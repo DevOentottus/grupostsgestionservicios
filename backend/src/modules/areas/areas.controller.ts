@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError, ConflictError } from "@/core/errors/index.js";
-import { authenticate, authorize } from "@/core/middleware/auth.js";
+import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
 
@@ -16,12 +16,14 @@ const actualizarAreaSchema = z.object({
 });
 
 export async function areasController(app: FastifyInstance) {
-  app.addHook("preHandler", authenticate);
+  // NOTA: No usar app.addHook("preHandler", authenticate) en serverless/emit.
+  // El hook de scope + route-level preHandler combinados causan timeout en Vercel.
+  // Cada ruta debe incluir authenticate + authorize en su propio preHandler.
 
   // ── GET /api/areas — listar todas las áreas ──
   app.get(
     "/api/areas",
-    { preHandler: [authorize("admin", "encargado", "colaborador")] },
+    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async (request) => {
       const user = request.user as {
         rol: string;
@@ -29,79 +31,63 @@ export async function areasController(app: FastifyInstance) {
         area_id: number | null;
       };
 
-      // Obtener áreas según el rol del usuario
-      let query = supabase
-        .from("areas")
-        .select(`
-          area_id,
-          area_nombre,
-          area_encargado_id,
-          area_fecha_creacion,
-          usuarios!areas_area_encargado_id_fkey (
-            usuario_id,
-            usuario_nombres,
-            usuario_correo,
-            usuario_username
-          )
-        `)
-        .order("area_nombre", { ascending: true });
+      // 1. Obtener IDs de áreas según el rol
+      let areaIds: number[] | null = null;
 
-      if (user.rol === "encargado") {
-        // Encargado: solo su área
-        const { data: encAreas } = await supabase
-          .from("areas")
-          .select("area_id")
-          .eq("area_encargado_id", user.user_id);
+      if (user.rol === "encargado" || user.rol === "colaborador") {
+        const table = user.rol === "encargado" ? "areas" : "areacolaboradores";
+        const field = user.rol === "encargado" ? "area_encargado_id" : "colaborador_id";
+        const selectField = user.rol === "encargado" ? "area_id" : "area_id";
 
-        const areaIds = (encAreas || []).map((a) => a.area_id);
-        if (areaIds.length > 0) {
-          query = query.in("area_id", areaIds);
-        } else {
-          query = query.eq("area_encargado_id", user.user_id);
-        }
-      } else if (user.rol === "colaborador") {
-        // Colaborador: áreas donde está asignado
-        const { data: cols } = await supabase
-          .from("areacolaboradores")
-          .select("area_id")
-          .eq("colaborador_id", user.user_id);
+        const { data: rows } = await supabase
+          .from(table)
+          .select(selectField)
+          .eq(field, user.user_id);
 
-        const areaIds = (cols || []).map((c) => c.area_id);
-        if (areaIds.length > 0) {
-          query = query.in("area_id", areaIds);
-        } else {
-          return { data: [] };
-        }
+        areaIds = ((rows || []) as any[]).map((r: any) => r.area_id);
+        if (areaIds.length === 0) return { data: [] };
       }
-      // Admin: todas (sin filtro)
 
-      const { data: areasData, error } = await query;
+      // 2. Query simplificada sin ORDER primero para aislar el problema
+      let q = supabase.from("areas").select("area_id, area_nombre, area_encargado_id, area_fecha_creacion");
+
+      if (areaIds) q = q.in("area_id", areaIds);
+
+      const { data: areasData, error } = await q;
       if (error) throw new Error(error.message);
+      if (!areasData?.length) return { data: [] };
 
-      // Obtener conteo de colaboradores por área
-      const rows = await Promise.all(
-        (areasData || []).map(async (a: any) => {
-          const { count } = await supabase
-            .from("areacolaboradores")
-            .select("*", { count: "exact", head: true })
-            .eq("area_id", a.area_id);
+      // 3. Obtener encargados y counts
+      const encargadoIds = [...new Set(areasData.map((a: any) => a.area_encargado_id).filter(Boolean))];
 
-          const encargado = a.usuarios || null;
-          return {
-            id: a.area_id,
-            nombre: a.area_nombre,
-            encargado_id: a.area_encargado_id,
-            created_at: a.area_fecha_creacion,
-            updated_at: null,
-            encargado_nombres: encargado?.usuario_nombres || null,
-            encargado_email: encargado?.usuario_correo || null,
-            encargado_username: encargado?.usuario_username || null,
-            colaborador_count: count || 0,
-          };
-        })
-      );
+      const [encResult, countResult] = await Promise.all([
+        encargadoIds.length
+          ? supabase.from("usuarios").select("usuario_id, usuario_nombres, usuario_correo, usuario_username").in("usuario_id", encargadoIds)
+          : { data: [] },
+        supabase.from("areacolaboradores").select("area_id"),
+      ]);
 
-      // Ordenar por nombre (en memoria porque los joins complican el ordering)
+      const encMap = new Map((encResult.data || []).map((u: any) => [u.usuario_id, u]));
+      const cMap = new Map<number, number>();
+      for (const c of (countResult.data || []) as any[]) {
+        cMap.set(c.area_id, (cMap.get(c.area_id) || 0) + 1);
+      }
+
+      const rows = areasData.map((a: any) => {
+        const enc = encMap.get(a.area_encargado_id);
+        return {
+          id: a.area_id,
+          nombre: a.area_nombre,
+          encargado_id: a.area_encargado_id,
+          created_at: a.area_fecha_creacion,
+          updated_at: null,
+          encargado_nombres: enc?.usuario_nombres || null,
+          encargado_email: enc?.usuario_correo || null,
+          encargado_username: enc?.usuario_username || null,
+          colaborador_count: cMap.get(a.area_id) || 0,
+        };
+      });
+
       rows.sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
 
       return { data: rows };
@@ -111,7 +97,7 @@ export async function areasController(app: FastifyInstance) {
   // ── GET /api/areas/:id — obtener área con colaboradores ──
   app.get(
     "/api/areas/:id",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const areaId = parseInt(id);
@@ -165,7 +151,7 @@ export async function areasController(app: FastifyInstance) {
   // ── POST /api/areas — crear área ──
   app.post(
     "/api/areas",
-    { preHandler: [authorize("admin")] },
+    { preHandler: [requireRoles("admin")] },
     async (request, reply) => {
       const input = crearAreaSchema.parse(request.body);
       const now = new Date();
@@ -202,7 +188,7 @@ export async function areasController(app: FastifyInstance) {
   // ── PUT /api/areas/:id — actualizar área ──
   app.put(
     "/api/areas/:id",
-    { preHandler: [authorize("admin")] },
+    { preHandler: [requireRoles("admin")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const input = actualizarAreaSchema.parse(request.body);
@@ -248,7 +234,7 @@ export async function areasController(app: FastifyInstance) {
   // ── DELETE /api/areas/:id — eliminar área ──
   app.delete(
     "/api/areas/:id",
-    { preHandler: [authorize("admin")] },
+    { preHandler: [requireRoles("admin")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const areaId = parseInt(id);
@@ -286,7 +272,7 @@ export async function areasController(app: FastifyInstance) {
   // ── POST /api/areas/:id/colaboradores — agregar colaborador ──
   app.post(
     "/api/areas/:id/colaboradores",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const body = request.body as { usuario_id: number };
@@ -336,7 +322,7 @@ export async function areasController(app: FastifyInstance) {
   // ── GET /api/areas/:id/servicios — servicios del área ──
   app.get(
     "/api/areas/:id/servicios",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request) => {
       const { id } = request.params as { id: string };
       const areaId = parseInt(id);
@@ -398,7 +384,7 @@ export async function areasController(app: FastifyInstance) {
   // ── DELETE /api/areas/:id/colaboradores/:usuario_id — remover colaborador ──
   app.delete(
     "/api/areas/:id/colaboradores/:usuario_id",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request, reply) => {
       const { id, usuario_id } = request.params as {
         id: string;

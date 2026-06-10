@@ -1,0 +1,13 @@
+admin
+admin123
+
+sistema
+sistema2026
+
+Encargado
+carlos.garcia
+admin123
+
+Colaborador:
+ana.martinez
+admin123

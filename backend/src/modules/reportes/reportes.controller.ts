@@ -1,16 +1,16 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
 import { ValidationError, ForbiddenError } from "@/core/errors/index.js";
-import { authenticate, authorize } from "@/core/middleware/auth.js";
+import { requireRoles } from "@/core/middleware/auth.js";
 import { z } from "zod";
 
 export async function reportesController(app: FastifyInstance) {
-  app.addHook("preHandler", authenticate);
+  // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
 
   // ── GET /api/reportes/colaborador ──
   app.get(
     "/api/reportes/colaborador",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request) => {
       const user = request.user as {
         user_id: number;
@@ -148,7 +148,7 @@ export async function reportesController(app: FastifyInstance) {
   // ── GET /api/reportes/area ──
   app.get(
     "/api/reportes/area",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request) => {
       const user = request.user as {
         user_id: number;
@@ -293,7 +293,7 @@ export async function reportesController(app: FastifyInstance) {
   // ── GET /api/reportes/exportar/:tipo/:formato ──
   app.get(
     "/api/reportes/exportar/:tipo/:formato",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request, reply) => {
       const user = request.user as {
         user_id: number;
@@ -550,3 +550,4 @@ async function exportPDF(
 
   doc.end();
 }
+

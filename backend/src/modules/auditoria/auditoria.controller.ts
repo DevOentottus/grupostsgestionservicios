@@ -1,14 +1,15 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
-import { authenticate, authorize } from "@/core/middleware/auth.js";
+import { requireRoles } from "@/core/middleware/auth.js";
 
 export async function auditoriaController(app: FastifyInstance) {
-  app.addHook("preHandler", authenticate);
+  // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
+  // Cada ruta incluye authenticate + authorize en su propio preHandler.
 
   // ── GET /api/auditoria — admin only, paginated, filterable ──
   app.get(
     "/api/auditoria",
-    { preHandler: [authorize("sistema")] },
+    { preHandler: [requireRoles("sistema")] },
     async (request) => {
       const query = request.query as {
         page?: string;

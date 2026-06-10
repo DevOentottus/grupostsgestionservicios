@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError } from "@/core/errors/index.js";
-import { authenticate } from "@/core/middleware/auth.js";
+import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
 
@@ -13,11 +13,13 @@ const crearComentarioSchema = z.object({
 });
 
 export async function comentariosController(app: FastifyInstance) {
-  app.addHook("preHandler", authenticate);
+  // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
+  // autenticación por ruta.
 
   // ── GET /api/servicios/:servicioId/comentarios ──
   app.get(
     "/api/servicios/:servicioId/comentarios",
+    { preHandler: [requireRoles()] },
     async (request) => {
       const { servicioId } = request.params as { servicioId: string };
 
@@ -63,6 +65,7 @@ export async function comentariosController(app: FastifyInstance) {
   // ── POST /api/servicios/:servicioId/comentarios ──
   app.post(
     "/api/servicios/:servicioId/comentarios",
+    { preHandler: [requireRoles()] },
     async (request, reply) => {
       const { servicioId } = request.params as { servicioId: string };
       const user = request.user as { user_id: number; rol: string };
@@ -113,6 +116,7 @@ export async function comentariosController(app: FastifyInstance) {
   // ── POST /api/servicios/:servicioId/tareas/:tareaId/comentarios ──
   app.post(
     "/api/servicios/:servicioId/tareas/:tareaId/comentarios",
+    { preHandler: [requireRoles()] },
     async (request, reply) => {
       const { servicioId, tareaId } = request.params as {
         servicioId: string;
@@ -169,6 +173,7 @@ export async function comentariosController(app: FastifyInstance) {
   // Buscamos en serviciocomentarios primero, luego en tareacomentarios.
   app.delete(
     "/api/comentarios/:id",
+    { preHandler: [requireRoles()] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const user = request.user as { user_id: number; rol: string };
@@ -216,3 +221,4 @@ export async function comentariosController(app: FastifyInstance) {
     }
   );
 }
+

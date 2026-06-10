@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
 import { NotFoundError } from "@/core/errors/index.js";
-import { authenticate, authorize } from "@/core/middleware/auth.js";
+import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
 
@@ -21,12 +21,13 @@ const actualizarAnuncioSchema = z.object({
 });
 
 export async function anunciosController(app: FastifyInstance) {
-  app.addHook("preHandler", authenticate);
+  // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
+  // Cada ruta incluye authenticate + authorize en su propio preHandler.
 
   // ── GET /api/anuncios — listar activos (todos los roles) ──
   app.get(
     "/api/anuncios",
-    { preHandler: [authorize("admin", "encargado", "colaborador")] },
+    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async () => {
       const today = new Date().toISOString().split("T")[0];
 
@@ -73,7 +74,7 @@ export async function anunciosController(app: FastifyInstance) {
   // ── GET /api/anuncios/todos — listar todos (admin only, incluye inactivos) ──
   app.get(
     "/api/anuncios/todos",
-    { preHandler: [authorize("sistema")] },
+    { preHandler: [requireRoles("sistema")] },
     async () => {
       const { data: anunciosData, error } = await supabase
         .from("anuncios")
@@ -116,7 +117,7 @@ export async function anunciosController(app: FastifyInstance) {
   // ── POST /api/anuncios — crear anuncio (admin) ──
   app.post(
     "/api/anuncios",
-    { preHandler: [authorize("sistema")] },
+    { preHandler: [requireRoles("sistema")] },
     async (request, reply) => {
       const input = crearAnuncioSchema.parse(request.body);
       const user = request.user as { user_id: number };
@@ -167,7 +168,7 @@ export async function anunciosController(app: FastifyInstance) {
   // ── PATCH /api/anuncios/:id — editar/desactivar (admin) ──
   app.patch(
     "/api/anuncios/:id",
-    { preHandler: [authorize("sistema")] },
+    { preHandler: [requireRoles("sistema")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const input = actualizarAnuncioSchema.parse(request.body);
@@ -224,7 +225,7 @@ export async function anunciosController(app: FastifyInstance) {
   // ── DELETE /api/anuncios/:id — eliminar (admin) ──
   app.delete(
     "/api/anuncios/:id",
-    { preHandler: [authorize("sistema")] },
+    { preHandler: [requireRoles("sistema")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const anuncioId = parseInt(id);
@@ -249,3 +250,4 @@ export async function anunciosController(app: FastifyInstance) {
     }
   );
 }
+

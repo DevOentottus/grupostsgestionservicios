@@ -11,8 +11,31 @@ export async function authenticate(request: FastifyRequest, _reply: FastifyReply
   }
 }
 
+/**
+ * PreHandler ÚNICO que autentica + autoriza roles.
+ * En serverless/emit mode, Fastify no maneja bien arrays de preHandler
+ * con funciones async+sync mezcladas. Esta función unifica ambas en UNA.
+ */
+export function requireRoles(...roles: Rol[]) {
+  return async (request: FastifyRequest, _reply: FastifyReply) => {
+    try {
+      await request.jwtVerify();
+    } catch {
+      throw new UnauthorizedError("Token inválido o expirado");
+    }
+    const user = request.user as { user_id: number; rol: Rol; area_id: number | null } | undefined;
+    if (!user) {
+      throw new UnauthorizedError("No autenticado");
+    }
+    if (user.rol === "sistema") return;
+    if (roles.length > 0 && !roles.includes(user.rol)) {
+      throw new ForbiddenError(`Se requiere rol: ${roles.join(" o ")}`);
+    }
+  };
+}
+
 export function authorize(...roles: Rol[]) {
-  return (request: FastifyRequest, _reply: FastifyReply) => {
+  return async (request: FastifyRequest, _reply: FastifyReply) => {
     const user = request.user as { user_id: number; rol: Rol; area_id: number | null } | undefined;
     if (!user) {
       throw new UnauthorizedError("No autenticado");

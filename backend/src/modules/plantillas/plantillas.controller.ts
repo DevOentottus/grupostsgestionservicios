@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError } from "@/core/errors/index.js";
-import { authenticate, authorize } from "@/core/middleware/auth.js";
+import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
 
@@ -35,12 +35,12 @@ const actualizarPlantillaSchema = z.object({
 });
 
 export async function plantillasController(app: FastifyInstance) {
-  app.addHook("preHandler", authenticate);
+  // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
 
   // ── GET /api/plantillas ──
   app.get(
     "/api/plantillas",
-    { preHandler: [authorize("admin", "encargado", "colaborador")] },
+    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async () => {
       const { data: plantillas } = await supabase
         .from("plantillas")
@@ -73,7 +73,7 @@ export async function plantillasController(app: FastifyInstance) {
   // ── GET /api/plantillas/:id ──
   app.get(
     "/api/plantillas/:id",
-    { preHandler: [authorize("admin", "encargado", "colaborador")] },
+    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const plantillaId = parseInt(id);
@@ -118,7 +118,7 @@ export async function plantillasController(app: FastifyInstance) {
   // ── POST /api/plantillas ──
   app.post(
     "/api/plantillas",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request, reply) => {
       const input = crearPlantillaSchema.parse(request.body);
       const authUser = request.user as { user_id: number };
@@ -183,7 +183,7 @@ export async function plantillasController(app: FastifyInstance) {
   // ── PUT /api/plantillas/:id ──
   app.put(
     "/api/plantillas/:id",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const input = actualizarPlantillaSchema.parse(request.body);
@@ -271,7 +271,7 @@ export async function plantillasController(app: FastifyInstance) {
   // ── DELETE /api/plantillas/:id ──
   app.delete(
     "/api/plantillas/:id",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const authUser = request.user as { user_id: number };
@@ -302,7 +302,7 @@ export async function plantillasController(app: FastifyInstance) {
   // ── POST /api/plantillas/:id/aplicar/:servicioId ──
   app.post(
     "/api/plantillas/:id/aplicar/:servicioId",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request, reply) => {
       const { id, servicioId } = request.params as {
         id: string;
@@ -399,3 +399,4 @@ export async function plantillasController(app: FastifyInstance) {
     }
   );
 }
+

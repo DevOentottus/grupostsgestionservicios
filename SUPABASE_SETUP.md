@@ -42,7 +42,7 @@ JWT_EXPIRES_IN=2h
 REFRESH_TOKEN_EXPIRES_IN=7d
 PORT=3001
 NODE_ENV=development
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=https://serviciolocalsts.vercel.app
 ```
 
 ### 2.1 `SUPABASE_URL`
@@ -85,7 +85,7 @@ CORS_ORIGIN=http://localhost:5173
 ### 2.8 `CORS_ORIGIN`
 
 - Origen permitido para CORS.
-- **Valor actual**: `http://localhost:5173` (Vite dev server).
+- **Valor actual**: `https://serviciolocalsts.vercel.app` (Vercel production).
 
 ---
 

@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
 import { NotFoundError } from "@/core/errors/index.js";
-import { authenticate } from "@/core/middleware/auth.js";
+import { requireRoles } from "@/core/middleware/auth.js";
 
 export async function displayController(app: FastifyInstance) {
   // ─────────────────────────────────────────────
@@ -85,7 +85,7 @@ export async function displayController(app: FastifyInstance) {
   // ─────────────────────────────────────────────
   app.get(
     "/api/display/trabajo",
-    { preHandler: [authenticate] },
+    { preHandler: [requireRoles()] },
     async (request) => {
       const user = request.user as {
         user_id: number;
@@ -246,3 +246,4 @@ export async function displayController(app: FastifyInstance) {
     };
   });
 }
+

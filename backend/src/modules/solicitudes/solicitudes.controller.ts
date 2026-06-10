@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
 import { NotFoundError } from "@/core/errors/index.js";
-import { authenticate, authorize } from "@/core/middleware/auth.js";
+import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
 
@@ -17,12 +17,12 @@ const atenderSolicitudSchema = z.object({
 });
 
 export async function solicitudesController(app: FastifyInstance) {
-  app.addHook("preHandler", authenticate);
+  // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
 
   // ── GET /api/solicitudes — listar solicitudes ──
   app.get(
     "/api/solicitudes",
-    { preHandler: [authorize("admin", "encargado", "colaborador")] },
+    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async (request) => {
       const user = request.user as {
         rol: string;
@@ -127,7 +127,7 @@ export async function solicitudesController(app: FastifyInstance) {
   // ── GET /api/solicitudes/mis-solicitudes — shortcut para usuario autenticado ──
   app.get(
     "/api/solicitudes/mis-solicitudes",
-    { preHandler: [authorize("admin", "encargado", "colaborador")] },
+    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async (request) => {
       const user = request.user as { user_id: number };
 
@@ -192,7 +192,7 @@ export async function solicitudesController(app: FastifyInstance) {
   // ── POST /api/solicitudes — crear solicitud ──
   app.post(
     "/api/solicitudes",
-    { preHandler: [authorize("admin", "encargado", "colaborador")] },
+    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async (request, reply) => {
       const input = crearSolicitudSchema.parse(request.body);
       const user = request.user as { user_id: number };
@@ -238,7 +238,7 @@ export async function solicitudesController(app: FastifyInstance) {
   // ── PATCH /api/solicitudes/:id/atender — atender/resolver solicitud ──
   app.patch(
     "/api/solicitudes/:id/atender",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const input = atenderSolicitudSchema.parse(request.body);
@@ -295,3 +295,4 @@ export async function solicitudesController(app: FastifyInstance) {
     }
   );
 }
+

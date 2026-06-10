@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import bcrypt from "bcryptjs";
 import { supabase } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError } from "@/core/errors/index.js";
-import { authenticate, authorize } from "@/core/middleware/auth.js";
+import { requireRoles } from "@/core/middleware/auth.js";
 import {
   crearUsuarioSchema,
   actualizarUsuarioSchema,
@@ -25,24 +25,25 @@ function combineApellidos(paterno: string, materno: string | null): string {
 }
 
 export async function usuariosController(app: FastifyInstance) {
-  // Todas las rutas requieren autenticación
-  app.addHook("preHandler", authenticate);
+  // NOTA: No usar app.addHook("preHandler", authenticate) en serverless/emit.
+  // El hook de scope + route-level preHandler combinados causan timeout en Vercel.
+  // Cada ruta debe incluir authenticate + authorize en su propio preHandler.
 
   // ── GET /api/usuarios ──
   app.get(
     "/api/usuarios",
-    { preHandler: [authorize("sistema", "encargado")] },
+    { preHandler: [requireRoles("sistema", "admin", "encargado")] },
     async () => {
       const { data: usuarios, error } = await supabase
         .from("usuarios")
-        .select(
-          "usuario_id, usuario_username, usuario_nombres, usuario_apellido_paterno, usuario_apellido_materno, usuario_dni, usuario_telefono, usuario_correo, usuario_rol, usuario_activo, usuario_fecha_creacion"
-        )
-        .order("usuario_nombres", { ascending: true });
+        .select("usuario_id, usuario_username, usuario_nombres, usuario_apellido_paterno, usuario_apellido_materno, usuario_dni, usuario_telefono, usuario_correo, usuario_rol, usuario_activo, usuario_fecha_creacion")
+        .limit(50);
 
-      if (error) throw new Error(error.message);
+      if (error) {
+        return { data: [], error: error.message };
+      }
 
-      const rows = (usuarios || []).map((u) => ({
+      const rows = (usuarios || []).map((u: any) => ({
         id: u.usuario_id,
         username: u.usuario_username,
         nombres: u.usuario_nombres,
@@ -63,7 +64,7 @@ export async function usuariosController(app: FastifyInstance) {
   // ── POST /api/usuarios ──
   app.post(
     "/api/usuarios",
-    { preHandler: [authorize("sistema")] },
+    { preHandler: [requireRoles("sistema")] },
     async (request, reply) => {
       const input = crearUsuarioSchema.parse(request.body);
 
@@ -155,7 +156,7 @@ export async function usuariosController(app: FastifyInstance) {
   // ── PUT /api/usuarios/:id ──
   app.put(
     "/api/usuarios/:id",
-    { preHandler: [authorize("sistema")] },
+    { preHandler: [requireRoles("sistema")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const input = actualizarUsuarioSchema.parse(request.body);
@@ -223,7 +224,7 @@ export async function usuariosController(app: FastifyInstance) {
   // ── PUT /api/usuarios/:id/password ──
   app.put(
     "/api/usuarios/:id/password",
-    { preHandler: [authorize("sistema")] },
+    { preHandler: [requireRoles("sistema")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const body = request.body as { password: string };
@@ -258,7 +259,7 @@ export async function usuariosController(app: FastifyInstance) {
   // ── PATCH /api/usuarios/:id/estado ──
   app.patch(
     "/api/usuarios/:id/estado",
-    { preHandler: [authorize("sistema")] },
+    { preHandler: [requireRoles("sistema")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
 

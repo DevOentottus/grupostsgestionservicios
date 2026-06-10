@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError } from "@/core/errors/index.js";
-import { authenticate, authorize } from "@/core/middleware/auth.js";
+import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
 
@@ -21,10 +21,11 @@ const tareaSchema = z.object({
 });
 
 export async function serviciosController(app: FastifyInstance) {
-  app.addHook("preHandler", authenticate);
+  // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
+  // autenticación por ruta.
 
   // ── GET /api/servicios ──
-  app.get("/api/servicios", async (request) => {
+  app.get("/api/servicios", { preHandler: [requireRoles()] }, async (request) => {
     const query = request.query as { estado?: string };
 
     let dbQuery = supabase
@@ -44,7 +45,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // ── GET /api/servicios/:id ──
-  app.get("/api/servicios/:id", async (request, reply) => {
+  app.get("/api/servicios/:id", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { data: servicios } = await supabase
       .from("servicios")
@@ -59,7 +60,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // ── POST /api/servicios ──
-  app.post("/api/servicios", async (request, reply) => {
+  app.post("/api/servicios", { preHandler: [requireRoles()] }, async (request, reply) => {
     const input = servicioSchema.parse(request.body);
 
     // Obtener último código para generar el siguiente
@@ -103,7 +104,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // ── PUT /api/servicios/:id ──
-  app.put("/api/servicios/:id", async (request, reply) => {
+  app.put("/api/servicios/:id", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const input = servicioSchema.parse(request.body);
 
@@ -128,7 +129,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // ── PATCH /api/servicios/:id/estado ──
-  app.patch("/api/servicios/:id/estado", async (request, reply) => {
+  app.patch("/api/servicios/:id/estado", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { estado, motivo } = request.body as { estado: string; motivo?: string };
     const validos = ["pendiente", "en_progreso", "completado", "cancelado", "bloqueado"];
@@ -173,7 +174,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // ── POST /api/servicios/:id/iniciar ──
-  app.post("/api/servicios/:id/iniciar", async (request, reply) => {
+  app.post("/api/servicios/:id/iniciar", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const user = request.user as { user_id: number };
     const servicioId = parseInt(id);
@@ -218,7 +219,7 @@ export async function serviciosController(app: FastifyInstance) {
   // ────────────────────
 
   // GET /api/servicios/:id/tareas
-  app.get("/api/servicios/:id/tareas", async (request) => {
+  app.get("/api/servicios/:id/tareas", { preHandler: [requireRoles()] }, async (request) => {
     const { id } = request.params as { id: string };
     const servicioId = parseInt(id);
 
@@ -250,7 +251,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // POST /api/servicios/:id/tareas
-  app.post("/api/servicios/:id/tareas", async (request, reply) => {
+  app.post("/api/servicios/:id/tareas", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const input = tareaSchema.parse(request.body);
     const servicioId = parseInt(id);
@@ -301,7 +302,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // PUT /api/tareas/:id
-  app.put("/api/tareas/:id", async (request, reply) => {
+  app.put("/api/tareas/:id", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const input = tareaSchema.parse(request.body);
 
@@ -328,7 +329,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // DELETE /api/tareas/:id
-  app.delete("/api/tareas/:id", async (request, reply) => {
+  app.delete("/api/tareas/:id", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const user = request.user as { user_id: number };
     const tareaId = parseInt(id);
@@ -358,7 +359,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // PATCH /api/servicios/:id/tareas/:tareaId
-  app.patch("/api/servicios/:id/tareas/:tareaId", async (request, reply) => {
+  app.patch("/api/servicios/:id/tareas/:tareaId", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { tareaId } = request.params as { id: string; tareaId: string };
     const { titulo } = request.body as { titulo?: string };
 
@@ -378,7 +379,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // PATCH /api/tareas/:id/completar
-  app.patch("/api/tareas/:id/completar", async (request, reply) => {
+  app.patch("/api/tareas/:id/completar", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const user = request.user as { user_id: number };
     const now = new Date();
@@ -416,7 +417,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // PATCH /api/tareas/:id/reabrir
-  app.patch("/api/tareas/:id/reabrir", async (request, reply) => {
+  app.patch("/api/tareas/:id/reabrir", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const user = request.user as { user_id: number };
 
@@ -450,7 +451,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // PUT /api/tareas/reordenar
-  app.put("/api/tareas/reordenar", async (request, reply) => {
+  app.put("/api/tareas/reordenar", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { tareas: items } = request.body as { tareas: { id: number; orden: number }[] };
     const user = request.user as { user_id: number };
 
@@ -493,3 +494,4 @@ function mapServicio(s: any) {
     updated_at: null,
   };
 }
+

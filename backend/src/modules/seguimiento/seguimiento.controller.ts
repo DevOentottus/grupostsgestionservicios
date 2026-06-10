@@ -1,12 +1,13 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError } from "@/core/errors/index.js";
-import { authenticate, authorize } from "@/core/middleware/auth.js";
+import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
 
 export async function seguimientoController(app: FastifyInstance) {
-  app.addHook("preHandler", authenticate);
+  // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
+  // autenticación por ruta.
 
   // ──────────────────────────────────
   // ENCUESTAS (usando calificaciones en Supabase)
@@ -19,7 +20,7 @@ export async function seguimientoController(app: FastifyInstance) {
   });
 
   // POST /api/servicios/:id/encuesta
-  app.post("/api/servicios/:id/encuesta", async (request, reply) => {
+  app.post("/api/servicios/:id/encuesta", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const input = encuestaSchema.parse(request.body);
 
@@ -52,7 +53,7 @@ export async function seguimientoController(app: FastifyInstance) {
   });
 
   // GET /api/servicios/:id/encuesta
-  app.get("/api/servicios/:id/encuesta", async (request) => {
+  app.get("/api/servicios/:id/encuesta", { preHandler: [requireRoles()] }, async (request) => {
     const { id } = request.params as { id: string };
     const { data: califs } = await supabase
       .from("calificaciones")
@@ -167,7 +168,7 @@ export async function seguimientoController(app: FastifyInstance) {
   // DASHBOARD / KPI
   // ──────────────────────────────────
 
-  app.get("/api/dashboard", async (request) => {
+  app.get("/api/dashboard", { preHandler: [requireRoles()] }, async (request) => {
     const query = request.query as {
       desde?: string;
       hasta?: string;
@@ -422,3 +423,4 @@ export async function seguimientoController(app: FastifyInstance) {
     };
   });
 }
+

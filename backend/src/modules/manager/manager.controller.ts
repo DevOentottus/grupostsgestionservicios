@@ -1,17 +1,17 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError, ForbiddenError } from "@/core/errors/index.js";
-import { authenticate, authorize, authorizeByArea } from "@/core/middleware/auth.js";
+import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
 
 export async function managerController(app: FastifyInstance) {
-  app.addHook("preHandler", authenticate);
+  // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
 
   // ── GET /api/manager/mi-area ──
   app.get(
     "/api/manager/mi-area",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request) => {
       const user = request.user as {
         user_id: number;
@@ -119,7 +119,7 @@ export async function managerController(app: FastifyInstance) {
   // ── GET /api/manager/distribucion ──
   app.get(
     "/api/manager/distribucion",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request) => {
       const user = request.user as {
         user_id: number;
@@ -211,7 +211,7 @@ export async function managerController(app: FastifyInstance) {
   // ── GET /api/manager/desempeno/:usuario_id ──
   app.get(
     "/api/manager/desempeno/:usuario_id",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado")] },
     async (request) => {
       const user = request.user as {
         user_id: number;
@@ -320,3 +320,4 @@ export async function managerController(app: FastifyInstance) {
     }
   );
 }
+
