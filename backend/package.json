@@ -1,0 +1,37 @@
+{
+  "name": "servicio-local-sts-api",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "db:start": "node -e \"const EP = require('embedded-postgres').default; const p = new EP({databaseDir: require('path').join(process.env.USERPROFILE,'.local','pg-sls','data'),binariesDir: require('path').join(process.env.USERPROFILE,'.local','pg-sls','bin'),port:5432,database:'servicio_local_sts',user:'postgres',password:'postgres',persistent:true,logging:true}); (async()=>{await p.initialise(); await p.start(); console.log('PostgreSQL ready'); await new Promise(()=>{}); })();\"",
+    "db:stop": "taskkill /F /IM postgres.exe 2>nul || echo PostgreSQL not running",
+    "build": "tsc",
+    "start": "node dist/src/app.js",
+    "migrate": "drizzle-kit push",
+    "migrate:generate": "drizzle-kit generate",
+    "studio": "drizzle-kit studio",
+    "db:create": "node scripts/create-db.mjs",
+    "db:setup": "npm run db:create && npx drizzle-kit push && npm run seed",
+    "seed": "tsx src/seeds/run.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "@fastify/jwt": "^10.1.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "fastify": "^5.8.5",
+    "postgres": "^3.4.9",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^25.9.2",
+    "drizzle-kit": "^0.31.10",
+    "embedded-postgres": "^18.4.0-beta.17",
+    "tsx": "^4.22.4",
+    "typescript": "^5.8.3"
+  }
+}
