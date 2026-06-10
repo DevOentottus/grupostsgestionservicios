@@ -9,7 +9,11 @@ import {
   ListChecks,
   TrendingUp,
   RefreshCw,
+  CheckCircle2,
+  Zap,
+  Star,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth.js";
 import { useDashboard } from "@/api/queries/useDashboard.js";
 import { DateRangeFilter } from "@/app/components/filters/DateRangeFilter.js";
 import { AreaFilter } from "@/app/components/filters/AreaFilter.js";
@@ -18,6 +22,7 @@ import { PieChartCard } from "@/app/components/charts/PieChart.js";
 import { BarChartCard } from "@/app/components/charts/BarChart.js";
 import { SatisfactionByAreaChart } from "@/app/components/charts/SatisfactionByAreaChart.js";
 import { TrendLineChart } from "@/app/components/charts/TrendLineChart.js";
+import { cn } from "@/app/lib/utils";
 import type { DashboardFilters, DashboardV2Response } from "@shared/index.js";
 
 // ── Helpers ──
@@ -69,6 +74,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
 // ── Dashboard Page ──
 
 export function DashboardPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>("alertas");
   const [filters, setFilters] = useState<DashboardFilters>({});
@@ -110,30 +116,36 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">Dashboard</h2>
-          <p className="text-sm text-slate-500">
-            {data?.total_servicios ?? 0} servicios registrados ·{" "}
-            {data?.completados ?? 0} completados
-            {isFetching && (
-              <RefreshCw className="inline-block w-3 h-3 ml-2 animate-spin text-blue-500" />
-            )}
-          </p>
+      {/* Welcome Banner - Figma gradient style */}
+      <div className="bg-gradient-to-r from-blue-900 to-blue-700 rounded-2xl p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-white text-xl mb-1" style={{ fontWeight: 700 }}>Bienvenido, {user?.nombres || "Usuario"}</h1>
+            <p className="text-blue-200 text-sm">
+              Panel de Administración — {new Date().toLocaleDateString("es-PE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="bg-yellow-400/20 text-yellow-300 text-sm px-3 py-1.5 rounded-full" style={{ fontWeight: 600 }}>
+              Administrador
+            </span>
+            <button
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white/10 hover:bg-white/20 rounded-xl transition-colors disabled:opacity-50 text-white"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
+              Actualizar
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
-          Actualizar
-        </button>
+        <p className="text-blue-200 text-xs mt-2">
+          {data?.total_servicios ?? 0} servicios registrados · {data?.completados ?? 0} completados
+        </p>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border p-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
         <div className="flex flex-wrap items-center gap-4">
           <DateRangeFilter
             fechaInicio={filters.fecha_inicio ?? ""}
@@ -148,17 +160,18 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="flex gap-1 border-b border-slate-200">
+      {/* Tab Navigation - Figma style with shadcn accent bottom border */}
+      <div className="flex gap-1 border-b border-gray-200">
         {TABS.map(({ id, label, icon }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
+            className={cn(
+              "flex items-center gap-1.5 px-4 py-2.5 text-sm transition-colors rounded-t-lg",
               activeTab === id
-                ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50"
-                : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-            }`}
+                ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 font-medium"
+                : "text-slate-500 hover:text-slate-700 hover:bg-slate-50",
+            )}
           >
             {icon}
             {label}
@@ -191,48 +204,60 @@ function AlertasTab({ data }: { data: DashboardV2Response | undefined }) {
   if (!data) return null;
   const { alertas } = data;
 
+  // KPI stat cards for alertas overview
+  const statCards = [
+    { label: "Servicios bloqueados", value: alertas.blocked_count, icon: AlertTriangle, color: "bg-red-500", textColor: "text-red-600" },
+    { label: "Servicios con demora", value: alertas.delayed_services.length, icon: Clock, color: "bg-orange-500", textColor: "text-orange-600" },
+    { label: "Servicios sin actividad", value: alertas.stale_services.length, icon: Activity, color: "bg-amber-500", textColor: "text-amber-600" },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Blocked Count Card */}
-      <div className="bg-white rounded-xl shadow-sm border p-6">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-red-100 flex items-center justify-center">
-            <AlertTriangle className="w-7 h-7 text-red-600" />
+      {/* Stat cards row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {statCards.map((s) => (
+          <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl ${s.color} flex items-center justify-center`}>
+                <s.icon className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>{s.value}</p>
+                <p className="text-gray-500 text-sm">{s.label}</p>
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-3xl font-bold text-slate-800">{alertas.blocked_count}</p>
-            <p className="text-sm text-slate-500">Servicios bloqueados</p>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Delayed Services */}
-      <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
           <Clock className="w-4 h-4 text-orange-500" />
-          Servicios con demora ({alertas.delayed_services.length})
-        </h3>
+          <h3 className="text-gray-800" style={{ fontWeight: 600 }}>Servicios con demora ({alertas.delayed_services.length})</h3>
+        </div>
         {alertas.delayed_services.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center py-6">Sin servicios con demora</p>
+          <p className="text-sm text-gray-400 text-center py-6">Sin servicios con demora</p>
         ) : (
-          <div className="space-y-2">
+          <div className="divide-y divide-gray-50">
             {alertas.delayed_services.map((s) => (
               <div
                 key={s.id}
-                className="flex flex-wrap items-center justify-between p-3 rounded-lg border border-orange-200 bg-orange-50"
+                className="px-5 py-3.5 hover:bg-gray-50 transition flex flex-wrap items-center justify-between gap-2 border-l-4 border-l-orange-400"
               >
                 <div className="min-w-0 flex-1">
-                  <span className="text-xs font-mono text-slate-400">{s.codigo}</span>
-                  <p className="text-sm font-medium text-slate-800 truncate">{s.descripcion}</p>
-                  <p className="text-xs text-slate-500">{s.cliente}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-gray-400">{s.codigo}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getPrioridadClass(s.prioridad)}`}>
+                      {s.prioridad}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-gray-800 truncate">{s.descripcion}</p>
+                  <p className="text-xs text-gray-500">{s.cliente}</p>
                 </div>
-                <div className="flex items-center gap-3 mt-2 sm:mt-0">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getPrioridadClass(s.prioridad)}`}>
-                    {s.prioridad}
-                  </span>
-                  <span className="text-xs text-orange-700 font-medium whitespace-nowrap">
-                    {formatMinutos(s.tiempo_transcurrido_minutos)} / {s.tiempo_estimado ? formatMinutos(s.tiempo_estimado) : "—"}
-                  </span>
+                <div className="text-xs text-orange-700 font-medium whitespace-nowrap">
+                  {formatMinutos(s.tiempo_transcurrido_minutos)}
+                  {s.tiempo_estimado ? ` / ${formatMinutos(s.tiempo_estimado)}` : ""}
                 </div>
               </div>
             ))}
@@ -241,26 +266,28 @@ function AlertasTab({ data }: { data: DashboardV2Response | undefined }) {
       </div>
 
       {/* Stale Services */}
-      <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
           <Activity className="w-4 h-4 text-amber-500" />
-          Servicios sin actividad ({alertas.stale_services.length})
-        </h3>
+          <h3 className="text-gray-800" style={{ fontWeight: 600 }}>Servicios sin actividad ({alertas.stale_services.length})</h3>
+        </div>
         {alertas.stale_services.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center py-6">Sin servicios estancados</p>
+          <p className="text-sm text-gray-400 text-center py-6">Sin servicios estancados</p>
         ) : (
-          <div className="space-y-2">
+          <div className="divide-y divide-gray-50">
             {alertas.stale_services.map((s) => (
               <div
                 key={s.id}
-                className={`flex flex-wrap items-center justify-between p-3 rounded-lg border ${getSeverityColor(s.horas_sin_actividad)}`}
+                className={cn(
+                  "px-5 py-3.5 hover:bg-gray-50 transition flex flex-wrap items-center justify-between gap-2 border-l-4",
+                  s.horas_sin_actividad >= 72 ? "border-l-red-500" : s.horas_sin_actividad >= 48 ? "border-l-orange-400" : "border-l-amber-400",
+                )}
               >
                 <div className="min-w-0 flex-1">
-                  <span className="text-xs font-mono text-slate-400">{s.codigo}</span>
-                  <p className="text-sm font-medium truncate">{s.descripcion}</p>
-                  <p className="text-xs opacity-75">{s.cliente}</p>
+                  <p className="text-sm font-medium text-gray-800 truncate">{s.descripcion}</p>
+                  <p className="text-xs text-gray-500">{s.cliente}</p>
                 </div>
-                <div className="text-xs font-medium whitespace-nowrap mt-2 sm:mt-0">
+                <div className="text-xs font-medium whitespace-nowrap text-gray-600">
                   {s.horas_sin_actividad >= 72
                     ? `${Math.round(s.horas_sin_actividad / 24)} días sin actividad`
                     : `${Math.round(s.horas_sin_actividad)} horas sin actividad`}
@@ -283,8 +310,9 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
   const kpiGroups = [
     {
       title: "Productividad",
-      icon: <Users className="w-4 h-4 text-blue-600" />,
-      color: "bg-blue-500",
+      icon: Zap,
+      iconBg: "bg-blue-900",
+      iconColor: "text-yellow-400",
       cards: [
         { label: "Servicios completados", value: indicadores.productividad.servicios_completados, unit: "" },
         { label: "Tareas completadas", value: indicadores.productividad.tareas_completadas, unit: "" },
@@ -293,8 +321,9 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
     },
     {
       title: "Eficiencia",
-      icon: <Clock className="w-4 h-4 text-amber-600" />,
-      color: "bg-amber-500",
+      icon: TrendingUp,
+      iconBg: "bg-green-600",
+      iconColor: "text-white",
       cards: [
         { label: "Tiempo promedio", value: indicadores.eficiencia.tiempo_promedio_min, unit: "min" },
         { label: "% a tiempo", value: indicadores.eficiencia.porcentaje_a_tiempo, unit: "%" },
@@ -303,8 +332,9 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
     },
     {
       title: "Satisfacción",
-      icon: <TrendingUp className="w-4 h-4 text-green-600" />,
-      color: "bg-green-500",
+      icon: Star,
+      iconBg: "bg-yellow-500",
+      iconColor: "text-white",
       cards: [
         { label: "Calificación promedio", value: indicadores.satisfaccion.promedio_calificacion, unit: "/5" },
         { label: "% Evaluados", value: indicadores.satisfaccion.porcentaje_evaluados, unit: "%" },
@@ -316,38 +346,38 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
     <div className="space-y-6">
       {/* Period comparison indicator */}
       {data.period_comparison && (
-        <div className="bg-white rounded-xl shadow-sm border p-4">
-          <h3 className="text-sm font-semibold text-slate-700 mb-3">Comparación vs periodo anterior</h3>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <h3 className="text-gray-800 mb-3" style={{ fontWeight: 600 }}>Comparación vs periodo anterior</h3>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <p className="text-xs text-slate-500">Servicios</p>
+              <p className="text-xs text-gray-500">Servicios</p>
               <div className="flex items-center gap-2 mt-1">
-                <span className={`text-lg font-bold ${data.period_comparison.variacion.servicios >= 0 ? "text-green-600" : "text-red-600"}`}>
+                <span className={cn("text-lg font-bold", data.period_comparison.variacion.servicios >= 0 ? "text-green-600" : "text-red-600")}>
                   {data.period_comparison.variacion.servicios >= 0 ? "+" : ""}{data.period_comparison.variacion.servicios}%
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-gray-400">
                   ({data.period_comparison.actual.servicios_completados} vs {data.period_comparison.anterior.servicios_completados})
                 </span>
               </div>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Tareas</p>
+              <p className="text-xs text-gray-500">Tareas</p>
               <div className="flex items-center gap-2 mt-1">
-                <span className={`text-lg font-bold ${data.period_comparison.variacion.tareas >= 0 ? "text-green-600" : "text-red-600"}`}>
+                <span className={cn("text-lg font-bold", data.period_comparison.variacion.tareas >= 0 ? "text-green-600" : "text-red-600")}>
                   {data.period_comparison.variacion.tareas >= 0 ? "+" : ""}{data.period_comparison.variacion.tareas}%
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-gray-400">
                   ({data.period_comparison.actual.tareas_completadas} vs {data.period_comparison.anterior.tareas_completadas})
                 </span>
               </div>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Tiempo promedio</p>
+              <p className="text-xs text-gray-500">Tiempo promedio</p>
               <div className="flex items-center gap-2 mt-1">
-                <span className={`text-lg font-bold ${(data.period_comparison.variacion.tiempo ?? 0) <= 0 ? "text-green-600" : "text-red-600"}`}>
+                <span className={cn("text-lg font-bold", (data.period_comparison.variacion.tiempo ?? 0) <= 0 ? "text-green-600" : "text-red-600")}>
                   {data.period_comparison.variacion.tiempo >= 0 ? "+" : ""}{data.period_comparison.variacion.tiempo}%
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-gray-400">
                   ({formatMinutos(data.period_comparison.actual.tiempo_promedio)} vs {formatMinutos(data.period_comparison.anterior.tiempo_promedio)})
                 </span>
               </div>
@@ -356,30 +386,38 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
         </div>
       )}
 
-      {/* KPI cards grouped */}
-      {kpiGroups.map((group) => (
-        <div key={group.title} className="bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-            {group.icon}
-            {group.title}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {group.cards.map((card) => (
-              <div key={card.label} className="bg-slate-50 rounded-lg p-4">
-                <p className="text-2xl font-bold text-slate-800">
-                  {typeof card.value === "number" ? card.value.toLocaleString() : card.value}
-                  <span className="text-sm font-normal text-slate-400 ml-1">{card.unit}</span>
-                </p>
-                <p className="text-xs text-slate-500 mt-1">{card.label}</p>
+      {/* KPI cards grouped - Figma style with colored icon containers */}
+      {kpiGroups.map((group) => {
+        const GroupIcon = group.icon;
+        return (
+          <div key={group.title} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-2 mb-4">
+              <div className={`w-8 h-8 rounded-lg ${group.iconBg} flex items-center justify-center`}>
+                <GroupIcon className={`w-4 h-4 ${group.iconColor}`} />
               </div>
-            ))}
+              <div>
+                <p className="text-gray-800 text-sm" style={{ fontWeight: 700 }}>{group.title}</p>
+                <p className="text-gray-400 text-xs">Indicadores de rendimiento</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {group.cards.map((card) => (
+                <div key={card.label} className="bg-gray-50 rounded-xl p-4">
+                  <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>
+                    {typeof card.value === "number" ? card.value.toLocaleString() : card.value}
+                    <span className="text-sm font-normal text-gray-400 ml-1">{card.unit}</span>
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">{card.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
-      {/* Legacy KPIs */}
-      <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="font-semibold text-slate-800 mb-4">KPIs del Sistema</h3>
+      {/* KPIs del Sistema */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <h3 className="text-gray-800 mb-4" style={{ fontWeight: 600 }}>KPIs del Sistema</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             { label: "Datos completos", value: kpi.registros_completos_pct, unit: "%" },
@@ -391,11 +429,11 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
             { label: "Con feedback", value: kpi.servicios_con_comentarios_pct, unit: "%" },
             { label: "Tiempo prom.", value: kpi.tiempo_promedio_min, unit: "min" },
           ].map((k) => (
-            <div key={k.label} className="bg-slate-50 rounded-lg p-3">
-              <p className="text-lg font-bold text-slate-800">
+            <div key={k.label} className="bg-gray-50 rounded-xl p-3">
+              <p className="text-lg text-gray-900" style={{ fontWeight: 700 }}>
                 {k.value}{k.unit}
               </p>
-              <p className="text-xs text-slate-500">{k.label}</p>
+              <p className="text-xs text-gray-500">{k.label}</p>
             </div>
           ))}
         </div>
@@ -425,14 +463,18 @@ function GraficosTab({ data }: { data: DashboardV2Response | undefined }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <PieChartCard title="Distribución de Servicios por Estado" data={estadoPieData} />
-      <BarChartCard
-        title="Servicios por Área"
-        data={areaBarData}
-        valueLabel="Total servicios"
-        color="#3b82f6"
-      />
-      <div className="lg:col-span-2">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <PieChartCard title="Distribución de Servicios por Estado" data={estadoPieData} />
+      </div>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+        <BarChartCard
+          title="Servicios por Área"
+          data={areaBarData}
+          valueLabel="Total servicios"
+          color="#3b82f6"
+        />
+      </div>
+      <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <SatisfactionByAreaChart
           title="Satisfacción por Área"
           data={graficos.satisfaccion_por_area}
@@ -458,40 +500,47 @@ function RankingTab({
     <div className="space-y-6">
       {/* Ranking */}
       {rankings.colaboradores_destacados.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
             <Users className="w-4 h-4 text-purple-500" />
-            Colaboradores destacados
-          </h3>
+            <h3 className="text-gray-800" style={{ fontWeight: 600 }}>Colaboradores destacados</h3>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-2 px-2 text-slate-500 font-medium">Colaborador</th>
-                  <th className="text-center py-2 px-2 text-slate-500 font-medium">Servicios</th>
-                  <th className="text-center py-2 px-2 text-slate-500 font-medium">Tareas</th>
-                  <th className="text-center py-2 px-2 text-slate-500 font-medium">Eficiencia</th>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Colaborador</th>
+                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Servicios</th>
+                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Tareas</th>
+                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Eficiencia</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-50">
                 {rankings.colaboradores_destacados.map((c, i) => (
-                  <tr key={c.usuario_id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-2 px-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-slate-200 text-xs flex items-center justify-center font-medium text-slate-600">
+                  <tr key={c.usuario_id} className="hover:bg-gray-50 transition">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <span className={cn(
+                          "w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold",
+                          i === 0 ? "bg-yellow-400 text-blue-900" :
+                          i === 1 ? "bg-gray-300 text-gray-700" :
+                          i === 2 ? "bg-amber-600 text-white" :
+                          "bg-gray-100 text-gray-500",
+                        )}>
                           {i + 1}
                         </span>
-                        <span className="font-medium text-slate-800">{c.nombres}</span>
+                        <span className="font-medium text-gray-800">{c.nombres}</span>
                       </div>
                     </td>
-                    <td className="text-center py-2 px-2 text-slate-600">{c.servicios_completados}</td>
-                    <td className="text-center py-2 px-2 text-slate-600">{c.tareas_completadas}</td>
-                    <td className="text-center py-2 px-2">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                    <td className="text-center py-3 px-4 text-gray-600">{c.servicios_completados}</td>
+                    <td className="text-center py-3 px-4 text-gray-600">{c.tareas_completadas}</td>
+                    <td className="text-center py-3 px-4">
+                      <span className={cn(
+                        "text-xs font-medium px-2 py-0.5 rounded-full",
                         c.eficiencia >= 80 ? "bg-green-100 text-green-700" :
                         c.eficiencia >= 50 ? "bg-amber-100 text-amber-700" :
-                        "bg-red-100 text-red-700"
-                      }`}>
+                        "bg-red-100 text-red-700",
+                      )}>
                         {c.eficiencia}%
                       </span>
                     </td>
@@ -504,61 +553,60 @@ function RankingTab({
       )}
 
       {/* Active Services Table */}
-      <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
           <ListChecks className="w-4 h-4 text-blue-500" />
-          Servicios en Progreso ({servicios_activos.length})
-        </h3>
+          <h3 className="text-gray-800" style={{ fontWeight: 600 }}>Servicios en Progreso ({servicios_activos.length})</h3>
+        </div>
         {servicios_activos.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center py-8">
-            No hay servicios activos en este momento
-          </p>
+          <p className="text-sm text-gray-400 text-center py-8">No hay servicios activos en este momento</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-2 px-3 text-slate-500 font-medium">Código</th>
-                  <th className="text-left py-2 px-3 text-slate-500 font-medium">Servicio</th>
-                  <th className="text-left py-2 px-3 text-slate-500 font-medium">Cliente</th>
-                  <th className="text-center py-2 px-3 text-slate-500 font-medium">Prioridad</th>
-                  <th className="text-center py-2 px-3 text-slate-500 font-medium">Progreso</th>
-                  <th className="text-center py-2 px-3 text-slate-500 font-medium">Tiempo</th>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Código</th>
+                  <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Servicio</th>
+                  <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Cliente</th>
+                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Prioridad</th>
+                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Progreso</th>
+                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Tiempo</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-50">
                 {servicios_activos.map((s) => (
                   <tr
                     key={s.id}
                     onClick={() => navigate(`/servicios/${s.id}`)}
-                    className="border-b border-slate-100 hover:bg-blue-50 cursor-pointer transition-colors"
+                    className="hover:bg-blue-50 cursor-pointer transition-colors"
                   >
-                    <td className="py-3 px-3 font-mono text-xs text-slate-400">{s.codigo}</td>
-                    <td className="py-3 px-3">
-                      <p className="font-medium text-slate-800 truncate max-w-[200px]">{s.descripcion}</p>
+                    <td className="py-3 px-4 font-mono text-xs text-gray-400">{s.codigo}</td>
+                    <td className="py-3 px-4">
+                      <p className="font-medium text-gray-800 truncate max-w-[200px]">{s.descripcion}</p>
                     </td>
-                    <td className="py-3 px-3 text-slate-600">{s.cliente}</td>
-                    <td className="py-3 px-3 text-center">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getPrioridadClass(s.prioridad)}`}>
+                    <td className="py-3 px-4 text-gray-600">{s.cliente}</td>
+                    <td className="py-3 px-4 text-center">
+                      <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", getPrioridadClass(s.prioridad))}>
                         {s.prioridad}
                       </span>
                     </td>
-                    <td className="py-3 px-3">
+                    <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all ${
+                            className={cn(
+                              "h-full rounded-full transition-all",
                               s.progreso_porcentaje >= 80 ? "bg-green-500" :
                               s.progreso_porcentaje >= 40 ? "bg-blue-500" :
-                              "bg-amber-500"
-                            }`}
+                              "bg-amber-500",
+                            )}
                             style={{ width: `${s.progreso_porcentaje}%` }}
                           />
                         </div>
-                        <span className="text-xs text-slate-500 w-8 text-right">{s.progreso_porcentaje}%</span>
+                        <span className="text-xs text-gray-500 w-8 text-right">{s.progreso_porcentaje}%</span>
                       </div>
                     </td>
-                    <td className="py-3 px-3 text-center text-xs text-slate-500">
+                    <td className="py-3 px-4 text-center text-xs text-gray-500">
                       {formatMinutos(s.tiempo_en_curso)}
                     </td>
                   </tr>
@@ -582,22 +630,22 @@ function ComparativoTab({ data }: { data: DashboardV2Response | undefined }) {
     <div className="space-y-6">
       {/* Period Comparison Detail */}
       {period_comparison && (
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-500" />
-            Comparación Detallada de Periodos
-          </h3>
+            <h3 className="text-gray-800" style={{ fontWeight: 600 }}>Comparación Detallada de Periodos</h3>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="text-left py-2 px-3 text-slate-500 font-medium">Métrica</th>
-                  <th className="text-right py-2 px-3 text-slate-500 font-medium">Actual</th>
-                  <th className="text-right py-2 px-3 text-slate-500 font-medium">Anterior</th>
-                  <th className="text-right py-2 px-3 text-slate-500 font-medium">Variación</th>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Métrica</th>
+                  <th className="text-right py-3 px-4 text-gray-500 text-xs font-medium">Actual</th>
+                  <th className="text-right py-3 px-4 text-gray-500 text-xs font-medium">Anterior</th>
+                  <th className="text-right py-3 px-4 text-gray-500 text-xs font-medium">Variación</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-50">
                 {[
                   {
                     label: "Servicios completados",
@@ -620,21 +668,22 @@ function ComparativoTab({ data }: { data: DashboardV2Response | undefined }) {
                     invertColor: true,
                   },
                 ].map((row) => (
-                  <tr key={row.label} className="border-b border-slate-100">
-                    <td className="py-2.5 px-3 text-slate-800 font-medium">{row.label}</td>
-                    <td className="py-2.5 px-3 text-right text-slate-600">
+                  <tr key={row.label} className="hover:bg-gray-50 transition">
+                    <td className="py-3 px-4 text-gray-800 font-medium">{row.label}</td>
+                    <td className="py-3 px-4 text-right text-gray-600">
                       {row.unit ? `${row.actual} ${row.unit}` : row.actual}
                     </td>
-                    <td className="py-2.5 px-3 text-right text-slate-600">
+                    <td className="py-3 px-4 text-right text-gray-600">
                       {row.unit ? `${row.anterior} ${row.unit}` : row.anterior}
                     </td>
-                    <td className="py-2.5 px-3 text-right">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        row.variacion === 0 ? "bg-slate-100 text-slate-600" :
+                    <td className="py-3 px-4 text-right">
+                      <span className={cn(
+                        "text-xs font-semibold px-2 py-0.5 rounded-full",
+                        row.variacion === 0 ? "bg-gray-100 text-gray-600" :
                         row.variacion > 0
                           ? row.invertColor ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-                          : row.invertColor ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                      }`}>
+                          : row.invertColor ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700",
+                      )}>
                         {row.variacion > 0 ? "+" : ""}{row.variacion}%
                       </span>
                     </td>
@@ -647,42 +696,47 @@ function ComparativoTab({ data }: { data: DashboardV2Response | undefined }) {
       )}
 
       {/* Summary KPIs */}
-      <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="font-semibold text-slate-800 mb-4">Resumen General</h3>
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <h3 className="text-gray-800 mb-4" style={{ fontWeight: 600 }}>Resumen General</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: "Tiempo promedio", value: kpi.tiempo_promedio_min, unit: "min", color: "bg-blue-500" },
-            { label: "Productividad", value: indicadores.productividad.promedio_por_colaborador, unit: "/col", color: "bg-green-500" },
-            { label: "Satisfacción", value: indicadores.satisfaccion.promedio_calificacion, unit: "/5", color: "bg-purple-500" },
-            { label: "% a tiempo", value: indicadores.eficiencia.porcentaje_a_tiempo, unit: "%", color: "bg-amber-500" },
-          ].map((card) => (
-            <div key={card.label} className="rounded-lg p-4 border border-slate-200">
-              <div className={`w-8 h-8 rounded-lg ${card.color} flex items-center justify-center text-white text-xs font-bold mb-2`}>
-                {card.unit}
+            { label: "Tiempo promedio", value: kpi.tiempo_promedio_min, unit: "min", color: "bg-blue-500", icon: Clock },
+            { label: "Productividad", value: indicadores.productividad.promedio_por_colaborador, unit: "/col", color: "bg-green-500", icon: Zap },
+            { label: "Satisfacción", value: indicadores.satisfaccion.promedio_calificacion, unit: "/5", color: "bg-purple-500", icon: Star },
+            { label: "% a tiempo", value: indicadores.eficiencia.porcentaje_a_tiempo, unit: "%", color: "bg-amber-500", icon: TrendingUp },
+          ].map((card) => {
+            const CardIcon = card.icon;
+            return (
+              <div key={card.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                <div className={`w-9 h-9 rounded-xl ${card.color} flex items-center justify-center mb-3`}>
+                  <CardIcon className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>
+                  {typeof card.value === "number" ? card.value.toLocaleString(undefined, { maximumFractionDigits: 1 }) : card.value}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">{card.label}</p>
               </div>
-              <p className="text-2xl font-bold text-slate-800">
-                {typeof card.value === "number" ? card.value.toLocaleString(undefined, { maximumFractionDigits: 1 }) : card.value}
-              </p>
-              <p className="text-xs text-slate-500 mt-1">{card.label}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* Chart section in Reportes */}
-      <TrendLineChart
-        title="Indicadores de Eficiencia"
-        data={[
-          { label: "Completos", valor: kpi.registros_completos_pct },
-          { label: "Tareas", valor: kpi.servicios_con_tareas_pct },
-          { label: "Tiempo", valor: kpi.completados_dentro_tiempo_pct },
-          { label: "Consultas", valor: kpi.servicios_consultados_pct },
-          { label: "Evaluación", valor: kpi.servicios_evaluados_pct },
-          { label: "Feedback", valor: kpi.servicios_con_comentarios_pct },
-        ]}
-        lineLabel="% KPI"
-        lineColor="#8b5cf6"
-      />
+      {/* Chart section */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <TrendLineChart
+          title="Indicadores de Eficiencia"
+          data={[
+            { label: "Completos", valor: kpi.registros_completos_pct },
+            { label: "Tareas", valor: kpi.servicios_con_tareas_pct },
+            { label: "Tiempo", valor: kpi.completados_dentro_tiempo_pct },
+            { label: "Consultas", valor: kpi.servicios_consultados_pct },
+            { label: "Evaluación", valor: kpi.servicios_evaluados_pct },
+            { label: "Feedback", valor: kpi.servicios_con_comentarios_pct },
+          ]}
+          lineLabel="% KPI"
+          lineColor="#8b5cf6"
+        />
+      </div>
     </div>
   );
 }

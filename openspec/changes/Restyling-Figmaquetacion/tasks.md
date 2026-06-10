@@ -143,7 +143,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-### T-009: Login page replacement (two-panel Figma design)
+### T-009: Login page replacement (two-panel Figma design) ✅
 
 | Field | Value |
 |---|---|
@@ -156,7 +156,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-### T-010: Usuarios/Collaborators page full replacement
+### T-010: Usuarios/Collaborators page full replacement ✅
 
 | Field | Value |
 |---|---|
@@ -169,7 +169,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-### T-011: Servicios card grid + 3-step wizard + @dnd-kit
+### T-011: Servicios card grid + 3-step wizard + @dnd-kit ✅
 
 | Field | Value |
 |---|---|
@@ -182,7 +182,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-### T-012: Areas master-detail replacement
+### T-012: Areas master-detail replacement ✅
 
 | Field | Value |
 |---|---|
@@ -195,7 +195,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ---
 
-### T-013: Comunicaciones unified page (new)
+### T-013: Comunicaciones unified page (new) ✅
 
 | Field | Value |
 |---|---|

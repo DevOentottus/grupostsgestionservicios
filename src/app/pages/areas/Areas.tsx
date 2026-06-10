@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   useAreas,
+  useArea,
   useCrearArea,
   useEditarArea,
   useEliminarArea,
@@ -8,348 +9,430 @@ import {
   useRemoverColaborador,
 } from "@/api/queries/useAreas.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
-import type { Area, AreaWithEncargado } from "@shared/index.js";
+import { useServicios } from "@/api/queries/useServicios.js";
+import { cn } from "@/app/lib/utils";
+import type { AreaWithEncargado, AreaWithColaboradores } from "@shared/index.js";
+import {
+  MapPin, Users, ClipboardList, CheckCircle2, Clock, AlertTriangle,
+  Plus, Edit2, Trash2, X, ChevronRight, ArrowLeft,
+} from "lucide-react";
 
 export function AreasPage() {
-  const { data: areas, isLoading } = useAreas();
+  const { data: areas, isLoading: areasLoading } = useAreas();
   const { data: usuarios } = useUsuarios();
+  const { data: servicios } = useServicios();
   const crearArea = useCrearArea();
   const editarArea = useEditarArea();
   const eliminarArea = useEliminarArea();
   const asignarColaborador = useAsignarColaborador();
   const removerColaborador = useRemoverColaborador();
 
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<Area | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const { data: selectedDetail, isLoading: detailLoading } = useArea(selectedId ?? 0);
+  const [showModal, setShowModal] = useState(false);
+  const [editingArea, setEditingArea] = useState<AreaWithEncargado | null>(null);
   const [form, setForm] = useState({ nombre: "", encargado_id: "" });
-  const [expandedArea, setExpandedArea] = useState<number | null>(null);
-  const [colaboradorAsignar, setColaboradorAsignar] = useState<{
-    areaId: number;
-  } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<AreaWithEncargado | null>(null);
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
+  const [newColabUserId, setNewColabUserId] = useState("");
 
-  // Reset form when closing
   const resetForm = () => {
     setForm({ nombre: "", encargado_id: "" });
-    setEditing(null);
-    setShowForm(false);
+    setEditingArea(null);
+    setShowModal(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data = {
       nombre: form.nombre,
-      encargado_id: form.encargado_id
-        ? parseInt(form.encargado_id)
-        : null,
+      encargado_id: form.encargado_id ? parseInt(form.encargado_id) : null,
     };
-
-    if (editing) {
-      await editarArea.mutateAsync({ id: editing.id, data });
+    if (editingArea) {
+      await editarArea.mutateAsync({ id: editingArea.id, data });
     } else {
       await crearArea.mutateAsync(data);
     }
     resetForm();
   };
 
-  const handleEdit = (area: Area) => {
-    setEditing(area);
+  const handleEdit = (area: AreaWithEncargado) => {
+    setEditingArea(area);
     setForm({
       nombre: area.nombre,
       encargado_id: area.encargado_id?.toString() || "",
     });
-    setShowForm(true);
+    setShowModal(true);
   };
 
-  const handleDelete = async (area: Area) => {
-    if (!window.confirm(`¿Eliminar el área "${area.nombre}"?`)) return;
-    await eliminarArea.mutateAsync(area.id);
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    await eliminarArea.mutateAsync(deleteConfirm.id);
+    if (selectedId === deleteConfirm.id) {
+      setSelectedId(null);
+    }
+    setDeleteConfirm(null);
   };
 
-  const handleAsignarColaborador = async (areaId: number) => {
-    if (!colaboradorAsignar) return;
+  const handleAsignarColaborador = async () => {
+    if (!selectedId || !newColabUserId) return;
     await asignarColaborador.mutateAsync({
-      areaId,
-      usuarioId: parseInt(
-        (document.getElementById("colaborador-select") as HTMLSelectElement)
-          ?.value || "0"
-      ),
+      areaId: selectedId,
+      usuarioId: parseInt(newColabUserId),
     });
-    setColaboradorAsignar(null);
+    setNewColabUserId("");
   };
 
-  if (isLoading) {
-    return <p className="text-slate-500">Cargando áreas...</p>;
+  const handleRemoverColaborador = async (usuarioId: number) => {
+    if (!selectedId) return;
+    await removerColaborador.mutateAsync({ areaId: selectedId, usuarioId });
+  };
+
+  const selectArea = (id: number) => {
+    setSelectedId(id);
+    setMobileView("detail");
+  };
+
+  const getAreaServiceStats = (areaId: number) => {
+    if (!servicios) return { total: 0, pendientes: 0, en_progreso: 0, completados: 0, bloqueados: 0 };
+    const areaServicios = servicios.filter((s: any) => s.area_id === areaId);
+    return {
+      total: areaServicios.length,
+      pendientes: areaServicios.filter((s: any) => s.estado === "pendiente").length,
+      en_progreso: areaServicios.filter((s: any) => s.estado === "en_progreso").length,
+      completados: areaServicios.filter((s: any) => s.estado === "completado").length,
+      bloqueados: areaServicios.filter((s: any) => s.estado === "bloqueado").length,
+    };
+  };
+
+  const disponibles = usuarios?.filter(
+    (u: any) =>
+      u.rol === "colaborador" &&
+      !selectedDetail?.colaboradores?.some((c: any) => c.usuario_id === u.id)
+  ) || [];
+
+  if (areasLoading) {
+    return <p className="text-gray-500">Cargando áreas...</p>;
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-slate-800">Áreas</h2>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          {mobileView === "detail" && selectedId ? (
+            <button
+              onClick={() => { setMobileView("list"); setSelectedId(null); }}
+              className="lg:hidden flex items-center gap-2 text-sm text-blue-700 font-semibold mb-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Volver a áreas
+            </button>
+          ) : null}
+          <h1 className="text-gray-900 font-bold">Áreas de Servicio</h1>
+          <p className="text-gray-500 text-sm">{areas?.length || 0} áreas registradas</p>
+        </div>
         <button
-          onClick={() => {
-            resetForm();
-            setShowForm(!showForm);
-          }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
+          onClick={() => { resetForm(); setShowModal(true); }}
+          className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition"
         >
-          + Nueva Área
+          <Plus className="w-4 h-4" />
+          Nueva Área
         </button>
       </div>
 
-      {/* Formulario crear/editar área */}
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white p-4 rounded-xl border space-y-3"
-        >
-          <h3 className="font-semibold text-slate-700">
-            {editing ? "Editar Área" : "Nueva Área"}
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              placeholder="Nombre del área"
-              value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-              className="px-3 py-2 border rounded-lg text-sm"
-              required
-            />
-            <select
-              value={form.encargado_id}
-              onChange={(e) =>
-                setForm({ ...form, encargado_id: e.target.value })
-              }
-              className="px-3 py-2 border rounded-lg text-sm"
-            >
-              <option value="">Sin encargado</option>
-              {usuarios
-                ?.filter(
-                  (u: any) =>
-                    u.rol === "admin" || u.rol === "encargado"
-                )
-                .map((u: any) => (
-                  <option key={u.id} value={u.id}>
-                    {u.nombres} ({u.rol})
-                  </option>
-                ))}
-            </select>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* ===== LEFT PANEL: Area list (40%) ===== */}
+        <div className={cn("lg:col-span-2 space-y-3", mobileView === "detail" && "hidden lg:block")}>
+          {areas?.map((area: AreaWithEncargado) => {
+            const stats = getAreaServiceStats(area.id);
+            const isSelected = selectedId === area.id;
+            return (
+              <button
+                key={area.id}
+                onClick={() => selectArea(area.id)}
+                className={cn(
+                  "w-full text-left rounded-2xl p-5 shadow-sm border transition",
+                  isSelected
+                    ? "bg-blue-900 border-blue-800 text-white"
+                    : "bg-white border-gray-100 hover:border-blue-200",
+                )}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center",
+                      isSelected ? "bg-yellow-400" : "bg-blue-900",
+                    )}>
+                      <MapPin className={cn("w-5 h-5", isSelected ? "text-blue-900" : "text-yellow-400")} />
+                    </div>
+                    <div>
+                      <p className={cn("text-sm font-bold", isSelected ? "text-white" : "text-gray-900")}>
+                        {area.nombre}
+                      </p>
+                      <p className={cn("text-xs", isSelected ? "text-blue-200" : "text-gray-500")}>
+                        {area.colaborador_count || 0} colaboradores
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className={cn("w-4 h-4", isSelected ? "text-yellow-400 rotate-90" : "text-gray-400")} />
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Total", value: stats.total, color: isSelected ? "bg-blue-800" : "bg-gray-100" },
+                    { label: "Activos", value: stats.en_progreso, color: isSelected ? "bg-blue-700" : "bg-blue-50" },
+                    { label: "Listos", value: stats.completados, color: isSelected ? "bg-green-800" : "bg-green-50" },
+                  ].map((s) => (
+                    <div key={s.label} className={cn(s.color, "rounded-xl p-2 text-center")}>
+                      <p className={cn("text-base font-bold", isSelected ? "text-white" : "text-gray-900")}>
+                        {s.value}
+                      </p>
+                      <p className={cn("text-xs", isSelected ? "text-blue-200" : "text-gray-500")}>
+                        {s.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </button>
+            );
+          })}
+          {(!areas || areas.length === 0) && (
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
+              <MapPin className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+              <p className="text-gray-400 text-sm">No hay áreas registradas</p>
+            </div>
+          )}
+        </div>
+
+        {/* ===== RIGHT PANEL: Detail view (60%) ===== */}
+        <div className={cn("lg:col-span-3", mobileView === "list" && "hidden lg:block")}>
+          {selectedId ? (
+            detailLoading ? (
+              <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 animate-pulse space-y-4">
+                <div className="h-6 bg-gray-200 rounded w-48" />
+                <div className="h-4 bg-gray-200 rounded w-32" />
+                <div className="h-20 bg-gray-200 rounded" />
+              </div>
+            ) : selectedDetail ? (
+              <div className="space-y-4">
+                {/* Header card */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-blue-900 rounded-2xl flex items-center justify-center">
+                        <MapPin className="w-6 h-6 text-yellow-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-gray-900 font-bold">Área: {selectedDetail.nombre}</h2>
+                        <p className="text-gray-500 text-sm">ID: {selectedDetail.id}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(areas?.find((a: any) => a.id === selectedId) as AreaWithEncargado)}
+                        className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition"
+                        title="Editar"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(areas?.find((a: any) => a.id === selectedId) as AreaWithEncargado)}
+                        className="p-2 rounded-xl hover:bg-red-50 text-red-500 transition"
+                        title="Eliminar"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Stats cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                    {[
+                      { label: "Servicios", value: getAreaServiceStats(selectedId).total, icon: ClipboardList, color: "bg-blue-100 text-blue-700" },
+                      { label: "En Progreso", value: getAreaServiceStats(selectedId).en_progreso, icon: Clock, color: "bg-blue-100 text-blue-700" },
+                      { label: "Completados", value: getAreaServiceStats(selectedId).completados, icon: CheckCircle2, color: "bg-green-100 text-green-700" },
+                      { label: "Colaboradores", value: selectedDetail.colaboradores?.length || 0, icon: Users, color: "bg-purple-100 text-purple-700" },
+                    ].map((stat) => (
+                      <div key={stat.label} className="bg-gray-50 rounded-xl p-3">
+                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mb-1", stat.color)}>
+                          <stat.icon className="w-4 h-4" />
+                        </div>
+                        <p className="text-lg font-bold text-gray-900">{stat.value}</p>
+                        <p className="text-xs text-gray-500">{stat.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Colaboradores section */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Users className="w-5 h-5 text-blue-800" />
+                    <h3 className="text-gray-800 font-semibold">Colaboradores del Área</h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {selectedDetail.colaboradores?.map((col: any) => (
+                      <div key={col.usuario_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl group">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-xs font-bold">
+                              {col.nombres?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-gray-900 text-sm font-semibold truncate">{col.nombres}</p>
+                            <p className="text-gray-500 text-xs">@{col.username}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRemoverColaborador(col.usuario_id)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
+                          title="Remover"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    {(!selectedDetail.colaboradores || selectedDetail.colaboradores.length === 0) && (
+                      <p className="text-gray-400 text-sm col-span-2">No hay colaboradores asignados a esta área</p>
+                    )}
+                  </div>
+
+                  {/* Add collaborator */}
+                  {disponibles.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2 items-end">
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-500 block mb-1 font-semibold">Agregar colaborador</label>
+                        <select
+                          value={newColabUserId}
+                          onChange={(e) => setNewColabUserId(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none focus:border-blue-500 bg-gray-50"
+                        >
+                          <option value="">Seleccionar...</option>
+                          {disponibles.map((u: any) => (
+                            <option key={u.id} value={u.id}>
+                              {u.nombres} — {u.email}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <button
+                        onClick={handleAsignarColaborador}
+                        disabled={!newColabUserId || asignarColaborador.isPending}
+                        className="bg-blue-900 text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-800 transition disabled:opacity-50 font-semibold"
+                      >
+                        Asignar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
+                <p className="text-gray-400">Error al cargar el detalle del área</p>
+              </div>
+            )
+          ) : (
+            <div className="bg-white rounded-2xl p-12 shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center h-full min-h-64">
+              <MapPin className="w-12 h-12 text-gray-200 mb-3" />
+              <p className="text-gray-400 text-sm">Seleccioná un área para ver su detalle</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Create/Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h3 className="text-gray-900 font-bold">
+                {editingArea ? "Editar Área" : "Nueva Área"}
+              </h3>
+              <button onClick={resetForm} className="p-2 rounded-lg hover:bg-gray-100">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="px-6 py-4 space-y-4">
+                <div>
+                  <label className="block text-xs text-gray-600 font-semibold mb-1">Nombre del Área *</label>
+                  <input
+                    type="text"
+                    placeholder="Ej: Mantenimiento Industrial"
+                    value={form.nombre}
+                    onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-gray-50"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 font-semibold mb-1">
+                    Encargado <span className="text-gray-400 font-normal">(opcional)</span>
+                  </label>
+                  <select
+                    value={form.encargado_id}
+                    onChange={(e) => setForm((p) => ({ ...p, encargado_id: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-gray-50"
+                  >
+                    <option value="">Sin encargado</option>
+                    {usuarios
+                      ?.filter((u: any) => u.rol === "admin" || u.rol === "encargado")
+                      .map((u: any) => (
+                        <option key={u.id} value={u.id}>
+                          {u.nombres} ({u.rol})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-3 px-6 py-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="flex-1 border border-gray-200 text-gray-700 rounded-xl py-2.5 text-sm hover:bg-gray-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={crearArea.isPending || editarArea.isPending}
+                  className="flex-1 bg-blue-900 text-white rounded-xl py-2.5 text-sm hover:bg-blue-800 transition disabled:opacity-50 font-semibold"
+                >
+                  {editarArea.isPending || crearArea.isPending ? "Guardando..." : editingArea ? "Actualizar" : "Crear Área"}
+                </button>
+              </div>
+            </form>
           </div>
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700"
-            >
-              {editing ? "Actualizar" : "Guardar"}
-            </button>
-            <button
-              type="button"
-              onClick={resetForm}
-              className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm hover:bg-slate-300"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
+        </div>
       )}
 
-      {/* Tabla de áreas */}
-      <div className="bg-white rounded-xl border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-slate-600">
-            <tr>
-              <th className="text-left p-3 font-medium">Nombre</th>
-              <th className="text-left p-3 font-medium">Encargado</th>
-              <th className="text-left p-3 font-medium">Colaboradores</th>
-              <th className="text-left p-3 font-medium">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {areas?.map((area: any) => {
-              return (
-                <tr key={area.id} className="hover:bg-slate-50">
-                  <td className="p-3 font-medium">{area.nombre}</td>
-                  <td className="p-3">
-                    {area.encargado_nombres ? (
-                      <div className="flex flex-col">
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full inline-block w-fit">
-                          {area.encargado_nombres}
-                        </span>
-                        {area.encargado_email && (
-                          <span className="text-xs text-slate-400 mt-0.5">{area.encargado_email}</span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-slate-400">—</span>
-                    )}
-                  </td>
-                  <td className="p-3 text-xs text-slate-600">
-                    <span className="font-medium">{area.colaborador_count ?? 0}</span> colaboradores
-                    <button
-                      onClick={() =>
-                        setExpandedArea(
-                          expandedArea === area.id ? null : area.id
-                        )
-                      }
-                      className="ml-2 text-blue-600 hover:underline"
-                    >
-                      {expandedArea === area.id
-                        ? "Ocultar"
-                        : "Gestionar"}
-                    </button>
-                  </td>
-                  <td className="p-3 flex gap-2">
-                    <button
-                      onClick={() => handleEdit(area)}
-                      className="text-xs text-blue-600 hover:underline"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(area)}
-                      className="text-xs text-red-600 hover:underline"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {(!areas || areas.length === 0) && (
-              <tr>
-                <td
-                  colSpan={4}
-                  className="p-6 text-center text-slate-400"
-                >
-                  No hay áreas registradas
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Panel de colaboradores expandido */}
-      {expandedArea && <ColaboradoresPanel areaId={expandedArea} />}
-    </div>
-  );
-}
-
-function ColaboradoresPanel({ areaId }: { areaId: number }) {
-  const { data: usuarios } = useUsuarios();
-  const asignarColaborador = useAsignarColaborador();
-  const removerColaborador = useRemoverColaborador();
-  const { data: areas, isLoading } = useAreas();
-  const [selectedUserId, setSelectedUserId] = useState("");
-
-  // Find the expanded area with its collaborators
-  const area = areas?.find((a: any) => a.id === areaId);
-  const [colaboradores, setColaboradores] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (area && (area as any).colaboradores) {
-      setColaboradores((area as any).colaboradores);
-    } else {
-      // Fetch area detail with collaborators
-      import("@/api/client.js").then(({ areasApi }) => {
-        areasApi.obtener(areaId).then((r) => {
-          setColaboradores(r.data.data.colaboradores || []);
-        });
-      });
-    }
-  }, [area, areaId]);
-
-  const handleAsignar = async () => {
-    if (!selectedUserId) return;
-    await asignarColaborador.mutateAsync({
-      areaId,
-      usuarioId: parseInt(selectedUserId),
-    });
-    // Refresh
-    const { areasApi } = await import("@/api/client.js");
-    const r = await areasApi.obtener(areaId);
-    setColaboradores(r.data.data.colaboradores || []);
-    setSelectedUserId("");
-  };
-
-  const handleRemover = async (usuarioId: number) => {
-    await removerColaborador.mutateAsync({ areaId, usuarioId });
-    // Refresh
-    const { areasApi } = await import("@/api/client.js");
-    const r = await areasApi.obtener(areaId);
-    setColaboradores(r.data.data.colaboradores || []);
-  };
-
-  if (isLoading) return null;
-
-  // Filter users that can be collaborators (colaborador role, not already assigned)
-  const disponibles =
-    usuarios?.filter(
-      (u: any) =>
-        u.rol === "colaborador" &&
-        !colaboradores?.some((c: any) => c.usuario_id === u.id)
-    ) || [];
-
-  return (
-    <div className="bg-white p-4 rounded-xl border space-y-3">
-      <h3 className="font-semibold text-slate-700">
-        Colaboradores del Área
-      </h3>
-
-      {/* Lista de colaboradores actuales */}
-      <div className="space-y-1">
-        {colaboradores?.length === 0 && (
-          <p className="text-sm text-slate-400">
-            No hay colaboradores asignados
-          </p>
-        )}
-        {colaboradores?.map((col: any) => (
-          <div
-            key={col.usuario_id}
-            className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-lg"
-          >
-            <span className="text-sm">
-              {col.nombres}{" "}
-              <span className="text-xs text-slate-400">
-                (@{col.username})
-              </span>
-            </span>
-            <button
-              onClick={() => handleRemover(col.usuario_id)}
-              className="text-xs text-red-600 hover:underline"
-            >
-              Remover
-            </button>
+      {/* Delete Confirmation */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+            <h3 className="text-gray-900 font-bold">Eliminar Área</h3>
+            <p className="text-sm text-gray-600">
+              ¿Estás seguro de eliminar el área <strong>"{deleteConfirm.nombre}"</strong>? Esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 border border-gray-200 text-gray-700 rounded-xl py-2.5 text-sm hover:bg-gray-50 transition"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={eliminarArea.isPending}
+                className="flex-1 bg-red-600 text-white rounded-xl py-2.5 text-sm hover:bg-red-700 transition disabled:opacity-50 font-semibold"
+              >
+                {eliminarArea.isPending ? "Eliminando..." : "Eliminar"}
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
-
-      {/* Asignar nuevo colaborador */}
-      {disponibles.length > 0 && (
-        <div className="flex gap-2 items-end">
-          <div className="flex-1">
-            <label className="text-xs text-slate-500 block mb-1">
-              Agregar colaborador
-            </label>
-            <select
-              id="colaborador-select"
-              value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg text-sm"
-            >
-              <option value="">Seleccionar...</option>
-              {disponibles.map((u: any) => (
-                <option key={u.id} value={u.id}>
-                  {u.nombres} — {u.email}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            onClick={handleAsignar}
-            disabled={!selectedUserId}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
-          >
-            Asignar
-          </button>
         </div>
       )}
     </div>

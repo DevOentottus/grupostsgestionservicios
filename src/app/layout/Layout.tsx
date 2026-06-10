@@ -18,6 +18,7 @@ import {
   Megaphone,
   LogOut,
   Tv,
+  Monitor,
   Clock,
   HardHat,
   Menu,
@@ -44,6 +45,7 @@ const nav: NavItem[] = [
   { to: "/reportes", label: "Reportes", icon: <BarChart3 className="w-4 h-4" /> },
   { to: "/auditoria", label: "Auditoría", icon: <ScrollText className="w-4 h-4" />, roles: ["admin"] },
   { to: "/anuncios", label: "Anuncios", icon: <Megaphone className="w-4 h-4" />, roles: ["admin"] },
+  { to: "/comunicaciones", label: "Comunicaciones", icon: <MessageSquare className="w-4 h-4" /> },
 ];
 
 const managerNav: NavItem[] = [
@@ -56,6 +58,7 @@ const displayLinks: { to: string; label: string; icon: React.ReactNode }[] = [
   { to: "/display/tv", label: "TV General", icon: <Tv className="w-3.5 h-3.5" /> },
   { to: "/display/waiting-room", label: "Sala Espera", icon: <Clock className="w-3.5 h-3.5" /> },
   { to: "/display/work-room", label: "Sala Trabajo", icon: <HardHat className="w-3.5 h-3.5" /> },
+  { to: "/monitor", label: "Monitor", icon: <Monitor className="w-3.5 h-3.5" /> },
 ];
 
 const mockNotifications = [
@@ -93,6 +96,7 @@ function getPageTitle(pathname: string): string {
     reportes: "Reportes",
     auditoria: "Auditoría",
     anuncios: "Anuncios",
+    comunicaciones: "Comunicaciones",
     manager: "Gestión",
     display: "Pantallas",
   };
@@ -172,8 +176,8 @@ export default function Layout() {
               <Wrench className="w-5 h-5 text-blue-900" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-base font-bold leading-tight">TechService</h1>
-              <p className="text-xs text-blue-200">Sistema de Gestión</p>
+              <h1 className="text-base font-bold leading-tight">ServicioLocal</h1>
+               <p className="text-xs text-blue-200">STS</p>
             </div>
           </div>
           {/* User info */}
