@@ -43,9 +43,7 @@ const emptyForm: UsuarioForm = {
 
 export function UsuariosPage() {
   const { user: currentUser } = useAuth();
-  console.log("[UsuariosPage] render, user:", currentUser?.username, "rol:", currentUser?.rol);
-  const { data: usuarios, isLoading, isError, error, fetchStatus } = useUsuarios();
-  console.log("[UsuariosPage] useUsuarios state:", { isLoading, isError, fetchStatus, dataLength: usuarios?.length });
+  const { data: usuarios, isLoading, isError, error } = useUsuarios();
   const { data: areas } = useAreas();
   const crearUsuario = useCrearUsuario();
   const editarUsuario = useEditarUsuario();

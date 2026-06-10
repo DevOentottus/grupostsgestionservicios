@@ -6,16 +6,9 @@ import type { Usuario } from "@shared/index.js";
 export function useUsuarios() {
   return useQuery({
     queryKey: ["usuarios"],
-    queryFn: async ({ signal }) => {
-      console.log("[useUsuarios] queryFn EJECUTÁNDOSE");
-      try {
-        const r = await usuariosApi.listar();
-        console.log("[useUsuarios] Respuesta:", r);
-        return r.data.data as Usuario[];
-      } catch (err) {
-        console.error("[useUsuarios] Error en queryFn:", err);
-        throw err;
-      }
+    queryFn: async () => {
+      const r = await usuariosApi.listar();
+      return r.data.data as Usuario[];
     },
   });
 }
