@@ -8,3 +8,5 @@ dist
 api/.vercel
 api/dist
 backend/dist
+
+.vercel
