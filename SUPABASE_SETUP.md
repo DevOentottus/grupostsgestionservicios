@@ -35,7 +35,7 @@
 El archivo `backend/.env` contiene la configuración de conexión:
 
 ```env
-SUPABASE_URL=https://ernwvzifnfjpkpazfumb.supabase.co
+SUPABASE_URL=https://soivnjbuhxowucgcprxc.supabase.co
 SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 JWT_SECRET=dev-secret-servicio-local-sts-2026
 JWT_EXPIRES_IN=2h
