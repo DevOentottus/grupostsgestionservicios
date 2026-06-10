@@ -64,7 +64,7 @@ async function seed() {
       dni: null,
       telefono: null,
       correo: "admin@serviciolocalsts.com",
-      rol: "Administrador",
+      rol: "admin",
     },
     {
       username: "sistema",
@@ -75,7 +75,7 @@ async function seed() {
       dni: null,
       telefono: null,
       correo: "sistema@serviciolocalsts.com",
-      rol: "Sistema",
+      rol: "sistema",
     },
     {
       username: "carlos.garcia",
@@ -86,7 +86,7 @@ async function seed() {
       dni: "12345678",
       telefono: "987654321",
       correo: "carlos@serviciolocalsts.com",
-      rol: "Encargado",
+      rol: "encargado",
     },
     {
       username: "maria.lopez",
@@ -97,7 +97,7 @@ async function seed() {
       dni: "23456789",
       telefono: "987654322",
       correo: "maria@serviciolocalsts.com",
-      rol: "Encargado",
+      rol: "encargado",
     },
     {
       username: "jose.ramirez",
@@ -108,7 +108,7 @@ async function seed() {
       dni: "34567890",
       telefono: "987654323",
       correo: "jose@serviciolocalsts.com",
-      rol: "Colaborador",
+      rol: "colaborador",
     },
     {
       username: "ana.martinez",
@@ -119,7 +119,7 @@ async function seed() {
       dni: "45678901",
       telefono: "987654324",
       correo: "ana@serviciolocalsts.com",
-      rol: "Colaborador",
+      rol: "colaborador",
     },
     {
       username: "luis.fernandez",
@@ -130,7 +130,7 @@ async function seed() {
       dni: "56789012",
       telefono: "987654325",
       correo: "luis@serviciolocalsts.com",
-      rol: "Colaborador",
+      rol: "colaborador",
     },
     {
       username: "demo",
@@ -141,7 +141,7 @@ async function seed() {
       dni: "67890123",
       telefono: "987654326",
       correo: "demo@serviciolocalsts.com",
-      rol: "Colaborador",
+      rol: "colaborador",
     },
     {
       username: "roberto.quispe",
@@ -152,7 +152,7 @@ async function seed() {
       dni: "78901234",
       telefono: "987654327",
       correo: "roberto@serviciolocalsts.com",
-      rol: "Colaborador",
+      rol: "colaborador",
     },
   ];
 
