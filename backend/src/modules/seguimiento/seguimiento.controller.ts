@@ -85,7 +85,7 @@ export async function seguimientoController(app: FastifyInstance) {
     const { codigo } = request.params as { codigo: string };
     const { data: servicios } = await supabase
       .from("servicios")
-      .select("*")
+      .select(`*, clientes!servicios_cliente_id_fkey(cliente_nombres, cliente_correo)`)
       .eq("servicio_codigo", codigo)
       .limit(1);
 
@@ -127,13 +127,28 @@ export async function seguimientoController(app: FastifyInstance) {
       areaNombre = areas?.[0]?.area_nombre || null;
     }
 
-    const tareas = (tareasList || []).map((t: any) => ({
-      id: t.tarea_id,
-      titulo: t.tarea_titulo,
-      orden: t.tarea_orden,
-      estado: t.tarea_estado,
-      completada: t.tarea_estado === "completado",
-    }));
+    // Cliente
+    const clienteData = (servicio as any).clientes || {};
+    const clienteNombre = clienteData.cliente_nombres || null;
+    const clienteEmail = clienteData.cliente_correo || null;
+
+    const tareas = (tareasList || []).map((t: any) => {
+      let completadaAt: string | null = null;
+      if (t.tarea_fecha_completado) {
+        const datePart = t.tarea_fecha_completado;
+        const timePart = t.tarea_hora_completado || "00:00:00";
+        completadaAt = `${datePart}T${timePart}`;
+      }
+      return {
+        id: t.tarea_id,
+        titulo: t.tarea_titulo,
+        orden: t.tarea_orden,
+        estado: t.tarea_estado,
+        completada: t.tarea_estado === "completado",
+        completada_at: completadaAt,
+        tiempo_estimado: t.tarea_tiempo_real || null,
+      };
+    });
 
     return {
       data: {
@@ -141,8 +156,14 @@ export async function seguimientoController(app: FastifyInstance) {
           id: servicio.servicio_id,
           codigo: servicio.servicio_codigo,
           titulo: servicio.servicio_nombre,
+          descripcion: servicio.servicio_descripcion,
           estado: servicio.servicio_estado,
+          prioridad: "media",
+          cliente_nombre: clienteNombre,
+          cliente_email: clienteEmail,
+          area_id: servicio.area_id,
           area_nombre: areaNombre,
+          tiempo_estimado: servicio.servicio_tiempo_estimado,
           fecha_inicio: servicio.servicio_fecha_inicio,
           created_at: servicio.servicio_fecha_creacion,
         },
@@ -158,6 +179,7 @@ export async function seguimientoController(app: FastifyInstance) {
               id: califs[0].calificacion_id,
               calificacion: califs[0].calificacion_puntaje,
               comentario: califs[0].calificacion_comentario,
+              sugerencia: califs[0].calificacion_sugerencia,
             }
           : null,
       },
