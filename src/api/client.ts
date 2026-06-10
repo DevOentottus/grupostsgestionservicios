@@ -237,6 +237,26 @@ export const reportesApi = {
     }),
 };
 
+// ── Solicitudes API ──
+export const solicitudesApi = {
+  listar: () => api.get("/solicitudes"),
+  misSolicitudes: () => api.get("/solicitudes/mis-solicitudes"),
+  crear: (data: { tipo: string; descripcion: string; prioridad?: string }) =>
+    api.post("/solicitudes", data),
+  atender: (id: number, data: { estado: string; respuesta?: string }) =>
+    api.patch(`/solicitudes/${id}/atender`, data),
+};
+
+// ── Anuncios API ──
+export const anunciosApi = {
+  listar: () => api.get("/anuncios"),
+  listarTodos: () => api.get("/anuncios/todos"),
+  crear: (data: { titulo: string; contenido: string; prioridad?: string; fecha_expiracion?: string }) =>
+    api.post("/anuncios", data),
+  editar: (id: number, data: any) => api.patch(`/anuncios/${id}`, data),
+  eliminar: (id: number) => api.delete(`/anuncios/${id}`),
+};
+
 // ── Dashboard v2 API ──
 export const dashboardApi = {
   getAll: (filters?: {

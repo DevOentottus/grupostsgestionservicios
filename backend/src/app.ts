@@ -16,6 +16,8 @@ import { auditoriaController } from "@/modules/auditoria/auditoria.controller.js
 import { displayController } from "@/modules/display/display.controller.js";
 import { reportesController } from "@/modules/reportes/reportes.controller.js";
 import { managerController } from "@/modules/manager/manager.controller.js";
+import { solicitudesController } from "@/modules/solicitudes/solicitudes.controller.js";
+import { anunciosController } from "@/modules/anuncios/anuncios.controller.js";
 
 export async function buildApp() {
   const app = Fastify({ logger: config.isDev });
@@ -45,6 +47,8 @@ export async function buildApp() {
   await app.register(displayController);
   await app.register(reportesController);
   await app.register(managerController);
+  await app.register(solicitudesController);
+  await app.register(anunciosController);
 
   return app;
 }

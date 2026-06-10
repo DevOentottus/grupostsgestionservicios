@@ -13,6 +13,8 @@ import { AreaServiciosPage } from "@/app/pages/areas/AreaServicios.js";
 import { PlantillasPage } from "@/app/pages/plantillas/Plantillas.js";
 import { AuditoriaPage } from "@/app/pages/auditoria/Auditoria.js";
 import { ReportesPage } from "@/app/pages/reportes/Reportes.js";
+import { SolicitudesInternasPage } from "@/app/pages/solicitudes/SolicitudesInternas.js";
+import { AnunciosPage } from "@/app/pages/anuncios/Anuncios.js";
 import { DisplayTVPage } from "@/app/pages/display/DisplayTV.js";
 import { DisplayWaitingRoomPage } from "@/app/pages/display/DisplayWaitingRoom.js";
 import { DisplayWorkRoomPage } from "@/app/pages/display/DisplayWorkRoom.js";
@@ -51,6 +53,8 @@ export default function App() {
           <Route path="areas/:id/servicios" element={<AreaServiciosPage />} />
           <Route path="plantillas" element={<PlantillasPage />} />
           <Route path="reportes" element={<ReportesPage />} />
+          <Route path="solicitudes" element={<SolicitudesInternasPage />} />
+          <Route path="anuncios" element={<AnunciosPage />} />
 
           {/* Admin only */}
           <Route path="usuarios" element={

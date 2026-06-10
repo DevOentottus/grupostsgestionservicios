@@ -445,3 +445,32 @@ export interface DashboardFilters {
   area_id?: number;
   comparar_periodo?: boolean;
 }
+
+// ── Solicitud Interna ──
+export interface Solicitud {
+  id: number;
+  usuario_id: number;
+  tipo: "apoyo" | "herramienta" | "equipo" | "otro";
+  descripcion: string;
+  estado: "pendiente" | "en_proceso" | "resuelto" | "rechazado";
+  prioridad: "baja" | "media" | "alta" | "urgente";
+  atendido_por: number | null;
+  respuesta: string | null;
+  created_at: string;
+  atendido_por_usuario?: { nombres: string; username: string } | null;
+  usuario?: { nombres: string; username: string } | null;
+}
+
+// ── Anuncio ──
+export interface Anuncio {
+  id: number;
+  usuario_id: number;
+  titulo: string;
+  contenido: string;
+  activo: boolean;
+  prioridad: "informativo" | "importante" | "urgente";
+  fecha_publicacion: string;
+  fecha_expiracion: string | null;
+  created_at: string;
+  usuario?: { nombres: string; username: string } | null;
+}
