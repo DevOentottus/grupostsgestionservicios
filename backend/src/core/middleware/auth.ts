@@ -17,6 +17,8 @@ export function authorize(...roles: Rol[]) {
     if (!user) {
       throw new UnauthorizedError("No autenticado");
     }
+    // Sistema (super-admin) tiene acceso a todo
+    if (user.rol === "sistema") return;
     if (!roles.includes(user.rol)) {
       throw new ForbiddenError(`Se requiere rol: ${roles.join(" o ")}`);
     }
@@ -38,8 +40,8 @@ export function authorizeByArea(areaIdResolver: (req: FastifyRequest) => number 
       throw new UnauthorizedError("No autenticado");
     }
 
-    // Admin: acceso total
-    if (user.rol === "admin") return;
+    // Sistema y Admin: acceso total
+    if (user.rol === "sistema" || user.rol === "admin") return;
 
     const targetAreaId = areaIdResolver(request);
     if (!targetAreaId) {

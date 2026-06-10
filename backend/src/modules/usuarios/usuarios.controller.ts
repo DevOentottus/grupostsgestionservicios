@@ -31,7 +31,7 @@ export async function usuariosController(app: FastifyInstance) {
   // ── GET /api/usuarios ──
   app.get(
     "/api/usuarios",
-    { preHandler: [authorize("admin", "encargado")] },
+    { preHandler: [authorize("sistema", "encargado")] },
     async () => {
       const { data: usuarios, error } = await supabase
         .from("usuarios")
@@ -63,7 +63,7 @@ export async function usuariosController(app: FastifyInstance) {
   // ── POST /api/usuarios ──
   app.post(
     "/api/usuarios",
-    { preHandler: [authorize("admin")] },
+    { preHandler: [authorize("sistema")] },
     async (request, reply) => {
       const input = crearUsuarioSchema.parse(request.body);
 
@@ -155,7 +155,7 @@ export async function usuariosController(app: FastifyInstance) {
   // ── PUT /api/usuarios/:id ──
   app.put(
     "/api/usuarios/:id",
-    { preHandler: [authorize("admin")] },
+    { preHandler: [authorize("sistema")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const input = actualizarUsuarioSchema.parse(request.body);
@@ -223,7 +223,7 @@ export async function usuariosController(app: FastifyInstance) {
   // ── PUT /api/usuarios/:id/password ──
   app.put(
     "/api/usuarios/:id/password",
-    { preHandler: [authorize("admin")] },
+    { preHandler: [authorize("sistema")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const body = request.body as { password: string };
@@ -258,7 +258,7 @@ export async function usuariosController(app: FastifyInstance) {
   // ── PATCH /api/usuarios/:id/estado ──
   app.patch(
     "/api/usuarios/:id/estado",
-    { preHandler: [authorize("admin")] },
+    { preHandler: [authorize("sistema")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
 

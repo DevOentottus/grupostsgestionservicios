@@ -52,6 +52,7 @@ const displayLinks: { to: string; label: string; icon: React.ReactNode }[] = [
 
 function RolBadge({ rol }: { rol: string }) {
   const styles: Record<string, string> = {
+    sistema: "bg-red-500/20 text-red-300",
     admin: "bg-purple-500/20 text-purple-300",
     encargado: "bg-blue-500/20 text-blue-300",
     colaborador: "bg-slate-500/20 text-slate-300",
@@ -74,6 +75,7 @@ export function Layout() {
 
   const canSee = (roles?: string[]) => {
     if (!roles) return true;
+    if (user?.rol === "sistema") return true;
     return roles.includes(user?.rol ?? "");
   };
 

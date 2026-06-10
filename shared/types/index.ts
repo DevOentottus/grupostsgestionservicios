@@ -1,5 +1,5 @@
 // ── Roles ──
-export type Rol = "admin" | "encargado" | "colaborador";
+export type Rol = "sistema" | "admin" | "encargado" | "colaborador";
 
 // ── Estado de servicio ──
 export type EstadoServicio =

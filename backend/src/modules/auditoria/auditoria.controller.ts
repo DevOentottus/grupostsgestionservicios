@@ -8,7 +8,7 @@ export async function auditoriaController(app: FastifyInstance) {
   // ── GET /api/auditoria — admin only, paginated, filterable ──
   app.get(
     "/api/auditoria",
-    { preHandler: [authorize("admin")] },
+    { preHandler: [authorize("sistema")] },
     async (request) => {
       const query = request.query as {
         page?: string;

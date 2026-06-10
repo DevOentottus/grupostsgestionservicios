@@ -67,6 +67,17 @@ async function seed() {
       rol: "Administrador",
     },
     {
+      username: "sistema",
+      hash: adminHash,
+      nombres: "Admin del Sistema",
+      apellido_paterno: "Sistema",
+      apellido_materno: null,
+      dni: null,
+      telefono: null,
+      correo: "sistema@serviciolocalsts.com",
+      rol: "Sistema",
+    },
+    {
       username: "carlos.garcia",
       hash: userHash,
       nombres: "Carlos",
