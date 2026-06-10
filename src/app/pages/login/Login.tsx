@@ -1,7 +1,6 @@
 import { useState, type FormEvent, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
-import { cn } from "@/app/lib/utils";
 import { Wrench, Eye, EyeOff, AlertCircle, User, Lock, LogIn } from "lucide-react";
 
 export function LoginPage() {
@@ -33,11 +32,6 @@ export function LoginPage() {
     }
   };
 
-  const quickLogin = (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
-  };
-
   return (
     <div className="min-h-screen flex" style={{ background: "linear-gradient(135deg, #1e3a5f 0%, #1e40af 50%, #2563eb 100%)" }}>
       {/* Left panel — hidden on mobile */}
@@ -57,19 +51,7 @@ export function LoginPage() {
             y monitoreo en tiempo real.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-4 w-full max-w-md">
-          {[
-            { label: "Servicios activos", value: "12" },
-            { label: "Técnicos en campo", value: "8" },
-            { label: "Áreas de servicio", value: "3" },
-            { label: "Completados hoy", value: "4" },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-white/10 rounded-xl p-4 backdrop-blur-sm">
-              <p className="text-yellow-400 text-2xl font-bold">{stat.value}</p>
-              <p className="text-blue-200 text-sm">{stat.label}</p>
-            </div>
-          ))}
-        </div>
+
       </div>
 
       {/* Right panel — form */}
@@ -149,27 +131,7 @@ export function LoginPage() {
             </button>
           </form>
 
-          {/* Demo credentials hint */}
-          <div className="mt-6 pt-5 border-t border-gray-100">
-            <p className="text-xs text-gray-400 font-semibold mb-3">ACCESO RÁPIDO (DEMO)</p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { label: "Administrador", u: "admin", p: "admin123", color: "bg-blue-100 text-blue-800" },
-                { label: "Encargado", u: "jlopez01", p: "pass123", color: "bg-amber-100 text-amber-800" },
-                { label: "Colaborador", u: "ptorres01", p: "pass123", color: "bg-green-100 text-green-800" },
-                { label: "Cliente", u: "cliente", p: "cliente123", color: "bg-purple-100 text-purple-800" },
-              ].map((r) => (
-                <button
-                  key={r.label}
-                  onClick={() => quickLogin(r.u, r.p)}
-                  className={cn(r.color, "rounded-lg px-3 py-2 text-xs text-left transition hover:opacity-80 font-semibold")}
-                >
-                  {r.label}
-                  <span className="block text-xs opacity-70 font-normal">{r.u}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+
         </div>
       </div>
     </div>

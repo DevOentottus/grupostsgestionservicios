@@ -32,7 +32,7 @@ interface NavItem {
   to: string;
   label: string;
   icon: React.ReactNode;
-  roles?: ("admin" | "encargado" | "colaborador")[];
+  roles?: ("sistema" | "admin" | "encargado" | "colaborador")[];
 }
 
 const nav: NavItem[] = [
@@ -41,7 +41,7 @@ const nav: NavItem[] = [
   { to: "/solicitudes", label: "Solicitudes", icon: <MessageSquare className="w-4 h-4" /> },
   { to: "/plantillas", label: "Plantillas", icon: <FileText className="w-4 h-4" /> },
   { to: "/areas", label: "Áreas", icon: <Building2 className="w-4 h-4" /> },
-  { to: "/usuarios", label: "Usuarios", icon: <Users className="w-4 h-4" />, roles: ["admin"] },
+  { to: "/usuarios", label: "Usuarios", icon: <Users className="w-4 h-4" />, roles: ["sistema"] },
   { to: "/reportes", label: "Reportes", icon: <BarChart3 className="w-4 h-4" /> },
   { to: "/auditoria", label: "Auditoría", icon: <ScrollText className="w-4 h-4" />, roles: ["admin"] },
   { to: "/anuncios", label: "Anuncios", icon: <Megaphone className="w-4 h-4" />, roles: ["admin"] },

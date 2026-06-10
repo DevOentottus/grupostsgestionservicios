@@ -119,7 +119,7 @@ export function UsuariosPage() {
     }));
   };
 
-  const isAdmin = currentUser?.rol === "admin" || currentUser?.rol === "sistema";
+  const canManage = currentUser?.rol === "sistema";
 
   return (
     <div className="space-y-5">
@@ -132,7 +132,7 @@ export function UsuariosPage() {
             {usuarios?.filter((u: Usuario) => !u.activo).length || 0} inactivos
           </p>
         </div>
-        {isAdmin && (
+        {canManage && (
           <button
             onClick={openAdd}
             className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition"
@@ -239,7 +239,7 @@ export function UsuariosPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        {isAdmin && (
+                        {canManage && (
                           <>
                             <button
                               onClick={() => openEdit(u)}
