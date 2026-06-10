@@ -43,7 +43,7 @@ const emptyForm: UsuarioForm = {
 
 export function UsuariosPage() {
   const { user: currentUser } = useAuth();
-  const { data: usuarios, isLoading } = useUsuarios();
+  const { data: usuarios, isLoading, isError, error } = useUsuarios();
   const { data: areas } = useAreas();
   const crearUsuario = useCrearUsuario();
   const editarUsuario = useEditarUsuario();
@@ -172,6 +172,19 @@ export function UsuariosPage() {
           </div>
         </div>
       </div>
+
+      {/* Error */}
+      {isError && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-red-800 text-sm font-semibold">Error al cargar usuarios</p>
+            <p className="text-red-600 text-xs mt-1">
+              {(error as any)?.response?.data?.detail || (error as any)?.message || "Error de conexión"}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
