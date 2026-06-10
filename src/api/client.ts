@@ -35,8 +35,13 @@ export interface ApiResponse<T> {
 // ── Auth API ──
 export const authApi = {
   login: (username: string, password: string) =>
-    api.post<ApiResponse<{ token: string; user: any }>>("/auth/login", { username, password }),
+    api.post<ApiResponse<{ token: string; user: any }>>("/auth/login", {
+      username,
+      password,
+    }),
   me: () => api.get("/auth/me"),
+  cambiarPassword: (current_password: string, new_password: string) =>
+    api.patch("/auth/password", { current_password, new_password }),
 };
 
 // ── Usuarios API ──
@@ -45,29 +50,84 @@ export const usuariosApi = {
   crear: (data: any) => api.post("/usuarios", data),
   editar: (id: number, data: any) => api.put(`/usuarios/${id}`, data),
   toggleEstado: (id: number) => api.patch(`/usuarios/${id}/estado`),
+  cambiarPassword: (id: number, password: string) =>
+    api.put(`/usuarios/${id}/password`, { password }),
+};
+
+// ── Áreas API ──
+export const areasApi = {
+  listar: () => api.get("/areas"),
+  obtener: (id: number) => api.get(`/areas/${id}`),
+  crear: (data: any) => api.post("/areas", data),
+  editar: (id: number, data: any) => api.put(`/areas/${id}`, data),
+  eliminar: (id: number) => api.delete(`/areas/${id}`),
+  asignarColaborador: (areaId: number, usuarioId: number) =>
+    api.post(`/areas/${areaId}/colaboradores`, { usuario_id: usuarioId }),
+  removerColaborador: (areaId: number, usuarioId: number) =>
+    api.delete(`/areas/${areaId}/colaboradores/${usuarioId}`),
+  listarServicios: (areaId: number) => api.get(`/areas/${areaId}/servicios`),
 };
 
 // ── Servicios API ──
 export const serviciosApi = {
   listar: (params?: any) => api.get("/servicios", { params }),
   obtener: (id: number) => api.get(`/servicios/${id}`),
+  obtenerServicioPublico: (codigo: string) =>
+    api.get(`/public/servicios/${codigo}`),
   crear: (data: any) => api.post("/servicios", data),
   editar: (id: number, data: any) => api.put(`/servicios/${id}`, data),
-  cambiarEstado: (id: number, estado: string) =>
-    api.patch(`/servicios/${id}/estado`, { estado }),
+  cambiarEstado: (id: number, estado: string, motivo?: string) =>
+    api.patch(`/servicios/${id}/estado`, { estado, motivo }),
+  cambiarEstadoMotivo: (id: number, estado: string, motivo: string) =>
+    api.patch(`/servicios/${id}/estado`, { estado, motivo }),
+  iniciar: (id: number) => api.post(`/servicios/${id}/iniciar`),
   // Tareas
   listarTareas: (servicioId: number) => api.get(`/servicios/${servicioId}/tareas`),
   crearTarea: (servicioId: number, data: any) =>
     api.post(`/servicios/${servicioId}/tareas`, data),
   editarTarea: (id: number, data: any) => api.put(`/tareas/${id}`, data),
   eliminarTarea: (id: number) => api.delete(`/tareas/${id}`),
+  editarTareaInline: (servicioId: number, tareaId: number, data: { titulo?: string }) =>
+    api.patch(`/servicios/${servicioId}/tareas/${tareaId}`, data),
   completarTarea: (id: number) => api.patch(`/tareas/${id}/completar`),
   reabrirTarea: (id: number) => api.patch(`/tareas/${id}/reabrir`),
   reordenarTareas: (tareas: { id: number; orden: number }[]) =>
     api.put("/tareas/reordenar", { tareas }),
 };
 
+// ── Plantillas API ──
+export const plantillasApi = {
+  listar: () => api.get("/plantillas"),
+  obtener: (id: number) => api.get(`/plantillas/${id}`),
+  crear: (data: any) => api.post("/plantillas", data),
+  editar: (id: number, data: any) => api.put(`/plantillas/${id}`, data),
+  eliminar: (id: number) => api.delete(`/plantillas/${id}`),
+  aplicar: (plantillaId: number, servicioId: number) =>
+    api.post(`/plantillas/${plantillaId}/aplicar/${servicioId}`),
+};
+
 // ── Seguimiento API ──
+// ── Comentarios API ──
+export const comentariosApi = {
+  listar: (servicioId: number) =>
+    api.get(`/servicios/${servicioId}/comentarios`),
+  crear: (servicioId: number, data: { contenido: string; tarea_id?: number }) =>
+    api.post(`/servicios/${servicioId}/comentarios`, data),
+  eliminar: (id: number) => api.delete(`/comentarios/${id}`),
+};
+
+// ── Auditoria API ──
+export const auditoriaApi = {
+  listar: (params?: {
+    page?: number;
+    limit?: number;
+    entidad?: string;
+    usuario_id?: number;
+    fecha_desde?: string;
+    fecha_hasta?: string;
+  }) => api.get("/auditoria", { params }),
+};
+
 export const seguimientoApi = {
   // Time tracking
   iniciarTiempo: (tareaId: number) => api.post(`/tareas/${tareaId}/tiempo/iniciar`),
@@ -81,4 +141,58 @@ export const seguimientoApi = {
   obtenerEncuesta: (servicioId: number) => api.get(`/servicios/${servicioId}/encuesta`),
   // Dashboard
   dashboard: (params?: any) => api.get("/dashboard", { params }),
+};
+
+// ── Display API ──
+export const displayApi = {
+  tv: () => api.get("/public/display/tv"),
+  trabajo: () => api.get("/display/trabajo"),
+  salaEspera: (codigo: string) => api.get(`/public/display/sala-espera/${codigo}`),
+};
+
+// ── Reportes API ──
+export const reportesApi = {
+  colaborador: (params?: {
+    fecha_inicio?: string;
+    fecha_fin?: string;
+    usuario_id?: number;
+  }) => api.get("/reportes/colaborador", { params }),
+  area: (params?: {
+    fecha_inicio?: string;
+    fecha_fin?: string;
+    area_id?: number;
+  }) => api.get("/reportes/area", { params }),
+  exportar: (
+    tipo: "colaborador" | "area",
+    formato: "xlsx" | "pdf",
+    params?: { fecha_inicio?: string; fecha_fin?: string; area_id?: number; usuario_id?: number }
+  ) =>
+    api.get(`/reportes/exportar/${tipo}/${formato}`, {
+      params,
+      responseType: "blob",
+    }),
+};
+
+// ── Dashboard v2 API ──
+export const dashboardApi = {
+  getAll: (filters?: {
+    fecha_inicio?: string;
+    fecha_fin?: string;
+    area_id?: number;
+    comparar_periodo?: boolean;
+  }) => api.get("/dashboard", { params: filters }),
+};
+
+// ── Manager API ──
+export const managerApi = {
+  miArea: (areaId?: number) =>
+    api.get("/manager/mi-area", {
+      params: areaId ? { area_id: areaId } : undefined,
+    }),
+  distribucion: (params?: { area_id?: number; colaborador_id?: number }) =>
+    api.get("/manager/distribucion", { params }),
+  desempeno: (
+    usuarioId: number,
+    params?: { fecha_inicio?: string; fecha_fin?: string }
+  ) => api.get(`/manager/desempeno/${usuarioId}`, { params }),
 };

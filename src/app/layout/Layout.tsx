@@ -4,7 +4,20 @@ import { useAuth } from "@/lib/auth.js";
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: "📊" },
   { to: "/servicios", label: "Servicios", icon: "📋" },
+  { to: "/plantillas", label: "Plantillas", icon: "📝" },
+  { to: "/areas", label: "Áreas", icon: "🏢" },
   { to: "/usuarios", label: "Usuarios", icon: "👥" },
+  { to: "/reportes", label: "Reportes", icon: "📈" },
+  { to: "/auditoria", label: "Auditoría", icon: "📜", adminOnly: true },
+  { to: "/manager/mi-area", label: "Mi Área", icon: "🎯", encargadoOnly: true },
+  { to: "/manager/distribucion", label: "Distribución", icon: "📋", encargadoOnly: true },
+  { to: "/manager/desempeno", label: "Desempeño", icon: "📊", encargadoOnly: true },
+];
+
+const displayLinks = [
+  { to: "/display/tv", label: "📺 TV" },
+  { to: "/display/waiting-room", label: "⏳ Sala Espera" },
+  { to: "/display/work-room", label: "🛠️ Sala Trabajo" },
 ];
 
 export function Layout() {
@@ -25,7 +38,13 @@ export function Layout() {
           <p className="text-xs text-slate-400 mt-1">{user?.nombres}</p>
         </div>
         <nav className="flex-1 p-2 space-y-1">
-          {nav.map(({ to, label, icon }) => (
+          {nav
+            .filter((item) => {
+              if (item.adminOnly) return user?.rol === "admin";
+              if (item.encargadoOnly) return user?.rol === "admin" || user?.rol === "encargado";
+              return true;
+            })
+            .map(({ to, label, icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -42,6 +61,23 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
+        {/* Display Links */}
+        <div className="px-3 py-2 border-t border-slate-800">
+          <p className="text-xs text-slate-500 uppercase tracking-wider mb-2 px-3">
+            Pantallas
+          </p>
+          {displayLinks.map(({ to, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              target="_blank"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            >
+              {label}
+            </NavLink>
+          ))}
+        </div>
+
         <div className="p-3 border-t border-slate-700">
           <button
             onClick={handleLogout}

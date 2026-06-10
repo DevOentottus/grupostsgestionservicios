@@ -2,16 +2,28 @@
 export type Rol = "admin" | "encargado" | "colaborador";
 
 // ── Estado de servicio ──
-export type EstadoServicio = "pendiente" | "en_progreso" | "completado" | "cancelado";
+export type EstadoServicio =
+  | "pendiente"
+  | "en_progreso"
+  | "completado"
+  | "cancelado"
+  | "bloqueado";
+
+// ── Prioridad ──
+export type Prioridad = "baja" | "media" | "alta" | "urgente";
 
 // ── Usuario ──
 export interface Usuario {
   id: number;
   username: string;
   nombres: string;
+  apellidos: string | null;
+  dni: string | null;
+  telefono: string | null;
   email: string;
   rol: Rol;
   activo: boolean;
+  area_id: number | null;
   created_at: string;
 }
 
@@ -22,8 +34,16 @@ export interface Servicio {
   titulo: string;
   descripcion: string | null;
   estado: EstadoServicio;
+  prioridad: Prioridad;
+  area_id: number | null;
   cliente_nombre: string;
   cliente_email: string | null;
+  datos_completos: boolean;
+  consultado_cliente: boolean;
+  tiempo_estimado: number | null;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  bloqueado_motivo: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -38,6 +58,10 @@ export interface Tarea {
   completada: boolean;
   completada_por: number | null;
   completada_at: string | null;
+  area_id: number | null;
+  tiempo_estimado: number | null;
+  asignado_a: number | null;
+  has_active_tracking?: boolean;
   created_at: string;
 }
 
@@ -78,4 +102,346 @@ export interface DashboardKPI {
   satisfaccion_visibilidad: number;
   servicios_evaluados_pct: number;
   servicios_con_comentarios_pct: number;
+}
+
+// ── Area ──
+export interface Area {
+  id: number;
+  nombre: string;
+  encargado_id: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AreaWithColaboradores extends Area {
+  colaboradores: {
+    usuario_id: number;
+    id: number;
+    nombres: string;
+    email: string;
+    username: string;
+  }[];
+}
+
+// ── Area Colaborador ──
+export interface AreaColaborador {
+  area_id: number;
+  usuario_id: number;
+}
+
+// ── Plantilla Proceso ──
+export interface PlantillaProceso {
+  id: number;
+  nombre: string;
+  descripcion: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Plantilla Tarea ──
+export interface PlantillaTarea {
+  id: number;
+  plantilla_id: number;
+  titulo: string;
+  descripcion: string | null;
+  orden: number;
+  asignado_a: number | null;
+  created_at: string;
+}
+
+// ── Comentario ──
+export interface Comentario {
+  id: number;
+  servicio_id: number;
+  tarea_id: number | null;
+  usuario_id: number;
+  contenido: string;
+  created_at: string;
+}
+
+export interface ComentarioDisplay extends Comentario {
+  usuario: {
+    id: number;
+    nombres: string;
+    username: string;
+  };
+  tarea?: {
+    id: number;
+    titulo: string;
+  } | null;
+}
+
+// ── Auditoria ──
+export interface Auditoria {
+  id: number;
+  usuario_id: number | null;
+  accion: string;
+  entidad: string;
+  entidad_id: number | null;
+  detalle: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface AuditoriaDisplay extends Auditoria {
+  usuario?: {
+    id: number;
+    nombres: string;
+    username: string;
+  } | null;
+}
+
+// ── Public Service Detail Response ──
+export interface PublicServicioResponse {
+  servicio: Servicio & { area_nombre: string | null };
+  tareas: Tarea[];
+  progreso: {
+    total: number;
+    completadas: number;
+    porcentaje: number;
+  };
+  tiempo_transcurrido_minutos: number;
+  encuesta: Encuesta | null;
+}
+
+// ── Display Data ──
+export interface DisplayData {
+  id: number;
+  codigo: string;
+  titulo: string;
+  descripcion: string | null;
+  estado: string;
+  prioridad: string;
+  cliente_nombre: string;
+  area_id: number | null;
+  fecha_inicio: string | null;
+  tiempo_estimado: number | null;
+  progreso: number;
+  tareas_total: number;
+  tareas_completadas: number;
+  tiempo_transcurrido_min: number;
+  tecnicos: { id: number; nombres: string }[];
+  created_at: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+// ── Delayed Service ──
+export interface DelayedService {
+  id: number;
+  codigo: string;
+  cliente: string;
+  descripcion: string;
+  estado: string;
+  tiempo_estimado: number | null;
+  tiempo_transcurrido_minutos: number;
+  prioridad: string;
+}
+
+// ── Stale Service ──
+export interface StaleService {
+  id: number;
+  codigo: string;
+  cliente: string;
+  descripcion: string;
+  ultima_actualizacion: string | null;
+  horas_sin_actividad: number;
+}
+
+// ── Dashboard V2 Response ──
+export interface DashboardV2Response {
+  kpi: DashboardKPI;
+  servicios_recientes?: any[];
+  total_servicios?: number;
+  completados?: number;
+  alertas: {
+    blocked_count: number;
+    delayed_services: DelayedService[];
+    stale_services: StaleService[];
+  };
+  indicadores: {
+    productividad: {
+      servicios_completados: number;
+      tareas_completadas: number;
+      promedio_por_colaborador: number;
+      periodo: { desde: string; hasta: string };
+    };
+    eficiencia: {
+      tiempo_promedio_min: number;
+      porcentaje_a_tiempo: number;
+      cantidad_retrasos: number;
+    };
+    satisfaccion: {
+      promedio_calificacion: number;
+      porcentaje_evaluados: number;
+    };
+  };
+  graficos: {
+    estado_servicios: {
+      pendiente: number;
+      en_progreso: number;
+      completado: number;
+      bloqueado: number;
+    };
+    servicios_por_area: {
+      area_nombre: string;
+      total: number;
+      completados: number;
+      tiempo_promedio_min: number;
+    }[];
+    satisfaccion_por_area: {
+      area_nombre: string;
+      promedio: number;
+      cantidad: number;
+    }[];
+  };
+  rankings: {
+    colaboradores_destacados: {
+      usuario_id: number;
+      nombres: string;
+      servicios_completados: number;
+      tareas_completadas: number;
+      eficiencia: number;
+    }[];
+  };
+  servicios_activos: {
+    id: number;
+    codigo: string;
+    estado: string;
+    descripcion: string;
+    cliente: string;
+    tiempo_en_curso: number;
+    ultima_actualizacion: string | null;
+    progreso_porcentaje: number;
+    prioridad: string;
+  }[];
+  period_comparison?: {
+    actual: {
+      servicios_completados: number;
+      tareas_completadas: number;
+      tiempo_promedio: number;
+    };
+    anterior: {
+      servicios_completados: number;
+      tareas_completadas: number;
+      tiempo_promedio: number;
+    };
+    variacion: {
+      servicios: number;
+      tareas: number;
+      tiempo: number;
+    };
+  };
+}
+
+// ── Manager ──
+export interface ManagerMiAreaResponse {
+  area: Area;
+  servicios: Servicio[];
+  estado_counts: {
+    total: number;
+    pendiente: number;
+    en_progreso: number;
+    completado: number;
+    bloqueado: number;
+    cancelado: number;
+  };
+  colaboradores: {
+    usuario_id: number;
+    id: number;
+    nombres: string;
+    email: string;
+    username: string;
+    rol: string;
+    tareas_activas: number;
+  }[];
+}
+
+export interface ManagerDistribucionItem {
+  id: number;
+  titulo: string;
+  servicio_id: number;
+  servicio_titulo: string;
+  servicio_codigo: string;
+  asignado_a: number | null;
+  asignado_nombre: string | null;
+  tiempo_estimado: number | null;
+  orden: number;
+  created_at: string;
+}
+
+export interface ManagerDesempenoResponse {
+  colaborador: {
+    id: number;
+    nombres: string;
+    email: string;
+    username: string;
+    rol: string;
+  };
+  periodo: {
+    desde: string;
+    hasta: string;
+  };
+  tareas_completadas: {
+    id: number;
+    titulo: string;
+    servicio_id: number;
+    servicio_titulo: string;
+    servicio_codigo: string;
+    tiempo_estimado: number | null;
+    completada_at: string;
+  }[];
+  total_tareas: number;
+  tiempo_promedio_por_tarea: number;
+  tiempo_total_minutos: number;
+  eficiencia: number;
+  servicios_completados: number;
+}
+
+export interface AreaServiciosResponse {
+  area: Area;
+  servicios: Servicio[];
+  estado_counts: {
+    total: number;
+    pendiente: number;
+    en_progreso: number;
+    completado: number;
+    bloqueado: number;
+    cancelado: number;
+  };
+  tiempo_promedio: number;
+}
+
+// ── Waiting Room Response ──
+export interface SalaEsperaResponse {
+  codigo: string;
+  estado: string;
+  progreso_porcentaje: number;
+  tiempo_transcurrido: number;
+  tiempo_estimado: number | null;
+  posicion_fila: number;
+  eta_estimado: number | null;
+}
+
+// ── Area Listing (with encargado details) ──
+export interface AreaWithEncargado extends Area {
+  encargado_nombres: string | null;
+  encargado_email: string | null;
+  encargado_username: string | null;
+  colaborador_count: number;
+}
+
+// ── Dashboard Filters ──
+export interface DashboardFilters {
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  area_id?: number;
+  comparar_periodo?: boolean;
 }

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { serviciosApi } from "@/api/client.js";
+import { serviciosApi, seguimientoApi } from "@/api/client.js";
 import { toast } from "sonner";
 import type { Servicio, Tarea } from "@shared/index.js";
 
@@ -51,8 +51,8 @@ export function useEditarServicio() {
 export function useCambiarEstado() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, estado }: { id: number; estado: string }) =>
-      serviciosApi.cambiarEstado(id, estado),
+    mutationFn: ({ id, estado, motivo }: { id: number; estado: string; motivo?: string }) =>
+      serviciosApi.cambiarEstado(id, estado, motivo),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["servicios"] });
       toast.success("Estado actualizado");
@@ -116,5 +116,63 @@ export function useEliminarTarea() {
       qc.invalidateQueries({ queryKey: ["tareas"] });
       toast.success("Tarea eliminada");
     },
+  });
+}
+
+export function useEditarTareaInline() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ servicioId, tareaId, data }: { servicioId: number; tareaId: number; data: { titulo?: string } }) =>
+      serviciosApi.editarTareaInline(servicioId, tareaId, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tareas"] });
+      toast.success("Tarea actualizada");
+    },
+    onError: (err: any) => toast.error(err.response?.data?.detail || "Error al actualizar"),
+  });
+}
+
+export function useIniciarServicio() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => serviciosApi.iniciar(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["servicios"] });
+      toast.success("Servicio iniciado");
+    },
+    onError: (err: any) => toast.error(err.response?.data?.detail || "Error al iniciar servicio"),
+  });
+}
+
+export function useReordenarTareas() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (tareas: { id: number; orden: number }[]) =>
+      serviciosApi.reordenarTareas(tareas),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tareas"] });
+    },
+    onError: (err: any) => toast.error(err.response?.data?.detail || "Error al reordenar"),
+  });
+}
+
+export function useTodosTiempos(servicioId: number) {
+  return useQuery({
+    queryKey: ["tiempos-servicio", servicioId],
+    queryFn: async () => {
+      // Get all tareas first, then their time tracking
+      const r = await serviciosApi.listarTareas(servicioId);
+      const tareasList = r.data.data as Tarea[];
+      const tiemposPromises = tareasList.map(async (tarea) => {
+        try {
+          const tr = await seguimientoApi.listarTiempo(tarea.id);
+          return { tarea_id: tarea.id, registros: tr.data.data || [] };
+        } catch {
+          return { tarea_id: tarea.id, registros: [] };
+        }
+      });
+      return Promise.all(tiemposPromises);
+    },
+    enabled: !!servicioId,
   });
 }

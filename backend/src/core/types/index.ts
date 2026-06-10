@@ -7,6 +7,7 @@ declare module "fastify" {
     user?: {
       user_id: number;
       rol: import("../../../../shared/types/index.js").Rol;
+      area_id: number | null;
     };
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }

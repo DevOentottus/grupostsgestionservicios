@@ -5,3 +5,6 @@ dist
 .env.local
 .env.*.local
 *.log
+api/.vercel
+api/dist
+backend/dist

@@ -1,0 +1,53 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Vite 6 + React 18 + TypeScript 5 + Tailwind 4 (frontend),
+    Fastify 5 + TypeScript + Drizzle ORM 0.45 + PostgreSQL (backend)
+  Architecture: Monorepo-ish (root frontend, backend/ API, shared types)
+    Backend: Module-based controllers (auth, usuarios, servicios, seguimiento)
+    Frontend: Page-based routing, React Query hooks, Axios API client
+  Testing: No test runner detected
+  Style: TypeScript strict mode, no linter/formatter configured
+
+strict_tdd: false
+
+testing:
+  strict_tdd_mode: false
+  detected_at: "2026-06-09"
+  test_runner:
+    command: N/A
+    framework: N/A
+  layers:
+    unit: { available: false, tool: N/A }
+    integration: { available: false, tool: N/A }
+    e2e: { available: false, tool: N/A }
+  coverage:
+    available: false
+    command: N/A
+  quality:
+    linter: { available: false, command: N/A }
+    type_checker: { available: true, command: "tsc --noEmit" }
+    formatter: { available: false, command: N/A }
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Identify affected modules/packages
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group tasks by phase (infrastructure, implementation, testing)
+    - Use hierarchical numbering (1.1, 1.2, etc.)
+    - Keep tasks small enough to complete in one session
+  apply:
+    - Follow existing code patterns and conventions
+    - Load relevant coding skills for the project stack
+  verify:
+    - Run tests if test infrastructure exists
+    - Compare implementation against every spec scenario
+  archive:
+    - Warn before merging destructive deltas (large removals)
