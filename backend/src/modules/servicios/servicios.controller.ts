@@ -27,10 +27,25 @@ export async function serviciosController(app: FastifyInstance) {
   // ── GET /api/servicios ──
   app.get("/api/servicios", { preHandler: [requireRoles()] }, async (request) => {
     const query = request.query as { estado?: string };
+    const user = request.user as { user_id: number; rol: string; area_id: number | null };
 
     let dbQuery = supabase
       .from("servicios")
       .select("*");
+
+    // Colaborador: solo ve servicios donde está asignado
+    if (user.rol === "colaborador") {
+      const { data: asignaciones } = await supabase
+        .from("serviciocolaboradores")
+        .select("servicio_id")
+        .eq("colaborador_id", user.user_id);
+
+      const ids = (asignaciones || []).map((a: any) => a.servicio_id);
+      if (ids.length === 0) {
+        return { data: [] };
+      }
+      dbQuery = dbQuery.in("servicio_id", ids);
+    }
 
     if (query.estado) {
       dbQuery = dbQuery.eq("servicio_estado", query.estado);
