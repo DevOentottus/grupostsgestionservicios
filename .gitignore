@@ -8,5 +8,6 @@ dist
 api/.vercel
 api/dist
 backend/dist
+backend/drizzle
 
 .vercel

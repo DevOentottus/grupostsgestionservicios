@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/app.ts",
+    "dev": "tsx watch src/main.ts",
     "build": "tsc",
-    "build:serverless": "esbuild src/serverless.ts --bundle --platform=node --format=esm --outfile=dist/serverless.js --alias:@=./src",
+    "build:serverless": "esbuild src/serverless.ts --bundle --platform=node --format=cjs --outfile=dist/serverless.cjs --alias:@=./src",
     "start": "node dist/src/app.js",
     "seed": "tsx src/seeds/run.ts",
     "typecheck": "tsc --noEmit"
