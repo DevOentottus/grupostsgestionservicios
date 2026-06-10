@@ -22,7 +22,7 @@ import { ServicioPublicoPage } from "@/app/pages/servicios/ServicioPublico.js";
 import { ManagerAreaPage } from "@/app/pages/manager/ManagerArea.js";
 import { ManagerDistribucionPage } from "@/app/pages/manager/ManagerDistribucion.js";
 import { ManagerDesempenoPage } from "@/app/pages/manager/ManagerDesempeno.js";
-import { Layout } from "@/app/layout/Layout.js";
+import Layout from "@/app/layout/Layout.js";
 
 export default function App() {
   return (

@@ -1,6 +1,6 @@
 # Skill Registry — ServicioLocalSTS
 
-Last updated: 2026-06-09
+Last updated: 2026-06-10
 
 ## Project Skills
 
@@ -37,3 +37,13 @@ No project-level convention files found.
 
 - SDD skills are system-level (sdd-*), loaded by the orchestrator as needed.
 - Skill triggers are from SKILL.md frontmatter or inferred from skill purpose.
+
+## Project Context (from SDD Init)
+
+- **SDD Persistence**: engram (no openspec/ directory)
+- **Strict TDD Mode**: disabled (no test runner detected)
+- **Stack**: Vite + React 18 SPA (frontend) + Fastify + TypeScript (backend) + Supabase PostgreSQL
+- **Deployment**: Vercel (Vite framework)
+- **Conventions**: Conventional commits in recent history, TypeScript strict mode, ES Modules
+- **Testing**: No test infrastructure installed; typecheck-only (tsc --noEmit)
+- **Quality**: No ESLint, Prettier, or formatter configured
