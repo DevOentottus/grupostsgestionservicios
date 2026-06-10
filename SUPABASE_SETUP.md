@@ -91,7 +91,7 @@ CORS_ORIGIN=http://localhost:5173
 
 ## 3. Database Schema
 
-> **⚠️ Nota importante sobre Drizzle ORM**: El proyecto tiene un schema Drizzle en `backend/src/db/schema.ts` que **NO refleja los nombres reales de columnas en Supabase**. El backend migró a queries directas con `supabase-js` (ver `connection.ts`). Las columnas reales en Supabase usan **snake_case con prefijo de tabla** (ej. `usuario_id`, `servicio_nombre`) — **NO** los nombres simples del schema Drizzle (ej. `id`, `titulo`). Usá los nombres documentados abajo.
+> **ℹ️ Nota sobre nombres de columnas**: Las columnas reales en Supabase usan **snake_case con prefijo de tabla** (ej. `usuario_id`, `servicio_nombre`). El backend consulta directamente con `supabase-js` (ver `connection.ts`). Drizzle ORM fue eliminado del proyecto.
 
 Ejecutá este script SQL completo en el **SQL Editor** de Supabase (o manualmente tabla por tabla).
 
