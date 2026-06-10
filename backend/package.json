@@ -4,16 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/app.ts",
-    "db:start": "node -e \"const EP = require('embedded-postgres').default; const p = new EP({databaseDir: require('path').join(process.env.USERPROFILE,'.local','pg-sls','data'),binariesDir: require('path').join(process.env.USERPROFILE,'.local','pg-sls','bin'),port:5432,database:'servicio_local_sts',user:'postgres',password:'postgres',persistent:true,logging:true}); (async()=>{await p.initialise(); await p.start(); console.log('PostgreSQL ready'); await new Promise(()=>{}); })();\"",
-    "db:stop": "taskkill /F /IM postgres.exe 2>nul || echo PostgreSQL not running",
     "build": "tsc",
     "build:serverless": "esbuild src/serverless.ts --bundle --platform=node --format=esm --outfile=dist/serverless.js --alias:@=./src",
     "start": "node dist/src/app.js",
-    "migrate": "drizzle-kit push",
-    "migrate:generate": "drizzle-kit generate",
-    "studio": "drizzle-kit studio",
-    "db:create": "node scripts/create-db.mjs",
-    "db:setup": "npm run db:create && npx drizzle-kit push && npm run seed",
     "seed": "tsx src/seeds/run.ts",
     "typecheck": "tsc --noEmit"
   },
@@ -24,7 +17,6 @@
     "@supabase/supabase-js": "^2.108.1",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
-    "drizzle-orm": "^0.45.2",
     "exceljs": "^4.4.0",
     "fastify": "^5.8.5",
     "pdfkit": "^0.19.0",
@@ -36,8 +28,6 @@
     "@types/node": "^25.9.2",
     "@types/pdfkit": "^0.17.6",
     "@vercel/node": "^5.1.14",
-    "drizzle-kit": "^0.31.10",
-    "embedded-postgres": "^18.4.0-beta.17",
     "esbuild": "^0.25.4",
     "tsx": "^4.22.4",
     "typescript": "^5.8.3"

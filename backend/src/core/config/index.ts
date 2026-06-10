@@ -6,10 +6,6 @@ export const config = {
   nodeEnv: process.env.NODE_ENV || "development",
   isDev: (process.env.NODE_ENV || "development") === "development",
 
-  database: {
-    url: process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/servicio_local_sts",
-  },
-
   jwt: {
     secret: process.env.JWT_SECRET || "dev-secret-servicio-local-sts-2026",
     expiresIn: process.env.JWT_EXPIRES_IN || "15m",
