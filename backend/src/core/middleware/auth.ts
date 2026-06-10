@@ -13,11 +13,11 @@ export async function authenticate(request: FastifyRequest, _reply: FastifyReply
 
 export function authorize(...roles: Rol[]) {
   return (request: FastifyRequest, _reply: FastifyReply) => {
-    if (!request.user || !("rol" in request.user)) {
+    const user = request.user as { user_id: number; rol: Rol; area_id: number | null } | undefined;
+    if (!user) {
       throw new UnauthorizedError("No autenticado");
     }
-    const userRole = (request.user as { rol: Rol }).rol;
-    if (!roles.includes(userRole)) {
+    if (!roles.includes(user.rol)) {
       throw new ForbiddenError(`Se requiere rol: ${roles.join(" o ")}`);
     }
   };
@@ -33,10 +33,10 @@ export function authorize(...roles: Rol[]) {
  */
 export function authorizeByArea(areaIdResolver: (req: FastifyRequest) => number | undefined) {
   return async (request: FastifyRequest, _reply: FastifyReply) => {
-    if (!request.user || !("rol" in request.user)) {
+    const user = request.user as { user_id: number; rol: Rol; area_id: number | null } | undefined;
+    if (!user) {
       throw new UnauthorizedError("No autenticado");
     }
-    const user = request.user as { user_id: number; rol: Rol; area_id: number | null };
 
     // Admin: acceso total
     if (user.rol === "admin") return;

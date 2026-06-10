@@ -17,8 +17,11 @@ const estados = [
   "cancelado",
 ];
 
+const PAGE_SIZE = 20;
+
 export function ServiciosPage() {
   const [filtro, setFiltro] = useState("todos");
+  const [pagina, setPagina] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     titulo: "",
@@ -219,7 +222,7 @@ export function ServiciosPage() {
         {estados.map((e) => (
           <button
             key={e}
-            onClick={() => setFiltro(e)}
+            onClick={() => { setFiltro(e); setPagina(1); }}
             className={`px-3 py-1 rounded-full text-xs font-medium ${
               filtro === e
                 ? "bg-blue-600 text-white"
@@ -236,48 +239,104 @@ export function ServiciosPage() {
         <p className="text-slate-500">Cargando...</p>
       ) : (
         <div className="space-y-2">
-          {servicios?.map((s: any) => (
-            <Link
-              key={s.id}
-              to={`/servicios/${s.id}`}
-              className="block bg-white p-4 rounded-xl border hover:shadow-sm transition-shadow"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-xs font-mono text-slate-400">
-                    {s.codigo}
-                  </span>
-                  <h3 className="font-medium text-slate-800">{s.titulo}</h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {s.cliente_nombre}
+          {(() => {
+            const totalPages = Math.max(1, Math.ceil((servicios?.length || 0) / PAGE_SIZE));
+            const safePage = Math.min(pagina, totalPages);
+            const paginated = (servicios || []).slice(
+              (safePage - 1) * PAGE_SIZE,
+              safePage * PAGE_SIZE
+            );
+
+            return (
+              <>
+                <p className="text-xs text-slate-400">
+                  Mostrando {(safePage - 1) * PAGE_SIZE + 1}–
+                  {Math.min(safePage * PAGE_SIZE, servicios?.length || 0)} de{" "}
+                  {servicios?.length || 0} servicios
+                </p>
+                {paginated.map((s: any) => (
+                  <Link
+                    key={s.id}
+                    to={`/servicios/${s.id}`}
+                    className="block bg-white p-4 rounded-xl border hover:shadow-sm transition-shadow"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-xs font-mono text-slate-400">
+                          {s.codigo}
+                        </span>
+                        <h3 className="font-medium text-slate-800">{s.titulo}</h3>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {s.cliente_nombre}
+                        </p>
+                        {s.area_id && (
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            Área ID: {s.area_id}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          s.estado === "completado"
+                            ? "bg-green-100 text-green-700"
+                            : s.estado === "en_progreso"
+                            ? "bg-blue-100 text-blue-700"
+                            : s.estado === "cancelado"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {s.estado.replace("_", " ")}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+                {servicios?.length === 0 && (
+                  <p className="text-slate-400 text-sm text-center py-8">
+                    No hay servicios
                   </p>
-                  {s.area_id && (
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      Área ID: {s.area_id}
-                    </p>
-                  )}
-                </div>
-                <span
-                  className={`text-xs px-2 py-1 rounded-full ${
-                    s.estado === "completado"
-                      ? "bg-green-100 text-green-700"
-                      : s.estado === "en_progreso"
-                      ? "bg-blue-100 text-blue-700"
-                      : s.estado === "cancelado"
-                      ? "bg-red-100 text-red-700"
-                      : "bg-slate-100 text-slate-600"
-                  }`}
-                >
-                  {s.estado.replace("_", " ")}
-                </span>
-              </div>
-            </Link>
-          ))}
-          {servicios?.length === 0 && (
-            <p className="text-slate-400 text-sm text-center py-8">
-              No hay servicios
-            </p>
-          )}
+                )}
+                {/* Paginación */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 pt-4">
+                    <button
+                      onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                      disabled={safePage <= 1}
+                      className="px-3 py-1 text-sm rounded border disabled:opacity-30 hover:bg-slate-50"
+                    >
+                      Anterior
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter((p) => Math.abs(p - safePage) <= 2 || p === 1 || p === totalPages)
+                      .map((p, idx, arr) => (
+                        <span key={p} className="flex items-center gap-1">
+                          {idx > 0 && arr[idx - 1] !== p - 1 && (
+                            <span className="text-slate-300 px-1">...</span>
+                          )}
+                          <button
+                            onClick={() => setPagina(p)}
+                            className={`px-3 py-1 text-sm rounded ${
+                              safePage === p
+                                ? "bg-blue-600 text-white"
+                                : "border hover:bg-slate-50"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        </span>
+                      ))}
+                    <button
+                      onClick={() => setPagina((p) => Math.min(totalPages, p + 1))}
+                      disabled={safePage >= totalPages}
+                      className="px-3 py-1 text-sm rounded border disabled:opacity-30 hover:bg-slate-50"
+                    >
+                      Siguiente
+                    </button>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
     </div>

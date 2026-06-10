@@ -22,7 +22,7 @@ export function errorHandler(
       title: "VALIDATION_ERROR",
       status: 400,
       detail: "Datos inválidos",
-      errors: error.errors.map((e) => ({
+      errors: error.issues.map((e) => ({
         field: e.path.join("."),
         message: e.message,
       })),

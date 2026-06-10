@@ -5,7 +5,7 @@ import { loginUser, generateJwtPayload } from "./auth.service.js";
 import { config } from "@/core/config/index.js";
 import { loginSchema } from "./auth.schema.js";
 import { auditLog } from "@/core/utils/index.js";
-import { NotFoundError, ValidationError } from "@/core/errors/index.js";
+import { NotFoundError, ValidationError, UnauthorizedError } from "@/core/errors/index.js";
 
 export async function authController(app: FastifyInstance) {
   // ── POST /api/auth/login ──
@@ -31,6 +31,50 @@ export async function authController(app: FastifyInstance) {
         user: result.user,
       },
     });
+  });
+
+  // ── POST /api/auth/refresh ──
+  app.post("/api/auth/refresh", async (request, reply) => {
+    const authHeader = request.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new UnauthorizedError("Token requerido");
+    }
+
+    const oldToken = authHeader.slice(7);
+    let payload: { user_id: number; rol: string; area_id: number | null };
+    try {
+      // Verificar incluso si expiró (ignoreExpiration) — el token sigue siendo válido
+      payload = app.jwt.verify<{ user_id: number; rol: string; area_id: number | null }>(
+        oldToken,
+        { ignoreExpiration: true }
+      );
+    } catch {
+      throw new UnauthorizedError("Token inválido");
+    }
+
+    // Verificar que el usuario siga activo
+    const { data: usuarios } = await supabase
+      .from("usuarios")
+      .select("usuario_id, usuario_activo")
+      .eq("usuario_id", payload.user_id)
+      .limit(1);
+
+    const usuario = usuarios?.[0];
+    if (!usuario || !usuario.usuario_activo) {
+      throw new UnauthorizedError("Usuario desactivado");
+    }
+
+    // Emitir nuevo token
+    const newToken = app.jwt.sign(
+      {
+        user_id: payload.user_id,
+        rol: payload.rol,
+        area_id: payload.area_id,
+      },
+      { expiresIn: config.jwt.expiresIn }
+    );
+
+    return reply.send({ data: { token: newToken } });
   });
 
   // ── GET /api/auth/me ──

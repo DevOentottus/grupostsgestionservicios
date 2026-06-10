@@ -1,5 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/lib/auth.js";
+import { AuthProvider } from "@/lib/auth.js";
+import { ErrorBoundary } from "@/app/components/ErrorBoundary.js";
+import { RequireAuth } from "@/app/components/RequireAuth.js";
+import { RequireRole } from "@/app/components/RequireRole.js";
 import { LoginPage } from "@/app/pages/login/Login.js";
 import { DashboardPage } from "@/app/pages/seguimiento/Dashboard.js";
 import { ServiciosPage } from "@/app/pages/servicios/Servicios.js";
@@ -19,15 +22,10 @@ import { ManagerDistribucionPage } from "@/app/pages/manager/ManagerDistribucion
 import { ManagerDesempenoPage } from "@/app/pages/manager/ManagerDesempeno.js";
 import { Layout } from "@/app/layout/Layout.js";
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return <>{children}</>;
-}
-
 export default function App() {
   return (
     <AuthProvider>
+      <ErrorBoundary>
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
@@ -36,29 +34,55 @@ export default function App() {
         <Route path="/display/work-room" element={<DisplayWorkRoomPage />} />
         <Route path="/public/servicio/:codigo" element={<ServicioPublicoPage />} />
 
+        {/* Protected routes — wrapped in RequireAuth */}
         <Route
           path="/"
           element={
-            <ProtectedRoute>
+            <RequireAuth>
               <Layout />
-            </ProtectedRoute>
+            </RequireAuth>
           }
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="servicios" element={<ServiciosPage />} />
           <Route path="servicios/:id" element={<ServicioDetailPage />} />
-          <Route path="usuarios" element={<UsuariosPage />} />
           <Route path="areas" element={<AreasPage />} />
           <Route path="areas/:id/servicios" element={<AreaServiciosPage />} />
           <Route path="plantillas" element={<PlantillasPage />} />
-          <Route path="auditoria" element={<AuditoriaPage />} />
           <Route path="reportes" element={<ReportesPage />} />
-          <Route path="manager/mi-area" element={<ManagerAreaPage />} />
-          <Route path="manager/distribucion" element={<ManagerDistribucionPage />} />
-          <Route path="manager/desempeno" element={<ManagerDesempenoPage />} />
+
+          {/* Admin only */}
+          <Route path="usuarios" element={
+            <RequireRole roles={["admin"]}>
+              <UsuariosPage />
+            </RequireRole>
+          } />
+          <Route path="auditoria" element={
+            <RequireRole roles={["admin"]}>
+              <AuditoriaPage />
+            </RequireRole>
+          } />
+
+          {/* Encargado+ (admin or encargado) */}
+          <Route path="manager/mi-area" element={
+            <RequireRole roles={["admin", "encargado"]}>
+              <ManagerAreaPage />
+            </RequireRole>
+          } />
+          <Route path="manager/distribucion" element={
+            <RequireRole roles={["admin", "encargado"]}>
+              <ManagerDistribucionPage />
+            </RequireRole>
+          } />
+          <Route path="manager/desempeno" element={
+            <RequireRole roles={["admin", "encargado"]}>
+              <ManagerDesempenoPage />
+            </RequireRole>
+          } />
         </Route>
       </Routes>
+      </ErrorBoundary>
     </AuthProvider>
   );
 }

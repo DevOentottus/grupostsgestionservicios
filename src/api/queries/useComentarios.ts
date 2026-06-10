@@ -24,8 +24,8 @@ export function useCrearComentario() {
     }: {
       servicioId: number;
       contenido: string;
-      tarea_id?: number | null;
-    }) => comentariosApi.crear(servicioId, { contenido, tarea_id }),
+      tarea_id?: number ;
+    }) => comentariosApi.crear(servicioId, { contenido, tarea_id: tarea_id ?? undefined }),
     onSuccess: (_, { servicioId }) => {
       qc.invalidateQueries({ queryKey: ["comentarios", servicioId] });
       toast.success("Comentario agregado");

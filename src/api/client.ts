@@ -8,6 +8,21 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+// ── Refresh token queue ──
+let isRefreshing = false;
+let pendingQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void;
+}> = [];
+
+function processQueue(newToken: string | null, error: unknown) {
+  for (const { resolve, reject } of pendingQueue) {
+    if (error) reject(error);
+    else resolve(newToken!);
+  }
+  pendingQueue = [];
+}
+
 // Interceptor: adjuntar JWT
 api.interceptors.request.use((config) => {
   const token = sessionStorage.getItem("auth_token");
@@ -15,16 +30,61 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor: manejar 401
+// Interceptor: manejar 401 con refresh automático
 api.interceptors.response.use(
   (r) => r,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const originalRequest = error.config;
+
+    // No es 401, o ya se reintentó, o es la misma request de refresh
+    if (
+      error.response?.status !== 401 ||
+      originalRequest._retry ||
+      originalRequest.url === "/auth/refresh"
+    ) {
+      return Promise.reject(error);
+    }
+
+    // Si ya estamos refrescando, encolar
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        pendingQueue.push({
+          resolve: (token: string) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(api(originalRequest));
+          },
+          reject,
+        });
+      });
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    try {
+      const oldToken = sessionStorage.getItem("auth_token");
+      if (!oldToken) throw new Error("No hay token");
+
+      const { data } = await api.post("/auth/refresh", null, {
+        headers: { Authorization: `Bearer ${oldToken}` },
+      });
+
+      const newToken = data.data.token;
+      sessionStorage.setItem("auth_token", newToken);
+
+      processQueue(newToken, null);
+
+      originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      return api(originalRequest);
+    } catch (refreshError) {
+      processQueue(null, refreshError);
       sessionStorage.removeItem("auth_token");
       sessionStorage.removeItem("auth_user");
       window.location.href = "/login";
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
     }
-    return Promise.reject(error);
   }
 );
 
@@ -40,6 +100,10 @@ export const authApi = {
       password,
     }),
   me: () => api.get("/auth/me"),
+  refresh: (token: string) =>
+    api.post<ApiResponse<{ token: string }>>("/auth/refresh", null, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
   cambiarPassword: (current_password: string, new_password: string) =>
     api.patch("/auth/password", { current_password, new_password }),
 };
