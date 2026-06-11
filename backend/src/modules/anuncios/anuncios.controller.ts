@@ -9,6 +9,7 @@ const crearAnuncioSchema = z.object({
   titulo: z.string().min(1, "Título requerido").max(200),
   contenido: z.string().min(1, "Contenido requerido"),
   prioridad: z.enum(["informativo", "importante", "urgente"]).default("informativo"),
+  area_id: z.number().int().nullable().optional(),
   fecha_expiracion: z.string().nullable().optional(),
 });
 
@@ -38,6 +39,10 @@ export async function anunciosController(app: FastifyInstance) {
           usuarios!anuncios_usuario_id_fkey (
             usuario_id,
             usuario_nombres
+          ),
+          areas!anuncios_area_id_fkey (
+            area_id,
+            area_nombre
           )
         `)
         .eq("anuncio_activo", true)
@@ -54,6 +59,8 @@ export async function anunciosController(app: FastifyInstance) {
         contenido: a.anuncio_contenido,
         activo: a.anuncio_activo,
         prioridad: a.anuncio_prioridad,
+        area_id: a.area_id,
+        area_nombre: a.areas?.area_nombre || null,
         fecha_publicacion: a.anuncio_fecha_publicacion,
         hora_publicacion: a.anuncio_hora_publicacion,
         fecha_expiracion: a.anuncio_fecha_expiracion,
@@ -83,6 +90,10 @@ export async function anunciosController(app: FastifyInstance) {
           usuarios!anuncios_usuario_id_fkey (
             usuario_id,
             usuario_nombres
+          ),
+          areas!anuncios_area_id_fkey (
+            area_id,
+            area_nombre
           )
         `)
         .order("anuncio_fecha_publicacion", { ascending: false })
@@ -97,6 +108,8 @@ export async function anunciosController(app: FastifyInstance) {
         contenido: a.anuncio_contenido,
         activo: a.anuncio_activo,
         prioridad: a.anuncio_prioridad,
+        area_id: a.area_id,
+        area_nombre: a.areas?.area_nombre || null,
         fecha_publicacion: a.anuncio_fecha_publicacion,
         hora_publicacion: a.anuncio_hora_publicacion,
         fecha_expiracion: a.anuncio_fecha_expiracion,
@@ -130,6 +143,7 @@ export async function anunciosController(app: FastifyInstance) {
           anuncio_titulo: input.titulo,
           anuncio_contenido: input.contenido,
           anuncio_prioridad: input.prioridad,
+          area_id: input.area_id ?? null,
           anuncio_fecha_expiracion: input.fecha_expiracion ?? null,
           anuncio_fecha_publicacion: now.toISOString().split("T")[0],
           anuncio_hora_publicacion: now.toTimeString().split(" ")[0],
@@ -150,16 +164,17 @@ export async function anunciosController(app: FastifyInstance) {
       return reply.status(201).send({
         data: {
           id: anuncio.anuncio_id,
-          usuario_id: anuncio.usuario_id,
-          titulo: anuncio.anuncio_titulo,
-          contenido: anuncio.anuncio_contenido,
-          activo: anuncio.anuncio_activo,
-          prioridad: anuncio.anuncio_prioridad,
-          fecha_publicacion: anuncio.anuncio_fecha_publicacion,
-          hora_publicacion: anuncio.anuncio_hora_publicacion,
-          fecha_expiracion: anuncio.anuncio_fecha_expiracion,
-          fecha_creacion: anuncio.anuncio_fecha_creacion,
-          hora_creacion: anuncio.anuncio_hora_creacion,
+           usuario_id: anuncio.usuario_id,
+           titulo: anuncio.anuncio_titulo,
+           contenido: anuncio.anuncio_contenido,
+           activo: anuncio.anuncio_activo,
+           prioridad: anuncio.anuncio_prioridad,
+           area_id: anuncio.area_id,
+           fecha_publicacion: anuncio.anuncio_fecha_publicacion,
+           hora_publicacion: anuncio.anuncio_hora_publicacion,
+           fecha_expiracion: anuncio.anuncio_fecha_expiracion,
+           fecha_creacion: anuncio.anuncio_fecha_creacion,
+           hora_creacion: anuncio.anuncio_hora_creacion,
         },
       });
     }

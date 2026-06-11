@@ -13,11 +13,12 @@ import {
   useCrearSolicitud,
   useAtenderSolicitud,
 } from "@/api/queries/useSolicitudes.js";
+import { useAreas } from "@/api/queries/useAreas.js";
 import { cn } from "@/app/lib/utils";
 import type { Anuncio, Solicitud } from "@shared/index.js";
 import {
   Megaphone, MessageSquare, ArrowUpRight, Plus, Send, Clock,
-  CheckCircle2, Bell, X, AlertCircle,
+  CheckCircle2, Bell, X, AlertCircle, MapPin,
 } from "lucide-react";
 
 // ── Anuncios config ──
@@ -57,8 +58,8 @@ const ESTADO_LABEL: Record<string, string> = {
 };
 
 // ── Anuncio create form state ──
-interface AnnFormData { titulo: string; contenido: string; prioridad: string; fecha_expiracion: string; }
-const emptyAnnForm: AnnFormData = { titulo: "", contenido: "", prioridad: "informativo", fecha_expiracion: "" };
+interface AnnFormData { titulo: string; contenido: string; prioridad: string; area_alcanze: "general" | number; fecha_expiracion: string; }
+const emptyAnnForm: AnnFormData = { titulo: "", contenido: "", prioridad: "informativo", area_alcanze: "general", fecha_expiracion: "" };
 
 // ── Solicitud create form state ──
 interface ReqFormData { tipo: string; descripcion: string; prioridad: string; }
@@ -89,6 +90,15 @@ export function ComunicacionesPage() {
   const anunciosLoading = anunciosQuery.isLoading;
   const anunciosError = anunciosQuery.isError;
 
+  const { data: areas } = useAreas();
+
+  // Filtrar anuncios: admin ve todos, otros ven general + su área
+  const anunciosFiltrados = isAdmin
+    ? (anuncios || [])
+    : (anuncios || []).filter((a: Anuncio) =>
+        a.area_id === null || a.area_id === currentUser?.area_id
+      );
+
   // Solicitudes hooks
   const misQuery = useMisSolicitudes();
   const todasQuery = useSolicitudes();
@@ -104,6 +114,7 @@ export function ComunicacionesPage() {
   const handleSaveAnuncio = async () => {
     if (!annForm.titulo || !annForm.contenido) return;
     const payload: any = { titulo: annForm.titulo, contenido: annForm.contenido, prioridad: annForm.prioridad };
+    payload.area_id = annForm.area_alcanze === "general" ? null : annForm.area_alcanze;
     if (annForm.fecha_expiracion) payload.fecha_expiracion = annForm.fecha_expiracion;
     await crearAnuncio.mutateAsync(payload);
     setShowModal(false);
@@ -141,7 +152,7 @@ export function ComunicacionesPage() {
   const statCards = [
     {
       label: "Anuncios activos",
-      value: anuncios?.length || 0,
+      value: anunciosFiltrados?.length || 0,
       icon: Megaphone,
       color: "bg-blue-900",
     },
@@ -182,7 +193,7 @@ export function ComunicacionesPage() {
             className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition"
           >
             <Plus className="w-4 h-4" />
-            Nueva Solicitud
+            Nuevo
           </button>
         </div>
       </div>
@@ -253,8 +264,8 @@ export function ComunicacionesPage() {
             <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
               <p className="text-red-600 font-medium">Error al cargar anuncios</p>
             </div>
-          ) : anuncios && anuncios.length > 0 ? (
-            anuncios.map((ann: Anuncio) => {
+          ) : anunciosFiltrados && anunciosFiltrados.length > 0 ? (
+            anunciosFiltrados.map((ann: Anuncio) => {
               const prioridadCfg = PRIORIDAD_CONFIG[ann.prioridad] || PRIORIDAD_CONFIG.informativo;
               const vencido = ann.fecha_expiracion && new Date(ann.fecha_expiracion) < new Date();
               return (
@@ -281,6 +292,17 @@ export function ComunicacionesPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      {ann.area_nombre && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-blue-900/10 text-blue-700 font-medium flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {ann.area_nombre}
+                        </span>
+                      )}
+                      {!ann.area_id && !ann.area_nombre && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+                          General
+                        </span>
+                      )}
                       <span className={cn("text-xs px-2 py-1 rounded-full font-semibold", prioridadCfg.style)}>
                         {prioridadCfg.icon} {prioridadCfg.label}
                       </span>
@@ -326,7 +348,7 @@ export function ComunicacionesPage() {
           ) : (
             <div className="bg-white rounded-2xl p-12 text-center text-gray-400 shadow-sm border border-gray-100">
               <Megaphone className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-              No hay anuncios
+              No hay anuncios {!isAdmin ? "para tu área" : ""}
             </div>
           )}
         </div>
@@ -515,6 +537,22 @@ export function ComunicacionesPage() {
                         className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-gray-50"
                       />
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 font-semibold mb-1">Alcance</label>
+                    <select
+                      value={typeof annForm.area_alcanze === "number" ? annForm.area_alcanze : "general"}
+                      onChange={(e) => setAnnForm((p) => ({
+                        ...p,
+                        area_alcanze: e.target.value === "general" ? "general" : Number(e.target.value),
+                      }))}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-gray-50"
+                    >
+                      <option value="general">General (todas las áreas)</option>
+                      {areas?.map((a: any) => (
+                        <option key={a.id} value={a.id}>{a.nombre}</option>
+                      ))}
+                    </select>
                   </div>
                 </>
               ) : (

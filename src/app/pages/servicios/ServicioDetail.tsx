@@ -160,6 +160,7 @@ export function ServicioDetailPage() {
     if (!templateName.trim() || !tareas) return;
     await crearPlantilla.mutateAsync({
       nombre: templateName.trim(),
+      area_id: servicio?.area_id ?? null,
       tareas: tareas.map((t: Tarea, i: number) => ({
         titulo: t.titulo,
         sort_order: t.orden ?? i,

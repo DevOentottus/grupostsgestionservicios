@@ -38,6 +38,7 @@ export function useCrearPlantilla() {
     mutationFn: (data: {
       nombre: string;
       descripcion?: string | null;
+      area_id?: number | null;
       tareas?: { titulo: string; sort_order?: number }[];
     }) => plantillasApi.crear(data),
     onSuccess: () => {
@@ -60,6 +61,7 @@ export function useEditarPlantilla() {
       data: {
         nombre?: string;
         descripcion?: string | null;
+        area_id?: number | null;
         tareas?: {
           id?: number;
           titulo: string;

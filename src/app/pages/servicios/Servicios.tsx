@@ -68,7 +68,7 @@ export function ServiciosPage() {
     return matchSearch;
   });
 
-  const canCreate = currentUser?.rol === "admin" || currentUser?.rol === "encargado" || currentUser?.rol === "sistema";
+  const canCreate = currentUser?.rol === "admin" || currentUser?.rol === "encargado" || currentUser?.rol === "sistema" || currentUser?.rol === "colaborador";
 
   const handleCreate = async () => {
     if (!form.titulo || !form.cliente_nombre) return;
@@ -122,7 +122,7 @@ export function ServiciosPage() {
         </div>
         {canCreate && (
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => navigate("/servicios/nuevo")}
             className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-4 py-2.5 rounded-xl text-sm font-bold transition"
           >
             <Plus className="w-4 h-4" />
@@ -381,7 +381,9 @@ export function ServiciosPage() {
                       className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-gray-50"
                     >
                       <option value="">Sin plantilla</option>
-                      {plantillas?.map((p: any) => (
+                      {(plantillas || [])
+                        .filter((p: any) => !form.area_id || !p.area_id || p.area_id === Number(form.area_id))
+                        .map((p: any) => (
                         <option key={p.id} value={p.id}>
                           {p.nombre} ({p.tareas_count} tareas)
                         </option>

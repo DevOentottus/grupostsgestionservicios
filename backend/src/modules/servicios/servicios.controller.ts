@@ -13,6 +13,21 @@ const servicioSchema = z.object({
   area_id: z.number().int().nullable().optional(),
   prioridad: z.enum(["baja", "media", "alta", "urgente"]).optional(),
   tiempo_estimado: z.number().int().positive().nullable().optional(),
+  // Nuevos campos
+  cliente_dni: z.string().optional(),
+  cliente_apellido_paterno: z.string().optional(),
+  cliente_apellido_materno: z.string().optional(),
+  cliente_nombres: z.string().optional(),
+  cliente_telefono: z.string().optional(),
+  descripcion_equipo: z.string().optional(),
+  serie_equipo: z.string().optional(),
+  detalles_equipo: z.string().optional(),
+  descripcion_accesorio: z.string().optional(),
+  detalles_accesorio: z.string().optional(),
+  cliente_reporte: z.string().optional(),
+  diagnostico_inicial: z.string().optional(),
+  id_plantilla_inicial: z.number().int().nullable().optional(),
+  colaborador_id: z.number().int().nullable().optional(),
 });
 
 const tareaSchema = z.object({
@@ -69,18 +84,15 @@ export async function serviciosController(app: FastifyInstance) {
   app.post("/api/servicios", { preHandler: [requireRoles()] }, async (request, reply) => {
     const input = servicioSchema.parse(request.body);
 
-    // Obtener último código para generar el siguiente
-    const { data: ultimos } = await supabase
-      .from("servicios")
-      .select("servicio_codigo")
-      .order("servicio_id", { ascending: false })
-      .limit(1);
-
-    const lastCode = ultimos?.[0]?.servicio_codigo || "SRV-000";
-    const num = parseInt(lastCode.replace("SRV-", "")) + 1;
-    const codigo = `SRV-${String(num).padStart(4, "0")}`;
-
     const now = new Date();
+    const codigo = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, "0"),
+      String(now.getDate()).padStart(2, "0"),
+      String(now.getHours()).padStart(2, "0"),
+      String(now.getMinutes()).padStart(2, "0"),
+      String(now.getSeconds()).padStart(2, "0"),
+    ].join("");
     const { data: newServicios, error } = await supabase
       .from("servicios")
       .insert({
@@ -90,7 +102,20 @@ export async function serviciosController(app: FastifyInstance) {
         servicio_estado: "pendiente",
         servicio_tiempo_estimado: input.tiempo_estimado ?? null,
         area_id: input.area_id ?? null,
-        cliente_id: null, // mapeo parcial: cliente_nombre no existe como campo en Supabase
+        colaborador_id: input.colaborador_id ?? null,
+        cliente_dni: input.cliente_dni || null,
+        cliente_apellido_paterno: input.cliente_apellido_paterno || null,
+        cliente_apellido_materno: input.cliente_apellido_materno || null,
+        cliente_nombres: input.cliente_nombres || null,
+        cliente_telefono: input.cliente_telefono || null,
+        servicio_descripcion_equipo: input.descripcion_equipo || null,
+        servicio_serie_equipo: input.serie_equipo || null,
+        servicio_detalles_equipo: input.detalles_equipo || null,
+        servicio_descripcion_accesorio: input.descripcion_accesorio || null,
+        servicio_detalles_accesorio: input.detalles_accesorio || null,
+        servicio_cliente_reporte: input.cliente_reporte || null,
+        servicio_diagnostico_inicial: input.diagnostico_inicial || null,
+        id_plantilla_inicial: input.id_plantilla_inicial ?? null,
         servicio_fecha_creacion: now.toISOString().split("T")[0],
         servicio_hora_creacion: now.toTimeString().split(" ")[0],
       })
@@ -497,6 +522,19 @@ function mapServicio(s: any) {
     colaborador_nombre: colaboradorNombre,
     cliente_nombre: s.cliente_id ? `Cliente #${s.cliente_id}` : null,
     cliente_email: null, // no disponible en servicios
+    cliente_dni: s.cliente_dni || null,
+    cliente_apellido_paterno: s.cliente_apellido_paterno || null,
+    cliente_apellido_materno: s.cliente_apellido_materno || null,
+    cliente_nombres: s.cliente_nombres || null,
+    cliente_telefono: s.cliente_telefono || null,
+    descripcion_equipo: s.servicio_descripcion_equipo || null,
+    serie_equipo: s.servicio_serie_equipo || null,
+    detalles_equipo: s.servicio_detalles_equipo || null,
+    descripcion_accesorio: s.servicio_descripcion_accesorio || null,
+    detalles_accesorio: s.servicio_detalles_accesorio || null,
+    cliente_reporte: s.servicio_cliente_reporte || null,
+    diagnostico_inicial: s.servicio_diagnostico_inicial || null,
+    id_plantilla_inicial: s.id_plantilla_inicial || null,
     datos_completos: false, // no disponible en Supabase
     consultado_cliente: false, // no disponible en Supabase
     tiempo_estimado: s.servicio_tiempo_estimado,

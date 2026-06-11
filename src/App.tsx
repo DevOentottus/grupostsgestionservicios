@@ -6,6 +6,7 @@ import { RequireRole } from "@/app/components/RequireRole.js";
 import { LoginPage } from "@/app/pages/login/Login.js";
 import { DashboardPage } from "@/app/pages/seguimiento/Dashboard.js";
 import { ServiciosPage } from "@/app/pages/servicios/Servicios.js";
+import { NuevoServicioPage } from "@/app/pages/servicios/NuevoServicio.js";
 import { ServicioDetailPage } from "@/app/pages/servicios/ServicioDetail.js";
 import { UsuariosPage } from "@/app/pages/usuarios/Usuarios.js";
 import { AreasPage } from "@/app/pages/areas/Areas.js";
@@ -62,6 +63,7 @@ export default function App() {
           } />
           <Route path="miarea" element={<MiAreaPage />} />
           <Route path="servicios" element={<ServiciosPage />} />
+          <Route path="servicios/nuevo" element={<NuevoServicioPage />} />
           <Route path="servicios/:id" element={<ServicioDetailPage />} />
           <Route path="areas" element={
             <RequireRole roles={["admin"]}>

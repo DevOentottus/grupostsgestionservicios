@@ -8,6 +8,7 @@ import { z } from "zod";
 const crearPlantillaSchema = z.object({
   nombre: z.string().min(1, "Nombre requerido").max(150),
   descripcion: z.string().nullable().optional(),
+  area_id: z.number().int().nullable().optional(),
   tareas: z
     .array(
       z.object({
@@ -22,6 +23,7 @@ const crearPlantillaSchema = z.object({
 const actualizarPlantillaSchema = z.object({
   nombre: z.string().min(1).max(150).optional(),
   descripcion: z.string().nullable().optional(),
+  area_id: z.number().int().nullable().optional(),
   tareas: z
     .array(
       z.object({
@@ -44,7 +46,7 @@ export async function plantillasController(app: FastifyInstance) {
     async () => {
       const { data: plantillas } = await supabase
         .from("plantillas")
-        .select("*")
+        .select("*, areas!plantillas_area_id_fkey(area_id, area_nombre)")
         .order("plantilla_nombre", { ascending: true });
 
       const rows = await Promise.all(
@@ -58,6 +60,8 @@ export async function plantillasController(app: FastifyInstance) {
             id: p.plantilla_id,
             nombre: p.plantilla_nombre,
             descripcion: p.plantilla_descripcion,
+            area_id: p.area_id,
+            area_nombre: p.areas?.area_nombre || null,
             created_at: p.plantilla_fecha_creacion,
             updated_at: null,
             activa: p.plantilla_activa,
@@ -80,7 +84,7 @@ export async function plantillasController(app: FastifyInstance) {
 
       const { data: plantillas } = await supabase
         .from("plantillas")
-        .select("*")
+        .select("*, areas!plantillas_area_id_fkey(area_id, area_nombre)")
         .eq("plantilla_id", plantillaId)
         .limit(1);
 
@@ -105,6 +109,8 @@ export async function plantillasController(app: FastifyInstance) {
           id: plantilla.plantilla_id,
           nombre: plantilla.plantilla_nombre,
           descripcion: plantilla.plantilla_descripcion,
+          area_id: plantilla.area_id,
+          area_nombre: plantilla.areas?.area_nombre || null,
           activa: plantilla.plantilla_activa,
           created_at: plantilla.plantilla_fecha_creacion,
           tareas,
@@ -126,6 +132,7 @@ export async function plantillasController(app: FastifyInstance) {
         .insert({
           plantilla_nombre: input.nombre,
           plantilla_descripcion: input.descripcion ?? null,
+          area_id: input.area_id ?? null,
           plantilla_activa: true,
           plantilla_fecha_creacion: new Date().toISOString().split("T")[0],
         })
@@ -168,6 +175,7 @@ export async function plantillasController(app: FastifyInstance) {
           id: plantilla.plantilla_id,
           nombre: plantilla.plantilla_nombre,
           descripcion: plantilla.plantilla_descripcion,
+          area_id: plantilla.area_id,
           activa: plantilla.plantilla_activa,
           created_at: plantilla.plantilla_fecha_creacion,
           tareas,
@@ -197,6 +205,7 @@ export async function plantillasController(app: FastifyInstance) {
       const updateData: Record<string, unknown> = {};
       if (input.nombre !== undefined) updateData.plantilla_nombre = input.nombre;
       if (input.descripcion !== undefined) updateData.plantilla_descripcion = input.descripcion;
+      if (input.area_id !== undefined) updateData.area_id = input.area_id;
 
       if (Object.keys(updateData).length > 0) {
         await supabase
@@ -253,6 +262,7 @@ export async function plantillasController(app: FastifyInstance) {
               id: updated.plantilla_id,
               nombre: updated.plantilla_nombre,
               descripcion: updated.plantilla_descripcion,
+              area_id: updated.area_id,
               activa: updated.plantilla_activa,
               tareas,
             }

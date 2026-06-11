@@ -5,6 +5,7 @@ import {
   useEditarPlantilla,
   useEliminarPlantilla,
 } from "@/api/queries/usePlantillas.js";
+import { useAreas } from "@/api/queries/useAreas.js";
 import { plantillasApi } from "@/api/client.js";
 import type { PlantillaWithTareas, PlantillaListItem } from "@/api/queries/usePlantillas.js";
 
@@ -61,15 +62,18 @@ function PlantillaCreateModal({
   onClose: () => void;
 }) {
   const crearPlantilla = useCrearPlantilla();
+  const { data: areas } = useAreas();
 
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [areaId, setAreaId] = useState<number | "">("");
   const [tareas, setTareas] = useState<TareaFormItem[]>([]);
   const [saving, setSaving] = useState(false);
 
   const resetForm = () => {
     setNombre("");
     setDescripcion("");
+    setAreaId("");
     setTareas([]);
   };
 
@@ -108,6 +112,7 @@ function PlantillaCreateModal({
       await crearPlantilla.mutateAsync({
         nombre: nombre.trim(),
         descripcion: descripcion.trim() || null,
+        area_id: areaId || null,
         tareas: tareasPayload,
       });
       resetForm();
@@ -151,6 +156,23 @@ function PlantillaCreateModal({
               rows={2}
               placeholder="Descripción opcional de la plantilla"
             />
+          </div>
+
+          {/* Área */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Área <span className="text-slate-400 font-normal">(opcional)</span>
+            </label>
+            <select
+              value={areaId}
+              onChange={(e) => setAreaId(e.target.value ? Number(e.target.value) : "")}
+              className="w-full px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="">Sin área (todas las áreas)</option>
+              {areas?.map((a: any) => (
+                <option key={a.id} value={a.id}>{a.nombre}</option>
+              ))}
+            </select>
           </div>
 
           {/* Tareas */}
@@ -369,6 +391,7 @@ function TaskEditModal({
 // ── Main Page ──
 export function PlantillasPage() {
   const { data: plantillas, isLoading } = usePlantillas();
+  const { data: areas } = useAreas();
   const editarPlantilla = useEditarPlantilla();
   const eliminarPlantilla = useEliminarPlantilla();
 
@@ -382,6 +405,7 @@ export function PlantillasPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editNombre, setEditNombre] = useState("");
   const [editDescripcion, setEditDescripcion] = useState("");
+  const [editAreaId, setEditAreaId] = useState<number | null>(null);
   const [editTareas, setEditTareas] = useState<TareaFormItem[]>([]);
   const [editSaving, setEditSaving] = useState(false);
   const [showTaskEdit, setShowTaskEdit] = useState(false);
@@ -393,6 +417,7 @@ export function PlantillasPage() {
       setEditingId(id);
       setEditNombre(data.nombre);
       setEditDescripcion(data.descripcion ?? "");
+      setEditAreaId(data.area_id);
       setEditTareas(
         data.tareas.map((t) => ({
           key: `t-${t.id}`,
@@ -408,6 +433,7 @@ export function PlantillasPage() {
     setEditingId(null);
     setEditNombre("");
     setEditDescripcion("");
+    setEditAreaId(null);
     setEditTareas([]);
   };
 
@@ -424,6 +450,7 @@ export function PlantillasPage() {
         data: {
           nombre: editNombre.trim(),
           descripcion: editDescripcion.trim() || null,
+          area_id: editAreaId,
           tareas: tareasPayload,
         },
       });
@@ -501,6 +528,16 @@ export function PlantillasPage() {
                     rows={2}
                     placeholder="Descripción opcional"
                   />
+                  <select
+                    value={editAreaId ?? ""}
+                    onChange={(e) => setEditAreaId(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                  >
+                    <option value="">Sin área</option>
+                    {areas?.map((a: any) => (
+                      <option key={a.id} value={a.id}>{a.nombre}</option>
+                    ))}
+                  </select>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -555,10 +592,17 @@ export function PlantillasPage() {
                         {p.descripcion}
                       </p>
                     )}
-                    <p className="text-xs text-slate-400 mt-2">
-                      {Number(p.tareas_count) || 0} tarea
-                      {Number(p.tareas_count) !== 1 ? "s" : ""}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      {p.area_nombre && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                          {p.area_nombre}
+                        </span>
+                      )}
+                      <p className="text-xs text-slate-400">
+                        {Number(p.tareas_count) || 0} tarea
+                        {Number(p.tareas_count) !== 1 ? "s" : ""}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="flex gap-1 ml-4 shrink-0">

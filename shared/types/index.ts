@@ -40,6 +40,19 @@ export interface Servicio {
   colaborador_nombre: string | null;
   cliente_nombre: string;
   cliente_email: string | null;
+  cliente_dni: string | null;
+  cliente_apellido_paterno: string | null;
+  cliente_apellido_materno: string | null;
+  cliente_nombres: string | null;
+  cliente_telefono: string | null;
+  descripcion_equipo: string | null;
+  serie_equipo: string | null;
+  detalles_equipo: string | null;
+  descripcion_accesorio: string | null;
+  detalles_accesorio: string | null;
+  cliente_reporte: string | null;
+  diagnostico_inicial: string | null;
+  id_plantilla_inicial: number | null;
   datos_completos: boolean;
   consultado_cliente: boolean;
   tiempo_estimado: number | null;
@@ -136,6 +149,8 @@ export interface PlantillaProceso {
   id: number;
   nombre: string;
   descripcion: string | null;
+  area_id: number | null;
+  area_nombre: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -543,6 +558,8 @@ export interface Anuncio {
   contenido: string;
   activo: boolean;
   prioridad: "informativo" | "importante" | "urgente";
+  area_id: number | null;
+  area_nombre?: string | null;
   fecha_publicacion: string;
   fecha_expiracion: string | null;
   created_at: string;

@@ -26,7 +26,7 @@ export function useTodosAnuncios() {
 export function useCrearAnuncio() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { titulo: string; contenido: string; prioridad?: string; fecha_expiracion?: string }) =>
+    mutationFn: (data: { titulo: string; contenido: string; prioridad?: string; area_id?: number | null; fecha_expiracion?: string }) =>
       anunciosApi.crear(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["anuncios"] });
