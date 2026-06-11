@@ -219,7 +219,7 @@ export interface DisplayData {
   tareas_total: number;
   tareas_completadas: number;
   tiempo_transcurrido_min: number;
-  tecnicos: { id: number; nombres: string }[];
+  tecnico: { id: number; nombres: string | null } | null;
   created_at: string;
 }
 
@@ -405,7 +405,7 @@ export interface ManagerMiAreaResponse {
   servicios: (Servicio & {
     descripcion: string | null;
     prioridad: string;
-    tecnicos: { id: number; nombres: string | null }[];
+    tecnico: { id: number; nombres: string | null } | null;
     progreso: number;
     total_tareas: number;
     tareas_completadas: number;

@@ -671,16 +671,17 @@ async function seed() {
         );
         return Promise.resolve();
       }
-      return insertSafe(
-        "serviciocolaboradores",
-        {
-          servicio_id: serv.servicio_id,
-          colaborador_id: usr.usuario_id,
-        },
-        `servicio-colab ${colaborador} → ${servicio}`,
-      ).then((row) => {
-        if (row) console.log(`  ✅ ${colaborador} asignado a ${servicio}`);
-      });
+      return supabase
+        .from("servicios")
+        .update({ colaborador_id: usr.usuario_id })
+        .eq("servicio_id", serv.servicio_id)
+        .then(({ error }) => {
+          if (error) {
+            console.log(`  ❌ Error asignando ${colaborador} → ${servicio}: ${error.message}`);
+          } else {
+            console.log(`  ✅ ${colaborador} asignado a ${servicio}`);
+          }
+        });
     },
   );
 

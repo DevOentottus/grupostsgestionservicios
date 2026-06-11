@@ -182,7 +182,10 @@ export default function Layout() {
           <p className="text-[10px] text-blue-300 uppercase tracking-wider px-3 pb-1 font-semibold">
             Principal
           </p>
-          {nav.filter((item) => canSee(item.roles)).map(({ to, label, icon }) => (
+          {nav
+            .filter((item) => canSee(item.roles))
+            .filter((item) => !(user?.rol === "sistema" && item.to === "/miarea"))
+            .map(({ to, label, icon }) => (
             <NavLink
               key={to}
               to={to}

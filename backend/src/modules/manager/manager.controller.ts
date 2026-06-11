@@ -45,19 +45,18 @@ export async function managerController(app: FastifyInstance) {
         .eq("area_id", areaId)
         .order("servicio_id", { ascending: false });
 
+      // Cache nombres de colaboradores
+      const colIds = (serviciosData || []).map((s: any) => s.colaborador_id).filter(Boolean);
+      const { data: colsCache } = colIds.length > 0
+        ? await supabase.from("usuarios").select("usuario_id, usuario_nombres").in("usuario_id", colIds)
+        : { data: [] };
+      const nombresMap = new Map((colsCache || []).map((u: any) => [u.usuario_id, u.usuario_nombres]));
+
       const servicios = await Promise.all(
         (serviciosData || []).map(async (s: any) => {
-          // Técnicos asignados a este servicio
-          const { data: tecnicos } = await supabase
-            .from("serviciocolaboradores")
-            .select(`
-              colaborador_id,
-              usuarios!serviciocolaboradores_colaborador_id_fkey (
-                usuario_id,
-                usuario_nombres
-              )
-            `)
-            .eq("servicio_id", s.servicio_id);
+          const tecnico = s.colaborador_id
+            ? { id: s.colaborador_id, nombres: nombresMap.get(s.colaborador_id) || null }
+            : null;
 
           // Progreso de tareas
           const { data: tareasSvc } = await supabase
@@ -75,12 +74,9 @@ export async function managerController(app: FastifyInstance) {
             descripcion: s.servicio_descripcion,
             estado: s.servicio_estado,
             created_at: s.servicio_fecha_creacion,
-            cliente_nombre: null, // lo resolvemos abajo
+            cliente_nombre: null,
             prioridad: s.servicio_prioridad || "media",
-            tecnicos: (tecnicos || []).map((t: any) => ({
-              id: t.usuarios?.usuario_id || t.colaborador_id,
-              nombres: t.usuarios?.usuario_nombres || null,
-            })),
+            tecnico,
             progreso: totalTareas > 0 ? Math.round((compTareas / totalTareas) * 100) : 0,
             total_tareas: totalTareas,
             tareas_completadas: compTareas,
@@ -119,17 +115,15 @@ export async function managerController(app: FastifyInstance) {
 
           // Servicios asignados a este colaborador dentro del área
           const { data: servAsignados } = await supabase
-            .from("serviciocolaboradores")
+            .from("servicios")
             .select(`
               servicio_id,
-              servicios!serviciocolaboradores_servicio_id_fkey (
-                servicio_id,
-                servicio_codigo,
-                servicio_nombre,
-                servicio_estado
-              )
+              servicio_codigo,
+              servicio_nombre,
+              servicio_estado
             `)
-            .eq("colaborador_id", colId);
+            .eq("colaborador_id", colId)
+            .eq("area_id", areaId);
 
           // Tareas completadas por este colaborador
           const { data: tareasComp } = await supabase
@@ -139,9 +133,7 @@ export async function managerController(app: FastifyInstance) {
             .eq("tarea_estado", "completado");
 
           // Tareas pendientes en los servicios asignados
-          const serviciosIds = (servAsignados || []).map((sa: any) =>
-            sa.servicios?.servicio_id || sa.servicio_id
-          ).filter(Boolean);
+          const serviciosIds = (servAsignados || []).map((sa: any) => sa.servicio_id).filter(Boolean);
           let tareasPend = 0;
           if (serviciosIds.length > 0) {
             const { data: pendientes } = await supabase
@@ -162,10 +154,10 @@ export async function managerController(app: FastifyInstance) {
             tareas_activas: tareasPend,
             tareas_completadas: tareasComp?.length || 0,
             servicios_asignados: (servAsignados || []).map((sa: any) => ({
-              id: sa.servicios?.servicio_id || sa.servicio_id,
-              codigo: sa.servicios?.servicio_codigo || null,
-              titulo: sa.servicios?.servicio_nombre || null,
-              estado: sa.servicios?.servicio_estado || null,
+              id: sa.servicio_id,
+              codigo: sa.servicio_codigo || null,
+              titulo: sa.servicio_nombre || null,
+              estado: sa.servicio_estado || null,
             })),
           };
         })

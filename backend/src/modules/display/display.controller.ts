@@ -16,6 +16,15 @@ export async function displayController(app: FastifyInstance) {
       .order("servicio_id", { ascending: true });
 
     // Enriquecer con progreso y técnicos asignados
+    // Resolver nombres de colaboradores en un solo query
+    const colaboradorIds = (servicios || [])
+      .map((s: any) => s.colaborador_id)
+      .filter(Boolean);
+    const { data: usuariosCol } = colaboradorIds.length > 0
+      ? await supabase.from("usuarios").select("usuario_id, usuario_nombres").in("usuario_id", colaboradorIds)
+      : { data: [] };
+    const usuarioMap = new Map((usuariosCol || []).map((u: any) => [u.usuario_id, u.usuario_nombres]));
+
     const result = await Promise.all(
       (servicios || []).map(async (svc: any) => {
         // Contar tareas completadas
@@ -28,25 +37,9 @@ export async function displayController(app: FastifyInstance) {
         const completadas = tareasData?.filter((t: any) => t.tarea_estado === "completado").length || 0;
         const progreso = total > 0 ? Math.round((completadas / total) * 100) : 0;
 
-        // Obtener técnicos asignados
-        const { data: cols } = await supabase
-          .from("serviciocolaboradores")
-          .select(`
-            colaborador_id,
-            usuarios!serviciocolaboradores_colaborador_id_fkey (
-              usuario_id,
-              usuario_nombres
-            )
-          `)
-          .eq("servicio_id", svc.servicio_id);
-
-        const tecnicos = (cols || []).map((c: any) => {
-          const u = c.usuarios || {};
-          return {
-            id: u.usuario_id || c.colaborador_id,
-            nombres: u.usuario_nombres || null,
-          };
-        });
+        const tecnico = svc.colaborador_id
+          ? { id: svc.colaborador_id, nombres: usuarioMap.get(svc.colaborador_id) || null }
+          : null;
 
         let tiempoTranscurrido = 0;
         if (svc.servicio_fecha_inicio) {
@@ -71,7 +64,7 @@ export async function displayController(app: FastifyInstance) {
           tareas_total: total,
           tareas_completadas: completadas,
           tiempo_transcurrido_min: tiempoTranscurrido,
-          tecnicos,
+          tecnico,
         };
       })
     );
@@ -106,6 +99,13 @@ export async function displayController(app: FastifyInstance) {
         .order("servicio_estado", { ascending: false })
         .order("servicio_id", { ascending: false });
 
+      // Cache de nombres de usuarios de una sola vez
+      const colIds = (servicios || []).map((s: any) => s.colaborador_id).filter(Boolean);
+      const { data: usersCol } = colIds.length > 0
+        ? await supabase.from("usuarios").select("usuario_id, usuario_nombres, usuario_username").in("usuario_id", colIds)
+        : { data: [] };
+      const userMap = new Map((usersCol || []).map((u: any) => [u.usuario_id, u]));
+
       const result = await Promise.all(
         (servicios || []).map(async (svc: any) => {
           const { data: tareasData } = await supabase
@@ -117,26 +117,10 @@ export async function displayController(app: FastifyInstance) {
           const completadas = tareasData?.filter((t: any) => t.tarea_estado === "completado").length || 0;
           const progreso = total > 0 ? Math.round((completadas / total) * 100) : 0;
 
-          const { data: cols } = await supabase
-            .from("serviciocolaboradores")
-            .select(`
-              colaborador_id,
-              usuarios!serviciocolaboradores_colaborador_id_fkey (
-                usuario_id,
-                usuario_nombres,
-                usuario_username
-              )
-            `)
-            .eq("servicio_id", svc.servicio_id);
-
-          const tecnicos = (cols || []).map((c: any) => {
-            const u = c.usuarios || {};
-            return {
-              id: u.usuario_id || c.colaborador_id,
-              nombres: u.usuario_nombres || null,
-              username: u.usuario_username || null,
-            };
-          });
+          const u = svc.colaborador_id ? userMap.get(svc.colaborador_id) : null;
+          const tecnico = u
+            ? { id: u.usuario_id, nombres: u.usuario_nombres || null, username: u.usuario_username || null }
+            : null;
 
           let demorado = false;
           if (svc.servicio_fecha_inicio && svc.servicio_tiempo_estimado) {
@@ -160,7 +144,7 @@ export async function displayController(app: FastifyInstance) {
             tareas_total: total,
             tareas_completadas: completadas,
             demorado,
-            tecnicos,
+            tecnico,
             created_at: svc.servicio_fecha_creacion,
           };
         })

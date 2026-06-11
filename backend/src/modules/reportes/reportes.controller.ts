@@ -68,12 +68,10 @@ export async function reportesController(app: FastifyInstance) {
         const { count: tareasCompletadas } = await tareasQuery;
 
         // Servicios donde el colaborador participó
-        let serviciosQuery = supabase
-          .from("serviciocolaboradores")
+        const { count: serviciosCompletados } = await supabase
+          .from("servicios")
           .select("servicio_id", { count: "exact", head: true })
           .eq("colaborador_id", usuarioId);
-
-        const { count: serviciosCompletados } = await serviciosQuery;
 
         return {
           data: {

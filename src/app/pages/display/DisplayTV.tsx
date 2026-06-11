@@ -14,7 +14,7 @@ interface TVService {
   tareas_total: number;
   tareas_completadas: number;
   tiempo_transcurrido_min: number;
-  tecnicos: { id: number; nombres: string }[];
+  tecnico: { id: number; nombres: string } | null;
 }
 
 const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
@@ -106,19 +106,15 @@ export function DisplayTVPage() {
                     )}
                   </div>
 
-                  {/* Estado badge + técnicos */}
+                  {/* Estado badge + técnico */}
                   <div className="flex items-center justify-between mb-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text} font-bold`}>
                       {cfg.label}
                     </span>
-                    {svc.tecnicos.length > 0 && (
-                      <div className="flex gap-1 flex-wrap justify-end">
-                        {svc.tecnicos.map((t) => (
-                          <span key={t.id} className="text-xs text-blue-300 bg-blue-800/50 px-1.5 py-0.5 rounded">
-                            {t.nombres?.split(" ")[0] || "—"}
-                          </span>
-                        ))}
-                      </div>
+                    {svc.tecnico && (
+                      <span className="text-xs text-blue-300 bg-blue-800/50 px-1.5 py-0.5 rounded">
+                        {svc.tecnico.nombres?.split(" ")[0] || "—"}
+                      </span>
                     )}
                   </div>
 

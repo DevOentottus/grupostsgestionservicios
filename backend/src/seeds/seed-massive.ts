@@ -343,20 +343,22 @@ async function seedMassive() {
   }
   console.log(`  📊 Tareas insertadas\n`);
 
-  // ─── 7. SERVICIO-COLABORADORES ─────────────────────────────────
-  console.log("👥 Asignando colaboradores a servicios…");
+  // ─── 7. ASIGNAR COLABORADOR A SERVICIOS ────────────────────────
+  console.log("👥 Asignando colaborador a cada servicio…");
 
   for (const codigo of allServicioCodes) {
     const svc = servicioMap.get(codigo);
     if (!svc) continue;
-    // Asignar 1-2 colaboradores por servicio
-    const numAsignaciones = 1 + Math.floor(Math.random() * 2);
-    const shuffled = [...allColabUsers].sort(() => Math.random() - 0.5);
-    for (let i = 0; i < Math.min(numAsignaciones, shuffled.length); i++) {
-      await insertSafe("serviciocolaboradores", {
-        servicio_id: svc.servicio_id,
-        colaborador_id: shuffled[i].usuario_id,
-      }, `${shuffled[i].usuario_username} → ${codigo}`);
+    // Asignar un colaborador aleatorio
+    const colab = allColabUsers[Math.floor(Math.random() * allColabUsers.length)];
+    const { error } = await supabase
+      .from("servicios")
+      .update({ colaborador_id: colab.usuario_id })
+      .eq("servicio_id", svc.servicio_id);
+    if (error) {
+      console.log(`  ❌ Error asignando ${colab.usuario_username} → ${codigo}: ${error.message}`);
+    } else {
+      console.log(`  ✅ ${colab.usuario_username} → ${codigo}`);
     }
   }
   console.log(`  📊 Asignaciones servicio-colaborador completadas\n`);

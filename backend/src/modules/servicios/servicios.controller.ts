@@ -35,16 +35,7 @@ export async function serviciosController(app: FastifyInstance) {
 
     // Colaborador: solo ve servicios donde está asignado
     if (user.rol === "colaborador") {
-      const { data: asignaciones } = await supabase
-        .from("serviciocolaboradores")
-        .select("servicio_id")
-        .eq("colaborador_id", user.user_id);
-
-      const ids = (asignaciones || []).map((a: any) => a.servicio_id);
-      if (ids.length === 0) {
-        return { data: [] };
-      }
-      dbQuery = dbQuery.in("servicio_id", ids);
+      dbQuery = dbQuery.eq("colaborador_id", user.user_id);
     }
 
     if (query.estado) {
