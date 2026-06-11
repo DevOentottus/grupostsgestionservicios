@@ -22,7 +22,6 @@ import { DisplayTVPage } from "@/app/pages/display/DisplayTV.js";
 import { DisplayWaitingRoomPage } from "@/app/pages/display/DisplayWaitingRoom.js";
 import { DisplayWorkRoomPage } from "@/app/pages/display/DisplayWorkRoom.js";
 import { ServicioPublicoPage } from "@/app/pages/servicios/ServicioPublico.js";
-import { ManagerAreaPage } from "@/app/pages/manager/ManagerArea.js";
 import { ManagerDistribucionPage } from "@/app/pages/manager/ManagerDistribucion.js";
 import { ManagerDesempenoPage } from "@/app/pages/manager/ManagerDesempeno.js";
 import Layout from "@/app/layout/Layout.js";
@@ -102,11 +101,6 @@ export default function App() {
           } />
 
           {/* Encargado */}
-          <Route path="manager/mi-area" element={
-            <RequireRole roles={["encargado"]}>
-              <ManagerAreaPage />
-            </RequireRole>
-          } />
           <Route path="manager/distribucion" element={
             <RequireRole roles={["admin"]}>
               <ManagerDistribucionPage />

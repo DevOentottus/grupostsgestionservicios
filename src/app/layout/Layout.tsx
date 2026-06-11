@@ -11,7 +11,6 @@ import {
   Users,
   BarChart3,
   ScrollText,
-  Target,
   KanbanSquare,
   TrendingUp,
   MessageSquare,
@@ -23,7 +22,6 @@ import {
   HardHat,
   Menu,
   X,
-  Bell,
   Settings,
   ChevronRight,
 } from "lucide-react";
@@ -50,7 +48,6 @@ const nav: NavItem[] = [
 ];
 
 const managerNav: NavItem[] = [
-  { to: "/manager/mi-area", label: "Mi Área", icon: <Target className="w-4 h-4" />, roles: ["encargado"] },
   { to: "/manager/distribucion", label: "Distribución", icon: <KanbanSquare className="w-4 h-4" />, roles: ["admin"] },
   { to: "/manager/desempeno", label: "Desempeño", icon: <TrendingUp className="w-4 h-4" />, roles: ["admin", "encargado"] },
 ];
@@ -61,38 +58,6 @@ const displayLinks: NavItem[] = [
   { to: "/display/work-room", label: "Sala Trabajo", icon: <HardHat className="w-3.5 h-3.5" />, roles: ["admin"] },
   { to: "/monitor", label: "Monitor", icon: <Monitor className="w-3.5 h-3.5" />, roles: ["admin"] },
 ];
-
-function getNotifications(rol: string) {
-  const base: { id: number; type: string; message: string; time: string }[] = [];
-
-  if (rol === "admin") {
-    base.push(
-      { id: 1, type: "info", message: "Nuevo servicio creado: SVC-042", time: "Hace 5 min" },
-      { id: 2, type: "warning", message: "Servicio SVC-038 próximo a vencer", time: "Hace 15 min" },
-      { id: 3, type: "success", message: "Servicio SVC-041 completado", time: "Hace 1 hora" },
-      { id: 4, type: "info", message: "Nuevo colaborador asignado al Área 3", time: "Hace 2 horas" },
-      { id: 5, type: "warning", message: "Servicio SVC-035 bloqueado", time: "Hace 3 horas" },
-    );
-  } else if (rol === "encargado") {
-    base.push(
-      { id: 1, type: "warning", message: "Servicio pendiente por vencer en tu área", time: "Hace 10 min" },
-      { id: 2, type: "success", message: "Servicio completado en tu área", time: "Hace 30 min" },
-      { id: 3, type: "info", message: "Nuevo colaborador asignado a tu área", time: "Hace 1 hora" },
-      { id: 4, type: "warning", message: "Servicio bloqueado en tu área", time: "Hace 2 horas" },
-      { id: 5, type: "info", message: "Solicitud de soporte recibida", time: "Hace 3 horas" },
-    );
-  } else {
-    // colaborador — solo notificaciones relacionadas a él o sus servicios
-    base.push(
-      { id: 1, type: "info", message: "Te asignaron una nueva tarea en SRV-042", time: "Hace 5 min" },
-      { id: 2, type: "success", message: "Completaste la tarea \"Revisar cableado\" en SRV-041", time: "Hace 20 min" },
-      { id: 3, type: "warning", message: "Tu servicio SRV-038 está próximo a vencer", time: "Hace 1 hora" },
-      { id: 4, type: "warning", message: "El servicio SRV-035 fue bloqueado", time: "Hace 2 horas" },
-    );
-  }
-
-  return base;
-}
 
 function RolBadge({ rol }: { rol: string }) {
   const styles: Record<string, string> = {
@@ -133,11 +98,8 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const notifications = getNotifications(user?.rol || "");
 
   const handleLogout = () => {
     setUserMenuOpen(false);
@@ -164,12 +126,9 @@ export default function Layout() {
 
   const pageTitle = getPageTitle(location.pathname);
 
-  // Close dropdowns on outside click
+  // Close user menu on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setNotifOpen(false);
-      }
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
@@ -326,58 +285,6 @@ export default function Layout() {
 
           {/* Right actions */}
           <div className="ml-auto flex items-center gap-1">
-            {/* Notifications */}
-            <div className="relative" ref={notifRef}>
-              <button
-                onClick={() => setNotifOpen(!notifOpen)}
-                className={cn(
-                  "relative p-2 rounded-lg transition-colors",
-                  notifOpen ? "bg-gray-100 text-gray-900" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100",
-                )}
-                aria-label="Notificaciones"
-              >
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                  {notifications.length}
-                </span>
-              </button>
-
-              {/* Notifications dropdown */}
-              {notifOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                  <div className="p-3 border-b border-gray-100">
-                    <p className="text-sm font-semibold text-gray-900">Notificaciones</p>
-                  </div>
-                  <div className="max-h-72 overflow-y-auto">
-                    {notifications.map((n) => (
-                      <div
-                        key={n.id}
-                        className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0"
-                      >
-                        <div
-                          className={cn(
-                            "w-2 h-2 rounded-full mt-1.5 shrink-0",
-                            n.type === "warning" && "bg-yellow-400",
-                            n.type === "success" && "bg-green-500",
-                            n.type === "info" && "bg-blue-500",
-                          )}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm text-gray-700">{n.message}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{n.time}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="p-2 border-t border-gray-100 text-center">
-                    <button className="text-xs text-blue-600 hover:text-blue-800 font-medium py-1">
-                      Ver todas
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Settings */}
             <button
               className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
