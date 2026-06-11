@@ -1,10 +1,6 @@
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { displayApi } from "@/api/client.js";
-
-interface Tecnico {
-  id: number;
-  nombres: string;
-}
 
 interface TVService {
   id: number;
@@ -12,44 +8,30 @@ interface TVService {
   titulo: string;
   descripcion: string | null;
   estado: string;
-  prioridad: string;
   cliente_nombre: string;
   area_id: number | null;
-  fecha_inicio: string | null;
-  tiempo_estimado: number | null;
   progreso: number;
   tareas_total: number;
   tareas_completadas: number;
   tiempo_transcurrido_min: number;
-  tecnicos: Tecnico[];
+  tecnicos: { id: number; nombres: string }[];
 }
 
-function formatDuration(minutes: number): string {
-  if (minutes < 60) return `${minutes} min`;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${h}h ${m}m`;
-}
-
-function prioridadColor(pri: string): string {
-  switch (pri) {
-    case "urgente": return "border-red-500 bg-red-50";
-    case "alta": return "border-orange-400 bg-orange-50";
-    case "media": return "border-blue-400 bg-blue-50";
-    default: return "border-slate-300 bg-slate-50";
-  }
-}
-
-function prioridadBadge(pri: string): string {
-  switch (pri) {
-    case "urgente": return "bg-red-600";
-    case "alta": return "bg-orange-500";
-    case "media": return "bg-blue-500";
-    default: return "bg-slate-400";
-  }
-}
+const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
+  en_progreso: { bg: "bg-blue-600", text: "text-white", label: "EN PROGRESO" },
+  completado: { bg: "bg-green-600", text: "text-white", label: "COMPLETADO" },
+  pendiente: { bg: "bg-yellow-500", text: "text-blue-900", label: "PENDIENTE" },
+  bloqueado: { bg: "bg-red-600", text: "text-white", label: "BLOQUEADO" },
+};
 
 export function DisplayTVPage() {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const { data, isLoading } = useQuery({
     queryKey: ["display", "tv"],
     queryFn: async () => {
@@ -62,100 +44,119 @@ export function DisplayTVPage() {
 
   if (isLoading) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-slate-900 text-white text-2xl">
+      <div className="min-h-screen flex items-center justify-center bg-blue-950 text-white text-2xl">
         Cargando servicios activos...
       </div>
     );
   }
 
   const servicios = data || [];
+  const activos = servicios.filter(s => s.estado === "en_progreso");
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-slate-900 text-white p-6"
-      style={{ cursor: "none" }}
-    >
+    <div className="min-h-screen bg-blue-950 p-6 flex flex-col" style={{ cursor: "none" }}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">ServicioLocalSTS — TV</h1>
-        <span className="text-lg text-slate-400">
-          {new Date().toLocaleTimeString("es-PE")}
-          <span className="ml-3 text-sm animate-pulse">● EN VIVO</span>
-        </span>
+      <div className="flex items-center justify-between mb-6 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center">
+            <span className="text-blue-900 font-bold text-lg">STS</span>
+          </div>
+          <div>
+            <p className="text-white text-lg font-bold">ServicioLocalSTS — Panel General</p>
+            <p className="text-blue-300 text-sm">
+              {currentTime.toLocaleDateString("es-PE", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              })}
+            </p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-yellow-400 text-3xl font-bold font-mono">
+            {currentTime.toLocaleTimeString("es-PE", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+          <p className="text-blue-300 text-xs">{activos.length} servicios activos</p>
+        </div>
       </div>
 
+      {/* Content */}
       {servicios.length === 0 ? (
-        <div className="h-[80vh] flex items-center justify-center text-slate-500 text-3xl">
+        <div className="flex-1 flex items-center justify-center text-blue-500 text-3xl">
           No hay servicios activos en este momento
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 h-[calc(100vh-100px)] overflow-y-auto scrollbar-hide">
-          {servicios.map((svc) => (
-            <div
-              key={svc.id}
-              className={`rounded-2xl border-2 p-5 flex flex-col justify-between transition-all ${prioridadColor(svc.prioridad)} bg-opacity-10 backdrop-blur-sm`}
-            >
-              {/* Header: Código + Prioridad */}
-              <div>
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <span className="text-4xl font-bold text-white">{svc.codigo}</span>
-                    <span className={`ml-2 px-2 py-0.5 rounded text-xs font-bold text-white ${prioridadBadge(svc.prioridad)}`}>
-                      {svc.prioridad.toUpperCase()}
-                    </span>
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {servicios.map((svc) => {
+              const cfg = statusConfig[svc.estado] || statusConfig.en_progreso;
+              return (
+                <div
+                  key={svc.id}
+                  className="bg-blue-900/50 rounded-xl p-4 border border-blue-800 hover:border-blue-600 transition-colors"
+                >
+                  {/* Header row */}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-yellow-400 text-sm font-bold">{svc.codigo}</span>
+                    {svc.cliente_nombre && (
+                      <span className="text-blue-300 text-xs truncate ml-2">{svc.cliente_nombre}</span>
+                    )}
                   </div>
-                  {svc.tiempo_estimado && (
-                    <span className="text-sm text-slate-400">
-                      Est: {formatDuration(svc.tiempo_estimado)}
+
+                  {/* Estado badge + técnicos */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${cfg.bg} ${cfg.text} font-bold`}>
+                      {cfg.label}
                     </span>
+                    {svc.tecnicos.length > 0 && (
+                      <div className="flex gap-1 flex-wrap justify-end">
+                        {svc.tecnicos.map((t) => (
+                          <span key={t.id} className="text-xs text-blue-300 bg-blue-800/50 px-1.5 py-0.5 rounded">
+                            {t.nombres?.split(" ")[0] || "—"}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Descripción */}
+                  {svc.titulo && (
+                    <p className="text-white text-xs mb-3 line-clamp-2">{svc.titulo}</p>
                   )}
-                </div>
 
-                {/* Cliente */}
-                <p className="text-xl text-slate-200 mb-1">{svc.cliente_nombre}</p>
-
-                {/* Descripción */}
-                {svc.descripcion && (
-                  <p className="text-sm text-slate-400 line-clamp-2 mb-4">{svc.descripcion}</p>
-                )}
-              </div>
-
-              {/* Progress */}
-              <div>
-                <div className="flex items-center justify-between text-sm text-slate-300 mb-1">
-                  <span>Progreso</span>
-                  <span>
-                    {svc.tareas_completadas}/{svc.tareas_total} ({svc.progreso}%)
-                  </span>
-                </div>
-                <div className="w-full bg-slate-700 rounded-full h-3 mb-3">
-                  <div
-                    className="bg-green-500 h-3 rounded-full transition-all duration-1000"
-                    style={{ width: `${svc.progreso}%` }}
-                  />
-                </div>
-
-                {/* Tiempo transcurrido */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400">
-                    ⏱ {formatDuration(svc.tiempo_transcurrido_min)}
-                  </span>
-                  {/* Técnicos */}
-                  {svc.tecnicos.length > 0 && (
-                    <div className="flex gap-1">
-                      {svc.tecnicos.map((t) => (
-                        <span
-                          key={t.id}
-                          className="px-2 py-0.5 rounded-full bg-slate-700 text-xs text-slate-300"
-                        >
-                          {t.nombres.split(" ")[0]}
-                        </span>
-                      ))}
+                  {/* Progreso */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-blue-300">
+                        {svc.tareas_completadas}/{svc.tareas_total} tareas
+                      </span>
+                      <span className="text-white font-bold">{svc.progreso}%</span>
                     </div>
+                    <div className="h-2 bg-blue-900 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-1000 ${
+                          svc.progreso === 100 ? "bg-green-500" : "bg-blue-500"
+                        }`}
+                        style={{ width: `${svc.progreso}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Tiempo transcurrido */}
+                  {svc.tiempo_transcurrido_min > 0 && (
+                    <p className="text-blue-400 text-xs mt-2">
+                      ⏱ {svc.tiempo_transcurrido_min < 60
+                        ? `${svc.tiempo_transcurrido_min} min`
+                        : `${Math.floor(svc.tiempo_transcurrido_min / 60)}h ${svc.tiempo_transcurrido_min % 60}m`}
+                    </p>
                   )}
                 </div>
-              </div>
-            </div>
-          ))}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

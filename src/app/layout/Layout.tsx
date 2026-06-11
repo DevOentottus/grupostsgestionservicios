@@ -17,9 +17,7 @@ import {
   Megaphone,
   LogOut,
   Tv,
-  Monitor,
   Clock,
-  HardHat,
   Menu,
   X,
   Settings,
@@ -57,8 +55,7 @@ const managerNav: NavItem[] = [
 const displayLinks: NavItem[] = [
   { to: "/display/tv", label: "TV General", icon: <Tv className="w-3.5 h-3.5" />, roles: ["admin"] },
   { to: "/display/waiting-room", label: "Sala Espera", icon: <Clock className="w-3.5 h-3.5" />, roles: ["admin"] },
-  { to: "/display/work-room", label: "Sala Trabajo", icon: <HardHat className="w-3.5 h-3.5" />, roles: ["admin"] },
-  { to: "/monitor", label: "Monitor", icon: <Monitor className="w-3.5 h-3.5" />, roles: ["admin"] },
+  { to: "/seguimiento-cliente", label: "Seguimiento Cliente", icon: <FileText className="w-3.5 h-3.5" /> },
 ];
 
 function RolBadge({ rol }: { rol: string }) {
