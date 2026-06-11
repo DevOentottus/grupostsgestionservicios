@@ -23,7 +23,7 @@ export interface Usuario {
   email: string;
   rol: Rol;
   activo: boolean;
-  area_id: number | null;
+  area_ids: number[];
   created_at: string;
 }
 

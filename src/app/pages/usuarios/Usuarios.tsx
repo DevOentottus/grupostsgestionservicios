@@ -78,7 +78,7 @@ export function UsuariosPage() {
       nombres: u.nombres,
       email: u.email,
       rol: u.rol,
-      area_ids: [],
+      area_ids: u.area_ids || [],
     });
     setShowModal(true);
   };
@@ -92,8 +92,10 @@ export function UsuariosPage() {
     };
     if (form.username) payload.username = form.username;
     if (form.password) payload.password = form.password;
-    if (form.rol === "encargado" && form.area_ids.length > 0) {
+    if ((form.rol === "encargado" || form.rol === "colaborador") && form.area_ids.length > 0) {
       payload.area_ids = form.area_ids;
+    } else {
+      payload.area_ids = [];
     }
 
     if (editingUser) {
@@ -353,7 +355,13 @@ export function UsuariosPage() {
                 <label className="block text-xs text-gray-600 font-semibold mb-1">Rol</label>
                 <select
                   value={form.rol}
-                  onChange={(e) => setForm((p) => ({ ...p, rol: e.target.value, area_ids: e.target.value !== "encargado" ? [] : p.area_ids }))}
+                  onChange={(e) => setForm((p) => {
+                    const newRol = e.target.value;
+                    if (newRol !== "encargado" && newRol !== "colaborador") {
+                      return { ...p, rol: newRol, area_ids: [] };
+                    }
+                    return { ...p, rol: newRol };
+                  })}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
                 >
                   <option value="colaborador">Colaborador</option>
@@ -363,14 +371,18 @@ export function UsuariosPage() {
                 </select>
               </div>
 
-              {/* Area assignment for encargado role */}
-              {form.rol === "encargado" && areas && areas.length > 0 && (
+              {/* Area assignment for encargado/colaborador */}
+              {(form.rol === "encargado" || form.rol === "colaborador") && areas && areas.length > 0 && (
                 <div className="border border-blue-100 rounded-xl p-4 bg-blue-50 space-y-3">
                   <p className="text-xs text-blue-800 font-bold flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5" />
                     ASIGNACIÓN DE ÁREAS
                   </p>
-                  <p className="text-xs text-blue-600">Seleccioná las áreas que este encargado va a supervisar:</p>
+                  <p className="text-xs text-blue-600">
+                    {form.rol === "encargado"
+                      ? "Seleccioná las áreas que va a supervisar:"
+                      : "Seleccioná las áreas donde va a trabajar:"}
+                  </p>
                   <div className="space-y-2">
                     {areas.map((a: any) => (
                       <label

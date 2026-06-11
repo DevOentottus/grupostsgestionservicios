@@ -14,6 +14,7 @@ export const crearUsuarioSchema = z.object({
   telefono: z.string().max(20).optional(),
   email: z.string().email("Email inválido"),
   rol: z.enum(["admin", "encargado", "colaborador"]),
+  area_ids: z.array(z.number().int().positive()).optional(),
 });
 
 export const actualizarUsuarioSchema = z.object({
@@ -24,4 +25,5 @@ export const actualizarUsuarioSchema = z.object({
   email: z.string().email().optional(),
   rol: z.enum(["admin", "encargado", "colaborador"]).optional(),
   username: z.string().min(3).max(50).optional(),
+  area_ids: z.array(z.number().int().positive()).optional(),
 });

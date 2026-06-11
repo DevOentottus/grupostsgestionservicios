@@ -43,19 +43,49 @@ export async function usuariosController(app: FastifyInstance) {
         return { data: [], error: error.message };
       }
 
-      const rows = (usuarios || []).map((u: any) => ({
-        id: u.usuario_id,
-        username: u.usuario_username,
-        nombres: u.usuario_nombres,
-        apellidos: combineApellidos(u.usuario_apellido_paterno, u.usuario_apellido_materno),
-        dni: u.usuario_dni,
-        telefono: u.usuario_telefono,
-        email: u.usuario_correo,
-        rol: u.usuario_rol?.toLowerCase(),
-        activo: u.usuario_activo,
-        area_id: null,
-        created_at: u.usuario_fecha_creacion,
-      }));
+      // Resolver áreas de todos los usuarios en un solo batch
+      const userIds = (usuarios || []).map((u: any) => u.usuario_id);
+      const { data: areacols } = await supabase
+        .from("areacolaboradores")
+        .select("colaborador_id, area_id")
+        .in("colaborador_id", userIds);
+      const { data: areasEnc } = await supabase
+        .from("areas")
+        .select("area_id, area_encargado_id")
+        .in("area_encargado_id", userIds);
+
+      const colAreasMap = new Map<number, number[]>();
+      for (const ac of areacols || []) {
+        const list = colAreasMap.get(ac.colaborador_id) || [];
+        list.push(ac.area_id);
+        colAreasMap.set(ac.colaborador_id, list);
+      }
+      const encAreasMap = new Map<number, number[]>();
+      for (const a of areasEnc || []) {
+        if (!a.area_encargado_id) continue;
+        const list = encAreasMap.get(a.area_encargado_id) || [];
+        list.push(a.area_id);
+        encAreasMap.set(a.area_encargado_id, list);
+      }
+
+      const rows = (usuarios || []).map((u: any) => {
+        const areasDeColab = colAreasMap.get(u.usuario_id) || [];
+        const areasDeEnc = encAreasMap.get(u.usuario_id) || [];
+        const allAreas = [...new Set([...areasDeColab, ...areasDeEnc])];
+        return {
+          id: u.usuario_id,
+          username: u.usuario_username,
+          nombres: u.usuario_nombres,
+          apellidos: combineApellidos(u.usuario_apellido_paterno, u.usuario_apellido_materno),
+          dni: u.usuario_dni,
+          telefono: u.usuario_telefono,
+          email: u.usuario_correo,
+          rol: u.usuario_rol?.toLowerCase(),
+          activo: u.usuario_activo,
+          area_ids: allAreas,
+          created_at: u.usuario_fecha_creacion,
+        };
+      });
 
       return { data: rows };
     }
@@ -130,6 +160,11 @@ export async function usuariosController(app: FastifyInstance) {
       const user = newUsers?.[0];
       if (!user) throw new Error("No se pudo crear el usuario");
 
+      // Asignar áreas si se proporcionaron
+      if (input.area_ids && input.area_ids.length > 0) {
+        await asignarAreasUsuario(user.usuario_id, input.rol, input.area_ids);
+      }
+
       // Auditoría
       const authUser = request.user as { user_id: number };
       await auditLog(null, authUser.user_id, "CREATE", "usuario", user.usuario_id, {
@@ -147,6 +182,7 @@ export async function usuariosController(app: FastifyInstance) {
           email: user.usuario_correo,
           rol: user.usuario_rol?.toLowerCase(),
           activo: user.usuario_activo,
+          area_ids: input.area_ids || [],
           created_at: user.usuario_fecha_creacion,
         },
       });
@@ -198,6 +234,16 @@ export async function usuariosController(app: FastifyInstance) {
       if (!updatedUsers?.length) throw new NotFoundError("Usuario no encontrado");
 
       const updated = updatedUsers[0];
+
+      // Reasignar áreas si se proporcionaron
+      if (input.area_ids !== undefined) {
+        await asignarAreasUsuario(
+          parseInt(id),
+          (input.rol || updated.usuario_rol).toLowerCase(),
+          input.area_ids,
+        );
+      }
+
       // Auditoría
       const authUser = request.user as { user_id: number };
       await auditLog(null, authUser.user_id, "UPDATE", "usuario", parseInt(id), {
@@ -215,7 +261,7 @@ export async function usuariosController(app: FastifyInstance) {
           email: updated.usuario_correo,
           rol: updated.usuario_rol?.toLowerCase(),
           activo: updated.usuario_activo,
-          area_id: null,
+          area_ids: input.area_ids || [],
         },
       });
     }
@@ -292,4 +338,39 @@ export async function usuariosController(app: FastifyInstance) {
       });
     }
   );
+}
+
+// ── Helper: asignar áreas a un usuario según su rol ──
+async function asignarAreasUsuario(
+  usuarioId: number,
+  rol: string,
+  areaIds: number[],
+) {
+  // 1. Limpiar asignaciones existentes
+  await supabase.from("areacolaboradores").delete().eq("colaborador_id", usuarioId);
+  await supabase
+    .from("areas")
+    .update({ area_encargado_id: null })
+    .eq("area_encargado_id", usuarioId);
+
+  if (areaIds.length === 0) return;
+
+  // 2. Asignar según rol
+  if (rol === "encargado") {
+    for (const areaId of areaIds) {
+      await supabase
+        .from("areas")
+        .update({ area_encargado_id: usuarioId })
+        .eq("area_id", areaId);
+    }
+  } else if (rol === "colaborador") {
+    for (const areaId of areaIds) {
+      await supabase
+        .from("areacolaboradores")
+        .upsert(
+          { area_id: areaId, colaborador_id: usuarioId },
+          { onConflict: "area_id, colaborador_id", ignoreDuplicates: true },
+        );
+    }
+  }
 }

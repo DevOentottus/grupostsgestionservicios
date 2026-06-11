@@ -173,7 +173,7 @@ export default function Layout() {
             </Avatar>
             <div className="min-w-0">
               <span className="text-sm text-blue-100 truncate block">{user?.nombres}</span>
-              <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="flex flex-col gap-0.5 mt-0.5">
                 <RolBadge rol={user?.rol ?? ""} />
                 {user?.area_nombre && (
                   <span className="text-[10px] text-blue-300 truncate">{user.area_nombre}</span>
