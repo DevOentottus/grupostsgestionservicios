@@ -36,6 +36,24 @@ export async function loginUser(
   const valida = bcrypt.compareSync(password, usuario.usuario_contrasena);
   if (!valida) throw new UnauthorizedError("Credenciales inválidas");
 
+  // Obtener área del usuario (encargado → area_encargado_id, colaborador → areacolaboradores)
+  let area_id: number | null = null;
+  if (usuario.usuario_rol?.toLowerCase() === "encargado") {
+    const { data: areaData } = await supabase
+      .from("areas")
+      .select("area_id")
+      .eq("area_encargado_id", usuario.usuario_id)
+      .limit(1);
+    if (areaData?.length) area_id = areaData[0].area_id;
+  } else if (usuario.usuario_rol?.toLowerCase() === "colaborador") {
+    const { data: acData } = await supabase
+      .from("areacolaboradores")
+      .select("area_id")
+      .eq("colaborador_id", usuario.usuario_id)
+      .limit(1);
+    if (acData?.length) area_id = acData[0].area_id;
+  }
+
   return {
     user: {
       id: usuario.usuario_id,
@@ -44,7 +62,7 @@ export async function loginUser(
       email: usuario.usuario_correo,
       rol: (usuario.usuario_rol?.toLowerCase() || "colaborador") as Rol,
       activo: usuario.usuario_activo,
-      area_id: null, // area_id no está en la tabla usuarios de Supabase
+      area_id,
     },
   };
 }

@@ -52,10 +52,10 @@ export async function authController(app: FastifyInstance) {
       throw new UnauthorizedError("Token inválido");
     }
 
-    // Verificar que el usuario siga activo
+    // Verificar que el usuario siga activo y re-obtener area_id
     const { data: usuarios } = await supabase
       .from("usuarios")
-      .select("usuario_id, usuario_activo")
+      .select("usuario_id, usuario_activo, usuario_rol")
       .eq("usuario_id", payload.user_id)
       .limit(1);
 
@@ -64,12 +64,30 @@ export async function authController(app: FastifyInstance) {
       throw new UnauthorizedError("Usuario desactivado");
     }
 
+    // Re-obtener area_id actualizado
+    let area_id: number | null = null;
+    if (usuario.usuario_rol?.toLowerCase() === "encargado") {
+      const { data: areaData } = await supabase
+        .from("areas")
+        .select("area_id")
+        .eq("area_encargado_id", payload.user_id)
+        .limit(1);
+      if (areaData?.length) area_id = areaData[0].area_id;
+    } else if (usuario.usuario_rol?.toLowerCase() === "colaborador") {
+      const { data: acData } = await supabase
+        .from("areacolaboradores")
+        .select("area_id")
+        .eq("colaborador_id", payload.user_id)
+        .limit(1);
+      if (acData?.length) area_id = acData[0].area_id;
+    }
+
     // Emitir nuevo token
     const newToken = app.jwt.sign(
       {
         user_id: payload.user_id,
         rol: payload.rol,
-        area_id: payload.area_id,
+        area_id,
       },
       { expiresIn: config.jwt.expiresIn }
     );

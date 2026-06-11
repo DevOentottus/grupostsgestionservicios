@@ -8,6 +8,7 @@ interface AuthUser {
   email: string;
   rol: string;
   activo: boolean;
+  area_id: number | null;
 }
 
 interface AuthContextType {
