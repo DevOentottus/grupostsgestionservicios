@@ -32,7 +32,7 @@ export function useCrearServicio() {
       qc.invalidateQueries({ queryKey: ["servicios"] });
       toast.success("Servicio creado");
     },
-    onError: (err: any) => toast.error(err.response?.data?.detail || "Error al crear"),
+    // El componente maneja los errores campo por campo en su catch
   });
 }
 

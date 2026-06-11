@@ -8,7 +8,6 @@ import { z } from "zod";
 const servicioSchema = z.object({
   titulo: z.string().min(1),
   descripcion: z.string().optional(),
-  cliente_nombre: z.string().min(1),
   cliente_email: z.string().email().optional(),
   area_id: z.number().int().nullable().optional(),
   prioridad: z.enum(["baja", "media", "alta", "urgente"]).optional(),

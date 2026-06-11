@@ -190,8 +190,19 @@ export function NuevoServicioPage() {
       const res = await crearServicio.mutateAsync(payload);
       toast.success("Servicio creado");
       navigate(`/servicios/${res.data.data.id}`);
-    } catch {
-      // el hook ya muestra el error
+    } catch (err: any) {
+      const serverErrors = err?.response?.data?.errors;
+      if (serverErrors?.length) {
+        const fieldErrors: Record<string, string> = {};
+        for (const e of serverErrors) {
+          fieldErrors[e.field] = e.message;
+        }
+        setErrors(fieldErrors);
+      } else if (err?.response?.data?.detail) {
+        toast.error(err.response.data.detail);
+      } else {
+        toast.error("Error al crear el servicio");
+      }
     }
   };
 
