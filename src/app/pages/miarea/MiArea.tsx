@@ -5,7 +5,7 @@ import { useMiArea } from "@/api/queries/useManager.js";
 import type { ManagerMiAreaResponse } from "@shared/index.js";
 import {
   Building2, Users, Wrench, Clock, CheckCircle2,
-  AlertTriangle, AlertCircle, X,
+  AlertTriangle, AlertCircle, X, Trophy,
 } from "lucide-react";
 
 export function MiAreaPage() {
@@ -99,6 +99,46 @@ export function MiAreaPage() {
             <Users className="w-4 h-4 text-slate-400" />
             Colaboradores del área
           </h3>
+
+          {/* Ranking por servicios completados */}
+          <div className="mb-4">
+            <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <Trophy className="w-3.5 h-3.5 text-amber-500" />
+              Ranking por servicios completados
+            </h4>
+            <div className="space-y-1">
+              {[...colaboradores]
+                .sort((a, b) => (b.servicios_completados || 0) - (a.servicios_completados || 0))
+                .map((col, idx) => {
+                  const pos = idx + 1;
+                  const medal = pos === 1 ? "text-yellow-500" : pos === 2 ? "text-gray-400" : pos === 3 ? "text-amber-700" : "text-slate-300";
+                  return (
+                    <div
+                      key={col.usuario_id}
+                      className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 transition-colors"
+                    >
+                      <span className={`w-6 text-center text-sm font-bold ${medal}`}>
+                        {pos <= 3 ? ["1°","2°","3°"][pos-1] : `#${pos}`}
+                      </span>
+                      <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                        <span className="text-[10px] font-semibold text-slate-600">
+                          {col.nombres?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-800 truncate">{col.nombres}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-bold text-green-600">{col.servicios_completados || 0}</p>
+                        <p className="text-[10px] text-slate-400">completados</p>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+
+          {/* Grid de colaboradores */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {colaboradores.map((col) => (
               <div

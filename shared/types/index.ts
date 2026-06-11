@@ -444,6 +444,7 @@ export interface ManagerMiAreaResponse {
     rol: string;
     tareas_activas: number;
     tareas_completadas: number;
+    servicios_completados: number;
     servicios_asignados: {
       id: number;
       codigo: string | null;

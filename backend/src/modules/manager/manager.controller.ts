@@ -144,6 +144,10 @@ export async function managerController(app: FastifyInstance) {
             tareasPend = pendientes?.length || 0;
           }
 
+          const serviciosCompletados = (servAsignados || []).filter(
+            (sa: any) => sa.servicio_estado === "completado"
+          ).length;
+
           return {
             usuario_id: colId,
             id: colId,
@@ -153,6 +157,7 @@ export async function managerController(app: FastifyInstance) {
             rol: u.usuario_rol?.toLowerCase() || null,
             tareas_activas: tareasPend,
             tareas_completadas: tareasComp?.length || 0,
+            servicios_completados: serviciosCompletados,
             servicios_asignados: (servAsignados || []).map((sa: any) => ({
               id: sa.servicio_id,
               codigo: sa.servicio_codigo || null,
