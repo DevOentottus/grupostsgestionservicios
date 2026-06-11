@@ -36,6 +36,8 @@ export interface Servicio {
   estado: EstadoServicio;
   prioridad: Prioridad;
   area_id: number | null;
+  colaborador_id: number | null;
+  colaborador_nombre: string | null;
   cliente_nombre: string;
   cliente_email: string | null;
   datos_completos: boolean;

@@ -233,6 +233,12 @@ export function ServiciosPage() {
                         Área #{srv.area_id}
                       </span>
                     )}
+                    {srv.colaborador_nombre && (
+                      <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {srv.colaborador_nombre}
+                      </span>
+                    )}
                     {srv.fecha_inicio && (
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />

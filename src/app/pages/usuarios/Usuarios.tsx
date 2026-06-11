@@ -380,7 +380,7 @@ export function UsuariosPage() {
                   </p>
                   <p className="text-xs text-blue-600">
                     {form.rol === "encargado"
-                      ? "Seleccioná las áreas que va a supervisar:"
+                      ? "Seleccioná el área que va a supervisar (solo una):"
                       : "Seleccioná las áreas donde va a trabajar:"}
                   </p>
                   <div className="space-y-2">
@@ -389,17 +389,33 @@ export function UsuariosPage() {
                         key={a.id}
                         className="flex items-center gap-2 cursor-pointer select-none group"
                       >
-                        <div
-                          onClick={() => toggleAreaId(a.id)}
-                          className={cn(
-                            "w-5 h-5 rounded border-2 flex items-center justify-center transition",
-                            form.area_ids.includes(a.id)
-                              ? "bg-blue-600 border-blue-600"
-                              : "bg-white border-gray-300 group-hover:border-blue-400",
-                          )}
-                        >
-                          {form.area_ids.includes(a.id) && <Check className="w-3 h-3 text-white" />}
-                        </div>
+                        {form.rol === "encargado" ? (
+                          /* Radio button — single selection */
+                          <div
+                            onClick={() => setForm((prev) => ({ ...prev, area_ids: [a.id] }))}
+                            className={cn(
+                              "w-5 h-5 rounded-full border-2 flex items-center justify-center transition",
+                              form.area_ids.includes(a.id)
+                                ? "border-blue-600"
+                                : "border-gray-300 group-hover:border-blue-400",
+                            )}
+                          >
+                            {form.area_ids.includes(a.id) && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
+                          </div>
+                        ) : (
+                          /* Checkbox — multiple selection */
+                          <div
+                            onClick={() => toggleAreaId(a.id)}
+                            className={cn(
+                              "w-5 h-5 rounded border-2 flex items-center justify-center transition",
+                              form.area_ids.includes(a.id)
+                                ? "bg-blue-600 border-blue-600"
+                                : "bg-white border-gray-300 group-hover:border-blue-400",
+                            )}
+                          >
+                            {form.area_ids.includes(a.id) && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                        )}
                         <span className="text-sm text-gray-700">{a.nombre}</span>
                       </label>
                     ))}

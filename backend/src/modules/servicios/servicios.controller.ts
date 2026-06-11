@@ -31,7 +31,7 @@ export async function serviciosController(app: FastifyInstance) {
 
     let dbQuery = supabase
       .from("servicios")
-      .select("*");
+      .select("*, usuario_colaborador:usuarios!colaborador_id(usuario_nombres, usuario_apellido_paterno)");
 
     // Colaborador: solo ve servicios donde está asignado
     if (user.rol === "colaborador") {
@@ -55,7 +55,7 @@ export async function serviciosController(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const { data: servicios } = await supabase
       .from("servicios")
-      .select("*")
+      .select("*, usuario_colaborador:usuarios!colaborador_id(usuario_nombres, usuario_apellido_paterno)")
       .eq("servicio_id", parseInt(id))
       .limit(1);
 
@@ -480,6 +480,11 @@ export async function serviciosController(app: FastifyInstance) {
 
 // ── Helper: mapea servicio de Supabase al formato ServicioLocalSTS ──
 function mapServicio(s: any) {
+  const colab = s.usuario_colaborador;
+  const colaboradorNombre = colab
+    ? `${colab.usuario_nombres || ""} ${colab.usuario_apellido_paterno || ""}`.trim()
+    : null;
+
   return {
     id: s.servicio_id,
     codigo: s.servicio_codigo,
@@ -488,6 +493,8 @@ function mapServicio(s: any) {
     estado: s.servicio_estado,
     prioridad: "media", // no disponible en Supabase
     area_id: s.area_id,
+    colaborador_id: s.colaborador_id,
+    colaborador_nombre: colaboradorNombre,
     cliente_nombre: s.cliente_id ? `Cliente #${s.cliente_id}` : null,
     cliente_email: null, // no disponible en servicios
     datos_completos: false, // no disponible en Supabase

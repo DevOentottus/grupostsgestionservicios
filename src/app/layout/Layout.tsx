@@ -97,6 +97,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -156,101 +157,103 @@ export default function Layout() {
       {/* ===== SIDEBAR ===== */}
       <aside
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-50 w-[280px] bg-blue-900 text-white flex flex-col shrink-0 transition-transform duration-300 ease-in-out",
+          "fixed lg:static inset-y-0 left-0 z-50 bg-blue-900 text-white flex flex-col shrink-0 transition-all duration-300 ease-in-out",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          sidebarCollapsed ? "w-16" : "w-60",
         )}
       >
         {/* Brand header */}
-        <div className="px-5 py-5 border-b border-white/10">
+        <div className={cn("border-b border-white/10", sidebarCollapsed ? "px-3 py-4" : "px-5 py-5")}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-yellow-400 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-yellow-400 flex items-center justify-center shrink-0">
               <Wrench className="w-5 h-5 text-blue-900" />
             </div>
-            <div className="min-w-0">
-              <h1 className="text-base font-bold leading-tight">ServicioLocal</h1>
-               <p className="text-xs text-blue-200">STS</p>
-            </div>
+            {!sidebarCollapsed && (
+              <div className="min-w-0">
+                <h1 className="text-base font-bold leading-tight">ServicioLocal</h1>
+                <p className="text-xs text-blue-200">STS</p>
+              </div>
+            )}
           </div>
-          {/* User info */}
-          <div className="flex items-center gap-2 mt-3">
-            <Avatar className="w-7 h-7 shrink-0">
-              <AvatarFallback className="text-[10px] bg-blue-700 text-white">
-                {getInitials(user?.nombres || "")}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <span className="text-sm text-blue-100 truncate block">{user?.nombres}</span>
-              <div className="flex flex-col gap-0.5 mt-0.5">
-                <RolBadge rol={user?.rol ?? ""} />
-                {user?.area_nombre && (
-                  <span className="text-[10px] text-blue-300 truncate">{user.area_nombre}</span>
-                )}
+          {/* User info — only when expanded */}
+          {!sidebarCollapsed && (
+            <div className="flex items-center gap-2 mt-3">
+              <Avatar className="w-7 h-7 shrink-0">
+                <AvatarFallback className="text-[10px] bg-blue-700 text-white">
+                  {getInitials(user?.nombres || "")}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <span className="text-sm text-blue-100 truncate block">{user?.nombres}</span>
+                <div className="flex flex-col gap-0.5 mt-0.5">
+                  <RolBadge rol={user?.rol ?? ""} />
+                  {user?.area_nombre && (
+                    <span className="text-[10px] text-blue-300 truncate">{user.area_nombre}</span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          {/* Principal section */}
-          <p className="text-[10px] text-blue-300 uppercase tracking-wider px-3 pb-1 font-semibold">
-            Principal
-          </p>
+        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
           {nav
             .filter((item) => canSee(item.roles))
             .filter((item) => !(user?.rol === "sistema" && item.to === "/miarea"))
             .map((item) => {
               const { to, icon } = item;
               const label = getNavLabel(item);
+              const isActive = location.pathname === to || location.pathname.startsWith(to + "/");
               return (
                 <NavLink
                   key={to}
                   to={to}
                   onClick={closeSidebar}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                      isActive
-                        ? "bg-yellow-400 text-blue-900 font-medium"
-                        : "text-blue-100 hover:bg-blue-800 hover:text-white",
-                    )
-                  }
+                  className={cn(
+                    "flex items-center justify-center lg:justify-start gap-3 px-2 py-2 rounded-lg text-sm transition-colors",
+                    isActive
+                      ? "bg-yellow-400 text-blue-900 font-medium"
+                      : "text-blue-100 hover:bg-blue-800 hover:text-white",
+                  )}
+                  title={sidebarCollapsed ? label : undefined}
                 >
-                  {icon}
-                  {label}
+                  <span className="shrink-0">{icon}</span>
+                  {!sidebarCollapsed && <span className="truncate">{label}</span>}
                 </NavLink>
               );
             })}
 
           {/* Gestión section */}
-          {canSee(["admin", "encargado"]) && (
+          {canSee(["admin", "encargado"]) && !sidebarCollapsed && (
             <>
               <p className="text-[10px] text-blue-300 uppercase tracking-wider px-3 pt-4 pb-1 font-semibold">
                 Gestión
               </p>
-              {managerNav.filter((item) => canSee(item.roles)).map(({ to, label, icon }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  onClick={closeSidebar}
-                  className={({ isActive }) =>
-                    cn(
+              {managerNav.filter((item) => canSee(item.roles)).map(({ to, label, icon }) => {
+                const isActive = location.pathname === to || location.pathname.startsWith(to + "/");
+                return (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    onClick={closeSidebar}
+                    className={cn(
                       "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
                       isActive
                         ? "bg-yellow-400 text-blue-900 font-medium"
                         : "text-blue-100 hover:bg-blue-800 hover:text-white",
-                    )
-                  }
-                >
-                  {icon}
-                  {label}
-                </NavLink>
-              ))}
+                    )}
+                  >
+                    {icon}
+                    {label}
+                  </NavLink>
+                );
+              })}
             </>
           )}
 
-          {/* Pantallas section — solo admin */}
-          {displayLinks.filter((item) => canSee(item.roles)).length > 0 && (
+          {/* Pantallas section */}
+          {!sidebarCollapsed && displayLinks.filter((item) => canSee(item.roles)).length > 0 && (
             <>
               <p className="text-[10px] text-blue-300 uppercase tracking-wider px-3 pt-4 pb-1 font-semibold">
                 Pantallas
@@ -271,14 +274,25 @@ export default function Layout() {
           )}
         </nav>
 
-        {/* Logout */}
-        <div className="px-3 py-3 border-t border-white/10">
+        {/* Bottom actions */}
+        <div className={cn("border-t border-white/10 space-y-1", sidebarCollapsed ? "px-2 py-3" : "px-3 py-3")}>
+          {/* Collapse toggle — desktop only */}
+          <button
+            onClick={() => setSidebarCollapsed((c) => !c)}
+            className="hidden lg:flex w-full items-center justify-center lg:justify-start gap-3 px-2 py-2 rounded-lg text-sm text-blue-200 hover:text-white hover:bg-blue-800 transition-colors"
+            title={sidebarCollapsed ? "Expandir menú" : "Colapsar menú"}
+          >
+            <Menu className="w-4 h-4 shrink-0" />
+            {!sidebarCollapsed && <span>Colapsar</span>}
+          </button>
+          {/* Logout */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-blue-200 hover:text-white hover:bg-blue-800 transition-colors"
+            className="w-full flex items-center justify-center lg:justify-start gap-3 px-2 py-2 rounded-lg text-sm text-blue-200 hover:text-white hover:bg-blue-800 transition-colors"
+            title="Cerrar sesión"
           >
-            <LogOut className="w-4 h-4" />
-            Cerrar sesión
+            <LogOut className="w-4 h-4 shrink-0" />
+            {!sidebarCollapsed && <span>Cerrar sesión</span>}
           </button>
         </div>
       </aside>

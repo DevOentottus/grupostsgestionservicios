@@ -4,10 +4,8 @@ import {
   useCrearPlantilla,
   useEditarPlantilla,
   useEliminarPlantilla,
-  useAplicarPlantilla,
 } from "@/api/queries/usePlantillas.js";
 import { plantillasApi } from "@/api/client.js";
-import { useServicios } from "@/api/queries/useServicios.js";
 import type { PlantillaWithTareas, PlantillaListItem } from "@/api/queries/usePlantillas.js";
 
 interface TareaFormItem {
@@ -47,110 +45,6 @@ function ConfirmDialog({
             className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
           >
             Eliminar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Service Selector Modal ──
-function ServiceSelectorModal({
-  open,
-  plantillaId,
-  plantillaNombre,
-  onClose,
-}: {
-  open: boolean;
-  plantillaId: number;
-  plantillaNombre: string;
-  onClose: () => void;
-}) {
-  const { data: servicios } = useServicios();
-  const aplicarPlantilla = useAplicarPlantilla();
-  const [filter, setFilter] = useState("todos");
-
-  if (!open) return null;
-
-  const estados = ["todos", "pendiente", "en_progreso", "completado", "cancelado", "bloqueado"];
-  const filtered = servicios?.filter((s: any) =>
-    filter === "todos" ? true : s.estado === filter
-  ) ?? [];
-
-  const handleAplicar = async (servicioId: number) => {
-    await aplicarPlantilla.mutateAsync({ plantillaId, servicioId });
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl max-w-lg w-full mx-4 max-h-[80vh] flex flex-col shadow-xl">
-        <div className="p-4 border-b">
-          <h3 className="text-lg font-semibold text-slate-800">
-            Aplicar Plantilla
-          </h3>
-          <p className="text-sm text-slate-500 mt-1">
-            Seleccioná un servicio para aplicar "{plantillaNombre}"
-          </p>
-        </div>
-
-        {/* Filtro rápido */}
-        <div className="p-4 border-b flex gap-2 overflow-x-auto">
-          {estados.map((e) => (
-            <button
-              key={e}
-              onClick={() => setFilter(e)}
-              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                filter === e
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {e === "todos" ? "Todos" : e.replace("_", " ")}
-            </button>
-          ))}
-        </div>
-
-        {/* Lista de servicios */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {filtered.length === 0 && (
-            <p className="text-sm text-slate-400 text-center py-8">
-              No hay servicios en esta categoría
-            </p>
-          )}
-          {filtered.map((s: any) => (
-            <button
-              key={s.id}
-              onClick={() => handleAplicar(s.id)}
-              disabled={aplicarPlantilla.isPending}
-              className="w-full text-left p-3 rounded-lg hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-colors disabled:opacity-50"
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="text-xs font-mono text-slate-400">{s.codigo}</span>
-                  <span className="ml-2 text-sm font-medium text-slate-800">{s.titulo}</span>
-                </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  s.estado === "completado" ? "bg-green-100 text-green-700" :
-                  s.estado === "en_progreso" ? "bg-blue-100 text-blue-700" :
-                  s.estado === "bloqueado" ? "bg-red-100 text-red-700" :
-                  s.estado === "cancelado" ? "bg-slate-100 text-slate-500" :
-                  "bg-yellow-100 text-yellow-700"
-                }`}>
-                  {s.estado.replace("_", " ")}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">{s.cliente_nombre}</p>
-            </button>
-          ))}
-        </div>
-
-        <div className="p-4 border-t">
-          <button
-            onClick={onClose}
-            className="w-full px-4 py-2 text-sm rounded-lg border text-slate-600 hover:bg-slate-50"
-          >
-            Cancelar
           </button>
         </div>
       </div>
@@ -484,12 +378,6 @@ export function PlantillasPage() {
   // Delete
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  // Aplicar
-  const [applyTo, setApplyTo] = useState<{
-    id: number;
-    nombre: string;
-  } | null>(null);
-
   // Inline editing
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editNombre, setEditNombre] = useState("");
@@ -647,13 +535,6 @@ export function PlantillasPage() {
                     <div className="ml-auto flex gap-1">
                       <button
                         type="button"
-                        onClick={() => setApplyTo({ id: p.id, nombre: p.nombre })}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200"
-                      >
-                        Aplicar
-                      </button>
-                      <button
-                        type="button"
                         onClick={() => setDeleteId(p.id)}
                         className="text-xs px-3 py-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
                       >
@@ -681,13 +562,6 @@ export function PlantillasPage() {
                   </div>
 
                   <div className="flex gap-1 ml-4 shrink-0">
-                    <button
-                      onClick={() => setApplyTo({ id: p.id, nombre: p.nombre })}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200"
-                      title="Aplicar a servicio"
-                    >
-                      Aplicar
-                    </button>
                     <button
                       onClick={() => startInlineEdit(p.id)}
                       className="text-xs px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200"
@@ -731,14 +605,7 @@ export function PlantillasPage() {
         onCancel={() => setDeleteId(null)}
       />
 
-      {applyTo && (
-        <ServiceSelectorModal
-          open={true}
-          plantillaId={applyTo.id}
-          plantillaNombre={applyTo.nombre}
-          onClose={() => setApplyTo(null)}
-        />
-      )}
+
     </div>
   );
 }

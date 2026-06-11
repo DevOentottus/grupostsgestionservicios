@@ -162,6 +162,9 @@ export async function usuariosController(app: FastifyInstance) {
 
       // Asignar áreas si se proporcionaron
       if (input.area_ids && input.area_ids.length > 0) {
+        if (input.rol === "encargado" && input.area_ids.length > 1) {
+          throw new ValidationError("Un encargado solo puede estar asignado a un área");
+        }
         await asignarAreasUsuario(user.usuario_id, input.rol, input.area_ids);
       }
 
