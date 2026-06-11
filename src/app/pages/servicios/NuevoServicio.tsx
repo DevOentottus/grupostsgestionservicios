@@ -325,7 +325,7 @@ export function NuevoServicioPage() {
               placeholder="Ej: Reparación de pantalla, Instalación de software..."
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {isColaborador ? (
               <SelectField
                 label="Área"
                 value={form.area_id}
@@ -336,18 +336,31 @@ export function NuevoServicioPage() {
                 }))}
                 placeholder="Sin área"
               />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <SelectField
+                  label="Área"
+                  value={form.area_id}
+                  onChange={(v) => set("area_id", v)}
+                  options={(areas || []).map((a: any) => ({
+                    value: String(a.id),
+                    label: a.nombre,
+                  }))}
+                  placeholder="Sin área"
+                />
 
-              <SelectField
-                label="Técnico"
-                value={form.colaborador_id}
-                onChange={(v) => set("colaborador_id", v)}
-                options={tecnicos.map((t: Usuario) => ({
-                  value: String(t.id),
-                  label: `${t.nombres} ${t.apellidos || ""}`.trim(),
-                }))}
-                placeholder="Sin asignar"
-              />
-            </div>
+                <SelectField
+                  label="Técnico"
+                  value={form.colaborador_id}
+                  onChange={(v) => set("colaborador_id", v)}
+                  options={tecnicos.map((t: Usuario) => ({
+                    value: String(t.id),
+                    label: `${t.nombres} ${t.apellidos || ""}`.trim(),
+                  }))}
+                  placeholder="Sin asignar"
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <InputField

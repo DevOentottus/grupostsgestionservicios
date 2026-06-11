@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth.js";
 import { Wrench, Eye, EyeOff, AlertCircle, User, Lock, LogIn } from "lucide-react";
 
 export function LoginPage() {
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -12,19 +12,22 @@ export function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const destinoPorRol = (rol: string) =>
+    rol === "colaborador" || rol === "encargado" ? "/miarea" : "/dashboard";
+
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/dashboard", { replace: true });
+    if (isAuthenticated && user) {
+      navigate(destinoPorRol(user.rol), { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      await login(username, password);
-      navigate("/dashboard", { replace: true });
+      const userData = await login(username, password);
+      navigate(destinoPorRol(userData.rol), { replace: true });
     } catch (err: any) {
       setError(err.response?.data?.detail || "Usuario o contraseña incorrectos. Verifique sus credenciales.");
     } finally {
