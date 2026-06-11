@@ -52,6 +52,10 @@ export async function serviciosController(app: FastifyInstance) {
     if (user.rol === "colaborador") {
       dbQuery = dbQuery.eq("tecnico_principal_id", user.user_id);
     }
+    // Encargado: solo ve servicios de su área
+    if (user.rol === "encargado" && user.area_id) {
+      dbQuery = dbQuery.eq("area_id", user.area_id);
+    }
 
     if (query.estado) {
       dbQuery = dbQuery.eq("servicio_estado", query.estado);
