@@ -33,7 +33,7 @@ interface NavItem {
 }
 
 const nav: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, roles: ["admin", "encargado"] },
+  { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, roles: ["admin"] },
   { to: "/miarea", label: "Mi Área", icon: <Home className="w-4 h-4" />, roles: ["colaborador", "encargado"] },
   { to: "/servicios", label: "Servicios", icon: <Wrench className="w-4 h-4" /> },
   { to: "/solicitudes", label: "Solicitudes", icon: <MessageSquare className="w-4 h-4" /> },
@@ -123,6 +123,13 @@ export default function Layout() {
 
   const closeSidebar = () => setSidebarOpen(false);
 
+  const getNavLabel = (item: NavItem): string => {
+    if (item.to === "/servicios" && (user?.rol === "encargado" || user?.rol === "colaborador")) {
+      return "Mis servicios";
+    }
+    return item.label;
+  };
+
   const pageTitle = getPageTitle(location.pathname);
 
   // Close user menu on outside click
@@ -192,24 +199,28 @@ export default function Layout() {
           {nav
             .filter((item) => canSee(item.roles))
             .filter((item) => !(user?.rol === "sistema" && item.to === "/miarea"))
-            .map(({ to, label, icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              onClick={closeSidebar}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-                  isActive
-                    ? "bg-yellow-400 text-blue-900 font-medium"
-                    : "text-blue-100 hover:bg-blue-800 hover:text-white",
-                )
-              }
-            >
-              {icon}
-              {label}
-            </NavLink>
-          ))}
+            .map((item) => {
+              const { to, icon } = item;
+              const label = getNavLabel(item);
+              return (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={closeSidebar}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                      isActive
+                        ? "bg-yellow-400 text-blue-900 font-medium"
+                        : "text-blue-100 hover:bg-blue-800 hover:text-white",
+                    )
+                  }
+                >
+                  {icon}
+                  {label}
+                </NavLink>
+              );
+            })}
 
           {/* Gestión section */}
           {canSee(["admin", "encargado"]) && (
