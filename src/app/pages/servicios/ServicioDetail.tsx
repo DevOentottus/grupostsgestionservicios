@@ -13,6 +13,7 @@ import { KanbanBoard } from "./components/KanbanBoard.js";
 import { ProcessFlow } from "@/app/components/flow/ProcessFlow.js";
 import { ConfirmDialog } from "@/app/components/ConfirmDialog.js";
 import { useAreas } from "@/api/queries/useAreas.js";
+import { useAuth } from "@/lib/auth.js";
 import { cn } from "@/app/lib/utils";
 import {
   ArrowLeft, CheckCircle2, Clock, User, MessageSquare,
@@ -81,8 +82,13 @@ const ESTADO_ESTILO: Record<string, string> = {
 export function ServicioDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const servicioId = parseInt(id!);
+
+  const esAdmin = user?.rol === "admin";
+  const esEncargado = user?.rol === "encargado";
+  const esGestion = esAdmin || esEncargado; // admin/encargado pueden gestionar
 
   const { data: servicio, isLoading: svcLoading } = useServicio(servicioId);
   const { data: tareas, isLoading: tareasLoading } = useTareas(servicioId);
@@ -275,24 +281,33 @@ export function ServicioDetailPage() {
             <p className="text-sm text-gray-500">{servicio.cliente_nombre}</p>
           </div>
 
-          {/* Estado buttons */}
-          <div className="flex gap-1.5 flex-wrap justify-end">
-            {ESTADOS.map((e) => (
-              <button
-                key={e.id}
-                onClick={() => cambiarEstado.mutate({ id: servicioId, estado: e.id })}
-                disabled={servicio.estado === e.id}
-                className={cn(
-                  "text-xs px-2.5 py-1 rounded-full font-medium transition-colors",
-                  servicio.estado === e.id
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : e.color,
-                )}
-              >
-                {e.label}
-              </button>
-            ))}
-          </div>
+          {/* Estado buttons — solo admin/encargado */}
+          {esGestion ? (
+            <div className="flex gap-1.5 flex-wrap justify-end">
+              {ESTADOS.map((e) => (
+                <button
+                  key={e.id}
+                  onClick={() => cambiarEstado.mutate({ id: servicioId, estado: e.id })}
+                  disabled={servicio.estado === e.id}
+                  className={cn(
+                    "text-xs px-2.5 py-1 rounded-full font-medium transition-colors",
+                    servicio.estado === e.id
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : e.color,
+                  )}
+                >
+                  {e.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <span className={cn("text-xs px-3 py-1.5 rounded-full font-medium", ESTADO_ESTILO[servicio.estado] || "bg-gray-100 text-gray-600")}>
+              {servicio.estado === "en_progreso" ? "En Progreso" :
+               servicio.estado === "pendiente" ? "Pendiente" :
+               servicio.estado === "completado" ? "Completado" :
+               servicio.estado === "bloqueado" ? "Bloqueado" : servicio.estado}
+            </span>
+          )}
         </div>
 
         {servicio.descripcion && (

@@ -144,7 +144,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // ── PATCH /api/servicios/:id/estado ──
-  app.patch("/api/servicios/:id/estado", { preHandler: [requireRoles()] }, async (request, reply) => {
+  app.patch("/api/servicios/:id/estado", { preHandler: [requireRoles("admin", "encargado")] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { estado, motivo } = request.body as { estado: string; motivo?: string };
     const validos = ["pendiente", "en_progreso", "completado", "cancelado", "bloqueado"];
