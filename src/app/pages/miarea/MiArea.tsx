@@ -215,12 +215,10 @@ export function MiAreaPage() {
                   </div>
                 </div>
                 {/* Técnico asignado */}
-                {s.tecnico && (
-                  <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
-                    <Users className="w-3 h-3" />
-                    {s.tecnico.nombres || "—"}
-                  </div>
-                )}
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
+                  <Users className="w-3 h-3" />
+                  {s.tecnico?.nombres || <span className="italic">Sin técnico</span>}
+                </div>
               </div>
             ))}
           </div>
