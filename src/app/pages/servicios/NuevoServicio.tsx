@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
 import { useAreas } from "@/api/queries/useAreas.js";
@@ -14,6 +14,75 @@ import { toast } from "sonner";
 const inputClass = "w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-gray-50 transition";
 const labelClass = "block text-xs text-gray-600 font-semibold mb-1";
 const sectionTitleClass = "text-gray-800 font-bold text-sm flex items-center gap-2";
+
+// ─── Componentes extraídos para evitar recreación en cada render ───
+
+const InputField = memo(function InputField({
+  label, value, onChange, placeholder, required, rows, error,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  rows?: number;
+  error?: string;
+}) {
+  return (
+    <div>
+      <label className={labelClass}>
+        {label} {required && <span className="text-red-400">*</span>}
+      </label>
+      {rows ? (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`${inputClass} resize-none`}
+          rows={rows}
+          placeholder={placeholder}
+        />
+      ) : (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={inputClass}
+          placeholder={placeholder}
+        />
+      )}
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
+  );
+});
+
+const SelectField = memo(function SelectField({
+  label, value, onChange, options, placeholder, required,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  required?: boolean;
+}) {
+  return (
+    <div>
+      <label className={labelClass}>
+        {label} {required && <span className="text-red-400">*</span>}
+      </label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={inputClass}
+      >
+        <option value="">{placeholder || "Seleccionar..."}</option>
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+});
 
 export function NuevoServicioPage() {
   const navigate = useNavigate();
@@ -125,69 +194,6 @@ export function NuevoServicioPage() {
       // el hook ya muestra el error
     }
   };
-
-  const InputField = ({
-    label, value, onChange, placeholder, required, rows, error,
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    placeholder?: string;
-    required?: boolean;
-    rows?: number;
-    error?: string;
-  }) => (
-    <div>
-      <label className={labelClass}>
-        {label} {required && <span className="text-red-400">*</span>}
-      </label>
-      {rows ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={`${inputClass} resize-none`}
-          rows={rows}
-          placeholder={placeholder}
-        />
-      ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={inputClass}
-          placeholder={placeholder}
-        />
-      )}
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-    </div>
-  );
-
-  const SelectField = ({
-    label, value, onChange, options, placeholder, required,
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    options: { value: string; label: string }[];
-    placeholder?: string;
-    required?: boolean;
-  }) => (
-    <div>
-      <label className={labelClass}>
-        {label} {required && <span className="text-red-400">*</span>}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={inputClass}
-      >
-        <option value="">{placeholder || "Seleccionar..."}</option>
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
-    </div>
-  );
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
