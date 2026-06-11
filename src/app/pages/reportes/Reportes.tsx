@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useReporteColaborador, useReporteArea, useExportarReporte } from "@/api/queries/useReportes.js";
+import { useMiArea } from "@/api/queries/useManager.js";
 import { usuariosApi, areasApi } from "@/api/client.js";
 import { cn } from "@/app/lib/utils";
 import type { Usuario, Area } from "@shared/index.js";
@@ -31,14 +32,26 @@ export function ReportesPage() {
   const [areaFechaFin, setAreaFechaFin] = useState("");
 
   const exportar = useExportarReporte();
+  const { data: miArea } = useMiArea();
 
-  // Fetch colaboradores and areas for dropdowns
+  // Fetch colaboradores (encargado → solo su área, admin → todos)
   const { data: colaboradores } = useQuery({
-    queryKey: ["usuarios"],
+    queryKey: ["reportes-colaboradores", user?.rol, user?.area_id],
     queryFn: async () => {
+      if (user?.rol === "encargado" && miArea?.colaboradores) {
+        return miArea.colaboradores.map((c) => ({
+          id: c.usuario_id,
+          nombres: c.nombres,
+          apellidos: "",
+          username: c.username || "",
+          email: c.email,
+          rol: "colaborador",
+        }));
+      }
       const r = await usuariosApi.listar();
       return (r.data.data as Usuario[]).filter((u) => u.rol !== "admin");
     },
+    enabled: user?.rol !== "encargado" || !!miArea,
   });
 
   const { data: areas } = useQuery({

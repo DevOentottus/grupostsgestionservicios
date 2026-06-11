@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { useDesempeno } from "@/api/queries/useManager.js";
-import { useUsuarios } from "@/api/queries/useUsuarios.js";
+import { useDesempeno, useMiArea } from "@/api/queries/useManager.js";
 import { useAuth } from "@/lib/auth.js";
 
 function formatMinutos(m: number): string {
@@ -13,7 +12,7 @@ function formatMinutos(m: number): string {
 
 export function ManagerDesempenoPage() {
   const { user } = useAuth();
-  const { data: usuarios } = useUsuarios();
+  const { data: miArea } = useMiArea();
 
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -26,9 +25,8 @@ export function ManagerDesempenoPage() {
     today.toISOString().split("T")[0]
   );
 
-  // Get colaboradores from user list
-  const colaboradores =
-    usuarios?.filter((u: any) => u.rol === "colaborador") || [];
+  // Get colaboradores from Mi Área (solo los del área del encargado)
+  const colaboradores = miArea?.colaboradores || [];
 
   const { data, isLoading, isError } = useDesempeno(
     parseInt(colaboradorId),
@@ -60,8 +58,8 @@ export function ManagerDesempenoPage() {
               className="px-3 py-2 border rounded-lg text-sm min-w-[200px]"
             >
               <option value="">Seleccionar colaborador...</option>
-              {colaboradores.map((u: any) => (
-                <option key={u.id} value={u.id}>
+              {colaboradores.map((u) => (
+                <option key={u.usuario_id} value={u.usuario_id}>
                   {u.nombres}
                 </option>
               ))}

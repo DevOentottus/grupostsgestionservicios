@@ -49,7 +49,7 @@ const nav: NavItem[] = [
 ];
 
 const managerNav: NavItem[] = [
-  { to: "/manager/mi-area", label: "Mi Área", icon: <Target className="w-4 h-4" />, roles: ["admin", "encargado"] },
+  { to: "/manager/mi-area", label: "Mi Área", icon: <Target className="w-4 h-4" />, roles: ["encargado"] },
   { to: "/manager/distribucion", label: "Distribución", icon: <KanbanSquare className="w-4 h-4" />, roles: ["admin"] },
   { to: "/manager/desempeno", label: "Desempeño", icon: <TrendingUp className="w-4 h-4" />, roles: ["admin", "encargado"] },
 ];

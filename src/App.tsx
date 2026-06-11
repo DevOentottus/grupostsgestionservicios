@@ -95,9 +95,9 @@ export default function App() {
             </RequireRole>
           } />
 
-          {/* Encargado+ (admin or encargado) */}
+          {/* Encargado */}
           <Route path="manager/mi-area" element={
-            <RequireRole roles={["admin", "encargado"]}>
+            <RequireRole roles={["encargado"]}>
               <ManagerAreaPage />
             </RequireRole>
           } />
