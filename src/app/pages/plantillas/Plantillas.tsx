@@ -1,14 +1,14 @@
 import { useState } from "react";
 import {
   usePlantillas,
-  usePlantilla,
   useCrearPlantilla,
   useEditarPlantilla,
   useEliminarPlantilla,
   useAplicarPlantilla,
 } from "@/api/queries/usePlantillas.js";
+import { plantillasApi } from "@/api/client.js";
 import { useServicios } from "@/api/queries/useServicios.js";
-import type { PlantillaTarea } from "@shared/index.js";
+import type { PlantillaWithTareas, PlantillaListItem } from "@/api/queries/usePlantillas.js";
 
 interface TareaFormItem {
   key: string;
@@ -158,46 +158,25 @@ function ServiceSelectorModal({
   );
 }
 
-// ── Plantilla Form Modal ──
-function PlantillaFormModal({
+// ── Plantilla Create Modal (sólo creación, sin edición) ──
+function PlantillaCreateModal({
   open,
-  editId,
   onClose,
 }: {
   open: boolean;
-  editId: number | null;
   onClose: () => void;
 }) {
-  const { data: editData } = usePlantilla(editId ?? 0);
   const crearPlantilla = useCrearPlantilla();
-  const editarPlantilla = useEditarPlantilla();
-  const isEditing = !!editId;
 
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [tareas, setTareas] = useState<TareaFormItem[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // Cargar datos de edición
-  const [loaded, setLoaded] = useState(false);
-  if (open && isEditing && editData && !loaded) {
-    setNombre(editData.nombre);
-    setDescripcion(editData.descripcion ?? "");
-    setTareas(
-      editData.tareas.map((t: PlantillaTarea) => ({
-        key: `edit-${t.id}`,
-        titulo: t.titulo,
-      }))
-    );
-    setLoaded(true);
-  }
-
-  // Reset al abrir/cerrar
   const resetForm = () => {
     setNombre("");
     setDescripcion("");
     setTareas([]);
-    setLoaded(false);
   };
 
   if (!open) return null;
@@ -232,22 +211,11 @@ function PlantillaFormModal({
         .filter((t) => t.titulo.trim())
         .map((t, i) => ({ titulo: t.titulo.trim(), sort_order: i }));
 
-      if (isEditing) {
-        await editarPlantilla.mutateAsync({
-          id: editId,
-          data: {
-            nombre: nombre.trim(),
-            descripcion: descripcion.trim() || null,
-            tareas: tareasPayload,
-          },
-        });
-      } else {
-        await crearPlantilla.mutateAsync({
-          nombre: nombre.trim(),
-          descripcion: descripcion.trim() || null,
-          tareas: tareasPayload,
-        });
-      }
+      await crearPlantilla.mutateAsync({
+        nombre: nombre.trim(),
+        descripcion: descripcion.trim() || null,
+        tareas: tareasPayload,
+      });
       resetForm();
       onClose();
     } finally {
@@ -260,7 +228,7 @@ function PlantillaFormModal({
       <div className="bg-white rounded-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto shadow-xl">
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <h3 className="text-lg font-semibold text-slate-800">
-            {isEditing ? "Editar Plantilla" : "Nueva Plantilla"}
+            Nueva Plantilla
           </h3>
 
           {/* Nombre */}
@@ -314,7 +282,6 @@ function PlantillaFormModal({
               )}
               {tareas.map((tarea, index) => (
                 <div key={tarea.key} className="flex items-center gap-2">
-                  {/* Reorder buttons */}
                   <div className="flex flex-col gap-0.5">
                     <button
                       type="button"
@@ -371,7 +338,7 @@ function PlantillaFormModal({
               disabled={saving || !nombre.trim()}
               className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {saving ? "Guardando..." : isEditing ? "Actualizar" : "Crear"}
+              {saving ? "Guardando..." : "Crear"}
             </button>
           </div>
         </form>
@@ -380,27 +347,202 @@ function PlantillaFormModal({
   );
 }
 
+// ── Task Edit Modal ──
+function TaskEditModal({
+  open,
+  tareas,
+  onSave,
+  onClose,
+}: {
+  open: boolean;
+  tareas: TareaFormItem[];
+  onSave: (tareas: TareaFormItem[]) => void;
+  onClose: () => void;
+}) {
+  const [items, setItems] = useState<TareaFormItem[]>(tareas);
+
+  if (!open) return null;
+
+  const addTarea = () => {
+    setItems([...items, { key: crypto.randomUUID(), titulo: "" }]);
+  };
+
+  const removeTarea = (key: string) => {
+    setItems(items.filter((t) => t.key !== key));
+  };
+
+  const updateTarea = (key: string, titulo: string) => {
+    setItems(items.map((t) => (t.key === key ? { ...t, titulo } : t)));
+  };
+
+  const moveTarea = (index: number, direction: "up" | "down") => {
+    const newItems = [...items];
+    const target = direction === "up" ? index - 1 : index + 1;
+    if (target < 0 || target >= newItems.length) return;
+    [newItems[index], newItems[target]] = [newItems[target], newItems[index]];
+    setItems(newItems);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl max-w-lg w-full mx-4 max-h-[80vh] flex flex-col shadow-xl">
+        <div className="p-4 border-b">
+          <h3 className="text-lg font-semibold text-slate-800">Editar Tareas</h3>
+          <p className="text-sm text-slate-500 mt-1">
+            Agregá, eliminá o reordená las tareas de esta plantilla
+          </p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          {items.length === 0 && (
+            <p className="text-xs text-slate-400 text-center py-8">
+              Sin tareas. Agregá al menos una.
+            </p>
+          )}
+          {items.map((tarea, index) => (
+            <div key={tarea.key} className="flex items-center gap-2">
+              <div className="flex flex-col gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => moveTarea(index, "up")}
+                  disabled={index === 0}
+                  className="text-[10px] leading-none px-1 py-0.5 rounded bg-slate-100 text-slate-500 hover:bg-slate-200 disabled:opacity-30"
+                  title="Subir"
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveTarea(index, "down")}
+                  disabled={index === items.length - 1}
+                  className="text-[10px] leading-none px-1 py-0.5 rounded bg-slate-100 text-slate-500 hover:bg-slate-200 disabled:opacity-30"
+                  title="Bajar"
+                >
+                  ▼
+                </button>
+              </div>
+              <input
+                value={tarea.titulo}
+                onChange={(e) => updateTarea(tarea.key, e.target.value)}
+                className="flex-1 px-3 py-2 border rounded-lg text-sm"
+                placeholder={`Tarea ${index + 1}`}
+              />
+              <button
+                type="button"
+                onClick={() => removeTarea(tarea.key)}
+                className="text-xs px-2 py-2 rounded bg-red-50 text-red-500 hover:bg-red-100"
+                title="Eliminar tarea"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="p-4 border-t flex justify-between items-center">
+          <button
+            type="button"
+            onClick={addTarea}
+            className="text-xs px-3 py-1.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200"
+          >
+            + Agregar tarea
+          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm rounded-lg border text-slate-600 hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onSave(items);
+                onClose();
+              }}
+              className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+            >
+              Guardar tareas
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ──
 export function PlantillasPage() {
   const { data: plantillas, isLoading } = usePlantillas();
+  const editarPlantilla = useEditarPlantilla();
   const eliminarPlantilla = useEliminarPlantilla();
 
-  const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId] = useState<number | null>(null);
+  // Create modal
+  const [showCreate, setShowCreate] = useState(false);
+
+  // Delete
   const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  // Aplicar
   const [applyTo, setApplyTo] = useState<{
     id: number;
     nombre: string;
   } | null>(null);
 
-  const openCreate = () => {
-    setEditId(null);
-    setShowForm(true);
+  // Inline editing
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editNombre, setEditNombre] = useState("");
+  const [editDescripcion, setEditDescripcion] = useState("");
+  const [editTareas, setEditTareas] = useState<TareaFormItem[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
+  const [showTaskEdit, setShowTaskEdit] = useState(false);
+
+  const startInlineEdit = async (id: number) => {
+    try {
+      const res = await plantillasApi.obtener(id);
+      const data = res.data.data as PlantillaWithTareas;
+      setEditingId(id);
+      setEditNombre(data.nombre);
+      setEditDescripcion(data.descripcion ?? "");
+      setEditTareas(
+        data.tareas.map((t) => ({
+          key: `t-${t.id}`,
+          titulo: t.titulo,
+        }))
+      );
+    } catch {
+      // silently fail — keep card readonly
+    }
   };
 
-  const openEdit = (id: number) => {
-    setEditId(id);
-    setShowForm(true);
+  const cancelInlineEdit = () => {
+    setEditingId(null);
+    setEditNombre("");
+    setEditDescripcion("");
+    setEditTareas([]);
+  };
+
+  const saveInlineEdit = async () => {
+    if (!editingId) return;
+    if (!editNombre.trim()) return;
+    setEditSaving(true);
+    try {
+      const tareasPayload = editTareas
+        .filter((t) => t.titulo.trim())
+        .map((t, i) => ({ titulo: t.titulo.trim(), sort_order: i }));
+      await editarPlantilla.mutateAsync({
+        id: editingId,
+        data: {
+          nombre: editNombre.trim(),
+          descripcion: editDescripcion.trim() || null,
+          tareas: tareasPayload,
+        },
+      });
+      cancelInlineEdit();
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -411,7 +553,7 @@ export function PlantillasPage() {
 
   const getDeleteName = () => {
     if (!plantillas || deleteId === null) return "";
-    const p = plantillas.find((x: any) => x.id === deleteId);
+    const p = (plantillas as PlantillaListItem[]).find((x) => x.id === deleteId);
     return p?.nombre ?? "";
   };
 
@@ -423,7 +565,7 @@ export function PlantillasPage() {
           Plantillas de Proceso
         </h2>
         <button
-          onClick={openCreate}
+          onClick={() => setShowCreate(true)}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
         >
           + Nueva Plantilla
@@ -445,66 +587,140 @@ export function PlantillasPage() {
       {/* List */}
       {!isLoading && plantillas && plantillas.length > 0 && (
         <div className="grid gap-3">
-          {plantillas.map((p: any) => (
+          {(plantillas as PlantillaListItem[]).map((p) => (
             <div
               key={p.id}
-              className="bg-white rounded-xl border p-4 hover:shadow-sm transition-shadow"
+              className={`bg-white rounded-xl border p-4 transition-shadow ${
+                editingId === p.id
+                  ? "ring-2 ring-blue-400 shadow-md"
+                  : "hover:shadow-sm"
+              }`}
             >
-              <div className="flex justify-between items-start">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-800 truncate">
-                    {p.nombre}
-                  </h3>
-                  {p.descripcion && (
-                    <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">
-                      {p.descripcion}
-                    </p>
-                  )}
-                  <p className="text-xs text-slate-400 mt-2">
-                    {Number(p.tareas_count) || 0} tarea
-                    {Number(p.tareas_count) !== 1 ? "s" : ""}
-                  </p>
-                </div>
+              {editingId === p.id ? (
+                /* ── Inline Edit Mode ── */
+                <div className="space-y-3">
+                  <input
+                    value={editNombre}
+                    onChange={(e) => setEditNombre(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg text-sm font-semibold"
+                    placeholder="Nombre de la plantilla"
+                    required
+                  />
+                  <textarea
+                    value={editDescripcion}
+                    onChange={(e) => setEditDescripcion(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                    rows={2}
+                    placeholder="Descripción opcional"
+                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowTaskEdit(true)}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200"
+                    >
+                      Editar tareas ({editTareas.filter((t) => t.titulo.trim()).length})
+                    </button>
+                    <span className="text-xs text-slate-400">
+                      o creá nuevas desde el modal
+                    </span>
+                  </div>
 
-                <div className="flex gap-1 ml-4 shrink-0">
-                  <button
-                    onClick={() =>
-                      setApplyTo({ id: p.id, nombre: p.nombre })
-                    }
-                    className="text-xs px-3 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200"
-                    title="Aplicar a servicio"
-                  >
-                    Aplicar
-                  </button>
-                  <button
-                    onClick={() => openEdit(p.id)}
-                    className="text-xs px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200"
-                    title="Editar"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => setDeleteId(p.id)}
-                    className="text-xs px-3 py-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
-                    title="Eliminar"
-                  >
-                    Eliminar
-                  </button>
+                  {/* Acciones inline */}
+                  <div className="flex gap-2 pt-2 border-t">
+                    <button
+                      type="button"
+                      onClick={cancelInlineEdit}
+                      disabled={editSaving}
+                      className="px-4 py-2 text-sm rounded-lg border text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={saveInlineEdit}
+                      disabled={editSaving || !editNombre.trim()}
+                      className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {editSaving ? "Guardando..." : "Guardar"}
+                    </button>
+                    <div className="ml-auto flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setApplyTo({ id: p.id, nombre: p.nombre })}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200"
+                      >
+                        Aplicar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteId(p.id)}
+                        className="text-xs px-3 py-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                /* ── Read-only View ── */
+                <div className="flex justify-between items-start">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-slate-800 truncate">
+                      {p.nombre}
+                    </h3>
+                    {p.descripcion && (
+                      <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">
+                        {p.descripcion}
+                      </p>
+                    )}
+                    <p className="text-xs text-slate-400 mt-2">
+                      {Number(p.tareas_count) || 0} tarea
+                      {Number(p.tareas_count) !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-1 ml-4 shrink-0">
+                    <button
+                      onClick={() => setApplyTo({ id: p.id, nombre: p.nombre })}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200"
+                      title="Aplicar a servicio"
+                    >
+                      Aplicar
+                    </button>
+                    <button
+                      onClick={() => startInlineEdit(p.id)}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200"
+                      title="Editar"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => setDeleteId(p.id)}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
+                      title="Eliminar"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
 
       {/* Modals */}
-      <PlantillaFormModal
-        open={showForm}
-        editId={editId}
-        onClose={() => {
-          setShowForm(false);
-          setEditId(null);
-        }}
+      <PlantillaCreateModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+      />
+
+      <TaskEditModal
+        open={showTaskEdit}
+        tareas={editTareas}
+        onSave={(tareas) => setEditTareas(tareas)}
+        onClose={() => setShowTaskEdit(false)}
       />
 
       <ConfirmDialog
