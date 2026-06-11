@@ -118,13 +118,11 @@ async function seedMassive() {
 
   const areasData = [
     { nombre: "Soporte Técnico", encargadoKey: "carlos.garcia" },
+    { nombre: "Redes y Comunicaciones", encargadoKey: null },
+    { nombre: "Software", encargadoKey: null },
     { nombre: "Instalaciones", encargadoKey: "maria.lopez" },
     { nombre: "Mantenimiento", encargadoKey: null },
     { nombre: "Desarrollo", encargadoKey: null },
-    { nombre: "Redes", encargadoKey: null },
-    { nombre: "Seguridad", encargadoKey: null },
-    { nombre: "Infraestructura", encargadoKey: null },
-    { nombre: "Consultoría", encargadoKey: null },
   ];
 
   const areaMap = new Map<string, any>();
@@ -367,11 +365,14 @@ async function seedMassive() {
   console.log("📄 Insertando plantillas…");
 
   const plantillaTareasMap: Record<string, string[]> = {
-    "Instalación Estándar": ["Revisión de sitio", "Instalación de equipos", "Configuración inicial", "Pruebas de funcionamiento", "Capacitación al cliente"],
-    "Soporte Técnico": ["Diagnóstico inicial", "Verificar con cliente", "Ejecutar solución", "Documentar caso"],
-    "Desarrollo": ["Análisis de requisitos", "Diseño de solución", "Implementación", "Pruebas unitarias", "Despliegue"],
-    "Seguridad": ["Escaneo de vulnerabilidades", "Análisis de riesgos", "Implementación de controles", "Pruebas de penetración", "Documentación"],
-    "Mantenimiento Preventivo": ["Inspección visual", "Limpieza de equipos", "Actualización de firmware", "Verificación de respaldos", "Informe final"],
+    "Mantenimiento Preventivo": ["Inspección inicial de equipos", "Limpieza de componentes", "Verificación de conexiones", "Pruebas de funcionamiento", "Informe técnico"],
+    "Instalación de Equipos": ["Recepción y verificación de equipos", "Preparación del área", "Instalación física", "Configuración y puesta en marcha", "Pruebas de aceptación"],
+    "Diagnóstico y Reparación": ["Diagnóstico inicial", "Cotización", "Reparación", "Pruebas de calidad", "Entrega al cliente"],
+    "Calibración": ["Recepción de instrumentos", "Verificación pre-calibración", "Proceso de calibración", "Verificación post-calibración", "Emisión de certificados"],
+    "Primera configuración": ["Quitar cintas azules", "Colocar tintas", "Conectar a la energía electrica", "Configuración de red WiFi", "Prueba de impresión", "Verificación final"],
+    "Instalación Estándar": ["Revisión de sitio", "Instalación de equipos", "Pruebas de funcionamiento", "Capacitación al cliente"],
+    "Soporte Técnico": ["Diagnóstico inicial", "Ejecutar solución", "Verificar con cliente", "Documentar caso"],
+    "Escaneo de vulnerabilidades": ["Preparación del área", "Instalación física", "Configuración inicial", "Pruebas de aceptación"],
   };
 
   for (const [nombrePlantilla, tareasPlantilla] of Object.entries(plantillaTareasMap)) {
@@ -432,8 +433,8 @@ async function seedMassive() {
   // ─── 10. SOLICITUDES INTERNAS ──────────────────────────────────
   try {
     console.log("📝 Insertando solicitudes internas…");
-    const tiposSolicitud = ["soporte", "equipo", "permiso", "capacitacion", "otro"];
-    const estadosSolicitud = ["pendiente", "aprobado", "rechazado", "en_proceso"];
+    const tiposSolicitud = ["apoyo", "herramienta", "equipo"];
+    const estadosSolicitud = ["pendiente", "en_proceso", "completado", "rechazado"];
     const solicitudesMotivos = [
       "Necesito acceso al servidor de base de datos.",
       "Solicito nuevo monitor para mi estación.",
@@ -448,14 +449,11 @@ async function seedMassive() {
     ];
     for (let i = 0; i < 10; i++) {
       const autor = pick(allUsuarios);
-      const areaDestino = pick(allAreas);
-      await insertSafe("solicitudes", {
-        solicitud_titulo: `Solicitud #${i + 1} de ${autor.usuario_username}`,
-        solicitud_descripcion: pick(solicitudesMotivos),
-        solicitud_tipo: pick(tiposSolicitud),
-        solicitud_estado: pick(estadosSolicitud),
+      await insertSafe("solicitudesinternas", {
         usuario_id: autor.usuario_id,
-        area_id: areaDestino.area_id,
+        solicitud_tipo: pick(tiposSolicitud),
+        solicitud_descripcion: pick(solicitudesMotivos),
+        solicitud_estado: pick(estadosSolicitud),
         solicitud_fecha_creacion: daysAgo(Math.floor(Math.random() * 15)),
         solicitud_hora_creacion: randomTime(),
       }, `solicitud ${i + 1}`);
@@ -476,14 +474,14 @@ async function seedMassive() {
       { titulo: "Feriado pendiente", contenido: "Se recuerda que el lunes próximo es feriado. Coordinar guardias.", tipo: "info" },
     ];
     for (const a of anuncios) {
-      await insertSafe("anuncios", {
-        anuncio_titulo: a.titulo,
-        anuncio_contenido: a.contenido,
-        anuncio_tipo: a.tipo,
-        anuncio_activo: true,
-        publicado_por: userMap.get("admin")?.usuario_id ?? null,
-        anuncio_fecha_publicacion: daysAgo(Math.floor(Math.random() * 7)),
-      }, `anuncio: ${a.titulo}`);
+        await insertSafe("anuncios", {
+          usuario_id: userMap.get("admin")?.usuario_id ?? null,
+          anuncio_titulo: a.titulo,
+          anuncio_contenido: a.contenido,
+          anuncio_activo: true,
+          anuncio_fecha_publicacion: daysAgo(Math.floor(Math.random() * 7)),
+          anuncio_hora_publicacion: randomTime(),
+        }, `anuncio: ${a.titulo}`);
     }
     console.log(`  📊 Anuncios insertados\n`);
   } catch {
