@@ -104,8 +104,17 @@ export async function areasController(app: FastifyInstance) {
       if (error) throw new Error(error.message);
       if (!areasData?.length) return { data: [] };
 
+      // Deduplicar por nombre de área (conservar el área más antigua)
+      const seen = new Map<string, any>();
+      for (const a of areasData) {
+        if (!seen.has(a.area_nombre)) {
+          seen.set(a.area_nombre, a);
+        }
+      }
+      const uniqueAreas = Array.from(seen.values());
+
       // 3. Obtener encargados y counts
-      const encargadoIds = [...new Set(areasData.map((a: any) => a.area_encargado_id).filter(Boolean))];
+      const encargadoIds = [...new Set(uniqueAreas.map((a: any) => a.area_encargado_id).filter(Boolean))];
 
       const [encResult, countResult] = await Promise.all([
         encargadoIds.length
@@ -120,7 +129,7 @@ export async function areasController(app: FastifyInstance) {
         cMap.set(c.area_id, (cMap.get(c.area_id) || 0) + 1);
       }
 
-      const rows = areasData.map((a: any) => {
+      const rows = uniqueAreas.map((a: any) => {
         const enc = encMap.get(a.area_encargado_id);
         return {
           id: a.area_id,
