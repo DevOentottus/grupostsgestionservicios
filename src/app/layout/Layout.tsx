@@ -36,13 +36,13 @@ interface NavItem {
 }
 
 const nav: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
+  { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, roles: ["admin", "encargado"] },
   { to: "/servicios", label: "Servicios", icon: <Wrench className="w-4 h-4" /> },
   { to: "/solicitudes", label: "Solicitudes", icon: <MessageSquare className="w-4 h-4" /> },
   { to: "/plantillas", label: "Plantillas", icon: <FileText className="w-4 h-4" /> },
-  { to: "/areas", label: "Áreas", icon: <Building2 className="w-4 h-4" /> },
+  { to: "/areas", label: "Áreas", icon: <Building2 className="w-4 h-4" />, roles: ["admin", "encargado"] },
   { to: "/usuarios", label: "Usuarios", icon: <Users className="w-4 h-4" />, roles: ["sistema"] },
-  { to: "/reportes", label: "Reportes", icon: <BarChart3 className="w-4 h-4" /> },
+  { to: "/reportes", label: "Reportes", icon: <BarChart3 className="w-4 h-4" />, roles: ["admin", "encargado"] },
   { to: "/auditoria", label: "Auditoría", icon: <ScrollText className="w-4 h-4" />, roles: ["admin"] },
   { to: "/anuncios", label: "Anuncios", icon: <Megaphone className="w-4 h-4" />, roles: ["admin"] },
   { to: "/comunicaciones", label: "Comunicaciones", icon: <MessageSquare className="w-4 h-4" /> },

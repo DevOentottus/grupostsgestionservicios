@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/lib/auth.js";
+import { AuthProvider, useAuth } from "@/lib/auth.js";
 import { ErrorBoundary } from "@/app/components/ErrorBoundary.js";
 import { RequireAuth } from "@/app/components/RequireAuth.js";
 import { RequireRole } from "@/app/components/RequireRole.js";
@@ -26,6 +26,13 @@ import { ManagerDistribucionPage } from "@/app/pages/manager/ManagerDistribucion
 import { ManagerDesempenoPage } from "@/app/pages/manager/ManagerDesempeno.js";
 import Layout from "@/app/layout/Layout.js";
 
+/** Redirige según el rol del usuario autenticado */
+function IndexRedirect() {
+  const { user } = useAuth();
+  const destino = user?.rol === "colaborador" ? "/servicios" : "/dashboard";
+  return <Navigate to={destino} replace />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -47,14 +54,30 @@ export default function App() {
             </RequireAuth>
           }
         >
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
+          <Route index element={<IndexRedirect />} />
+          <Route path="dashboard" element={
+            <RequireRole roles={["admin", "encargado"]}>
+              <DashboardPage />
+            </RequireRole>
+          } />
           <Route path="servicios" element={<ServiciosPage />} />
           <Route path="servicios/:id" element={<ServicioDetailPage />} />
-          <Route path="areas" element={<AreasPage />} />
-          <Route path="areas/:id/servicios" element={<AreaServiciosPage />} />
+          <Route path="areas" element={
+            <RequireRole roles={["admin", "encargado"]}>
+              <AreasPage />
+            </RequireRole>
+          } />
+          <Route path="areas/:id/servicios" element={
+            <RequireRole roles={["admin", "encargado"]}>
+              <AreaServiciosPage />
+            </RequireRole>
+          } />
           <Route path="plantillas" element={<PlantillasPage />} />
-          <Route path="reportes" element={<ReportesPage />} />
+          <Route path="reportes" element={
+            <RequireRole roles={["admin", "encargado"]}>
+              <ReportesPage />
+            </RequireRole>
+          } />
           <Route path="solicitudes" element={<SolicitudesInternasPage />} />
           <Route path="anuncios" element={<AnunciosPage />} />
           <Route path="comunicaciones" element={<ComunicacionesPage />} />

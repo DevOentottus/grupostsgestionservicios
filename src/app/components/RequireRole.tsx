@@ -17,7 +17,7 @@ export function RequireRole({ roles, children }: RequireRoleProps) {
   // Sistema (super-admin) tiene acceso a todo
   if (!user || (user.rol !== "sistema" && !roles.includes(user.rol))) {
     toast.error("No tenés permisos para acceder a esta sección");
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/servicios" replace />;
   }
 
   return <>{children}</>;

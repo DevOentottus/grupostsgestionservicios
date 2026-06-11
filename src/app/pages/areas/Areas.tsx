@@ -10,6 +10,7 @@ import {
 } from "@/api/queries/useAreas.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import { useServicios } from "@/api/queries/useServicios.js";
+import { useAuth } from "@/lib/auth.js";
 import { cn } from "@/app/lib/utils";
 import type { AreaWithEncargado, AreaWithColaboradores } from "@shared/index.js";
 import {
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 
 export function AreasPage() {
+  const { user } = useAuth();
   const { data: areas, isLoading: areasLoading } = useAreas();
   const { data: usuarios } = useUsuarios();
   const { data: servicios } = useServicios();
@@ -93,6 +95,11 @@ export function AreasPage() {
     setMobileView("detail");
   };
 
+  // Encargado: solo ve su propia área
+  const visibleAreas = user?.rol === "encargado"
+    ? (areas || []).filter((a) => a.id === user.area_id)
+    : (areas || []);
+
   const getAreaServiceStats = (areaId: number) => {
     if (!servicios) return { total: 0, pendientes: 0, en_progreso: 0, completados: 0, bloqueados: 0 };
     const areaServicios = servicios.filter((s: any) => s.area_id === areaId);
@@ -130,21 +137,23 @@ export function AreasPage() {
             </button>
           ) : null}
           <h1 className="text-gray-900 font-bold">Áreas de Servicio</h1>
-          <p className="text-gray-500 text-sm">{areas?.length || 0} áreas registradas</p>
+          <p className="text-gray-500 text-sm">{visibleAreas.length} áreas registradas</p>
         </div>
-        <button
-          onClick={() => { resetForm(); setShowModal(true); }}
-          className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition"
-        >
-          <Plus className="w-4 h-4" />
-          Nueva Área
-        </button>
+        {user?.rol !== "encargado" && (
+          <button
+            onClick={() => { resetForm(); setShowModal(true); }}
+            className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition"
+          >
+            <Plus className="w-4 h-4" />
+            Nueva Área
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* ===== LEFT PANEL: Area list (40%) ===== */}
         <div className={cn("lg:col-span-2 space-y-3", mobileView === "detail" && "hidden lg:block")}>
-          {areas?.map((area: AreaWithEncargado) => {
+          {visibleAreas.map((area: AreaWithEncargado) => {
             const stats = getAreaServiceStats(area.id);
             const isSelected = selectedId === area.id;
             return (
@@ -197,7 +206,7 @@ export function AreasPage() {
               </button>
             );
           })}
-          {(!areas || areas.length === 0) && (
+          {visibleAreas.length === 0 && (
             <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
               <MapPin className="w-12 h-12 text-gray-200 mx-auto mb-3" />
               <p className="text-gray-400 text-sm">No hay áreas registradas</p>
@@ -228,22 +237,24 @@ export function AreasPage() {
                         <p className="text-gray-500 text-sm">ID: {selectedDetail.id}</p>
                       </div>
                     </div>
+                    {user?.rol !== "encargado" && (
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleEdit(areas?.find((a: any) => a.id === selectedId) as AreaWithEncargado)}
+                        onClick={() => handleEdit(visibleAreas.find((a: any) => a.id === selectedId) as AreaWithEncargado)}
                         className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition"
                         title="Editar"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => setDeleteConfirm(areas?.find((a: any) => a.id === selectedId) as AreaWithEncargado)}
+                        onClick={() => setDeleteConfirm(visibleAreas.find((a: any) => a.id === selectedId) as AreaWithEncargado)}
                         className="p-2 rounded-xl hover:bg-red-50 text-red-500 transition"
                         title="Eliminar"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
+                    )}
                   </div>
 
                   {/* Stats cards */}

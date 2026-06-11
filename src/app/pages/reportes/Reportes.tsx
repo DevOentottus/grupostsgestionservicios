@@ -24,7 +24,9 @@ export function ReportesPage() {
   const [colabFechaFin, setColabFechaFin] = useState("");
 
   // Area filters
-  const [areaId, setAreaId] = useState<number | undefined>();
+  const [areaId, setAreaId] = useState<number | undefined>(
+    user?.rol === "encargado" ? (user.area_id ?? undefined) : undefined
+  );
   const [areaFechaInicio, setAreaFechaInicio] = useState("");
   const [areaFechaFin, setAreaFechaFin] = useState("");
 
