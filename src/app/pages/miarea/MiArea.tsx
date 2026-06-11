@@ -174,11 +174,11 @@ export function MiAreaPage() {
                     />
                   </div>
                 </div>
-                {/* Técnicos */}
-                {s.tecnicos && s.tecnicos.length > 0 && (
+                {/* Técnico asignado */}
+                {s.tecnico && (
                   <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
                     <Users className="w-3 h-3" />
-                    {s.tecnicos.map((t) => t.nombres).filter(Boolean).join(", ")}
+                    {s.tecnico.nombres || "—"}
                   </div>
                 )}
               </div>
