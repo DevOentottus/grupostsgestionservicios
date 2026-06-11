@@ -9,15 +9,13 @@ import {
   useIniciarTiempo, useFinalizarTiempo,
 } from "@/api/queries/useSeguimiento.js";
 import { CommentsTab } from "./components/CommentsTab.js";
-import { KanbanBoard } from "./components/KanbanBoard.js";
 import { ProcessFlow } from "@/app/components/flow/ProcessFlow.js";
 import { ConfirmDialog } from "@/app/components/ConfirmDialog.js";
-import { useAreas } from "@/api/queries/useAreas.js";
 import { useAuth } from "@/lib/auth.js";
 import { cn } from "@/app/lib/utils";
 import {
   ArrowLeft, CheckCircle2, Clock, User, MessageSquare,
-  Send, AlertTriangle, Plus, X, ChevronRight, Activity,
+  Send, AlertTriangle, Plus, X, ChevronRight,
   Pencil, UserPlus, MessageCircle, BookOpen, Eye, Wrench,
   FileText, Star,
 } from "lucide-react";
@@ -26,7 +24,6 @@ import type { Tarea } from "@shared/index.js";
 // ── Tab Definitions ──
 const TABS = [
   { id: "tareas", label: "Tareas", icon: CheckCircle2 },
-  { id: "kanban", label: "Kanban", icon: Activity },
   { id: "flujo", label: "Flujo", icon: ChevronRight },
   { id: "comentarios", label: "Comentarios", icon: MessageSquare },
 ] as const;
@@ -46,14 +43,6 @@ const TIPO_TAREA_CONFIG: Record<string, { label: string; class: string }> = {
   administrativo: { label: "Administrativo", class: "bg-purple-100 text-purple-700" },
   cliente: { label: "Cliente", class: "bg-green-100 text-green-700" },
 };
-
-// ── Kanban column definitions ──
-const KANBAN_COLUMNS = [
-  { id: "pendiente", title: "Pendiente", headerClass: "bg-amber-100 text-amber-800", countClass: "bg-amber-200 text-amber-800" },
-  { id: "en_progreso", title: "En Progreso", headerClass: "bg-blue-100 text-blue-800", countClass: "bg-blue-200 text-blue-800" },
-  { id: "completado", title: "Completado", headerClass: "bg-green-100 text-green-800", countClass: "bg-green-200 text-green-800" },
-  { id: "bloqueado", title: "Bloqueado", headerClass: "bg-red-100 text-red-800", countClass: "bg-red-200 text-red-800" },
-];
 
 function formatDuration(minutes: number): string {
   if (minutes < 1) return "< 1 min";
@@ -106,15 +95,12 @@ export function ServicioDetailPage() {
   const editarTareaInline = useEditarTareaInline();
   const iniciarTiempo = useIniciarTiempo();
   const finalizarTiempo = useFinalizarTiempo();
-  const { data: areas } = useAreas();
-
   const [nuevaTarea, setNuevaTarea] = useState("");
   const [nuevaTareaTipo, setNuevaTareaTipo] = useState<string>("tecnico");
   const [editTareaId, setEditTareaId] = useState<number | null>(null);
   const [editTareaTitle, setEditTareaTitle] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Tarea | null>(null);
   const [activeTracking, setActiveTracking] = useState<Record<number, number | null>>({});
-  const [kanbanAreaFilter, setKanbanAreaFilter] = useState<string>("");
 
   const tareasSorted = [...(tareas || [])].sort((a: Tarea, b: Tarea) => a.orden - b.orden);
   const completadasCount = tareasSorted.filter((t) => t.completada).length;
@@ -145,11 +131,6 @@ export function ServicioDetailPage() {
     cambiarEstado.mutate({ id: servicioId, estado: "en_progreso", motivo: undefined });
   };
 
-  const handleTaskDrop = (taskId: number, targetColumn: string) => {
-    if (targetColumn === "completado") completarTarea.mutate(taskId);
-    else if (targetColumn === "pendiente" || targetColumn === "en_progreso") reabrirTarea.mutate(taskId);
-  };
-
   const handleStartTitleEdit = (tarea: Tarea) => {
     setEditTareaId(tarea.id);
     setEditTareaTitle(tarea.titulo);
@@ -176,29 +157,6 @@ export function ServicioDetailPage() {
   };
 
   const handleStartTimer = (tareaId: number) => iniciarTiempo.mutate(tareaId);
-
-  const kanbanItems = tareasSorted
-    .filter((tarea) => !kanbanAreaFilter || tarea.area_id === parseInt(kanbanAreaFilter))
-    .map((tarea) => {
-      let columnId: string;
-      if (tarea.completada) columnId = "completado";
-      else if (isBloqueado) columnId = "bloqueado";
-      else if (tarea.has_active_tracking) columnId = "en_progreso";
-      else columnId = "pendiente";
-
-      return {
-        id: tarea.id,
-        columnId,
-        titulo: tarea.titulo,
-        subtitulo: null,
-        badge: tarea.completada ? "Completada" : tarea.has_active_tracking ? "En curso" : null,
-        badgeClass: tarea.completada ? "bg-green-100 text-green-700" : tarea.has_active_tracking ? "bg-blue-100 text-blue-700" : undefined,
-        meta: [
-          ...(tarea.asignado_a ? [{ label: "Asignado" as const, value: `#${tarea.asignado_a}` }] : []),
-          ...(tarea.tiempo_estimado ? [{ label: "Tiempo" as const, value: `${tarea.tiempo_estimado} min` }] : []),
-        ],
-      };
-    });
 
   const flowSteps = tareasSorted.map((tarea) => ({
     id: tarea.id,
@@ -420,8 +378,9 @@ export function ServicioDetailPage() {
               <p className="text-sm text-gray-400 text-center py-8">No hay tareas. Agrega la primera.</p>
             ) : (
               <div className="divide-y divide-gray-50">
-                {tareasSorted.map((tarea) => {
+                {tareasSorted.map((tarea, idx) => {
                   const isEditing = editTareaId === tarea.id;
+                  const prevIncompleta = idx > 0 && !tareasSorted[idx - 1].completada;
                   return (
                     <div
                       key={tarea.id}
@@ -435,12 +394,16 @@ export function ServicioDetailPage() {
                         onClick={() =>
                           tarea.completada
                             ? reabrirTarea.mutate(tarea.id)
-                            : completarTarea.mutate(tarea.id)
+                            : !prevIncompleta && completarTarea.mutate(tarea.id)
                         }
+                        disabled={!tarea.completada && prevIncompleta}
+                        title={prevIncompleta && !tarea.completada ? "Completá la tarea anterior primero" : undefined}
                         className={cn(
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition",
                           tarea.completada
                             ? "bg-green-500 border-green-500"
+                            : prevIncompleta
+                            ? "border-gray-200 bg-gray-50 cursor-not-allowed"
                             : "border-gray-300 hover:border-blue-500",
                         )}
                       >
@@ -521,31 +484,6 @@ export function ServicioDetailPage() {
                 })}
               </div>
             )}
-          </div>
-        )}
-
-        {/* KANBAN TAB */}
-        {activeTab === "kanban" && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 space-y-4">
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500 font-medium">Filtrar por área:</label>
-              <select
-                value={kanbanAreaFilter}
-                onChange={(e) => setKanbanAreaFilter(e.target.value)}
-                className="px-2 py-1 border border-gray-200 rounded-lg text-xs bg-gray-50"
-              >
-                <option value="">Todas las áreas</option>
-                {(areas || []).map((a: any) => (
-                  <option key={a.id} value={a.id}>{a.nombre}</option>
-                ))}
-              </select>
-            </div>
-            <KanbanBoard
-              columns={KANBAN_COLUMNS}
-              items={kanbanItems}
-              onItemDrop={handleTaskDrop}
-              isLoading={tareasLoading}
-            />
           </div>
         )}
 
