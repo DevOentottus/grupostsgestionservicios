@@ -61,13 +61,37 @@ const displayLinks: NavItem[] = [
   { to: "/monitor", label: "Monitor", icon: <Monitor className="w-3.5 h-3.5" />, roles: ["admin"] },
 ];
 
-const mockNotifications = [
-  { id: 1, type: "info", message: "Nuevo servicio creado: SVC-042", time: "Hace 5 min" },
-  { id: 2, type: "warning", message: "Servicio SVC-038 próximo a vencer", time: "Hace 15 min" },
-  { id: 3, type: "success", message: "Servicio SVC-041 completado", time: "Hace 1 hora" },
-  { id: 4, type: "info", message: "Nuevo colaborador asignado al Área 3", time: "Hace 2 horas" },
-  { id: 5, type: "warning", message: "Servicio SVC-035 bloqueado", time: "Hace 3 horas" },
-];
+function getNotifications(rol: string) {
+  const base: { id: number; type: string; message: string; time: string }[] = [];
+
+  if (rol === "admin") {
+    base.push(
+      { id: 1, type: "info", message: "Nuevo servicio creado: SVC-042", time: "Hace 5 min" },
+      { id: 2, type: "warning", message: "Servicio SVC-038 próximo a vencer", time: "Hace 15 min" },
+      { id: 3, type: "success", message: "Servicio SVC-041 completado", time: "Hace 1 hora" },
+      { id: 4, type: "info", message: "Nuevo colaborador asignado al Área 3", time: "Hace 2 horas" },
+      { id: 5, type: "warning", message: "Servicio SVC-035 bloqueado", time: "Hace 3 horas" },
+    );
+  } else if (rol === "encargado") {
+    base.push(
+      { id: 1, type: "warning", message: "Servicio pendiente por vencer en tu área", time: "Hace 10 min" },
+      { id: 2, type: "success", message: "Servicio completado en tu área", time: "Hace 30 min" },
+      { id: 3, type: "info", message: "Nuevo colaborador asignado a tu área", time: "Hace 1 hora" },
+      { id: 4, type: "warning", message: "Servicio bloqueado en tu área", time: "Hace 2 horas" },
+      { id: 5, type: "info", message: "Solicitud de soporte recibida", time: "Hace 3 horas" },
+    );
+  } else {
+    // colaborador (y otros roles no admin/encargado)
+    base.push(
+      { id: 1, type: "info", message: "Nueva tarea asignada: SVC-042", time: "Hace 5 min" },
+      { id: 2, type: "success", message: "Tarea completada: revisión cableado", time: "Hace 20 min" },
+      { id: 3, type: "warning", message: "Servicio SRV-038 próximo a vencer", time: "Hace 1 hora" },
+      { id: 4, type: "warning", message: "Servicio SRV-035 bloqueado", time: "Hace 2 horas" },
+    );
+  }
+
+  return base;
+}
 
 function RolBadge({ rol }: { rol: string }) {
   const styles: Record<string, string> = {
@@ -112,6 +136,7 @@ export default function Layout() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const notifications = getNotifications(user?.rol || "");
 
   const handleLogout = () => {
     setUserMenuOpen(false);
@@ -244,22 +269,26 @@ export default function Layout() {
             </>
           )}
 
-          {/* Pantallas section */}
-          <p className="text-[10px] text-blue-300 uppercase tracking-wider px-3 pt-4 pb-1 font-semibold">
-            Pantallas
-          </p>
-          {displayLinks.filter((item) => canSee(item.roles)).map(({ to, label, icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              target="_blank"
-              onClick={closeSidebar}
-              className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-blue-200 hover:text-white hover:bg-blue-800 transition-colors"
-            >
-              {icon}
-              {label}
-            </NavLink>
-          ))}
+          {/* Pantallas section — solo admin */}
+          {displayLinks.filter((item) => canSee(item.roles)).length > 0 && (
+            <>
+              <p className="text-[10px] text-blue-300 uppercase tracking-wider px-3 pt-4 pb-1 font-semibold">
+                Pantallas
+              </p>
+              {displayLinks.filter((item) => canSee(item.roles)).map(({ to, label, icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  target="_blank"
+                  onClick={closeSidebar}
+                  className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-blue-200 hover:text-white hover:bg-blue-800 transition-colors"
+                >
+                  {icon}
+                  {label}
+                </NavLink>
+              ))}
+            </>
+          )}
         </nav>
 
         {/* Logout */}
@@ -308,7 +337,7 @@ export default function Layout() {
               >
                 <Bell className="w-5 h-5" />
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                  {mockNotifications.length}
+                  {notifications.length}
                 </span>
               </button>
 
@@ -319,7 +348,7 @@ export default function Layout() {
                     <p className="text-sm font-semibold text-gray-900">Notificaciones</p>
                   </div>
                   <div className="max-h-72 overflow-y-auto">
-                    {mockNotifications.map((n) => (
+                    {notifications.map((n) => (
                       <div
                         key={n.id}
                         className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0"
