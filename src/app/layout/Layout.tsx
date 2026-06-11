@@ -34,7 +34,7 @@ interface NavItem {
 
 const nav: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, roles: ["admin", "encargado"] },
-  { to: "/miarea", label: "Mi Área", icon: <Home className="w-4 h-4" />, roles: ["colaborador"] },
+  { to: "/miarea", label: "Mi Área", icon: <Home className="w-4 h-4" />, roles: ["colaborador", "encargado"] },
   { to: "/servicios", label: "Servicios", icon: <Wrench className="w-4 h-4" /> },
   { to: "/solicitudes", label: "Solicitudes", icon: <MessageSquare className="w-4 h-4" /> },
   { to: "/plantillas", label: "Plantillas", icon: <FileText className="w-4 h-4" /> },
@@ -171,8 +171,15 @@ export default function Layout() {
                 {getInitials(user?.nombres || "")}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm text-blue-100 truncate">{user?.nombres}</span>
-            <RolBadge rol={user?.rol ?? ""} />
+            <div className="min-w-0">
+              <span className="text-sm text-blue-100 truncate block">{user?.nombres}</span>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <RolBadge rol={user?.rol ?? ""} />
+                {user?.area_nombre && (
+                  <span className="text-[10px] text-blue-300 truncate">{user.area_nombre}</span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

@@ -12,6 +12,7 @@ export interface LoginResult {
     rol: Rol;
     activo: boolean;
     area_id: number | null;
+    area_nombre: string | null;
   };
 }
 
@@ -38,13 +39,17 @@ export async function loginUser(
 
   // Obtener área del usuario (encargado → area_encargado_id, colaborador → areacolaboradores)
   let area_id: number | null = null;
+  let area_nombre: string | null = null;
   if (usuario.usuario_rol?.toLowerCase() === "encargado") {
     const { data: areaData } = await supabase
       .from("areas")
-      .select("area_id")
+      .select("area_id, area_nombre")
       .eq("area_encargado_id", usuario.usuario_id)
       .limit(1);
-    if (areaData?.length) area_id = areaData[0].area_id;
+    if (areaData?.length) {
+      area_id = areaData[0].area_id;
+      area_nombre = areaData[0].area_nombre;
+    }
   } else if (usuario.usuario_rol?.toLowerCase() === "colaborador") {
     const { data: acData } = await supabase
       .from("areacolaboradores")
@@ -52,6 +57,15 @@ export async function loginUser(
       .eq("colaborador_id", usuario.usuario_id)
       .limit(1);
     if (acData?.length) area_id = acData[0].area_id;
+
+    if (area_id) {
+      const { data: aData } = await supabase
+        .from("areas")
+        .select("area_nombre")
+        .eq("area_id", area_id)
+        .limit(1);
+      if (aData?.length) area_nombre = aData[0].area_nombre;
+    }
   }
 
   return {
@@ -63,6 +77,7 @@ export async function loginUser(
       rol: (usuario.usuario_rol?.toLowerCase() || "colaborador") as Rol,
       activo: usuario.usuario_activo,
       area_id,
+      area_nombre,
     },
   };
 }

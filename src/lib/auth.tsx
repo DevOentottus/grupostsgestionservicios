@@ -9,6 +9,7 @@ interface AuthUser {
   rol: string;
   activo: boolean;
   area_id: number | null;
+  area_nombre: string | null;
 }
 
 interface AuthContextType {
