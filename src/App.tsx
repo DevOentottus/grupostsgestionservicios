@@ -63,12 +63,12 @@ export default function App() {
           <Route path="servicios" element={<ServiciosPage />} />
           <Route path="servicios/:id" element={<ServicioDetailPage />} />
           <Route path="areas" element={
-            <RequireRole roles={["admin", "encargado"]}>
+            <RequireRole roles={["admin"]}>
               <AreasPage />
             </RequireRole>
           } />
           <Route path="areas/:id/servicios" element={
-            <RequireRole roles={["admin", "encargado"]}>
+            <RequireRole roles={["admin"]}>
               <AreaServiciosPage />
             </RequireRole>
           } />
@@ -102,7 +102,7 @@ export default function App() {
             </RequireRole>
           } />
           <Route path="manager/distribucion" element={
-            <RequireRole roles={["admin", "encargado"]}>
+            <RequireRole roles={["admin"]}>
               <ManagerDistribucionPage />
             </RequireRole>
           } />

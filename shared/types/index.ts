@@ -344,7 +344,14 @@ export interface DashboardV2Response {
 // ── Manager ──
 export interface ManagerMiAreaResponse {
   area: Area;
-  servicios: Servicio[];
+  servicios: (Servicio & {
+    descripcion: string | null;
+    prioridad: string;
+    tecnicos: { id: number; nombres: string | null }[];
+    progreso: number;
+    total_tareas: number;
+    tareas_completadas: number;
+  })[];
   estado_counts: {
     total: number;
     pendiente: number;
@@ -361,6 +368,13 @@ export interface ManagerMiAreaResponse {
     username: string;
     rol: string;
     tareas_activas: number;
+    tareas_completadas: number;
+    servicios_asignados: {
+      id: number;
+      codigo: string | null;
+      titulo: string | null;
+      estado: string | null;
+    }[];
   }[];
 }
 

@@ -38,19 +38,55 @@ export async function managerController(app: FastifyInstance) {
       if (!areas?.length) throw new NotFoundError("Área no encontrada");
       const area = areas[0];
 
-      // Servicios del área
+      // Servicios del área con información enriquecida
       const { data: serviciosData } = await supabase
         .from("servicios")
         .select("*")
         .eq("area_id", areaId)
         .order("servicio_id", { ascending: false });
 
-      const servicios = (serviciosData || []).map((s: any) => ({
-        id: s.servicio_id,
-        codigo: s.servicio_codigo,
-        titulo: s.servicio_nombre,
-        estado: s.servicio_estado,
-      }));
+      const servicios = await Promise.all(
+        (serviciosData || []).map(async (s: any) => {
+          // Técnicos asignados a este servicio
+          const { data: tecnicos } = await supabase
+            .from("serviciocolaboradores")
+            .select(`
+              colaborador_id,
+              usuarios!serviciocolaboradores_colaborador_id_fkey (
+                usuario_id,
+                usuario_nombres
+              )
+            `)
+            .eq("servicio_id", s.servicio_id);
+
+          // Progreso de tareas
+          const { data: tareasSvc } = await supabase
+            .from("tareas")
+            .select("tarea_id, tarea_estado")
+            .eq("servicio_id", s.servicio_id);
+
+          const totalTareas = tareasSvc?.length || 0;
+          const compTareas = tareasSvc?.filter((t: any) => t.tarea_estado === "completado").length || 0;
+
+          return {
+            id: s.servicio_id,
+            codigo: s.servicio_codigo,
+            titulo: s.servicio_nombre,
+            descripcion: s.servicio_descripcion,
+            estado: s.servicio_estado,
+            created_at: s.servicio_fecha_creacion,
+            cliente_nombre: null, // lo resolvemos abajo
+            prioridad: s.servicio_prioridad || "media",
+            tecnicos: (tecnicos || []).map((t: any) => ({
+              id: t.usuarios?.usuario_id || t.colaborador_id,
+              nombres: t.usuarios?.usuario_nombres || null,
+            })),
+            progreso: totalTareas > 0 ? Math.round((compTareas / totalTareas) * 100) : 0,
+            total_tareas: totalTareas,
+            tareas_completadas: compTareas,
+          };
+        })
+      );
 
       const estadoCounts = {
         total: servicios.length,
@@ -61,7 +97,7 @@ export async function managerController(app: FastifyInstance) {
         cancelado: servicios.filter((s) => s.estado === "cancelado").length,
       };
 
-      // Colaboradores del área
+      // Colaboradores del área con datos enriquecidos
       const { data: cols } = await supabase
         .from("areacolaboradores")
         .select(`
@@ -76,18 +112,45 @@ export async function managerController(app: FastifyInstance) {
         `)
         .eq("area_id", areaId);
 
-      // Tareas activas por colaborador
       const colaboradores = await Promise.all(
         (cols || []).map(async (a: any) => {
           const u = a.usuarios || {};
           const colId = u.usuario_id || a.colaborador_id;
 
-          // En Supabase, tareas no tiene asignado_a, usamos tareas completadas como proxy
-          const { data: tareas } = await supabase
+          // Servicios asignados a este colaborador dentro del área
+          const { data: servAsignados } = await supabase
+            .from("serviciocolaboradores")
+            .select(`
+              servicio_id,
+              servicios!serviciocolaboradores_servicio_id_fkey (
+                servicio_id,
+                servicio_codigo,
+                servicio_nombre,
+                servicio_estado
+              )
+            `)
+            .eq("colaborador_id", colId);
+
+          // Tareas completadas por este colaborador
+          const { data: tareasComp } = await supabase
             .from("tareas")
             .select("tarea_id")
             .eq("tarea_completado_por", colId)
-            .eq("tarea_estado", "pendiente");
+            .eq("tarea_estado", "completado");
+
+          // Tareas pendientes en los servicios asignados
+          const serviciosIds = (servAsignados || []).map((sa: any) =>
+            sa.servicios?.servicio_id || sa.servicio_id
+          ).filter(Boolean);
+          let tareasPend = 0;
+          if (serviciosIds.length > 0) {
+            const { data: pendientes } = await supabase
+              .from("tareas")
+              .select("tarea_id")
+              .in("servicio_id", serviciosIds)
+              .eq("tarea_estado", "pendiente");
+            tareasPend = pendientes?.length || 0;
+          }
 
           return {
             usuario_id: colId,
@@ -96,7 +159,14 @@ export async function managerController(app: FastifyInstance) {
             email: u.usuario_correo || null,
             username: u.usuario_username || null,
             rol: u.usuario_rol?.toLowerCase() || null,
-            tareas_activas: tareas?.length || 0,
+            tareas_activas: tareasPend,
+            tareas_completadas: tareasComp?.length || 0,
+            servicios_asignados: (servAsignados || []).map((sa: any) => ({
+              id: sa.servicios?.servicio_id || sa.servicio_id,
+              codigo: sa.servicios?.servicio_codigo || null,
+              titulo: sa.servicios?.servicio_nombre || null,
+              estado: sa.servicios?.servicio_estado || null,
+            })),
           };
         })
       );

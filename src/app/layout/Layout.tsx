@@ -40,7 +40,7 @@ const nav: NavItem[] = [
   { to: "/servicios", label: "Servicios", icon: <Wrench className="w-4 h-4" /> },
   { to: "/solicitudes", label: "Solicitudes", icon: <MessageSquare className="w-4 h-4" /> },
   { to: "/plantillas", label: "Plantillas", icon: <FileText className="w-4 h-4" /> },
-  { to: "/areas", label: "Áreas", icon: <Building2 className="w-4 h-4" />, roles: ["admin", "encargado"] },
+  { to: "/areas", label: "Áreas", icon: <Building2 className="w-4 h-4" />, roles: ["admin"] },
   { to: "/usuarios", label: "Usuarios", icon: <Users className="w-4 h-4" />, roles: ["sistema"] },
   { to: "/reportes", label: "Reportes", icon: <BarChart3 className="w-4 h-4" />, roles: ["admin", "encargado"] },
   { to: "/auditoria", label: "Auditoría", icon: <ScrollText className="w-4 h-4" />, roles: ["admin"] },
@@ -50,7 +50,7 @@ const nav: NavItem[] = [
 
 const managerNav: NavItem[] = [
   { to: "/manager/mi-area", label: "Mi Área", icon: <Target className="w-4 h-4" />, roles: ["admin", "encargado"] },
-  { to: "/manager/distribucion", label: "Distribución", icon: <KanbanSquare className="w-4 h-4" />, roles: ["admin", "encargado"] },
+  { to: "/manager/distribucion", label: "Distribución", icon: <KanbanSquare className="w-4 h-4" />, roles: ["admin"] },
   { to: "/manager/desempeno", label: "Desempeño", icon: <TrendingUp className="w-4 h-4" />, roles: ["admin", "encargado"] },
 ];
 

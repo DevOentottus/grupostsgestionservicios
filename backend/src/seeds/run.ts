@@ -154,6 +154,29 @@ async function seed() {
       correo: "roberto@serviciolocalsts.com",
       rol: "colaborador",
     },
+    // Colaboradores sin área asignada (disponibles para asignar)
+    {
+      username: "sofia.vega",
+      hash: userHash,
+      nombres: "Sofía",
+      apellido_paterno: "Vega",
+      apellido_materno: "Ríos",
+      dni: "89012345",
+      telefono: "987654328",
+      correo: "sofia@serviciolocalsts.com",
+      rol: "colaborador",
+    },
+    {
+      username: "diego.paredes",
+      hash: userHash,
+      nombres: "Diego",
+      apellido_paterno: "Paredes",
+      apellido_materno: "Luna",
+      dni: "90123456",
+      telefono: "987654329",
+      correo: "diego@serviciolocalsts.com",
+      rol: "colaborador",
+    },
   ];
 
   const userMap = new Map<string, any>();
@@ -244,6 +267,8 @@ async function seed() {
     { area: "Instalaciones", colaborador: "ana.martinez" },
     { area: "Mantenimiento", colaborador: "jose.ramirez" },
     { area: "Desarrollo", colaborador: "demo" },
+    { area: "Soporte Técnico", colaborador: "sofia.vega" },
+    { area: "Instalaciones", colaborador: "diego.paredes" },
   ];
 
   const areaColabPromises = areaColabData.map(({ area, colaborador }) => {
