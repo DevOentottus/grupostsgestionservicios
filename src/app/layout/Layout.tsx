@@ -54,11 +54,11 @@ const managerNav: NavItem[] = [
   { to: "/manager/desempeno", label: "Desempeño", icon: <TrendingUp className="w-4 h-4" />, roles: ["admin", "encargado"] },
 ];
 
-const displayLinks: { to: string; label: string; icon: React.ReactNode }[] = [
-  { to: "/display/tv", label: "TV General", icon: <Tv className="w-3.5 h-3.5" /> },
-  { to: "/display/waiting-room", label: "Sala Espera", icon: <Clock className="w-3.5 h-3.5" /> },
-  { to: "/display/work-room", label: "Sala Trabajo", icon: <HardHat className="w-3.5 h-3.5" /> },
-  { to: "/monitor", label: "Monitor", icon: <Monitor className="w-3.5 h-3.5" /> },
+const displayLinks: NavItem[] = [
+  { to: "/display/tv", label: "TV General", icon: <Tv className="w-3.5 h-3.5" />, roles: ["admin"] },
+  { to: "/display/waiting-room", label: "Sala Espera", icon: <Clock className="w-3.5 h-3.5" />, roles: ["admin"] },
+  { to: "/display/work-room", label: "Sala Trabajo", icon: <HardHat className="w-3.5 h-3.5" />, roles: ["admin"] },
+  { to: "/monitor", label: "Monitor", icon: <Monitor className="w-3.5 h-3.5" />, roles: ["admin"] },
 ];
 
 const mockNotifications = [
@@ -248,7 +248,7 @@ export default function Layout() {
           <p className="text-[10px] text-blue-300 uppercase tracking-wider px-3 pt-4 pb-1 font-semibold">
             Pantallas
           </p>
-          {displayLinks.map(({ to, label, icon }) => (
+          {displayLinks.filter((item) => canSee(item.roles)).map(({ to, label, icon }) => (
             <NavLink
               key={to}
               to={to}
