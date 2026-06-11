@@ -7,7 +7,7 @@ import { useCrearServicio } from "@/api/queries/useServicios.js";
 import { usePlantillas } from "@/api/queries/usePlantillas.js";
 import type { Usuario } from "@shared/index.js";
 import {
-  ArrowLeft, Save, User, Monitor, Package, Wrench, AlertCircle,
+  ArrowLeft, Save, User, Monitor, Package, Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -253,7 +253,7 @@ export function NuevoServicioPage() {
             <Monitor className="w-4 h-4 text-blue-600" />
             Equipo
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
               <InputField
                 label="Descripción"
@@ -263,12 +263,12 @@ export function NuevoServicioPage() {
               />
             </div>
             <InputField
-              label="Número de Serie"
+              label="N° de Serie"
               value={form.serie_equipo}
               onChange={(v) => set("serie_equipo", v)}
               placeholder="SN-12345-ABC"
             />
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-3">
               <InputField
                 label="Detalles"
                 value={form.detalles_equipo}
@@ -286,7 +286,7 @@ export function NuevoServicioPage() {
             <Package className="w-4 h-4 text-blue-600" />
             Accesorios
           </h2>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InputField
               label="Descripción"
               value={form.descripcion_accesorio}
@@ -343,21 +343,22 @@ export function NuevoServicioPage() {
               />
             </div>
 
-            <InputField
-              label="Reporte del Cliente"
-              value={form.cliente_reporte}
-              onChange={(v) => set("cliente_reporte", v)}
-              rows={2}
-              placeholder="¿Qué reportó el cliente? Ej: 'La laptop no enciende desde ayer'"
-            />
-
-            <InputField
-              label="Diagnóstico Inicial"
-              value={form.diagnostico_inicial}
-              onChange={(v) => set("diagnostico_inicial", v)}
-              rows={2}
-              placeholder="Primera impresión técnica. Ej: 'Probable falla en fuente de poder'"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <InputField
+                label="Reporte del Cliente"
+                value={form.cliente_reporte}
+                onChange={(v) => set("cliente_reporte", v)}
+                rows={2}
+                placeholder="¿Qué reportó el cliente?"
+              />
+              <InputField
+                label="Diagnóstico Inicial"
+                value={form.diagnostico_inicial}
+                onChange={(v) => set("diagnostico_inicial", v)}
+                rows={2}
+                placeholder="Primera impresión técnica"
+              />
+            </div>
 
             <InputField
               label="Descripción del Servicio"

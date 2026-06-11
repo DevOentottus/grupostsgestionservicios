@@ -101,7 +101,7 @@ export function MiAreaPage() {
           </h3>
 
           {/* Ranking por servicios completados */}
-          <div className="mb-4">
+          <div>
             <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Trophy className="w-3.5 h-3.5 text-amber-500" />
               Ranking por servicios completados
@@ -136,30 +136,6 @@ export function MiAreaPage() {
                   );
                 })}
             </div>
-          </div>
-
-          {/* Grid de colaboradores */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {colaboradores.map((col) => (
-              <div
-                key={col.usuario_id}
-                className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 hover:border-blue-200 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                  <span className="text-xs font-semibold text-slate-600">
-                    {col.nombres?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">{col.nombres}</p>
-                  <p className="text-xs text-slate-400">
-                    {col.tareas_activas > 0
-                      ? `${col.tareas_activas} tareas activas`
-                      : "Sin tareas activas"}
-                  </p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       )}
