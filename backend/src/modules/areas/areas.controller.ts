@@ -15,6 +15,53 @@ const actualizarAreaSchema = z.object({
   encargado_id: z.number().int().nullable().optional(),
 });
 
+/** Upgrade un colaborador a encargado, y revierte el anterior si queda sin áreas */
+async function sincronizarRolEncargado(
+  nuevoEncargadoId: number | null,
+  viejoEncargadoId: number | null,
+) {
+  // Subir rol del nuevo encargado si era colaborador
+  if (nuevoEncargadoId) {
+    const { data: user } = await supabase
+      .from("usuarios")
+      .select("usuario_id, usuario_rol")
+      .eq("usuario_id", nuevoEncargadoId)
+      .limit(1)
+      .single();
+
+    if (user && user.usuario_rol === "colaborador") {
+      await supabase
+        .from("usuarios")
+        .update({ usuario_rol: "encargado" })
+        .eq("usuario_id", nuevoEncargadoId);
+    }
+  }
+
+  // Bajar rol del anterior encargado si ya no es encargado de ninguna área
+  if (viejoEncargadoId && viejoEncargadoId !== nuevoEncargadoId) {
+    const { data: otrasAreas } = await supabase
+      .from("areas")
+      .select("area_id")
+      .eq("area_encargado_id", viejoEncargadoId);
+
+    if (!otrasAreas?.length) {
+      const { data: oldUser } = await supabase
+        .from("usuarios")
+        .select("usuario_id, usuario_rol")
+        .eq("usuario_id", viejoEncargadoId)
+        .limit(1)
+        .single();
+
+      if (oldUser && oldUser.usuario_rol === "encargado") {
+        await supabase
+          .from("usuarios")
+          .update({ usuario_rol: "colaborador" })
+          .eq("usuario_id", viejoEncargadoId);
+      }
+    }
+  }
+}
+
 export async function areasController(app: FastifyInstance) {
   // NOTA: No usar app.addHook("preHandler", authenticate) en serverless/emit.
   // El hook de scope + route-level preHandler combinados causan timeout en Vercel.
@@ -174,6 +221,9 @@ export async function areasController(app: FastifyInstance) {
         nombre: input.nombre,
       });
 
+      // Sincronizar rol del usuario asignado como encargado
+      await sincronizarRolEncargado(input.encargado_id ?? null, null);
+
       return reply.status(201).send({
         data: {
           id: area.area_id,
@@ -196,11 +246,13 @@ export async function areasController(app: FastifyInstance) {
 
       const { data: existing } = await supabase
         .from("areas")
-        .select("area_id")
+        .select("area_id, area_encargado_id")
         .eq("area_id", areaId)
         .limit(1);
 
       if (!existing?.length) throw new NotFoundError("Área no encontrada");
+
+      const oldEncargadoId = existing[0].area_encargado_id ?? null;
 
       const updateData: Record<string, unknown> = {};
       if (input.nombre !== undefined) updateData.area_nombre = input.nombre;
@@ -218,6 +270,10 @@ export async function areasController(app: FastifyInstance) {
       await auditLog(null, authUser.user_id, "UPDATE", "area", areaId, {
         campos: Object.keys(input),
       });
+
+      // Sincronizar rol del nuevo/anterior encargado
+      const nuevoEncargadoId = input.encargado_id !== undefined ? input.encargado_id : oldEncargadoId;
+      await sincronizarRolEncargado(nuevoEncargadoId, oldEncargadoId);
 
       return reply.send({
         data: updated

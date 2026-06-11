@@ -390,7 +390,7 @@ export function AreasPage() {
                   >
                     <option value="">Sin encargado</option>
                     {usuarios
-                      ?.filter((u: any) => u.rol === "admin" || u.rol === "encargado")
+                      ?.filter((u: any) => u.rol !== "sistema")
                       .map((u: any) => (
                         <option key={u.id} value={u.id}>
                           {u.nombres} ({u.rol})
