@@ -46,7 +46,7 @@ export async function managerController(app: FastifyInstance) {
         .order("servicio_id", { ascending: false });
 
       // Cache nombres de colaboradores
-      const colIds = (serviciosData || []).map((s: any) => s.colaborador_id).filter(Boolean);
+      const colIds = (serviciosData || []).map((s: any) => s.tecnico_principal_id).filter(Boolean);
       const { data: colsCache } = colIds.length > 0
         ? await supabase.from("usuarios").select("usuario_id, usuario_nombres").in("usuario_id", colIds)
         : { data: [] };
@@ -54,8 +54,8 @@ export async function managerController(app: FastifyInstance) {
 
       const servicios = await Promise.all(
         (serviciosData || []).map(async (s: any) => {
-          const tecnico = s.colaborador_id
-            ? { id: s.colaborador_id, nombres: nombresMap.get(s.colaborador_id) || null }
+          const tecnico = s.tecnico_principal_id
+            ? { id: s.tecnico_principal_id, nombres: nombresMap.get(s.tecnico_principal_id) || null }
             : null;
 
           // Progreso de tareas
@@ -122,7 +122,7 @@ export async function managerController(app: FastifyInstance) {
               servicio_nombre,
               servicio_estado
             `)
-            .eq("colaborador_id", colId)
+            .eq("tecnico_principal_id", colId)
             .eq("area_id", areaId);
 
           // Tareas completadas por este colaborador

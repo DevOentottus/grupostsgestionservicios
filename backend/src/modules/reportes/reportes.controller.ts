@@ -71,7 +71,7 @@ export async function reportesController(app: FastifyInstance) {
         const { count: serviciosCompletados } = await supabase
           .from("servicios")
           .select("servicio_id", { count: "exact", head: true })
-          .eq("colaborador_id", usuarioId);
+          .eq("tecnico_principal_id", usuarioId);
 
         return {
           data: {

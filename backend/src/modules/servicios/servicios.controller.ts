@@ -46,11 +46,11 @@ export async function serviciosController(app: FastifyInstance) {
 
     let dbQuery = supabase
       .from("servicios")
-      .select("*, usuario_colaborador:usuarios!colaborador_id(usuario_nombres, usuario_apellido_paterno)");
+      .select("*, usuario_colaborador:usuarios!tecnico_principal_id(usuario_nombres, usuario_apellido_paterno)");
 
     // Colaborador: solo ve servicios donde está asignado
     if (user.rol === "colaborador") {
-      dbQuery = dbQuery.eq("colaborador_id", user.user_id);
+      dbQuery = dbQuery.eq("tecnico_principal_id", user.user_id);
     }
 
     if (query.estado) {
@@ -70,7 +70,7 @@ export async function serviciosController(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const { data: servicios } = await supabase
       .from("servicios")
-      .select("*, usuario_colaborador:usuarios!colaborador_id(usuario_nombres, usuario_apellido_paterno)")
+      .select("*, usuario_colaborador:usuarios!tecnico_principal_id(usuario_nombres, usuario_apellido_paterno)")
       .eq("servicio_id", parseInt(id))
       .limit(1);
 
@@ -102,7 +102,7 @@ export async function serviciosController(app: FastifyInstance) {
         servicio_estado: "pendiente",
         servicio_tiempo_estimado: input.tiempo_estimado ?? null,
         area_id: input.area_id ?? null,
-        colaborador_id: input.colaborador_id ?? null,
+        tecnico_principal_id: input.colaborador_id ?? null,
         cliente_dni: input.cliente_dni || null,
         cliente_apellido_paterno: input.cliente_apellido_paterno || null,
         cliente_apellido_materno: input.cliente_apellido_materno || null,
@@ -518,7 +518,7 @@ function mapServicio(s: any) {
     estado: s.servicio_estado,
     prioridad: "media", // no disponible en Supabase
     area_id: s.area_id,
-    colaborador_id: s.colaborador_id,
+    colaborador_id: s.tecnico_principal_id,
     colaborador_nombre: colaboradorNombre,
     cliente_nombre: s.cliente_id ? `Cliente #${s.cliente_id}` : null,
     cliente_email: null, // no disponible en servicios

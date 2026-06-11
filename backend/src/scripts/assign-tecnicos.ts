@@ -14,11 +14,11 @@ const supabase = createClient(
 async function main() {
   console.log("🔎 Buscando servicios sin técnico...");
 
-  // 1. Servicios sin colaborador_id
+  // 1. Servicios sin técnico asignado
   const { data: servicios, error: errServ } = await supabase
     .from("servicios")
     .select("servicio_id, area_id")
-    .is("colaborador_id", null);
+    .is("tecnico_principal_id", null);
 
   if (errServ) throw errServ;
   if (!servicios?.length) {
@@ -74,7 +74,7 @@ async function main() {
 
     const { error: errUpd } = await supabase
       .from("servicios")
-      .update({ colaborador_id: finalPool[idx] })
+      .update({ tecnico_principal_id: finalPool[idx] })
       .eq("servicio_id", sv.servicio_id);
 
     if (errUpd) {
