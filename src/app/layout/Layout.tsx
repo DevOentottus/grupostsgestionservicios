@@ -24,6 +24,7 @@ import {
   X,
   Settings,
   ChevronRight,
+  Home,
 } from "lucide-react";
 
 interface NavItem {
@@ -35,6 +36,7 @@ interface NavItem {
 
 const nav: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, roles: ["admin", "encargado"] },
+  { to: "/miarea", label: "Mi Área", icon: <Home className="w-4 h-4" />, roles: ["colaborador"] },
   { to: "/servicios", label: "Servicios", icon: <Wrench className="w-4 h-4" /> },
   { to: "/solicitudes", label: "Solicitudes", icon: <MessageSquare className="w-4 h-4" /> },
   { to: "/plantillas", label: "Plantillas", icon: <FileText className="w-4 h-4" /> },

@@ -24,12 +24,13 @@ import { DisplayWorkRoomPage } from "@/app/pages/display/DisplayWorkRoom.js";
 import { ServicioPublicoPage } from "@/app/pages/servicios/ServicioPublico.js";
 import { ManagerDistribucionPage } from "@/app/pages/manager/ManagerDistribucion.js";
 import { ManagerDesempenoPage } from "@/app/pages/manager/ManagerDesempeno.js";
+import { MiAreaPage } from "@/app/pages/miarea/MiArea.js";
 import Layout from "@/app/layout/Layout.js";
 
 /** Redirige según el rol del usuario autenticado */
 function IndexRedirect() {
   const { user } = useAuth();
-  const destino = user?.rol === "colaborador" ? "/servicios" : "/dashboard";
+  const destino = user?.rol === "colaborador" ? "/miarea" : "/dashboard";
   return <Navigate to={destino} replace />;
 }
 
@@ -60,6 +61,7 @@ export default function App() {
               <DashboardPage />
             </RequireRole>
           } />
+          <Route path="miarea" element={<MiAreaPage />} />
           <Route path="servicios" element={<ServiciosPage />} />
           <Route path="servicios/:id" element={<ServicioDetailPage />} />
           <Route path="areas" element={
