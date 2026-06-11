@@ -83,6 +83,27 @@ export async function seguimientoController(app: FastifyInstance) {
   // GET /api/public/servicios/:codigo
   app.get("/api/public/servicios/:codigo", async (request, reply) => {
     const { codigo } = request.params as { codigo: string };
+
+    // Registrar visita de cliente
+    try {
+      const { data: svc } = await supabase
+        .from("servicios")
+        .select("servicio_id")
+        .eq("servicio_codigo", codigo)
+        .limit(1);
+      if (svc?.[0]) {
+        await supabase.from("serviciovisitas").insert({
+          servicio_id: svc[0].servicio_id,
+          visita_fecha: new Date().toISOString().split("T")[0],
+          visita_hora: new Date().toTimeString().split(" ")[0],
+          visita_ip: (request.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || request.ip,
+          visita_user_agent: (request.headers["user-agent"] as string) || null,
+        });
+      }
+    } catch {
+      // No bloquear la respuesta si falla el tracking
+    }
+
     const { data: servicios } = await supabase
       .from("servicios")
       .select(`*, clientes!servicios_cliente_id_fkey(cliente_nombres, cliente_correo)`)

@@ -17,6 +17,7 @@ import { MonitorPage } from "@/app/pages/monitor/Monitor.js";
 import { SolicitudesInternasPage } from "@/app/pages/solicitudes/SolicitudesInternas.js";
 import { AnunciosPage } from "@/app/pages/anuncios/Anuncios.js";
 import { ComunicacionesPage } from "@/app/pages/comunicaciones/Comunicaciones.js";
+import { RendimientoSistemaPage } from "@/app/pages/admin/RendimientoSistema.js";
 import { DisplayTVPage } from "@/app/pages/display/DisplayTV.js";
 import { DisplayWaitingRoomPage } from "@/app/pages/display/DisplayWaitingRoom.js";
 import { DisplayWorkRoomPage } from "@/app/pages/display/DisplayWorkRoom.js";
@@ -84,6 +85,11 @@ export default function App() {
           <Route path="monitor" element={<MonitorPage />} />
 
           {/* Admin only */}
+          <Route path="admin/rendimiento" element={
+            <RequireRole roles={["admin"]}>
+              <RendimientoSistemaPage />
+            </RequireRole>
+          } />
           <Route path="usuarios" element={
             <RequireRole roles={["admin"]}>
               <UsuariosPage />

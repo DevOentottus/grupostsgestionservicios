@@ -341,6 +341,64 @@ export interface DashboardV2Response {
   };
 }
 
+// ── Rendimiento del Sistema (admin) ──
+export interface RendimientoResponse {
+  visit_tracking: {
+    total_visitas: number;
+    servicios_mas_consultados: {
+      servicio_id: number;
+      codigo: string;
+      nombre: string;
+      visitas: number;
+      ultima_visita: string | null;
+    }[];
+    visitas_por_dia: {
+      fecha: string;
+      cantidad: number;
+    }[];
+    promedio_visitas_por_servicio: number;
+  };
+  performance: {
+    servicios_completados: number;
+    servicios_en_progreso: number;
+    servicios_pendientes: number;
+    servicios_bloqueados: number;
+    tiempo_promedio_completado_min: number;
+    tasa_completacion: number;
+    tareas_completadas: number;
+    tareas_pendientes: number;
+    tasa_completacion_tareas: number;
+  };
+  calificaciones: {
+    promedio_calificacion: number;
+    total_calificaciones: number;
+    calificaciones_por_puntaje: { puntaje: number; cantidad: number }[];
+    ultimas_calificaciones: {
+      servicio_codigo: string;
+      servicio_nombre: string;
+      puntaje: number;
+      comentario: string | null;
+      fecha: string;
+    }[];
+  };
+  colaboradores: {
+    colaboradores_con_tareas: number;
+    top_colaboradores: {
+      usuario_id: number;
+      nombres: string;
+      total_tareas: number;
+    }[];
+  };
+  sistema: {
+    total_usuarios: number;
+    total_areas: number;
+    total_clientes: number;
+    total_servicios: number;
+    tasa_servicios_con_calificacion: number;
+    dias_datos: number;
+  };
+}
+
 // ── Manager ──
 export interface ManagerMiAreaResponse {
   area: Area;

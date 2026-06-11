@@ -44,6 +44,7 @@ const nav: NavItem[] = [
   { to: "/usuarios", label: "Usuarios", icon: <Users className="w-4 h-4" />, roles: ["sistema"] },
   { to: "/reportes", label: "Reportes", icon: <BarChart3 className="w-4 h-4" />, roles: ["admin", "encargado"] },
   { to: "/auditoria", label: "Auditoría", icon: <ScrollText className="w-4 h-4" />, roles: ["admin"] },
+  { to: "/admin/rendimiento", label: "Rendimiento", icon: <TrendingUp className="w-4 h-4" />, roles: ["admin"] },
   { to: "/anuncios", label: "Anuncios", icon: <Megaphone className="w-4 h-4" />, roles: ["admin"] },
   { to: "/comunicaciones", label: "Comunicaciones", icon: <MessageSquare className="w-4 h-4" /> },
 ];

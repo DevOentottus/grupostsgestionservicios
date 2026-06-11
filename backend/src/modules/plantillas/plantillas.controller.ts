@@ -49,8 +49,8 @@ export async function plantillasController(app: FastifyInstance) {
 
       const rows = await Promise.all(
         (plantillas || []).map(async (p: any) => {
-          const { count } = await supabase
-            .from("plantilla_tareas")
+        const { count } = await supabase
+            .from("plantillatareas")
             .select("*", { count: "exact", head: true })
             .eq("plantilla_id", p.plantilla_id);
 
@@ -88,18 +88,16 @@ export async function plantillasController(app: FastifyInstance) {
       if (!plantilla) throw new NotFoundError("Plantilla no encontrada");
 
       const { data: tareasData } = await supabase
-        .from("plantilla_tareas")
+        .from("plantillatareas")
         .select("*")
         .eq("plantilla_id", plantillaId)
-        .order("tarea_orden", { ascending: true });
+        .order("plantillatarea_orden", { ascending: true });
 
       const tareas = (tareasData || []).map((t: any) => ({
-        id: t.plantilla_tarea_id,
+        id: t.plantillatarea_id,
         plantilla_id: t.plantilla_id,
-        titulo: t.tarea_titulo,
-        descripcion: t.tarea_descripcion,
-        orden: t.tarea_orden,
-        asignado_a: t.asignado_a,
+        titulo: t.plantillatarea_titulo,
+        orden: t.plantillatarea_orden,
       }));
 
       return reply.send({
@@ -141,11 +139,10 @@ export async function plantillasController(app: FastifyInstance) {
       if (input.tareas && input.tareas.length > 0) {
         const tareasToInsert = input.tareas.map((t, i) => ({
           plantilla_id: plantilla.plantilla_id,
-          tarea_titulo: t.titulo,
-          tarea_orden: t.sort_order ?? i,
-          asignado_a: t.asignado_a ?? null,
+          plantillatarea_titulo: t.titulo,
+          plantillatarea_orden: t.sort_order ?? i,
         }));
-        await supabase.from("plantilla_tareas").insert(tareasToInsert);
+        await supabase.from("plantillatareas").insert(tareasToInsert);
       }
 
       await auditLog(null, authUser.user_id, "CREATE", "plantilla", plantilla.plantilla_id, {
@@ -154,17 +151,16 @@ export async function plantillasController(app: FastifyInstance) {
       });
 
       const { data: tareasData } = await supabase
-        .from("plantilla_tareas")
+        .from("plantillatareas")
         .select("*")
         .eq("plantilla_id", plantilla.plantilla_id)
-        .order("tarea_orden", { ascending: true });
+        .order("plantillatarea_orden", { ascending: true });
 
       const tareas = (tareasData || []).map((t: any) => ({
-        id: t.plantilla_tarea_id,
+        id: t.plantillatarea_id,
         plantilla_id: t.plantilla_id,
-        titulo: t.tarea_titulo,
-        orden: t.tarea_orden,
-        asignado_a: t.asignado_a,
+        titulo: t.plantillatarea_titulo,
+        orden: t.plantillatarea_orden,
       }));
 
       return reply.status(201).send({
@@ -212,20 +208,18 @@ export async function plantillasController(app: FastifyInstance) {
       // Si se enviaron tareas, reemplazar todas
       if (input.tareas !== undefined) {
         await supabase
-          .from("plantilla_tareas")
+          .from("plantillatareas")
           .delete()
           .eq("plantilla_id", plantillaId);
-        // .neq is not needed since we're deleting all
 
         const tareasToInsert = input.tareas.map((t, i) => ({
           plantilla_id: plantillaId,
-          tarea_titulo: t.titulo,
-          tarea_orden: t.sort_order ?? i,
-          asignado_a: t.asignado_a ?? null,
+          plantillatarea_titulo: t.titulo,
+          plantillatarea_orden: t.sort_order ?? i,
         }));
 
         if (tareasToInsert.length > 0) {
-          await supabase.from("plantilla_tareas").insert(tareasToInsert);
+          await supabase.from("plantillatareas").insert(tareasToInsert);
         }
       }
 
@@ -240,18 +234,17 @@ export async function plantillasController(app: FastifyInstance) {
         .limit(1);
 
       const { data: tareasData } = await supabase
-        .from("plantilla_tareas")
+        .from("plantillatareas")
         .select("*")
         .eq("plantilla_id", plantillaId)
-        .order("tarea_orden", { ascending: true });
+        .order("plantillatarea_orden", { ascending: true });
 
       const updated = updatedPlantillas?.[0];
       const tareas = (tareasData || []).map((t: any) => ({
-        id: t.plantilla_tarea_id,
+        id: t.plantillatarea_id,
         plantilla_id: t.plantilla_id,
-        titulo: t.tarea_titulo,
-        orden: t.tarea_orden,
-        asignado_a: t.asignado_a,
+        titulo: t.plantillatarea_titulo,
+        orden: t.plantillatarea_orden,
       }));
 
       return reply.send({
@@ -287,8 +280,7 @@ export async function plantillasController(app: FastifyInstance) {
       const plantilla = existing[0];
 
       // Eliminar (cascade no garantizado, eliminar tareas primero)
-      await supabase.from("plantilla_tareas").delete().eq("plantilla_id", plantillaId);
-      await supabase.from("servicios_plantillas").delete().eq("plantilla_id", plantillaId);
+      await supabase.from("plantillatareas").delete().eq("plantilla_id", plantillaId);
       await supabase.from("plantillas").delete().eq("plantilla_id", plantillaId);
 
       await auditLog(null, authUser.user_id, "DELETE", "plantilla", plantillaId, {
@@ -330,10 +322,10 @@ export async function plantillasController(app: FastifyInstance) {
       const servicio = servicios[0];
 
       const { data: plantillaTareas } = await supabase
-        .from("plantilla_tareas")
+        .from("plantillatareas")
         .select("*")
         .eq("plantilla_id", plantillaId)
-        .order("tarea_orden", { ascending: true });
+        .order("plantillatarea_orden", { ascending: true });
 
       if (!plantillaTareas?.length) {
         return reply.status(200).send({
@@ -356,24 +348,14 @@ export async function plantillasController(app: FastifyInstance) {
 
       const nuevasTareas = plantillaTareas.map((pt: any, i: number) => ({
         servicio_id: sId,
-        tarea_titulo: pt.tarea_titulo,
-        tarea_descripcion: pt.tarea_descripcion || null,
+        tarea_titulo: pt.plantillatarea_titulo,
         tarea_orden: ordenOffset + i,
-        asignado_a: pt.asignado_a ?? null,
       }));
 
       const { data: inserted } = await supabase
         .from("tareas")
         .insert(nuevasTareas)
         .select();
-
-      // Registrar en servicios_plantillas (junction)
-      await supabase
-        .from("servicios_plantillas")
-        .insert({
-          servicio_id: sId,
-          plantilla_id: plantillaId,
-        });
 
       await auditLog(null, authUser.user_id, "CREATE", "plantilla-aplicar", plantillaId, {
         servicio_id: sId,
@@ -385,7 +367,6 @@ export async function plantillasController(app: FastifyInstance) {
         id: t.tarea_id,
         servicio_id: t.servicio_id,
         titulo: t.tarea_titulo,
-        descripcion: t.tarea_descripcion,
         orden: t.tarea_orden,
       }));
 

@@ -257,6 +257,11 @@ export const anunciosApi = {
   eliminar: (id: number) => api.delete(`/anuncios/${id}`),
 };
 
+// ── Rendimiento API ──
+export const rendimientoApi = {
+  getRendimiento: () => api.get("/admin/rendimiento"),
+};
+
 // ── Dashboard v2 API ──
 export const dashboardApi = {
   getAll: (filters?: {
