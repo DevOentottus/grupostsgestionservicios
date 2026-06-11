@@ -81,12 +81,12 @@ function getNotifications(rol: string) {
       { id: 5, type: "info", message: "Solicitud de soporte recibida", time: "Hace 3 horas" },
     );
   } else {
-    // colaborador (y otros roles no admin/encargado)
+    // colaborador — solo notificaciones relacionadas a él o sus servicios
     base.push(
-      { id: 1, type: "info", message: "Nueva tarea asignada: SVC-042", time: "Hace 5 min" },
-      { id: 2, type: "success", message: "Tarea completada: revisión cableado", time: "Hace 20 min" },
-      { id: 3, type: "warning", message: "Servicio SRV-038 próximo a vencer", time: "Hace 1 hora" },
-      { id: 4, type: "warning", message: "Servicio SRV-035 bloqueado", time: "Hace 2 horas" },
+      { id: 1, type: "info", message: "Te asignaron una nueva tarea en SRV-042", time: "Hace 5 min" },
+      { id: 2, type: "success", message: "Completaste la tarea \"Revisar cableado\" en SRV-041", time: "Hace 20 min" },
+      { id: 3, type: "warning", message: "Tu servicio SRV-038 está próximo a vencer", time: "Hace 1 hora" },
+      { id: 4, type: "warning", message: "El servicio SRV-035 fue bloqueado", time: "Hace 2 horas" },
     );
   }
 
