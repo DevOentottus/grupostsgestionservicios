@@ -418,13 +418,15 @@ export function ServicioDetailPage() {
                     >
                       {/* Checkbox */}
                       <button
-                        onClick={() =>
-                          tarea.completada
-                            ? reabrirTarea.mutate(tarea.id)
-                            : !prevIncompleta && completarTarea.mutate(tarea.id)
+                        onClick={() => {
+                          if (tarea.completada) return; // no permitir desmarcar
+                          if (!prevIncompleta) completarTarea.mutate(tarea.id);
+                        }}
+                        disabled={tarea.completada || prevIncompleta}
+                        title={
+                          tarea.completada ? "Tarea completada" :
+                          prevIncompleta ? "Completá la tarea anterior primero" : undefined
                         }
-                        disabled={!tarea.completada && prevIncompleta}
-                        title={prevIncompleta && !tarea.completada ? "Completá la tarea anterior primero" : undefined}
                         className={cn(
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition",
                           tarea.completada
