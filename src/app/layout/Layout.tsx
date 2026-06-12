@@ -14,10 +14,8 @@ import {
   KanbanSquare,
   TrendingUp,
   MessageSquare,
-  Megaphone,
   LogOut,
   Tv,
-  Clock,
   Menu,
   X,
   Settings,
@@ -36,14 +34,12 @@ const nav: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, roles: ["admin"] },
   { to: "/miarea", label: "Mi Área", icon: <Home className="w-4 h-4" />, roles: ["colaborador", "encargado"] },
   { to: "/servicios", label: "Servicios", icon: <Wrench className="w-4 h-4" /> },
-  { to: "/solicitudes", label: "Solicitudes", icon: <MessageSquare className="w-4 h-4" /> },
   { to: "/plantillas", label: "Plantillas", icon: <FileText className="w-4 h-4" /> },
   { to: "/areas", label: "Áreas", icon: <Building2 className="w-4 h-4" />, roles: ["admin", "sistema"] },
   { to: "/usuarios", label: "Usuarios", icon: <Users className="w-4 h-4" />, roles: ["sistema"] },
   { to: "/reportes", label: "Reportes", icon: <BarChart3 className="w-4 h-4" />, roles: ["admin", "encargado"] },
   { to: "/auditoria", label: "Auditoría", icon: <ScrollText className="w-4 h-4" />, roles: ["admin"] },
   { to: "/admin/rendimiento", label: "Rendimiento", icon: <TrendingUp className="w-4 h-4" />, roles: ["admin"] },
-  { to: "/anuncios", label: "Anuncios", icon: <Megaphone className="w-4 h-4" />, roles: ["admin"] },
   { to: "/comunicaciones", label: "Comunicaciones", icon: <MessageSquare className="w-4 h-4" /> },
 ];
 
@@ -55,7 +51,6 @@ const managerNav: NavItem[] = [
 
 const displayLinks: NavItem[] = [
   { to: "/display/tv", label: "TV General", icon: <Tv className="w-3.5 h-3.5" />, roles: ["admin"] },
-  { to: "/display/waiting-room", label: "Sala Espera", icon: <Clock className="w-3.5 h-3.5" />, roles: ["admin"] },
   { to: "/seguimiento-cliente", label: "Seguimiento Cliente", icon: <FileText className="w-3.5 h-3.5" /> },
 ];
 
@@ -81,13 +76,11 @@ function getPageTitle(pathname: string): string {
     miarea: "Mi Área",
     misservicios: "Mis Servicios",
     servicios: "Servicios",
-    solicitudes: "Solicitudes",
     plantillas: "Plantillas",
     areas: "Áreas",
     usuarios: "Usuarios",
     reportes: "Reportes",
     auditoria: "Auditoría",
-    anuncios: "Anuncios",
     comunicaciones: "Comunicaciones",
     manager: "Gestión",
     display: "Pantallas",

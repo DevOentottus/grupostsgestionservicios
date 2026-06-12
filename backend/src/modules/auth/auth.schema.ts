@@ -25,5 +25,6 @@ export const actualizarUsuarioSchema = z.object({
   email: z.string().email().optional(),
   rol: z.enum(["admin", "encargado", "colaborador"]).optional(),
   username: z.string().min(3).max(50).optional(),
+  password: z.string().min(6).max(100).optional(),
   area_ids: z.array(z.number().int().positive()).optional(),
 });

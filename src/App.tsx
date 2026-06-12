@@ -14,12 +14,9 @@ import { AreaServiciosPage } from "@/app/pages/areas/AreaServicios.js";
 import { PlantillasPage } from "@/app/pages/plantillas/Plantillas.js";
 import { AuditoriaPage } from "@/app/pages/auditoria/Auditoria.js";
 import { ReportesPage } from "@/app/pages/reportes/Reportes.js";
-import { SolicitudesInternasPage } from "@/app/pages/solicitudes/SolicitudesInternas.js";
-import { AnunciosPage } from "@/app/pages/anuncios/Anuncios.js";
 import { ComunicacionesPage } from "@/app/pages/comunicaciones/Comunicaciones.js";
 import { RendimientoSistemaPage } from "@/app/pages/admin/RendimientoSistema.js";
 import { DisplayTVPage } from "@/app/pages/display/DisplayTV.js";
-import { DisplayWaitingRoomPage } from "@/app/pages/display/DisplayWaitingRoom.js";
 import { ServicioPublicoPage } from "@/app/pages/servicios/ServicioPublico.js";
 import { SeguimientoClientePage } from "@/app/pages/seguimiento/SeguimientoCliente.js";
 import { ManagerDistribucionPage } from "@/app/pages/manager/ManagerDistribucion.js";
@@ -43,7 +40,6 @@ export default function App() {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/display/tv" element={<DisplayTVPage />} />
-        <Route path="/display/waiting-room" element={<DisplayWaitingRoomPage />} />
         <Route path="/seguimiento-cliente" element={<SeguimientoClientePage />} />
         <Route path="/public/servicio/:codigo" element={<ServicioPublicoPage />} />
 
@@ -82,8 +78,6 @@ export default function App() {
               <ReportesPage />
             </RequireRole>
           } />
-          <Route path="solicitudes" element={<SolicitudesInternasPage />} />
-          <Route path="anuncios" element={<AnunciosPage />} />
           <Route path="comunicaciones" element={<ComunicacionesPage />} />
           {/* Admin only */}
           <Route path="admin/rendimiento" element={

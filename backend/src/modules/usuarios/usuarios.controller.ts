@@ -224,6 +224,9 @@ export async function usuariosController(app: FastifyInstance) {
       if (input.email !== undefined) updateData.usuario_correo = input.email;
       if (input.rol !== undefined) updateData.usuario_rol = input.rol;
       if (input.username !== undefined) updateData.usuario_username = input.username;
+      if (input.password) {
+        updateData.usuario_contrasena = await bcrypt.hash(input.password, 10);
+      }
 
       const { data: updatedUsers, error } = await supabase
         .from("usuarios")

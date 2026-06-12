@@ -283,37 +283,9 @@ export function AreasPage() {
                     <h3 className="text-gray-800 font-semibold">Colaboradores del Área</h3>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {selectedDetail.colaboradores?.map((col: any) => (
-                      <div key={col.usuario_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl group">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-white text-xs font-bold">
-                              {col.nombres?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-gray-900 text-sm font-semibold truncate">{col.nombres}</p>
-                            <p className="text-gray-500 text-xs">@{col.username}</p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleRemoverColaborador(col.usuario_id)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition opacity-0 group-hover:opacity-100"
-                          title="Remover"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                    {(!selectedDetail.colaboradores || selectedDetail.colaboradores.length === 0) && (
-                      <p className="text-gray-400 text-sm col-span-2">No hay colaboradores asignados a esta área</p>
-                    )}
-                  </div>
-
-                  {/* Add collaborator */}
+                  {/* Add collaborator — arriba de la lista */}
                   {disponibles.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2 items-end">
+                    <div className="mb-4 flex gap-2 items-end">
                       <div className="flex-1">
                         <label className="text-xs text-gray-500 block mb-1 font-semibold">Agregar colaborador</label>
                         <select
@@ -338,6 +310,34 @@ export function AreasPage() {
                       </button>
                     </div>
                   )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {selectedDetail.colaboradores?.map((col: any) => (
+                      <div key={col.usuario_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-xs font-bold">
+                              {col.nombres?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-gray-900 text-sm font-semibold truncate">{col.nombres}</p>
+                            <p className="text-gray-500 text-xs">@{col.username}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRemoverColaborador(col.usuario_id)}
+                          className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
+                          title="Remover del área"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                    {(!selectedDetail.colaboradores || selectedDetail.colaboradores.length === 0) && (
+                      <p className="text-gray-400 text-sm col-span-2">No hay colaboradores asignados a esta área</p>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (

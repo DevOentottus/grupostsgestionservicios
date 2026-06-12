@@ -311,21 +311,19 @@ export function UsuariosPage() {
                     required
                   />
                 </div>
-                {!editingUser && (
-                  <div>
-                    <label className="block text-xs text-gray-600 font-semibold mb-1">
-                      Contraseña {!editingUser && "*"}
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      value={form.password}
-                      onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
-                      required={!editingUser}
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="block text-xs text-gray-600 font-semibold mb-1">
+                    Contraseña {!editingUser ? "*" : "(dejar vacío para mantener)"}
+                  </label>
+                  <input
+                    type="password"
+                    placeholder={editingUser ? "Nueva contraseña (opcional)" : "••••••••"}
+                    value={form.password}
+                    onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
+                    required={!editingUser}
+                  />
+                </div>
                 <div>
                   <label className="block text-xs text-gray-600 font-semibold mb-1">Nombres *</label>
                   <input
@@ -429,15 +427,7 @@ export function UsuariosPage() {
                 </div>
               )}
 
-              {/* Info for editing */}
-              {editingUser && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-700">
-                    Dejá la contraseña en blanco para mantener la actual.
-                  </p>
-                </div>
-              )}
+
             </div>
 
             <div className="flex gap-3 px-6 py-4 border-t border-gray-100 flex-shrink-0">
