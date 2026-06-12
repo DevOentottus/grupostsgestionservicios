@@ -103,7 +103,7 @@ export function ServicioPublicoPage() {
   const evidenciasQuery = useQuery({
     queryKey: ["evidencias-publicas", codigo, dni],
     queryFn: async () => {
-      const r = await evidenciasPublicApi.listarPorCodigo(codigo!, dni);
+      const r = await evidenciasPublicApi.listarPorCodigo(codigo!, dni!);
       return r.data.data as (Evidencia & { comentarios: EvidenciaComentario[] })[];
     },
     enabled: !!codigo && !!dni && !!data?.servicio,
@@ -369,15 +369,6 @@ export function ServicioPublicoPage() {
               dni={dni}
               onComentarioAdded={() => evidenciasQuery.refetch()}
             />
-          </div>
-        )}
-
-        {/* No DNI message */}
-        {!dni && data?.servicio && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 text-center">
-            <p className="text-sm text-yellow-700">
-              Ingressá tu DNI en la pantalla anterior para ver las evidencias del servicio y dejar comentarios.
-            </p>
           </div>
         )}
 

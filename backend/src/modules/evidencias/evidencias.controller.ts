@@ -282,9 +282,13 @@ export async function evidenciasController(app: FastifyInstance) {
   );
 
   // ── GET /api/public/servicios/:codigo/evidencias ──
-  app.get("/api/public/servicios/:codigo/evidencias", async (request) => {
+  app.get("/api/public/servicios/:codigo/evidencias", async (request, reply) => {
     const { codigo } = request.params as { codigo: string };
     const query = request.query as { dni?: string };
+
+    if (!query?.dni) {
+      return reply.status(400).send({ detail: "DNI es obligatorio" });
+    }
 
     const { data: servicios } = await supabase
       .from("servicios")
@@ -296,17 +300,15 @@ export async function evidenciasController(app: FastifyInstance) {
 
     const s = servicios[0];
 
-    // If DNI is provided, validate it
-    if (query.dni) {
-      const { data: clientes } = await supabase
-        .from("clientes")
-        .select("cliente_dni")
-        .eq("cliente_id", s.cliente_id)
-        .limit(1);
+    // Validate DNI
+    const { data: clientes } = await supabase
+      .from("clientes")
+      .select("cliente_dni")
+      .eq("cliente_id", s.cliente_id)
+      .limit(1);
 
-      if (clientes?.[0] && clientes[0].cliente_dni !== query.dni) {
-        throw new ForbiddenError("DNI incorrecto");
-      }
+    if (clientes?.[0] && clientes[0].cliente_dni !== query.dni) {
+      throw new ForbiddenError("DNI incorrecto");
     }
 
     const { data: rows } = await supabase
@@ -336,7 +338,7 @@ export async function evidenciasController(app: FastifyInstance) {
     const input = z.object({
       contenido: z.string().min(1),
       codigo: z.string().min(1),
-      dni: z.string().optional(),
+      dni: z.string().min(1),
     }).parse(request.body);
     const evidenciaId = parseInt(id);
 
@@ -352,17 +354,15 @@ export async function evidenciasController(app: FastifyInstance) {
     const s = (ev as any).servicios as { servicio_codigo: string; cliente_id?: number };
     if (s.servicio_codigo !== input.codigo) throw new ForbiddenError("Código de servicio incorrecto");
 
-    // Validate DNI if provided
-    if (input.dni) {
-      const { data: sv } = await supabase
-        .from("servicios")
-        .select("cliente_id, clientes!inner(cliente_dni)")
-        .eq("servicio_id", ev.servicio_id)
-        .limit(1);
-      const clienteDni = (sv?.[0] as any)?.clientes?.cliente_dni;
-      if (clienteDni && clienteDni !== input.dni) {
-        throw new ForbiddenError("DNI incorrecto");
-      }
+    // Validate DNI
+    const { data: sv } = await supabase
+      .from("servicios")
+      .select("cliente_id, clientes!inner(cliente_dni)")
+      .eq("servicio_id", ev.servicio_id)
+      .limit(1);
+    const clienteDni = (sv?.[0] as any)?.clientes?.cliente_dni;
+    if (clienteDni && clienteDni !== input.dni) {
+      throw new ForbiddenError("DNI incorrecto");
     }
 
     const { data: rows, error } = await supabase

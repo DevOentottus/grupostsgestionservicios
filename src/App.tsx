@@ -23,6 +23,7 @@ import { DisplayWaitingRoomPage } from "@/app/pages/display/DisplayWaitingRoom.j
 import { ServicioPublicoPage } from "@/app/pages/servicios/ServicioPublico.js";
 import { SeguimientoClientePage } from "@/app/pages/seguimiento/SeguimientoCliente.js";
 import { ManagerDistribucionPage } from "@/app/pages/manager/ManagerDistribucion.js";
+import { ManagerClientesPage } from "@/app/pages/manager/ManagerClientes.js";
 import { ManagerDesempenoPage } from "@/app/pages/manager/ManagerDesempeno.js";
 import { MiAreaPage } from "@/app/pages/miarea/MiArea.js";
 import Layout from "@/app/layout/Layout.js";
@@ -101,7 +102,12 @@ export default function App() {
             </RequireRole>
           } />
 
-          {/* Encargado */}
+          {/* Gestión */}
+          <Route path="manager/clientes" element={
+            <RequireRole roles={["admin", "sistema"]}>
+              <ManagerClientesPage />
+            </RequireRole>
+          } />
           <Route path="manager/distribucion" element={
             <RequireRole roles={["admin"]}>
               <ManagerDistribucionPage />

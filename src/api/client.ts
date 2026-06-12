@@ -320,4 +320,5 @@ export const managerApi = {
     usuarioId: number,
     params?: { fecha_inicio?: string; fecha_fin?: string }
   ) => api.get(`/manager/desempeno/${usuarioId}`, { params }),
+  clientes: () => api.get("/manager/clientes"),
 };

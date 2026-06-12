@@ -9,9 +9,9 @@ export function SeguimientoClientePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = codigo.trim();
-    if (!trimmed) return;
-    const params = dni.trim() ? `?dni=${encodeURIComponent(dni.trim())}` : "";
-    navigate(`/public/servicio/${trimmed}${params}`);
+    const dniTrimmed = dni.trim();
+    if (!trimmed || !dniTrimmed) return;
+    navigate(`/public/servicio/${trimmed}?dni=${encodeURIComponent(dniTrimmed)}`);
   };
 
   return (
@@ -58,7 +58,7 @@ export function SeguimientoClientePage() {
               htmlFor="dni"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              DNI <span className="text-gray-400 font-normal">(opcional)</span>
+              DNI
             </label>
             <input
               id="dni"
@@ -71,15 +71,13 @@ export function SeguimientoClientePage() {
                          placeholder:text-gray-400"
               autoComplete="off"
               maxLength={8}
+              required
             />
-            <p className="text-xs text-gray-400 mt-1">
-              Opcional: si lo ingresás, podrás ver las evidencias del servicio y comentarlas.
-            </p>
           </div>
 
           <button
             type="submit"
-            disabled={!codigo.trim()}
+            disabled={!codigo.trim() || !dni.trim()}
             className="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg
                        hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
                        transition-colors"

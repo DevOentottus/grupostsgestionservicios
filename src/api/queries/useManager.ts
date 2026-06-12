@@ -29,6 +29,16 @@ export function useDistribucion(params?: {
   });
 }
 
+export function useClientes() {
+  return useQuery({
+    queryKey: ["manager", "clientes"],
+    queryFn: async () => {
+      const r = await managerApi.clientes();
+      return r.data.data as any[];
+    },
+  });
+}
+
 export function useDesempeno(
   usuarioId: number,
   params?: { fecha_inicio?: string; fecha_fin?: string }

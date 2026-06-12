@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import type { Evidencia, EvidenciaComentario } from "@shared/index.js";
 import { useAgregarComentarioEvidencia, useCambiarEstadoEvidencia } from "@/api/queries/useEvidencias.js";
+import { evidenciasPublicApi } from "@/api/client.js";
 
 interface EvidenceViewerProps {
   evidencias: (Evidencia & { comentarios?: EvidenciaComentario[] })[];
@@ -43,7 +44,17 @@ export function EvidenceViewer({
   const handleSendComentario = async (evidenciaId: number) => {
     const contenido = comentarios[evidenciaId]?.trim();
     if (!contenido) return;
-    await addComentario.mutateAsync({ evidenciaId, contenido });
+
+    if (readOnly) {
+      await evidenciasPublicApi.agregarComentario(evidenciaId, {
+        contenido,
+        codigo: codigo || "",
+        dni: dni || "",
+      });
+    } else {
+      await addComentario.mutateAsync({ evidenciaId, contenido });
+    }
+
     setComentarios((prev) => ({ ...prev, [evidenciaId]: "" }));
     onComentarioAdded?.();
   };

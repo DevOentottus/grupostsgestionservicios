@@ -400,5 +400,45 @@ export async function managerController(app: FastifyInstance) {
       };
     }
   );
+
+  // ── GET /api/manager/clientes ──
+  app.get(
+    "/api/manager/clientes",
+    { preHandler: [requireRoles("admin", "sistema")] },
+    async () => {
+      const { data: clientes } = await supabase
+        .from("clientes")
+        .select("*")
+        .order("cliente_nombres", { ascending: true });
+
+      if (!clientes?.length) return { data: [] };
+
+      // Servicio counts per client
+      const { data: servicios } = await supabase
+        .from("servicios")
+        .select("cliente_id, servicio_id, servicio_codigo, servicio_fecha_creacion")
+        .in("cliente_id", clientes.map((c: any) => c.cliente_id));
+
+      const serviceMap: Record<number, { total: number; ultimo: { codigo: string; fecha: string } | null }> = {};
+      for (const s of (servicios || []) as any[]) {
+        if (!serviceMap[s.cliente_id]) {
+          serviceMap[s.cliente_id] = { total: 0, ultimo: null };
+        }
+        serviceMap[s.cliente_id].total++;
+        const fecha = s.servicio_fecha_creacion;
+        if (!serviceMap[s.cliente_id].ultimo || fecha > serviceMap[s.cliente_id].ultimo!.fecha) {
+          serviceMap[s.cliente_id].ultimo = { codigo: s.servicio_codigo, fecha };
+        }
+      }
+
+      const data = (clientes as any[]).map((c) => ({
+        ...c,
+        total_servicios: serviceMap[c.cliente_id]?.total || 0,
+        ultimo_servicio: serviceMap[c.cliente_id]?.ultimo || null,
+      }));
+
+      return { data };
+    }
+  );
 }
 
