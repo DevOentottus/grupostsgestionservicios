@@ -80,8 +80,9 @@ export function useAsignarColaborador() {
       areaId: number;
       usuarioId: number;
     }) => areasApi.asignarColaborador(areaId, usuarioId),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ["areas"] });
+      qc.invalidateQueries({ queryKey: ["areas", variables.areaId] });
       toast.success("Colaborador asignado");
     },
     onError: (err: any) =>
@@ -99,8 +100,9 @@ export function useRemoverColaborador() {
       areaId: number;
       usuarioId: number;
     }) => areasApi.removerColaborador(areaId, usuarioId),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ["areas"] });
+      qc.invalidateQueries({ queryKey: ["areas", variables.areaId] });
       toast.success("Colaborador removido");
     },
     onError: (err: any) =>

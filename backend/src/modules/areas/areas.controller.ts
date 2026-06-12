@@ -70,7 +70,7 @@ export async function areasController(app: FastifyInstance) {
   // ── GET /api/areas — listar todas las áreas ──
   app.get(
     "/api/areas",
-    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
+    { preHandler: [requireRoles("admin", "sistema", "encargado", "colaborador")] },
     async (request) => {
       const user = request.user as {
         rol: string;
@@ -153,7 +153,7 @@ export async function areasController(app: FastifyInstance) {
   // ── GET /api/areas/:id — obtener área con colaboradores ──
   app.get(
     "/api/areas/:id",
-    { preHandler: [requireRoles("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "sistema", "encargado")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const areaId = parseInt(id);
@@ -207,7 +207,7 @@ export async function areasController(app: FastifyInstance) {
   // ── POST /api/areas — crear área ──
   app.post(
     "/api/areas",
-    { preHandler: [requireRoles("admin")] },
+    { preHandler: [requireRoles("admin", "sistema")] },
     async (request, reply) => {
       const input = crearAreaSchema.parse(request.body);
       const now = new Date();
@@ -247,7 +247,7 @@ export async function areasController(app: FastifyInstance) {
   // ── PUT /api/areas/:id — actualizar área ──
   app.put(
     "/api/areas/:id",
-    { preHandler: [requireRoles("admin")] },
+    { preHandler: [requireRoles("admin", "sistema")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const input = actualizarAreaSchema.parse(request.body);
@@ -299,7 +299,7 @@ export async function areasController(app: FastifyInstance) {
   // ── DELETE /api/areas/:id — eliminar área ──
   app.delete(
     "/api/areas/:id",
-    { preHandler: [requireRoles("admin")] },
+    { preHandler: [requireRoles("admin", "sistema")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const areaId = parseInt(id);
@@ -337,7 +337,7 @@ export async function areasController(app: FastifyInstance) {
   // ── POST /api/areas/:id/colaboradores — agregar colaborador ──
   app.post(
     "/api/areas/:id/colaboradores",
-    { preHandler: [requireRoles("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "sistema", "encargado")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const body = request.body as { usuario_id: number };
@@ -387,7 +387,7 @@ export async function areasController(app: FastifyInstance) {
   // ── GET /api/areas/:id/servicios — servicios del área ──
   app.get(
     "/api/areas/:id/servicios",
-    { preHandler: [requireRoles("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "sistema", "encargado")] },
     async (request) => {
       const { id } = request.params as { id: string };
       const areaId = parseInt(id);
@@ -449,7 +449,7 @@ export async function areasController(app: FastifyInstance) {
   // ── DELETE /api/areas/:id/colaboradores/:usuario_id — remover colaborador ──
   app.delete(
     "/api/areas/:id/colaboradores/:usuario_id",
-    { preHandler: [requireRoles("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "sistema", "encargado")] },
     async (request, reply) => {
       const { id, usuario_id } = request.params as {
         id: string;

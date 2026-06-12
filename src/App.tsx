@@ -67,7 +67,7 @@ export default function App() {
           <Route path="servicios/nuevo" element={<NuevoServicioPage />} />
           <Route path="servicios/:id" element={<ServicioDetailPage />} />
           <Route path="areas" element={
-            <RequireRole roles={["admin", "encargado"]}>
+            <RequireRole roles={["admin", "sistema"]}>
               <AreasPage />
             </RequireRole>
           } />
