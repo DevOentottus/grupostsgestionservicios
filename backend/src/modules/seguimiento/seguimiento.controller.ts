@@ -94,10 +94,10 @@ export async function seguimientoController(app: FastifyInstance) {
       if (svc?.[0]) {
         await supabase.from("serviciovisitas").insert({
           servicio_id: svc[0].servicio_id,
-          visita_fecha: new Date().toISOString().split("T")[0],
-          visita_hora: new Date().toTimeString().split(" ")[0],
-          visita_ip: (request.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || request.ip,
-          visita_user_agent: (request.headers["user-agent"] as string) || null,
+          serviciovisita_fecha: new Date().toISOString().split("T")[0],
+          serviciovisita_hora: new Date().toTimeString().split(" ")[0],
+          serviciovisita_ip: (request.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || request.ip,
+          serviciovisita_user_agent: (request.headers["user-agent"] as string) || null,
         });
       }
     } catch {
