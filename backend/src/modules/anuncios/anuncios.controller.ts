@@ -81,7 +81,7 @@ export async function anunciosController(app: FastifyInstance) {
   // ── GET /api/anuncios/todos — listar todos (admin only, incluye inactivos) ──
   app.get(
     "/api/anuncios/todos",
-    { preHandler: [requireRoles("sistema")] },
+    { preHandler: [requireRoles("admin", "sistema")] },
     async () => {
       const { data: anunciosData, error } = await supabase
         .from("anuncios")
@@ -130,7 +130,7 @@ export async function anunciosController(app: FastifyInstance) {
   // ── POST /api/anuncios — crear anuncio (admin) ──
   app.post(
     "/api/anuncios",
-    { preHandler: [requireRoles("sistema")] },
+    { preHandler: [requireRoles("admin", "sistema")] },
     async (request, reply) => {
       const input = crearAnuncioSchema.parse(request.body);
       const user = request.user as { user_id: number };
@@ -183,7 +183,7 @@ export async function anunciosController(app: FastifyInstance) {
   // ── PATCH /api/anuncios/:id — editar/desactivar (admin) ──
   app.patch(
     "/api/anuncios/:id",
-    { preHandler: [requireRoles("sistema")] },
+    { preHandler: [requireRoles("admin", "sistema")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const input = actualizarAnuncioSchema.parse(request.body);
@@ -240,7 +240,7 @@ export async function anunciosController(app: FastifyInstance) {
   // ── DELETE /api/anuncios/:id — eliminar (admin) ──
   app.delete(
     "/api/anuncios/:id",
-    { preHandler: [requireRoles("sistema")] },
+    { preHandler: [requireRoles("admin", "sistema")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const anuncioId = parseInt(id);

@@ -85,7 +85,7 @@ export default function App() {
             </RequireRole>
           } />
           <Route path="usuarios" element={
-            <RequireRole roles={["admin"]}>
+            <RequireRole roles={["sistema"]}>
               <UsuariosPage />
             </RequireRole>
           } />
