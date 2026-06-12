@@ -65,6 +65,16 @@ export function MiAreaPage() {
     return map;
   }, [data]);
 
+  // Always call this useMemo unconditionally — guard against data being null
+  const colaboradoresOrdenados = useMemo(() => {
+    const cols = data?.colaboradores || [];
+    return [...cols].sort((a, b) =>
+      rankingSort === "desc"
+        ? (b.servicios_completados || 0) - (a.servicios_completados || 0)
+        : (a.servicios_completados || 0) - (b.servicios_completados || 0)
+    );
+  }, [data?.colaboradores, rankingSort]);
+
   if (isLoading) {
     return (
       <div className="space-y-4 animate-pulse">
@@ -104,14 +114,6 @@ export function MiAreaPage() {
     { key: "completado",  label: "Completados",          count: estado_counts.completado,                         color: "text-green-600",  bg: "bg-green-100" },
     { key: "bloqueados",  label: "Bloqueados/Cancelados", count: estado_counts.bloqueado + estado_counts.cancelado, color: "text-red-600",    bg: "bg-red-100" },
   ];
-
-  const colaboradoresOrdenados = useMemo(() => {
-    return [...colaboradores].sort((a, b) =>
-      rankingSort === "desc"
-        ? (b.servicios_completados || 0) - (a.servicios_completados || 0)
-        : (a.servicios_completados || 0) - (b.servicios_completados || 0)
-    );
-  }, [colaboradores, rankingSort]);
 
   return (
     <div className="space-y-6">
