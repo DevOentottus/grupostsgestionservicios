@@ -18,11 +18,11 @@ export async function rendimientoController(app: FastifyInstance) {
 
       return {
         data: {
-          ...visitStats,
-          ...kpiStats,
-          ...califStats,
-          ...collabStats,
-          ...healthStats,
+          visit_tracking: visitStats,
+          performance: kpiStats,
+          calificaciones: califStats,
+          colaboradores: collabStats,
+          sistema: healthStats,
         },
       };
     }
