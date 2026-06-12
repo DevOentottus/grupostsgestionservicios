@@ -5,7 +5,7 @@ import { requireRoles } from "@/core/middleware/auth.js";
 export async function rendimientoController(app: FastifyInstance) {
   app.get(
     "/api/admin/rendimiento",
-    { preHandler: [requireRoles("admin")] },
+    { preHandler: [requireRoles("admin", "sistema")] },
     async () => {
       const [visitStats, kpiStats, califStats, collabStats, healthStats] =
         await Promise.all([

@@ -80,7 +80,7 @@ export default function App() {
           <Route path="comunicaciones" element={<ComunicacionesPage />} />
           {/* Admin only */}
           <Route path="admin/rendimiento" element={
-            <RequireRole roles={["admin"]}>
+            <RequireRole roles={["admin", "sistema"]}>
               <RendimientoSistemaPage />
             </RequireRole>
           } />
