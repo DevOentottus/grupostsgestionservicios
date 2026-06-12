@@ -11,6 +11,9 @@ import {
 import { useCrearPlantilla } from "@/api/queries/usePlantillas.js";
 import { CommentsTab } from "./components/CommentsTab.js";
 import { ProcessFlow } from "@/app/components/flow/ProcessFlow.js";
+import { useEvidencias } from "@/api/queries/useEvidencias.js";
+import { EvidenceUploader } from "@/app/components/evidencias/EvidenceUploader.js";
+import { EvidenceViewer } from "@/app/components/evidencias/EvidenceViewer.js";
 import { ConfirmDialog } from "@/app/components/ConfirmDialog.js";
 import { useAuth } from "@/lib/auth.js";
 import { cn } from "@/app/lib/utils";
@@ -18,7 +21,7 @@ import {
   ArrowLeft, CheckCircle2, Clock, User, MessageSquare,
   Send, AlertTriangle, Plus, X, ChevronRight,
   Pencil, UserPlus, MessageCircle, BookOpen, Eye, Wrench,
-  FileText, Star, Save,
+  FileText, Star, Save, Camera,
 } from "lucide-react";
 import type { Tarea } from "@shared/index.js";
 
@@ -27,6 +30,7 @@ const TABS = [
   { id: "tareas", label: "Tareas", icon: CheckCircle2 },
   { id: "flujo", label: "Flujo", icon: ChevronRight },
   { id: "comentarios", label: "Comentarios", icon: MessageSquare },
+  { id: "evidencias", label: "Evidencias", icon: Camera },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -68,6 +72,71 @@ const ESTADO_ESTILO: Record<string, string> = {
   bloqueado: "bg-red-100 text-red-800",
   cancelado: "bg-gray-100 text-gray-600",
 };
+
+// ── Evidencias Tab Component ──
+function EvidenciasTabContent({ servicioId, tareas }: { servicioId: number; tareas: Tarea[] }) {
+  const { data: evidencias, isLoading } = useEvidencias(servicioId);
+  const [tareaSeleccionada, setTareaSeleccionada] = useState<number | null>(null);
+
+  const tareasConEvidencia = tareas.filter((t) =>
+    evidencias?.some((e) => e.tarea_id === t.id)
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Subir evidencia */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <h4 className="text-sm font-semibold text-slate-700 mb-3">Subir evidencia</h4>
+        <div className="mb-3">
+          <label className="block text-xs text-slate-500 mb-1">Seleccionar tarea</label>
+          <select
+            value={tareaSeleccionada ?? ""}
+            onChange={(e) => setTareaSeleccionada(e.target.value ? Number(e.target.value) : null)}
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-slate-50"
+          >
+            <option value="">Seleccioná una tarea...</option>
+            {tareas
+              .sort((a, b) => a.orden - b.orden)
+              .map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.titulo} {t.completada ? "✅" : "⬜"}
+                </option>
+              ))}
+          </select>
+        </div>
+        {tareaSeleccionada && (
+          <EvidenceUploader
+            servicioId={servicioId}
+            tareaId={tareaSeleccionada}
+          />
+        )}
+      </div>
+
+      {/* Lista de evidencias */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+          <Camera className="w-4 h-4 text-slate-400" />
+          Evidencias subidas
+          {evidencias && (
+            <span className="text-xs font-normal text-slate-400">({evidencias.length})</span>
+          )}
+        </h4>
+        {isLoading ? (
+          <div className="space-y-3 animate-pulse">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-20 bg-slate-100 rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <EvidenceViewer
+            evidencias={evidencias || []}
+            showStatus
+          />
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function ServicioDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -524,6 +593,11 @@ export function ServicioDetailPage() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
             <CommentsTab servicioId={servicioId} />
           </div>
+        )}
+
+        {/* EVIDENCIAS TAB */}
+        {activeTab === "evidencias" && (
+          <EvidenciasTabContent servicioId={servicioId} tareas={tareas || []} />
         )}
       </div>
 

@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { serviciosApi, seguimientoApi } from "@/api/client.js";
+import { serviciosApi, seguimientoApi, evidenciasPublicApi } from "@/api/client.js";
 import { toast } from "sonner";
 import { cn } from "@/app/lib/utils";
 import {
-  Clock, CheckCircle2, AlertTriangle, Star, Send, ArrowLeft,
+  Clock, CheckCircle2, AlertTriangle, Star, Send, ArrowLeft, Camera,
 } from "lucide-react";
-import type { PublicServicioResponse, Encuesta } from "@shared/index.js";
+import type { PublicServicioResponse, Encuesta, Evidencia, EvidenciaComentario } from "@shared/index.js";
+import { EvidenceViewer } from "@/app/components/evidencias/EvidenceViewer.js";
 
 function formatETA(minutes: number): string {
   if (minutes < 1) return "Menos de 1 min";
@@ -78,11 +79,14 @@ function LoadingSkeleton() {
 
 export function ServicioPublicoPage() {
   const { codigo } = useParams<{ codigo: string }>();
+  const [searchParams] = useSearchParams();
+  const dni = searchParams.get("dni") || undefined;
   const [rating, setRating] = useState(0);
   const [comentario, setComentario] = useState("");
   const [observacion, setObservacion] = useState("");
   const [sugerencia, setSugerencia] = useState("");
   const [showSurvey, setShowSurvey] = useState(false);
+  const [evidencias, setEvidencias] = useState<(Evidencia & { comentarios?: EvidenciaComentario[] })[]>([]);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["servicio-publico", codigo],
@@ -94,6 +98,22 @@ export function ServicioPublicoPage() {
     refetchInterval: 30_000,
     refetchIntervalInBackground: false,
   });
+
+  // Fetch evidencias when service loads
+  const evidenciasQuery = useQuery({
+    queryKey: ["evidencias-publicas", codigo, dni],
+    queryFn: async () => {
+      const r = await evidenciasPublicApi.listarPorCodigo(codigo!, dni);
+      return r.data.data as (Evidencia & { comentarios: EvidenciaComentario[] })[];
+    },
+    enabled: !!codigo && !!dni && !!data?.servicio,
+  });
+
+  useEffect(() => {
+    if (evidenciasQuery.data) {
+      setEvidencias(evidenciasQuery.data);
+    }
+  }, [evidenciasQuery.data]);
 
   useEffect(() => {
     if (data?.encuesta) {
@@ -327,6 +347,37 @@ export function ServicioPublicoPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Evidencias section */}
+        {evidencias.length > 0 && dni && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Camera className="w-4 h-4 text-blue-600" />
+              </div>
+              <h3 className="text-gray-900" style={{ fontWeight: 600 }}>
+                Evidencias del servicio
+              </h3>
+            </div>
+            <EvidenceViewer
+              evidencias={evidencias}
+              readOnly
+              showStatus={false}
+              codigo={codigo}
+              dni={dni}
+              onComentarioAdded={() => evidenciasQuery.refetch()}
+            />
+          </div>
+        )}
+
+        {/* No DNI message */}
+        {!dni && data?.servicio && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 text-center">
+            <p className="text-sm text-yellow-700">
+              Ingressá tu DNI en la pantalla anterior para ver las evidencias del servicio y dejar comentarios.
+            </p>
           </div>
         )}
 

@@ -188,6 +188,42 @@ export interface ComentarioDisplay extends Comentario {
   } | null;
 }
 
+// ── Evidencias ──
+export interface Evidencia {
+  id: number;
+  servicio_id: number;
+  tarea_id: number;
+  tipo: "photo" | "video";
+  archivo_url: string;
+  thumbnail_url: string | null;
+  comentario_colaborador: string | null;
+  comentario_cliente: string | null;
+  estado: "pendiente" | "aprobado" | "rechazado" | "reemplazado";
+  submitted_by: number | null;
+  submitted_at: string;
+  created_at: string;
+}
+
+export interface EvidenciaComentario {
+  id: number;
+  evidencia_id: number;
+  usuario_id: number | null;
+  es_cliente: boolean;
+  contenido: string;
+  created_at: string;
+}
+
+export interface EvidenciaComentarioDisplay extends EvidenciaComentario {
+  usuario_nombres?: string;
+}
+
+// ── Tarea with evidence config ──
+export interface TareaEvidenciaConfig {
+  requiere_evidencia: boolean;
+  modo_evidencia: string | null;
+  evidencia_desactivada: boolean;
+}
+
 // ── Auditoria ──
 export interface Auditoria {
   id: number;
@@ -445,6 +481,7 @@ export interface ManagerMiAreaResponse {
     tareas_activas: number;
     tareas_completadas: number;
     servicios_completados: number;
+    calificacion_promedio: number | null;
     servicios_asignados: {
       id: number;
       codigo: string | null;

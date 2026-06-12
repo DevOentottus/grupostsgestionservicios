@@ -4,12 +4,14 @@ import { useNavigate } from "react-router-dom";
 export function SeguimientoClientePage() {
   const navigate = useNavigate();
   const [codigo, setCodigo] = useState("");
+  const [dni, setDni] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = codigo.trim();
     if (!trimmed) return;
-    navigate(`/public/servicio/${trimmed}`);
+    const params = dni.trim() ? `?dni=${encodeURIComponent(dni.trim())}` : "";
+    navigate(`/public/servicio/${trimmed}${params}`);
   };
 
   return (
@@ -49,6 +51,30 @@ export function SeguimientoClientePage() {
               autoFocus
               autoComplete="off"
             />
+          </div>
+
+          <div>
+            <label
+              htmlFor="dni"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              DNI <span className="text-gray-400 font-normal">(opcional)</span>
+            </label>
+            <input
+              id="dni"
+              type="text"
+              value={dni}
+              onChange={(e) => setDni(e.target.value)}
+              placeholder="Ej: 12345678"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg text-center font-mono
+                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                         placeholder:text-gray-400"
+              autoComplete="off"
+              maxLength={8}
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Opcional: si lo ingresás, podrás ver las evidencias del servicio y comentarlas.
+            </p>
           </div>
 
           <button

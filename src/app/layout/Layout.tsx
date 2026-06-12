@@ -77,6 +77,8 @@ function getPageTitle(pathname: string): string {
   const mainSegment = segments[0] || "dashboard";
   const titles: Record<string, string> = {
     dashboard: "Dashboard",
+    miarea: "Mi Área",
+    misservicios: "Mis Servicios",
     servicios: "Servicios",
     solicitudes: "Solicitudes",
     plantillas: "Plantillas",

@@ -272,6 +272,42 @@ export const dashboardApi = {
   }) => api.get("/dashboard", { params: filters }),
 };
 
+// ── Evidencias API ──
+export const evidenciasApi = {
+  upload: (data: {
+    servicio_id: number;
+    tarea_id: number;
+    tipo: "photo" | "video";
+    archivo_base64: string;
+    content_type?: string;
+    comentario?: string;
+  }) => api.post("/evidencias/upload", data),
+  listarPorServicio: (servicioId: number) =>
+    api.get(`/servicios/${servicioId}/evidencias`),
+  agregarComentario: (evidenciaId: number, data: { contenido: string }) =>
+    api.post(`/evidencias/${evidenciaId}/comentario`, data),
+  cambiarEstado: (evidenciaId: number, estado: string) =>
+    api.patch(`/evidencias/${evidenciaId}/estado`, { estado }),
+  configurarTarea: (tareaId: number, data: {
+    requiere_evidencia?: boolean;
+    modo_evidencia?: string | null;
+    evidencia_desactivada?: boolean;
+  }) => api.patch(`/tareas/${tareaId}/evidencia-config`, data),
+};
+
+// ── Evidencias Públicas API ──
+export const evidenciasPublicApi = {
+  listarPorCodigo: (codigo: string, dni?: string) =>
+    api.get(`/public/servicios/${codigo}/evidencias`, {
+      params: dni ? { dni } : undefined,
+    }),
+  agregarComentario: (evidenciaId: number, data: {
+    contenido: string;
+    codigo: string;
+    dni?: string;
+  }) => api.post(`/public/evidencias/${evidenciaId}/comentario`, data),
+};
+
 // ── Manager API ──
 export const managerApi = {
   miArea: (areaId?: number) =>

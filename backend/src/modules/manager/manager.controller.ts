@@ -148,6 +148,19 @@ export async function managerController(app: FastifyInstance) {
             (sa: any) => sa.servicio_estado === "completado"
           ).length;
 
+          // Calificación promedio en los servicios asignados
+          let calificacionPromedio: number | null = null;
+          if (serviciosIds.length > 0) {
+            const { data: califs } = await supabase
+              .from("calificaciones")
+              .select("calificacion_puntaje")
+              .in("servicio_id", serviciosIds);
+            if (califs && califs.length > 0) {
+              const suma = califs.reduce((acc: number, c: any) => acc + c.calificacion_puntaje, 0);
+              calificacionPromedio = Math.round((suma / califs.length) * 10) / 10;
+            }
+          }
+
           return {
             usuario_id: colId,
             id: colId,
@@ -158,6 +171,7 @@ export async function managerController(app: FastifyInstance) {
             tareas_activas: tareasPend,
             tareas_completadas: tareasComp?.length || 0,
             servicios_completados: serviciosCompletados,
+            calificacion_promedio: calificacionPromedio,
             servicios_asignados: (servAsignados || []).map((sa: any) => ({
               id: sa.servicio_id,
               codigo: sa.servicio_codigo || null,
