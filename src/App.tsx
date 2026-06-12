@@ -19,7 +19,6 @@ import { RendimientoSistemaPage } from "@/app/pages/admin/RendimientoSistema.js"
 import { DisplayTVPage } from "@/app/pages/display/DisplayTV.js";
 import { ServicioPublicoPage } from "@/app/pages/servicios/ServicioPublico.js";
 import { SeguimientoClientePage } from "@/app/pages/seguimiento/SeguimientoCliente.js";
-import { ManagerDistribucionPage } from "@/app/pages/manager/ManagerDistribucion.js";
 import { ManagerClientesPage } from "@/app/pages/manager/ManagerClientes.js";
 import { ManagerDesempenoPage } from "@/app/pages/manager/ManagerDesempeno.js";
 import { MiAreaPage } from "@/app/pages/miarea/MiArea.js";
@@ -100,11 +99,6 @@ export default function App() {
           <Route path="manager/clientes" element={
             <RequireRole roles={["admin", "sistema"]}>
               <ManagerClientesPage />
-            </RequireRole>
-          } />
-          <Route path="manager/distribucion" element={
-            <RequireRole roles={["admin"]}>
-              <ManagerDistribucionPage />
             </RequireRole>
           } />
           <Route path="manager/desempeno" element={
