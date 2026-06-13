@@ -21,7 +21,7 @@ import {
   ArrowLeft, CheckCircle2, Clock, MessageSquare,
   Send, AlertTriangle, Plus, X, ChevronRight,
   Pencil, MessageCircle,
-  Save, Camera, Share2, QrCode, Play, Lock, RotateCcw,
+  Save, Camera, Share2, Play, Lock, RotateCcw,
 } from "lucide-react";
 import type { Tarea } from "@shared/index.js";
 
@@ -50,20 +50,25 @@ const TABS = [
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
-// ── Priority / Efficiency config ──
-const PRIORITY_CONFIG: Record<string, { label: string; class: string }> = {
-  baja: { label: "Baja", class: "bg-gray-100 text-gray-600" },
-  media: { label: "Media", class: "bg-blue-100 text-blue-700" },
-  alta: { label: "Alta", class: "bg-orange-100 text-orange-700" },
-  urgente: { label: "Urgente", class: "bg-red-100 text-red-700" },
-};
-
+// ── Efficiency config (replaces old priority config) ──
 const EFICIENCIA_CONFIG: Record<string, { label: string; class: string; icon: string }> = {
   baja: { label: "Baja", class: "bg-gray-50 text-gray-700 border-gray-200", icon: "chevron" },
   media: { label: "Media", class: "bg-blue-50 text-blue-700 border-blue-200", icon: "clock" },
   alta: { label: "Alta", class: "bg-orange-50 text-orange-700 border-orange-200", icon: "chevron" },
   urgente: { label: "Urgente", class: "bg-red-50 text-red-700 border-red-200", icon: "alert" },
 };
+
+/** Combinar fecha + hora del backend a locale legible */
+function formatDateTime(fecha: string, hora?: string | null): string {
+  try {
+    const d = new Date(`${fecha}T${hora || "00:00:00"}`);
+    return d.toLocaleDateString("es-PE", {
+      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+    });
+  } catch {
+    return fecha;
+  }
+}
 
 // ── Task type badges ──
 const TIPO_TAREA_CONFIG: Record<string, { label: string; class: string }> = {
@@ -79,6 +84,15 @@ function formatDuration(minutes: number): string {
   const m = Math.floor(minutes % 60);
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
+
+/** Convierte clave de estado a label legible */
+const ESTADO_LABEL: Record<string, string> = {
+  pendiente: "Pendiente",
+  en_progreso: "En Progreso",
+  completado: "Completado",
+  bloqueado: "Bloqueado",
+  cancelado: "Cancelado",
+};
 
 const ESTADO_ESTILO: Record<string, string> = {
   pendiente: "bg-yellow-100 text-yellow-800",
@@ -220,20 +234,7 @@ export function ServicioDetailPage() {
   const isPendiente = servicio?.estado === "pendiente";
   const isBloqueado = servicio?.estado === "bloqueado";
   const isEnProgreso = servicio?.estado === "en_progreso";
-  const prioridadConf = PRIORITY_CONFIG[servicio?.prioridad || "media"];
   const eficienciaConf = EFICIENCIA_CONFIG[servicio?.prioridad || "media"];
-
-  // ── Helper: combinar fecha + hora del backend ──
-  function formatDateTime(fecha: string, hora?: string | null): string {
-    try {
-      const d = new Date(`${fecha}T${hora || "00:00:00"}`);
-      return d.toLocaleDateString("es-PE", {
-        day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-      });
-    } catch {
-      return fecha;
-    }
-  }
 
   const handleAddTarea = async () => {
     if (!nuevaTarea.trim()) return;
@@ -247,13 +248,7 @@ export function ServicioDetailPage() {
     setNuevaTarea("");
   };
 
-  const handleIniciar = () => {
-    cambiarEstado.mutate({ id: servicioId, estado: "en_progreso", motivo: undefined });
-  };
-
-  const handleReabrir = () => {
-    cambiarEstado.mutate({ id: servicioId, estado: "en_progreso", motivo: undefined });
-  };
+  const irAEnProgreso = () => cambiarEstado.mutate({ id: servicioId, estado: "en_progreso" });
 
   const handleStartTitleEdit = (tarea: Tarea) => {
     setEditTareaId(tarea.id);
@@ -345,7 +340,7 @@ export function ServicioDetailPage() {
             <p className="text-sm text-red-600 mt-0.5">{servicio.bloqueado_motivo}</p>
           </div>
           <button
-            onClick={handleReabrir}
+            onClick={irAEnProgreso}
             className="text-sm px-3 py-1.5 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors flex-shrink-0"
           >
             Reabrir
@@ -409,44 +404,25 @@ export function ServicioDetailPage() {
                   </>
                 )}
               </div>
-              {/* Lock/Cancel icons for gestion */}
-              {esGestion && servicio.estado !== "bloqueado" && servicio.estado !== "cancelado" && (
+              {/* Gestion action icons: bloqueado→desbloquear, cancelado→reactivar, otherwise→bloquear/cancelar */}
+              {esGestion && (servicio.estado === "bloqueado" ? (
+                <button onClick={irAEnProgreso} className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition" title="Desbloquear">
+                  <Lock className="w-3.5 h-3.5" />
+                </button>
+              ) : servicio.estado === "cancelado" ? (
+                <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "pendiente" })} className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition" title="Reactivar">
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              ) : (
                 <>
-                  <button
-                    onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado", motivo: undefined })}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
-                    title="Bloquear"
-                  >
+                  <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado" })} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition" title="Bloquear">
                     <Lock className="w-3.5 h-3.5" />
                   </button>
-                  <button
-                    onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
-                    title="Cancelar"
-                  >
+                  <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition" title="Cancelar">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </>
-              )}
-              {/* Unlock / Reactivate icons when blocked or cancelled */}
-              {esGestion && servicio.estado === "bloqueado" && (
-                <button
-                  onClick={handleReabrir}
-                  className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
-                  title="Desbloquear"
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                </button>
-              )}
-              {esGestion && servicio.estado === "cancelado" && (
-                <button
-                  onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "pendiente" })}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition"
-                  title="Reactivar"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </button>
-              )}
+              ))}
               {servicio.prioridad && (
                 <span className={cn("text-xs font-semibold px-3 py-1 rounded-lg border shadow-sm flex items-center gap-1.5 select-none", eficienciaConf.class)}>
                   {eficienciaConf.icon === "alert" ? <AlertTriangle className="w-3 h-3" /> :
@@ -471,11 +447,7 @@ export function ServicioDetailPage() {
 
           {/* Estado badge */}
           <span className={cn("text-xs px-3 py-1.5 rounded-full font-medium", ESTADO_ESTILO[servicio.estado] || "bg-gray-100 text-gray-600")}>
-            {servicio.estado === "en_progreso" ? "En Progreso" :
-             servicio.estado === "pendiente" ? "Pendiente" :
-             servicio.estado === "completado" ? "Completado" :
-             servicio.estado === "bloqueado" ? "Bloqueado" :
-             servicio.estado === "cancelado" ? "Cancelado" : servicio.estado}
+            {ESTADO_LABEL[servicio.estado] || servicio.estado}
           </span>
         </div>
 
@@ -507,7 +479,7 @@ export function ServicioDetailPage() {
         <div className="flex gap-2 mt-4">
           {isPendiente && (
             <button
-              onClick={handleIniciar}
+              onClick={irAEnProgreso}
               disabled={cambiarEstado.isPending}
               className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-1.5"
             >
