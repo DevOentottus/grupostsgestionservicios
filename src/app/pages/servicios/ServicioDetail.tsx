@@ -21,7 +21,7 @@ import {
   ArrowLeft, CheckCircle2, Clock, MessageSquare,
   Send, AlertTriangle, Plus, X, ChevronRight,
   Pencil, MessageCircle,
-  Save, Camera, Share2, QrCode, Play,
+  Save, Camera, Share2, QrCode, Play, Lock,
 } from "lucide-react";
 import type { Tarea } from "@shared/index.js";
 
@@ -72,14 +72,6 @@ function formatDuration(minutes: number): string {
   const m = Math.floor(minutes % 60);
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
-
-const ESTADOS = [
-  { id: "pendiente", label: "Pendiente", color: "bg-amber-100 text-amber-700 hover:bg-amber-200" },
-  { id: "en_progreso", label: "En Progreso", color: "bg-blue-100 text-blue-700 hover:bg-blue-200" },
-  { id: "completado", label: "Completado", color: "bg-green-100 text-green-700 hover:bg-green-200" },
-  { id: "cancelado", label: "Cancelado", color: "bg-gray-100 text-gray-600 hover:bg-gray-200" },
-  { id: "bloqueado", label: "Bloqueado", color: "bg-red-100 text-red-700 hover:bg-red-200" },
-];
 
 const ESTADO_ESTILO: Record<string, string> = {
   pendiente: "bg-yellow-100 text-yellow-800",
@@ -363,7 +355,7 @@ export function ServicioDetailPage() {
                 {showCompartir && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowCompartir(false)} />
-                    <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-[200px]">
+                    <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-[220px]">
                       <button
                         onClick={() => {
                           setShowCompartir(false);
@@ -371,17 +363,17 @@ export function ServicioDetailPage() {
                         }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-800 hover:bg-blue-100 hover:text-blue-800 transition font-medium rounded-none"
                       >
-                        <span className="w-6 h-6 flex items-center justify-center bg-blue-100 rounded-lg text-blue-700">
+                        <span className="w-7 h-7 flex items-center justify-center bg-blue-100 rounded-lg text-blue-700 flex-shrink-0">
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                           </svg>
                         </span>
-                        <div className="flex flex-col items-start">
-                          <span className="font-medium">Código QR</span>
-                          <span className="text-xs text-gray-500 font-normal">Escaneá para ver el estado</span>
+                        <div className="flex items-baseline gap-1.5 min-w-0">
+                          <span className="font-medium whitespace-nowrap">Código QR</span>
+                          <span className="text-xs text-gray-400 truncate">· Escaneá para ver el estado</span>
                         </div>
                       </button>
-                      <div className="border-t border-gray-100" />
+                      <div className="border-t border-gray-100 mx-3" />
                       <button
                         onClick={() => {
                           setShowCompartir(false);
@@ -389,23 +381,53 @@ export function ServicioDetailPage() {
                         }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-800 hover:bg-green-100 hover:text-green-800 transition font-medium rounded-none"
                       >
-                        <span className="w-6 h-6 flex items-center justify-center bg-green-100 rounded-lg text-green-700">
+                        <span className="w-7 h-7 flex items-center justify-center bg-green-100 rounded-lg text-green-700 flex-shrink-0">
                           <MessageCircle className="w-4 h-4" />
                         </span>
-                        <div className="flex flex-col items-start">
-                          <span className="font-medium">Enviar por WhatsApp</span>
-                          <span className="text-xs text-gray-500 font-normal">Link precargado para el cliente</span>
+                        <div className="flex items-baseline gap-1.5 min-w-0">
+                          <span className="font-medium whitespace-nowrap">WhatsApp</span>
+                          <span className="text-xs text-gray-400 truncate">· Link precargado para el cliente</span>
                         </div>
                       </button>
                     </div>
                   </>
                 )}
               </div>
+              {/* Lock/Cancel icons for gestion */}
+              {esGestion && servicio.estado !== "bloqueado" && servicio.estado !== "cancelado" && (
+                <>
+                  <button
+                    onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado", motivo: undefined })}
+                    className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+                    title="Bloquear servicio"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })}
+                    className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+                    title="Cancelar servicio"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              )}
+              {/* Unlock button when blocked */}
+              {esGestion && servicio.estado === "bloqueado" && (
+                <button
+                  onClick={handleReabrir}
+                  className="p-1 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
+                  title="Desbloquear servicio"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                </button>
+              )}
               <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", ESTADO_ESTILO[servicio.estado] || "bg-gray-100 text-gray-600")}>
                 {servicio.estado === "en_progreso" ? "En Progreso" :
                  servicio.estado === "pendiente" ? "Pendiente" :
                  servicio.estado === "completado" ? "Completado" :
-                 servicio.estado === "bloqueado" ? "Bloqueado" : servicio.estado}
+                 servicio.estado === "bloqueado" ? "Bloqueado" :
+                 servicio.estado === "cancelado" ? "Cancelado" : servicio.estado}
               </span>
               {servicio.prioridad && (
                 <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", prioridadConf.class)}>
@@ -426,31 +448,14 @@ export function ServicioDetailPage() {
             <p className="text-sm text-gray-500 mt-0.5">{servicio.cliente_nombre}</p>
           </div>
 
-          {/* Estado buttons — solo admin/encargado */}
-          {esGestion ? (
-            <div className="flex gap-1.5 flex-wrap justify-end">
-              {ESTADOS.map((e) => (
-                <button
-                  key={e.id}
-                  onClick={() => cambiarEstado.mutate({ id: servicioId, estado: e.id })}
-                  disabled={servicio.estado === e.id}
-                  className={cn(
-                    "text-xs px-2.5 py-1 rounded-full font-medium transition-colors",
-                    servicio.estado === e.id
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : e.color,
-                  )}
-                >
-                  {e.label}
-                </button>
-              ))}
-            </div>
-          ) : (
+          {/* Estado badge (solo non-gestion, gestion lo ve en la línea de arriba) */}
+          {!esGestion && (
             <span className={cn("text-xs px-3 py-1.5 rounded-full font-medium", ESTADO_ESTILO[servicio.estado] || "bg-gray-100 text-gray-600")}>
               {servicio.estado === "en_progreso" ? "En Progreso" :
                servicio.estado === "pendiente" ? "Pendiente" :
                servicio.estado === "completado" ? "Completado" :
-               servicio.estado === "bloqueado" ? "Bloqueado" : servicio.estado}
+               servicio.estado === "bloqueado" ? "Bloqueado" :
+               servicio.estado === "cancelado" ? "Cancelado" : servicio.estado}
             </span>
           )}
         </div>
@@ -533,8 +538,30 @@ export function ServicioDetailPage() {
         {/* TAREAS TAB */}
         {activeTab === "tareas" && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            {/* Add task + Save as template */}
-            <div className="p-4 border-b border-gray-100 space-y-3">
+            {/* Header: título + botón guardar plantilla */}
+            <div className="flex items-center justify-between px-5 pt-4 pb-2">
+              <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-gray-400" />
+                Tareas
+                {totalTareas > 0 && (
+                  <span className="text-xs font-normal text-gray-400">
+                    {completadasCount}/{totalTareas}
+                  </span>
+                )}
+              </h3>
+              {totalTareas > 0 && (
+                <button
+                  onClick={() => setShowSaveTemplate(true)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-blue-700 hover:bg-blue-100 transition"
+                  title="Guardar tareas como plantilla"
+                >
+                  <Save className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Add task input */}
+            <div className="px-5 pb-4">
               <div className="flex gap-2">
                 <input
                   value={nuevaTarea}
@@ -552,15 +579,6 @@ export function ServicioDetailPage() {
                   Agregar
                 </button>
               </div>
-              {esGestion && totalTareas > 0 && (
-                <button
-                  onClick={() => setShowSaveTemplate(true)}
-                  className="w-full flex items-center justify-center gap-1.5 text-xs text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl transition-colors font-medium"
-                >
-                  <Save className="w-3.5 h-3.5" />
-                  Guardar tareas como plantilla
-                </button>
-              )}
             </div>
 
             {/* Task list */}
@@ -587,9 +605,16 @@ export function ServicioDetailPage() {
                     >
                       {/* Checkbox */}
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           if (tarea.completada) return; // no permitir desmarcar
-                          if (!prevIncompleta) completarTarea.mutate(tarea.id);
+                          if (!prevIncompleta) {
+                            const isFirst = completadasCount === 0;
+                            await completarTarea.mutateAsync(tarea.id);
+                            // Auto-advance: si era la primera tarea, pasar a en_progreso
+                            if (isFirst && servicio?.estado === "pendiente") {
+                              cambiarEstado.mutate({ id: servicioId, estado: "en_progreso" });
+                            }
+                          }
                         }}
                         disabled={tarea.completada || prevIncompleta}
                         title={
@@ -701,7 +726,17 @@ export function ServicioDetailPage() {
       {showSaveTemplate && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
-            <h3 className="text-gray-900 font-bold">Guardar como plantilla</h3>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Save className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-gray-900 font-bold text-sm">Guardar como plantilla</h3>
+                <p className="text-xs text-gray-400">
+                  Creado por <span className="font-medium text-gray-600">{user?.nombres || user?.username || "—"}</span>
+                </p>
+              </div>
+            </div>
             <p className="text-sm text-gray-500">
               Se crearán {totalTareas} tarea{totalTareas !== 1 ? "s" : ""} en la nueva plantilla.
             </p>
@@ -759,28 +794,16 @@ export function ServicioDetailPage() {
             <p className="text-xs text-gray-500 text-center">
               Escaneá el código para ver el estado del servicio
             </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  const url = `${PUBLIC_URL}/public/servicio/${servicio.codigo}`;
-                  navigator.clipboard.writeText(url);
-                  toast.success("Enlace copiado al portapapeles");
-                }}
-                className="flex-1 border border-gray-300 text-gray-700 rounded-xl py-2 text-xs hover:bg-gray-100 hover:text-gray-900 transition font-medium"
-              >
-                Copiar enlace
-              </button>
-              <button
-                onClick={() => {
-                  setQrModalOpen(false);
-                  compartirWhatsApp(servicio.codigo, servicio.titulo);
-                }}
-                className="flex-1 bg-green-500 text-white rounded-xl py-2 text-xs hover:bg-green-600 transition font-medium flex items-center justify-center gap-1.5"
-              >
-                <MessageCircle className="w-3.5 h-3.5" />
-                WhatsApp
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                const url = `${PUBLIC_URL}/public/servicio/${servicio.codigo}`;
+                navigator.clipboard.writeText(url);
+                toast.success("Enlace copiado al portapapeles");
+              }}
+              className="w-full border border-gray-300 text-gray-700 rounded-xl py-2.5 text-xs hover:bg-gray-100 hover:text-gray-900 transition font-medium"
+            >
+              Copiar enlace
+            </button>
           </div>
         </div>
       )}
