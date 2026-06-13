@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
 import { useUploadEvidencia } from "@/api/queries/useEvidencias.js";
 import { cn } from "@/app/lib/utils";
-import { Camera, Upload, X, FileVideo, Loader2 } from "lucide-react";
+import { Camera, Image, Upload, X, FileVideo, Loader2 } from "lucide-react";
+import { CameraCapture } from "./CameraCapture.js";
 
 interface EvidenceUploaderProps {
   servicioId: number;
@@ -11,7 +12,7 @@ interface EvidenceUploaderProps {
 }
 
 export function EvidenceUploader({ servicioId, tareaId, onUploaded, className }: EvidenceUploaderProps) {
-  const [mode, setMode] = useState<"photo" | "video" | null>(null);
+  const [mode, setMode] = useState<"photo" | "video" | "camera" | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [comentario, setComentario] = useState("");
   const [fileType, setFileType] = useState<string>("");
@@ -29,13 +30,19 @@ export function EvidenceUploader({ servicioId, tareaId, onUploaded, className }:
     reader.readAsDataURL(file);
   };
 
+  const handleCameraCapture = (dataUrl: string, mimeType: string) => {
+    setFileType(mimeType);
+    setMode("photo");
+    setPreview(dataUrl);
+  };
+
   const handleUpload = async () => {
     if (!preview) return;
     try {
       await uploadMutation.mutateAsync({
         servicio_id: servicioId,
         tarea_id: tareaId,
-        tipo: mode!,
+        tipo: "photo",
         archivo_base64: preview,
         content_type: fileType,
         comentario: comentario || undefined,
@@ -57,6 +64,25 @@ export function EvidenceUploader({ servicioId, tareaId, onUploaded, className }:
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (videoInputRef.current) videoInputRef.current.value = "";
   };
+
+  // Camera mode: show live viewfinder
+  if (mode === "camera") {
+    return (
+      <div className={cn("space-y-3", className)}>
+        <CameraCapture
+          onCapture={handleCameraCapture}
+          onCancel={handleCancel}
+        />
+        <button
+          onClick={handleCancel}
+          className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-600 rounded-xl py-2 text-sm hover:bg-gray-50 transition"
+        >
+          <X className="w-4 h-4" />
+          Cancelar
+        </button>
+      </div>
+    );
+  }
 
   if (preview && mode) {
     return (
@@ -114,14 +140,23 @@ export function EvidenceUploader({ servicioId, tareaId, onUploaded, className }:
   }
 
   return (
-    <div className={cn("flex gap-2", className)}>
-      {/* Photo button */}
+    <div className={cn("flex flex-wrap gap-2", className)}>
+      {/* Camera button (direct capture) */}
       <button
-        onClick={() => fileInputRef.current?.click()}
-        className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-100 transition flex-1 justify-center"
+        onClick={() => setMode("camera")}
+        className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition flex-1 justify-center shadow-sm"
       >
         <Camera className="w-4 h-4" />
-        Foto
+        Tomar foto
+      </button>
+
+      {/* Gallery button */}
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-100 transition flex-1 justify-center"
+      >
+        <Image className="w-4 h-4" />
+        Subir foto
       </button>
       <input
         ref={fileInputRef}
@@ -138,7 +173,7 @@ export function EvidenceUploader({ servicioId, tareaId, onUploaded, className }:
       {/* Video button */}
       <button
         onClick={() => videoInputRef.current?.click()}
-        className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-100 transition flex-1 justify-center"
+        className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 text-purple-700 rounded-xl text-sm font-medium hover:bg-purple-100 transition flex-1 justify-center"
       >
         <FileVideo className="w-4 h-4" />
         Video
