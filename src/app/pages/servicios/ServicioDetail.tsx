@@ -50,12 +50,19 @@ const TABS = [
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
-// ── Priority config ──
+// ── Priority / Efficiency config ──
 const PRIORITY_CONFIG: Record<string, { label: string; class: string }> = {
   baja: { label: "Baja", class: "bg-gray-100 text-gray-600" },
   media: { label: "Media", class: "bg-blue-100 text-blue-700" },
   alta: { label: "Alta", class: "bg-orange-100 text-orange-700" },
   urgente: { label: "Urgente", class: "bg-red-100 text-red-700" },
+};
+
+const EFICIENCIA_CONFIG: Record<string, { label: string; class: string; icon: string }> = {
+  baja: { label: "Baja", class: "bg-gray-50 text-gray-700 border-gray-200", icon: "chevron" },
+  media: { label: "Media", class: "bg-blue-50 text-blue-700 border-blue-200", icon: "clock" },
+  alta: { label: "Alta", class: "bg-orange-50 text-orange-700 border-orange-200", icon: "chevron" },
+  urgente: { label: "Urgente", class: "bg-red-50 text-red-700 border-red-200", icon: "alert" },
 };
 
 // ── Task type badges ──
@@ -79,6 +86,14 @@ const ESTADO_ESTILO: Record<string, string> = {
   completado: "bg-green-100 text-green-800",
   bloqueado: "bg-red-100 text-red-800",
   cancelado: "bg-gray-100 text-gray-600",
+};
+
+const HEADER_BG: Record<string, string> = {
+  pendiente: "bg-amber-50/40",
+  en_progreso: "bg-blue-50/40",
+  completado: "bg-green-50/40",
+  bloqueado: "bg-red-50/40",
+  cancelado: "bg-gray-50/40",
 };
 
 // ── Evidencias Tab Component ──
@@ -206,6 +221,7 @@ export function ServicioDetailPage() {
   const isBloqueado = servicio?.estado === "bloqueado";
   const isEnProgreso = servicio?.estado === "en_progreso";
   const prioridadConf = PRIORITY_CONFIG[servicio?.prioridad || "media"];
+  const eficienciaConf = EFICIENCIA_CONFIG[servicio?.prioridad || "media"];
 
   // ── Helper: combinar fecha + hora del backend ──
   function formatDateTime(fecha: string, hora?: string | null): string {
@@ -338,19 +354,19 @@ export function ServicioDetailPage() {
       )}
 
       {/* Header Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div className={cn("rounded-2xl shadow-sm border border-gray-100 p-6 transition-colors", HEADER_BG[servicio.estado] || "bg-white")}>
         <div className="flex flex-col md:flex-row justify-between items-start gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="text-xs font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded-lg font-medium">{servicio.codigo}</span>
+              <span className="text-xs font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded-lg font-medium shadow-sm">{servicio.codigo}</span>
               {/* Botón Compartir */}
               <div className="relative">
                 <button
                   onClick={() => setShowCompartir(!showCompartir)}
-                  className="text-xs text-gray-500 hover:text-blue-700 hover:bg-blue-100 px-1.5 py-0.5 rounded-lg transition flex items-center gap-1"
-                  title="Compartir"
+                  className="text-xs font-medium text-gray-600 hover:text-blue-700 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5"
                 >
                   <Share2 className="w-3.5 h-3.5" />
+                  Compartir
                 </button>
                 {showCompartir && (
                   <>
@@ -393,22 +409,22 @@ export function ServicioDetailPage() {
                   </>
                 )}
               </div>
-              {/* Lock/Cancel icons for gestion */}
+              {/* Lock/Cancel buttons for gestion */}
               {esGestion && servicio.estado !== "bloqueado" && servicio.estado !== "cancelado" && (
                 <>
                   <button
                     onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado", motivo: undefined })}
-                    className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
-                    title="Bloquear servicio"
+                    className="text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5"
                   >
                     <Lock className="w-3.5 h-3.5" />
+                    Bloquear
                   </button>
                   <button
                     onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })}
-                    className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
-                    title="Cancelar servicio"
+                    className="text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5"
                   >
                     <X className="w-3.5 h-3.5" />
+                    Cancelar
                   </button>
                 </>
               )}
@@ -416,10 +432,10 @@ export function ServicioDetailPage() {
               {esGestion && servicio.estado === "bloqueado" && (
                 <button
                   onClick={handleReabrir}
-                  className="p-1 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
-                  title="Desbloquear servicio"
+                  className="text-xs font-medium text-red-600 hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 shadow-sm transition flex items-center gap-1.5"
                 >
                   <Lock className="w-3.5 h-3.5" />
+                  Desbloquear
                 </button>
               )}
               <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", ESTADO_ESTILO[servicio.estado] || "bg-gray-100 text-gray-600")}>
@@ -430,8 +446,11 @@ export function ServicioDetailPage() {
                  servicio.estado === "cancelado" ? "Cancelado" : servicio.estado}
               </span>
               {servicio.prioridad && (
-                <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", prioridadConf.class)}>
-                  {prioridadConf.label}
+                <span className={cn("text-xs font-semibold px-3 py-1 rounded-lg border shadow-sm flex items-center gap-1.5 select-none", eficienciaConf.class)}>
+                  {eficienciaConf.icon === "alert" ? <AlertTriangle className="w-3 h-3" /> :
+                   eficienciaConf.icon === "clock" ? <Clock className="w-3 h-3" /> :
+                   <ChevronRight className="w-3 h-3" />}
+                  {eficienciaConf.label}
                 </span>
               )}
               {/* Hora de registro */}
