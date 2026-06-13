@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   useServicio, useTareas,
@@ -6,7 +6,7 @@ import {
   useCambiarEstado, useEditarTareaInline,
 } from "@/api/queries/useServicios.js";
 import {
-  useIniciarTiempo, useFinalizarTiempo,
+  useIniciarTiempo, usePausarTiempo, useFinalizarTiempo, useTiemposServicio,
 } from "@/api/queries/useSeguimiento.js";
 import { useCrearPlantilla } from "@/api/queries/usePlantillas.js";
 import { CommentsTab } from "./components/CommentsTab.js";
@@ -21,9 +21,25 @@ import {
   ArrowLeft, CheckCircle2, Clock, User, MessageSquare,
   Send, AlertTriangle, Plus, X, ChevronRight,
   Pencil, UserPlus, MessageCircle, BookOpen, Eye, Wrench,
-  FileText, Star, Save, Camera,
+  FileText, Star, Save, Camera, Timer, Pause,
 } from "lucide-react";
 import type { Tarea } from "@shared/index.js";
+
+// ── Public URL (configurable via env) ──
+const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL || "https://serviciolocalsts.vercel.app";
+
+function compartirWhatsApp(codigo: string, titulo: string) {
+  const serviceUrl = `${PUBLIC_URL}/public/servicio/${codigo}`;
+  const mensaje = [
+    `Hola! Podés ver el estado de tu servicio *${codigo}* - *${titulo}* acá:`,
+    "",
+    serviceUrl,
+    "",
+    "Solo necesitás ingresar tu DNI para validar tu identidad.",
+  ].join("\n");
+  const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
 
 // ── Tab Definitions ──
 const TABS = [
@@ -164,8 +180,18 @@ export function ServicioDetailPage() {
   const cambiarEstado = useCambiarEstado();
   const editarTareaInline = useEditarTareaInline();
   const iniciarTiempo = useIniciarTiempo();
+  const pausarTiempo = usePausarTiempo();
   const finalizarTiempo = useFinalizarTiempo();
+  const { data: tiemposResumen } = useTiemposServicio(servicioId);
   const crearPlantilla = useCrearPlantilla();
+
+  // Tick cada 1s para refrescar display de cronómetros activos
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const [nuevaTarea, setNuevaTarea] = useState("");
   const [nuevaTareaTipo, setNuevaTareaTipo] = useState<string>("tecnico");
   const [editTareaId, setEditTareaId] = useState<number | null>(null);
@@ -183,6 +209,47 @@ export function ServicioDetailPage() {
   const isBloqueado = servicio?.estado === "bloqueado";
   const isEnProgreso = servicio?.estado === "en_progreso";
   const prioridadConf = PRIORITY_CONFIG[servicio?.prioridad || "media"];
+
+  // ── Cálculo de tiempo transcurrido del servicio ──
+  const servicioElapsedMinutos = useMemo(() => {
+    if (!servicio || !servicio.fecha_inicio) return 0;
+    const startStr = `${servicio.fecha_inicio}T${servicio.hora_inicio || "00:00:00"}`;
+    const start = new Date(startStr).getTime();
+    if (servicio.estado === "completado" && servicio.fecha_fin) {
+      const endStr = `${servicio.fecha_fin}T${servicio.hora_fin || "00:00:00"}`;
+      return Math.floor((new Date(endStr).getTime() - start) / 60000);
+    }
+    return Math.floor((Date.now() - start) / 60000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [servicio, tick]);
+
+  // ── Helper: duración en segundos desde tracking_inicio ──
+  function elapsedSeconds(trackingInicio: string): number {
+    return Math.floor((Date.now() - new Date(trackingInicio).getTime()) / 1000);
+  }
+
+  // ── Helper: format segundos a mm:ss o hh:mm:ss ──
+  function formatElapsed(totalSec: number): string {
+    if (totalSec < 60) return `${totalSec}s`;
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    if (m < 60) return `${m}m ${s}s`;
+    const h = Math.floor(m / 60);
+    const remM = m % 60;
+    return `${h}h ${remM}m`;
+  }
+
+  // ── Helper: combinar fecha + hora del backend ──
+  function formatDateTime(fecha: string, hora?: string | null): string {
+    try {
+      const d = new Date(`${fecha}T${hora || "00:00:00"}`);
+      return d.toLocaleDateString("es-PE", {
+        day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+      });
+    } catch {
+      return fecha;
+    }
+  }
 
   const handleAddTarea = async () => {
     if (!nuevaTarea.trim()) return;
@@ -244,6 +311,12 @@ export function ServicioDetailPage() {
   };
 
   const handleStartTimer = (tareaId: number) => iniciarTiempo.mutate(tareaId);
+  const handlePauseTimer = (trackingId: number) => pausarTiempo.mutate(trackingId);
+  const handleStopTimer = (trackingId: number) => finalizarTiempo.mutate(trackingId);
+
+  // Buscar tracking info de una tarea en tiemposResumen
+  const getTrackingInfo = (tareaId: number) =>
+    tiemposResumen?.find((t: any) => t.tarea_id === tareaId) || null;
 
   const flowSteps = tareasSorted.map((tarea) => ({
     id: tarea.id,
@@ -321,9 +394,32 @@ export function ServicioDetailPage() {
                   {prioridadConf.label}
                 </span>
               )}
+              {/* Hora de registro */}
+              {servicio.created_at && (
+                <span className="text-xs text-gray-400 flex items-center gap-1 ml-1">
+                  <Clock className="w-3 h-3" />
+                  {formatDateTime(servicio.created_at, servicio.hora_creacion)}
+                </span>
+              )}
             </div>
-            <h2 className="text-xl text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
-            <p className="text-sm text-gray-500">{servicio.cliente_nombre}</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-xl text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
+              {/* Tiempo total transcurrido del servicio */}
+              {servicioElapsedMinutos > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                  <Timer className="w-3 h-3" />
+                  {(() => {
+                    const m = servicioElapsedMinutos;
+                    if (m < 60) return `${m} min`;
+                    const h = Math.floor(m / 60);
+                    const rm = m % 60;
+                    return rm > 0 ? `${h}h ${rm}m` : `${h}h`;
+                  })()}
+                  {servicio.estado === "en_progreso" && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse ml-0.5" />}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-500 mt-0.5">{servicio.cliente_nombre}</p>
           </div>
 
           {/* Estado buttons — solo admin/encargado */}
@@ -396,6 +492,13 @@ export function ServicioDetailPage() {
               En Progreso
             </span>
           )}
+          <button
+            onClick={() => compartirWhatsApp(servicio.codigo, servicio.titulo)}
+            className="bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-600 transition-colors flex items-center gap-1.5"
+          >
+            <MessageCircle className="w-4 h-4" />
+            WhatsApp
+          </button>
         </div>
       </div>
 
@@ -551,35 +654,138 @@ export function ServicioDetailPage() {
                         </div>
                       )}
 
-                      {/* Actions */}
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                        <button
-                          onClick={() => handleStartTimer(tarea.id)}
-                          className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition"
-                          title="Iniciar cronómetro"
-                        >
-                          ▶
-                        </button>
-                        {!isEditing && (
-                          <button
-                            onClick={() => handleStartTitleEdit(tarea)}
-                            className="p-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-                            title="Editar título"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDeleteClick(tarea)}
-                          className="p-1.5 rounded-lg bg-red-100 text-red-500 hover:bg-red-200 transition"
-                          title="Eliminar tarea"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
+                      {/* Timer + Actions */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* Timer display */}
+                        {(() => {
+                          const info = getTrackingInfo(tarea.id);
+                          if (tarea.completada) {
+                            // Tarea completada: mostrar tiempo real si existe
+                            const realMin = info?.tiempo_real_minutos || 0;
+                            return realMin > 0 ? (
+                              <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-lg font-medium flex items-center gap-1 whitespace-nowrap">
+                                <Clock className="w-3 h-3" />
+                                {realMin < 60 ? `${realMin} min` : `${Math.floor(realMin / 60)}h ${realMin % 60}m`}
+                              </span>
+                            ) : null;
+                          }
+                          if (info?.tracking_activo && info.tracking_inicio) {
+                            // Tracking activo: mostrar contador en vivo
+                            const secs = elapsedSeconds(info.tracking_inicio);
+                            const isPaused = !!info.tracking_pausa;
+                            const trackId = info.tracking_id;
+                            return (
+                              <span className={cn(
+                                "flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-mono font-medium whitespace-nowrap",
+                                isPaused
+                                  ? "bg-orange-50 text-orange-700"
+                                  : "bg-green-50 text-green-700",
+                              )}>
+                                {!isPaused && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
+                                {isPaused && <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />}
+                                {formatElapsed(secs)}
+                                {!isPaused && trackId ? (
+                                  <button
+                                    onClick={() => handlePauseTimer(trackId)}
+                                    className="ml-1 p-0.5 rounded hover:bg-green-200 transition"
+                                    title="Pausar"
+                                  >
+                                    <Pause className="w-3 h-3" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleStartTimer(tarea.id)}
+                                    className="ml-1 p-0.5 rounded hover:bg-orange-200 transition"
+                                    title="Reanudar"
+                                  >
+                                    <PlayIconSmall />
+                                  </button>
+                                )}
+                                {trackId && (
+                                  <button
+                                    onClick={() => handleStopTimer(trackId)}
+                                    className="p-0.5 rounded hover:bg-red-200 transition"
+                                    title="Finalizar"
+                                  >
+                                    <span className="text-red-500 font-bold text-xs">■</span>
+                                  </button>
+                                )}
+                              </span>
+                            );
+                          }
+                          // Sin tracking activo: botón iniciar (solo si no está completada)
+                          if (!tarea.completada) {
+                            return (
+                              <button
+                                onClick={() => handleStartTimer(tarea.id)}
+                                className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition opacity-0 group-hover:opacity-100"
+                                title="Iniciar cronómetro"
+                              >
+                                <PlayIconSmall />
+                              </button>
+                            );
+                          }
+                          return null;
+                        })()}
+
+                        {/* Edit + Delete (siempre visibles en hover) */}
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {!isEditing && !tarea.completada && (
+                            <button
+                              onClick={() => handleStartTitleEdit(tarea)}
+                              className="p-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                              title="Editar título"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          )}
+                          {!tarea.completada && (
+                            <button
+                              onClick={() => handleDeleteClick(tarea)}
+                              className="p-1.5 rounded-lg bg-red-100 text-red-500 hover:bg-red-200 transition"
+                              title="Eliminar tarea"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Eficiencia: resumen de tiempos */}
+            {tiemposResumen && tiemposResumen.length > 0 && (
+              <div className="border-t border-gray-100 px-5 py-3 bg-gray-50/50">
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span className="font-medium flex items-center gap-1.5">
+                    <Timer className="w-3.5 h-3.5" />
+                    Tiempo por tarea
+                  </span>
+                  <span>
+                    {(() => {
+                      const totalReal = tiemposResumen.reduce((sum: number, t: any) => sum + (t.tiempo_real_minutos || 0), 0);
+                      if (totalReal === 0 && !tiemposResumen.some((t: any) => t.tracking_activo)) return null;
+                      const activos = tiemposResumen.filter((t: any) => t.tracking_activo).length;
+                      const completados = tiemposResumen.filter((t: any) => t.completada).length;
+                      return (
+                        <>
+                          {completados > 0 && <span className="text-green-600">{completados} completadas</span>}
+                          {completados > 0 && activos > 0 && <span className="mx-1">·</span>}
+                          {activos > 0 && <span className="text-blue-600">{activos} en curso</span>}
+                          {totalReal > 0 && (
+                            <>
+                              <span className="mx-1">·</span>
+                              <span className="text-gray-700 font-medium">{totalReal < 60 ? `${totalReal} min total` : `${Math.floor(totalReal / 60)}h ${totalReal % 60}m total`}</span>
+                            </>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -654,6 +860,14 @@ export function ServicioDetailPage() {
         isLoading={eliminarTarea.isPending}
       />
     </div>
+  );
+}
+
+function PlayIconSmall() {
+  return (
+    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M5.5 3.5A.5.5 0 015 4v8a.5.5 0 00.8.4l6-4a.5.5 0 000-.8l-6-4a.5.5 0 00-.3-.1z" />
+    </svg>
   );
 }
 

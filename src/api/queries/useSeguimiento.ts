@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { seguimientoApi } from "@/api/client.js";
 import { toast } from "sonner";
-import type { DashboardKPI } from "@shared/index.js";
+import type { DashboardKPI, TiempoTrackingResumen } from "@shared/index.js";
 
 // ── Time Tracking ──
 export function useIniciarTiempo() {
@@ -45,6 +45,18 @@ export function useListarTiempo(tareaId: number) {
       return r.data.data;
     },
     enabled: !!tareaId,
+  });
+}
+
+export function useTiemposServicio(servicioId: number) {
+  return useQuery({
+    queryKey: ["tiempos-servicio", servicioId],
+    queryFn: async () => {
+      const r = await seguimientoApi.tiemposServicio(servicioId);
+      return r.data.data as TiempoTrackingResumen[];
+    },
+    enabled: !!servicioId,
+    refetchInterval: 10_000, // refrescar cada 10s para timers en vivo
   });
 }
 

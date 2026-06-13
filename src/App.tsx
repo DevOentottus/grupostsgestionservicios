@@ -102,7 +102,7 @@ export default function App() {
             </RequireRole>
           } />
           <Route path="manager/desempeno" element={
-            <RequireRole roles={["admin", "encargado"]}>
+            <RequireRole roles={["admin", "encargado", "sistema"]}>
               <ManagerDesempenoPage />
             </RequireRole>
           } />

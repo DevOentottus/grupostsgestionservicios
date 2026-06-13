@@ -172,7 +172,7 @@ export async function serviciosController(app: FastifyInstance) {
 
     const { data: servicios } = await supabase
       .from("servicios")
-      .select("servicio_id, servicio_estado, servicio_fecha_inicio")
+      .select("servicio_id, servicio_estado, servicio_fecha_inicio, servicio_fecha_fin")
       .eq("servicio_id", parseInt(id))
       .limit(1);
 
@@ -187,6 +187,12 @@ export async function serviciosController(app: FastifyInstance) {
       const now = new Date();
       updateData.servicio_fecha_inicio = now.toISOString().split("T")[0];
       updateData.servicio_hora_inicio = now.toTimeString().split(" ")[0];
+    }
+
+    if (estado === "completado" && !servicioActual.servicio_fecha_fin) {
+      const now = new Date();
+      updateData.servicio_fecha_fin = now.toISOString().split("T")[0];
+      updateData.servicio_hora_fin = now.toTimeString().split(" ")[0];
     }
 
     const { data: updatedServicios } = await supabase
@@ -417,6 +423,18 @@ export async function serviciosController(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const user = request.user as { user_id: number };
     const now = new Date();
+    const tareaId = parseInt(id);
+
+    // Finalizar tracking activo si existe
+    await supabase
+      .from("tiempo_tracking")
+      .update({
+        tracking_fin: now.toISOString(),
+        tracking_pausa: null,
+      })
+      .eq("tarea_id", tareaId)
+      .eq("usuario_id", user.user_id)
+      .is("tracking_fin", null);
 
     const { data: updatedTareas } = await supabase
       .from("tareas")
@@ -426,16 +444,35 @@ export async function serviciosController(app: FastifyInstance) {
         tarea_fecha_completado: now.toISOString().split("T")[0],
         tarea_hora_completado: now.toTimeString().split(" ")[0],
       })
-      .eq("tarea_id", parseInt(id))
+      .eq("tarea_id", tareaId)
       .select();
 
     if (!updatedTareas?.length) throw new NotFoundError("Tarea no encontrada");
 
     const t = updatedTareas[0];
-    await auditLog(null, user.user_id, "COMPLETE", "tarea", parseInt(id), {
+    await auditLog(null, user.user_id, "COMPLETE", "tarea", tareaId, {
       titulo: t.tarea_titulo,
       servicio_id: t.servicio_id,
     });
+
+    // Si todas las tareas del servicio están completadas, cerrar el servicio
+    const { data: pendingTasks } = await supabase
+      .from("tareas")
+      .select("tarea_id")
+      .eq("servicio_id", t.servicio_id)
+      .neq("tarea_estado", "completado")
+      .limit(1);
+
+    if (!pendingTasks?.length) {
+      await supabase
+        .from("servicios")
+        .update({
+          servicio_estado: "completado",
+          servicio_fecha_fin: now.toISOString().split("T")[0],
+          servicio_hora_fin: now.toTimeString().split(" ")[0],
+        })
+        .eq("servicio_id", t.servicio_id);
+    }
 
     return reply.send({
       data: {
@@ -504,6 +541,183 @@ export async function serviciosController(app: FastifyInstance) {
 
     return reply.send({ data: { success: true } });
   });
+  // ──────────────────────────────────
+  // CRONÓMETRO POR TAREA (tiempo_tracking)
+  // ──────────────────────────────────
+
+  // GET /api/servicios/:id/tiempos — resumen de tracking para todo el servicio
+  app.get("/api/servicios/:id/tiempos", { preHandler: [requireRoles()] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const servicioId = parseInt(id);
+
+    const { data: tareas } = await supabase
+      .from("tareas")
+      .select("tarea_id, tarea_titulo, tarea_estado, tarea_tiempo_real, tarea_orden")
+      .eq("servicio_id", servicioId)
+      .order("tarea_orden", { ascending: true });
+
+    const tareaIds = (tareas || []).map((t: any) => t.tarea_id);
+
+    // Obtener tracking activo (sin fin) para todas las tareas
+    const { data: trackingsActivos } = tareaIds.length > 0 ? await supabase
+      .from("tiempo_tracking")
+      .select("*")
+      .in("tarea_id", tareaIds)
+      .is("tracking_fin", null) : { data: [] };
+
+    const activosMap: Record<number, any> = {};
+    for (const ta of trackingsActivos || []) {
+      if (!activosMap[ta.tarea_id]) activosMap[ta.tarea_id] = ta;
+    }
+
+    const resumen = (tareas || []).map((t: any) => {
+      const activo = activosMap[t.tarea_id];
+      return {
+        tarea_id: t.tarea_id,
+        titulo: t.tarea_titulo,
+        completada: t.tarea_estado === "completado",
+        tiempo_estimado: null,
+        tiempo_real_minutos: t.tarea_tiempo_real || 0,
+        tracking_activo: !!activo,
+        tracking_id: activo?.tracking_id || null,
+        tracking_inicio: activo?.tracking_inicio || null,
+        tracking_pausa: activo?.tracking_pausa || null,
+      };
+    });
+
+    return { data: resumen };
+  });
+
+  // POST /api/tareas/:id/tiempo/iniciar
+  app.post("/api/tareas/:id/tiempo/iniciar", { preHandler: [requireRoles()] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const user = request.user as { user_id: number };
+    const tareaId = parseInt(id);
+
+    // Verificar que la tarea existe
+    const { data: tareas } = await supabase
+      .from("tareas")
+      .select("tarea_id, tarea_estado")
+      .eq("tarea_id", tareaId)
+      .limit(1);
+    if (!tareas?.length) throw new NotFoundError("Tarea no encontrada");
+
+    // Finalizar cualquier tracking activo del usuario en esta tarea
+    await supabase
+      .from("tiempo_tracking")
+      .update({ tracking_fin: new Date().toISOString() })
+      .eq("tarea_id", tareaId)
+      .eq("usuario_id", user.user_id)
+      .is("tracking_fin", null);
+
+    const now = new Date();
+    const { data: newTrack } = await supabase
+      .from("tiempo_tracking")
+      .insert({
+        tarea_id: tareaId,
+        usuario_id: user.user_id,
+        tracking_inicio: now.toISOString(),
+      })
+      .select()
+      .limit(1);
+
+    return reply.status(201).send({ data: newTrack?.[0] || null });
+  });
+
+  // GET /api/tareas/:id/tiempo
+  app.get("/api/tareas/:id/tiempo", { preHandler: [requireRoles()] }, async (request) => {
+    const { id } = request.params as { id: string };
+    const { data: entries } = await supabase
+      .from("tiempo_tracking")
+      .select("*, usuarios!tiempo_tracking_usuario_id_fkey(usuario_nombres)")
+      .eq("tarea_id", parseInt(id))
+      .order("tracking_inicio", { ascending: false });
+
+    return {
+      data: (entries || []).map((e: any) => ({
+        id: e.tracking_id,
+        tarea_id: e.tarea_id,
+        usuario_id: e.usuario_id,
+        usuario_nombre: (e as any).usuarios?.usuario_nombres || null,
+        inicio: e.tracking_inicio,
+        pausa_at: e.tracking_pausa,
+        fin: e.tracking_fin,
+        created_at: e.created_at,
+      })),
+    };
+  });
+
+  // PATCH /api/tiempo/:id/pausar
+  app.patch("/api/tiempo/:id/pausar", { preHandler: [requireRoles()] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { data: updated } = await supabase
+      .from("tiempo_tracking")
+      .update({ tracking_pausa: new Date().toISOString() })
+      .eq("tracking_id", parseInt(id))
+      .is("tracking_pausa", null)
+      .is("tracking_fin", null)
+      .select()
+      .limit(1);
+
+    if (!updated?.length) throw new NotFoundError("Tracking no encontrado o ya pausado");
+    return reply.send({ data: updated[0] });
+  });
+
+  // PATCH /api/tiempo/:id/reanudar
+  app.patch("/api/tiempo/:id/reanudar", { preHandler: [requireRoles()] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { data: updated } = await supabase
+      .from("tiempo_tracking")
+      .update({ tracking_pausa: null })
+      .eq("tracking_id", parseInt(id))
+      .is("tracking_fin", null)
+      .select()
+      .limit(1);
+
+    if (!updated?.length) throw new NotFoundError("Tracking no encontrado o ya finalizado");
+    return reply.send({ data: updated[0] });
+  });
+
+  // PATCH /api/tiempo/:id/finalizar
+  app.patch("/api/tiempo/:id/finalizar", { preHandler: [requireRoles()] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const now = new Date();
+    const { data: updated } = await supabase
+      .from("tiempo_tracking")
+      .update({
+        tracking_fin: now.toISOString(),
+        tracking_pausa: null, // si estaba pausado, se reanuda y finaliza
+      })
+      .eq("tracking_id", parseInt(id))
+      .is("tracking_fin", null)
+      .select()
+      .limit(1);
+
+    if (!updated?.length) throw new NotFoundError("Tracking no encontrado o ya finalizado");
+
+    // Calcular y actualizar tarea_tiempo_real en la tarea
+    const track = updated[0];
+    const inicio = new Date(track.tracking_inicio).getTime();
+    const fin = now.getTime();
+    const minutos = Math.round((fin - inicio) / 60000);
+
+    if (minutos > 0) {
+      // Sumar al tiempo real existente
+      const { data: tareaActual } = await supabase
+        .from("tareas")
+        .select("tarea_tiempo_real")
+        .eq("tarea_id", track.tarea_id)
+        .limit(1);
+
+      const tiempoExistente = tareaActual?.[0]?.tarea_tiempo_real || 0;
+      await supabase
+        .from("tareas")
+        .update({ tarea_tiempo_real: tiempoExistente + minutos })
+        .eq("tarea_id", track.tarea_id);
+    }
+
+    return reply.send({ data: updated[0] });
+  });
 }
 
 // ── Helper: mapea servicio de Supabase al formato ServicioLocalSTS ──
@@ -542,7 +756,10 @@ function mapServicio(s: any) {
     consultado_cliente: false, // no disponible en Supabase
     tiempo_estimado: s.servicio_tiempo_estimado,
     fecha_inicio: s.servicio_fecha_inicio,
+    hora_inicio: s.servicio_hora_inicio,
     fecha_fin: s.servicio_fecha_fin,
+    hora_fin: s.servicio_hora_fin,
+    hora_creacion: s.servicio_hora_creacion,
     bloqueado_motivo: null, // no disponible en Supabase
     created_at: s.servicio_fecha_creacion,
     updated_at: null,

@@ -292,7 +292,7 @@ export async function managerController(app: FastifyInstance) {
   // ── GET /api/manager/desempeno/:usuario_id ──
   app.get(
     "/api/manager/desempeno/:usuario_id",
-    { preHandler: [requireRoles("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado", "sistema")] },
     async (request) => {
       const user = request.user as {
         user_id: number;

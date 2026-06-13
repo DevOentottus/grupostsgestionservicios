@@ -57,7 +57,10 @@ export interface Servicio {
   consultado_cliente: boolean;
   tiempo_estimado: number | null;
   fecha_inicio: string | null;
+  hora_inicio: string | null;
   fecha_fin: string | null;
+  hora_fin: string | null;
+  hora_creacion: string | null;
   bloqueado_motivo: string | null;
   created_at: string;
   updated_at: string;
@@ -85,9 +88,23 @@ export interface TiempoTracking {
   id: number;
   tarea_id: number;
   usuario_id: number;
+  usuario_nombre?: string | null;
   inicio: string;
   pausa_at: string | null;
   fin: string | null;
+  created_at?: string;
+}
+
+export interface TiempoTrackingResumen {
+  tarea_id: number;
+  titulo: string;
+  completada: boolean;
+  tiempo_estimado: number | null;
+  tiempo_real_minutos: number;
+  tracking_activo: boolean;
+  tracking_id: number | null;
+  tracking_inicio: string | null;
+  tracking_pausa: string | null;
 }
 
 // ── Encuesta ──

@@ -44,7 +44,7 @@ const nav: NavItem[] = [
 
 const managerNav: NavItem[] = [
   { to: "/manager/clientes", label: "Clientes", icon: <Users className="w-4 h-4" />, roles: ["admin", "sistema"] },
-  { to: "/manager/desempeno", label: "Desempeño", icon: <TrendingUp className="w-4 h-4" />, roles: ["admin", "encargado"] },
+  { to: "/manager/desempeno", label: "Desempeño", icon: <TrendingUp className="w-4 h-4" />, roles: ["admin", "encargado", "sistema"] },
 ];
 
 const displayLinks: NavItem[] = [

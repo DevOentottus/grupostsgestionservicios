@@ -199,6 +199,7 @@ export const seguimientoApi = {
   reanudarTiempo: (id: number) => api.patch(`/tiempo/${id}/reanudar`),
   finalizarTiempo: (id: number) => api.patch(`/tiempo/${id}/finalizar`),
   listarTiempo: (tareaId: number) => api.get(`/tareas/${tareaId}/tiempo`),
+  tiemposServicio: (servicioId: number) => api.get(`/servicios/${servicioId}/tiempos`),
   // Encuestas
   crearEncuesta: (servicioId: number, data: any) =>
     api.post(`/servicios/${servicioId}/encuesta`, data),
