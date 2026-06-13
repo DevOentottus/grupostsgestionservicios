@@ -16,12 +16,14 @@ import { EvidenceUploader } from "@/app/components/evidencias/EvidenceUploader.j
 import { EvidenceViewer } from "@/app/components/evidencias/EvidenceViewer.js";
 import { ConfirmDialog } from "@/app/components/ConfirmDialog.js";
 import { useAuth } from "@/lib/auth.js";
+import { toast } from "sonner";
 import { cn } from "@/app/lib/utils";
+import QRCode from "qrcode";
 import {
   ArrowLeft, CheckCircle2, Clock, User, MessageSquare,
   Send, AlertTriangle, Plus, X, ChevronRight,
   Pencil, UserPlus, MessageCircle, BookOpen, Eye, Wrench,
-  FileText, Star, Save, Camera, Timer, Pause,
+  FileText, Star, Save, Camera, Timer, Pause, Share2, QrCode,
 } from "lucide-react";
 import type { Tarea } from "@shared/index.js";
 
@@ -200,6 +202,19 @@ export function ServicioDetailPage() {
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [activeTracking, setActiveTracking] = useState<Record<number, number | null>>({});
+  const [showCompartir, setShowCompartir] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState("");
+
+  // Generar QR cuando se abre el modal
+  useEffect(() => {
+    if (qrModalOpen && servicio) {
+      const url = `${PUBLIC_URL}/public/servicio/${servicio.codigo}`;
+      QRCode.toDataURL(url, { width: 280, margin: 2 })
+        .then(setQrDataUrl)
+        .catch(() => setQrDataUrl(""));
+    }
+  }, [qrModalOpen, servicio]);
 
   const tareasSorted = [...(tareas || [])].sort((a: Tarea, b: Tarea) => a.orden - b.orden);
   const completadasCount = tareasSorted.filter((t) => t.completada).length;
@@ -383,6 +398,49 @@ export function ServicioDetailPage() {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg">{servicio.codigo}</span>
+              {/* Botón Compartir */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowCompartir(!showCompartir)}
+                  className="text-xs text-gray-400 hover:text-blue-600 hover:bg-blue-50 px-1.5 py-0.5 rounded-lg transition flex items-center gap-1"
+                  title="Compartir"
+                >
+                  <Share2 className="w-3 h-3" />
+                </button>
+                {showCompartir && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowCompartir(false)} />
+                    <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-[180px]">
+                      <button
+                        onClick={() => {
+                          setShowCompartir(false);
+                          setQrModalOpen(true);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition font-medium"
+                      >
+                        <span className="w-5 h-5 flex items-center justify-center bg-blue-50 rounded-md text-blue-600">
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                          </svg>
+                        </span>
+                        Código QR
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowCompartir(false);
+                          compartirWhatsApp(servicio.codigo, servicio.titulo);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs text-gray-700 hover:bg-green-50 hover:text-green-700 transition font-medium"
+                      >
+                        <span className="w-5 h-5 flex items-center justify-center bg-green-50 rounded-md text-green-600">
+                          <MessageCircle className="w-3.5 h-3.5" />
+                        </span>
+                        Enviar por WhatsApp
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
               <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", ESTADO_ESTILO[servicio.estado] || "bg-gray-100 text-gray-600")}>
                 {servicio.estado === "en_progreso" ? "En Progreso" :
                  servicio.estado === "pendiente" ? "Pendiente" :
@@ -492,13 +550,6 @@ export function ServicioDetailPage() {
               En Progreso
             </span>
           )}
-          <button
-            onClick={() => compartirWhatsApp(servicio.codigo, servicio.titulo)}
-            className="bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-600 transition-colors flex items-center gap-1.5"
-          >
-            <MessageCircle className="w-4 h-4" />
-            WhatsApp
-          </button>
         </div>
       </div>
 
@@ -841,6 +892,54 @@ export function ServicioDetailPage() {
               >
                 <Save className="w-4 h-4" />
                 {crearPlantilla.isPending ? "Guardando..." : "Guardar plantilla"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* QR Code Modal */}
+      {qrModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setQrModalOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xs p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-gray-900 font-bold text-sm">Código QR del servicio</h3>
+              <button onClick={() => setQrModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition p-1">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex justify-center">
+              {qrDataUrl ? (
+                <img src={qrDataUrl} alt="QR del servicio" className="w-56 h-56 rounded-xl border border-gray-100" />
+              ) : (
+                <div className="w-56 h-56 bg-gray-50 rounded-xl animate-pulse flex items-center justify-center">
+                  <span className="text-xs text-gray-400">Generando QR...</span>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 text-center">
+              Escaneá el código para ver el estado del servicio
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const url = `${PUBLIC_URL}/public/servicio/${servicio.codigo}`;
+                  navigator.clipboard.writeText(url);
+                  toast.success("Enlace copiado al portapapeles");
+                }}
+                className="flex-1 border border-gray-200 text-gray-700 rounded-xl py-2 text-xs hover:bg-gray-50 transition font-medium"
+              >
+                Copiar enlace
+              </button>
+              <button
+                onClick={() => {
+                  setQrModalOpen(false);
+                  compartirWhatsApp(servicio.codigo, servicio.titulo);
+                }}
+                className="flex-1 bg-green-500 text-white rounded-xl py-2 text-xs hover:bg-green-600 transition font-medium flex items-center justify-center gap-1.5"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                WhatsApp
               </button>
             </div>
           </div>
