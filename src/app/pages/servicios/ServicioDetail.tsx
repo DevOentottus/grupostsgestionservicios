@@ -21,7 +21,7 @@ import {
   ArrowLeft, CheckCircle2, Clock, MessageSquare,
   Send, AlertTriangle, Plus, X, ChevronRight,
   Pencil, MessageCircle,
-  Save, Camera, Share2, QrCode, Play, Lock,
+  Save, Camera, Share2, QrCode, Play, Lock, RotateCcw,
 } from "lucide-react";
 import type { Tarea } from "@shared/index.js";
 
@@ -409,42 +409,44 @@ export function ServicioDetailPage() {
                   </>
                 )}
               </div>
-              {/* Lock/Cancel buttons for gestion */}
+              {/* Lock/Cancel icons for gestion */}
               {esGestion && servicio.estado !== "bloqueado" && servicio.estado !== "cancelado" && (
                 <>
                   <button
                     onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado", motivo: undefined })}
-                    className="text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+                    title="Bloquear"
                   >
                     <Lock className="w-3.5 h-3.5" />
-                    Bloquear
                   </button>
                   <button
                     onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })}
-                    className="text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+                    title="Cancelar"
                   >
                     <X className="w-3.5 h-3.5" />
-                    Cancelar
                   </button>
                 </>
               )}
-              {/* Unlock button when blocked */}
+              {/* Unlock / Reactivate icons when blocked or cancelled */}
               {esGestion && servicio.estado === "bloqueado" && (
                 <button
                   onClick={handleReabrir}
-                  className="text-xs font-medium text-red-600 hover:bg-red-50 px-2.5 py-1 rounded-lg border border-red-200 shadow-sm transition flex items-center gap-1.5"
+                  className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
+                  title="Desbloquear"
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  Desbloquear
                 </button>
               )}
-              <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", ESTADO_ESTILO[servicio.estado] || "bg-gray-100 text-gray-600")}>
-                {servicio.estado === "en_progreso" ? "En Progreso" :
-                 servicio.estado === "pendiente" ? "Pendiente" :
-                 servicio.estado === "completado" ? "Completado" :
-                 servicio.estado === "bloqueado" ? "Bloqueado" :
-                 servicio.estado === "cancelado" ? "Cancelado" : servicio.estado}
-              </span>
+              {esGestion && servicio.estado === "cancelado" && (
+                <button
+                  onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "pendiente" })}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition"
+                  title="Reactivar"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              )}
               {servicio.prioridad && (
                 <span className={cn("text-xs font-semibold px-3 py-1 rounded-lg border shadow-sm flex items-center gap-1.5 select-none", eficienciaConf.class)}>
                   {eficienciaConf.icon === "alert" ? <AlertTriangle className="w-3 h-3" /> :
@@ -467,16 +469,14 @@ export function ServicioDetailPage() {
             <p className="text-sm text-gray-500 mt-0.5">{servicio.cliente_nombre}</p>
           </div>
 
-          {/* Estado badge (solo non-gestion, gestion lo ve en la línea de arriba) */}
-          {!esGestion && (
-            <span className={cn("text-xs px-3 py-1.5 rounded-full font-medium", ESTADO_ESTILO[servicio.estado] || "bg-gray-100 text-gray-600")}>
-              {servicio.estado === "en_progreso" ? "En Progreso" :
-               servicio.estado === "pendiente" ? "Pendiente" :
-               servicio.estado === "completado" ? "Completado" :
-               servicio.estado === "bloqueado" ? "Bloqueado" :
-               servicio.estado === "cancelado" ? "Cancelado" : servicio.estado}
-            </span>
-          )}
+          {/* Estado badge */}
+          <span className={cn("text-xs px-3 py-1.5 rounded-full font-medium", ESTADO_ESTILO[servicio.estado] || "bg-gray-100 text-gray-600")}>
+            {servicio.estado === "en_progreso" ? "En Progreso" :
+             servicio.estado === "pendiente" ? "Pendiente" :
+             servicio.estado === "completado" ? "Completado" :
+             servicio.estado === "bloqueado" ? "Bloqueado" :
+             servicio.estado === "cancelado" ? "Cancelado" : servicio.estado}
+          </span>
         </div>
 
         {servicio.descripcion && (
