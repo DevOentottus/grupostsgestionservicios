@@ -388,7 +388,7 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
                   {data.period_comparison.variacion.servicios >= 0 ? "+" : ""}{data.period_comparison.variacion.servicios}%
                 </span>
                 <span className="text-xs text-gray-400">
-                  ({data.period_comparison.actual.servicios_completados} vs {data.period_comparison.anterior.servicios_completados})
+                  ({data.period_comparison.anterior.servicios_completados} vs {data.period_comparison.actual.servicios_completados})
                 </span>
               </div>
             </div>
@@ -399,7 +399,7 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
                   {data.period_comparison.variacion.tareas >= 0 ? "+" : ""}{data.period_comparison.variacion.tareas}%
                 </span>
                 <span className="text-xs text-gray-400">
-                  ({data.period_comparison.actual.tareas_completadas} vs {data.period_comparison.anterior.tareas_completadas})
+                  ({data.period_comparison.anterior.tareas_completadas} vs {data.period_comparison.actual.tareas_completadas})
                 </span>
               </div>
             </div>
@@ -410,7 +410,7 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
                   {data.period_comparison.variacion.tiempo >= 0 ? "+" : ""}{data.period_comparison.variacion.tiempo}%
                 </span>
                 <span className="text-xs text-gray-400">
-                  ({formatMinutos(data.period_comparison.actual.tiempo_promedio)} vs {formatMinutos(data.period_comparison.anterior.tiempo_promedio)})
+                  ({formatMinutos(data.period_comparison.anterior.tiempo_promedio)} vs {formatMinutos(data.period_comparison.actual.tiempo_promedio)})
                 </span>
               </div>
             </div>
@@ -885,19 +885,19 @@ function ComparativoTab({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
               <div>
-                <p className="text-xs text-slate-500 font-medium mb-2">Periodo 1 (actual)</p>
-                <DateRangeFilter
-                  fechaInicio={fechaPeriodo1}
-                  fechaFin={fechaFinPeriodo1}
-                  onChange={onPeriodo1Change}
-                />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 font-medium mb-2">Periodo 2 (comparar)</p>
+                <p className="text-xs text-slate-500 font-medium mb-2">Periodo anterior</p>
                 <DateRangeFilter
                   fechaInicio={compararFechaInicio}
                   fechaFin={compararFechaFin}
                   onChange={onCompararFechaChange}
+                />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 font-medium mb-2">Periodo actual</p>
+                <DateRangeFilter
+                  fechaInicio={fechaPeriodo1}
+                  fechaFin={fechaFinPeriodo1}
+                  onChange={onPeriodo1Change}
                 />
               </div>
             </div>
@@ -917,8 +917,8 @@ function ComparativoTab({
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
                   <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Métrica</th>
-                  <th className="text-right py-3 px-4 text-gray-500 text-xs font-medium">Actual</th>
                   <th className="text-right py-3 px-4 text-gray-500 text-xs font-medium">Anterior</th>
+                  <th className="text-right py-3 px-4 text-gray-500 text-xs font-medium">Actual</th>
                   <th className="text-right py-3 px-4 text-gray-500 text-xs font-medium">Variación</th>
                 </tr>
               </thead>
@@ -948,10 +948,10 @@ function ComparativoTab({
                   <tr key={row.label} className="hover:bg-gray-50 transition">
                     <td className="py-3 px-4 text-gray-800 font-medium">{row.label}</td>
                     <td className="py-3 px-4 text-right text-gray-600">
-                      {row.unit ? `${row.actual} ${row.unit}` : row.actual}
+                      {row.unit ? `${row.anterior} ${row.unit}` : row.anterior}
                     </td>
                     <td className="py-3 px-4 text-right text-gray-600">
-                      {row.unit ? `${row.anterior} ${row.unit}` : row.anterior}
+                      {row.unit ? `${row.actual} ${row.unit}` : row.actual}
                     </td>
                     <td className="py-3 px-4 text-right">
                       <span className={cn(
