@@ -244,7 +244,7 @@ export async function seguimientoController(app: FastifyInstance) {
     };
 
     // ── Servicios del período ──
-    let svcQuery = supabase.from("servicios").select("servicio_estado, servicio_tiempo_estimado, servicio_fecha_inicio, servicio_fecha_creacion, area_id");
+    let svcQuery = supabase.from("servicios").select("servicio_id, servicio_estado, servicio_tiempo_estimado, servicio_fecha_inicio, servicio_fecha_creacion, area_id");
     svcQuery = applyDateFilter(svcQuery, "servicio_fecha_creacion");
     svcQuery = applyAreaFilter(svcQuery, "area_id");
     const { data: allServicios } = await svcQuery;
