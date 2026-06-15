@@ -36,10 +36,10 @@ export function ManagerDesempenoPage() {
         .filter((u) => u.rol === "colaborador" || u.rol === "encargado")
         .map((u) => ({
           usuario_id: u.id,
-          nombres: u.nombres,
+          nombres: [u.nombres, u.apellidos].filter(Boolean).join(" "),
         }));
     }
-    // Encargado ve solo los de su área
+    // Encargado ve solo los de su área (vienen con nombres desde el backend)
     return miArea?.colaboradores || [];
   }, [esSupervisor, todosUsuarios, miArea]);
 
