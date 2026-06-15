@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, subDays, subMonths, subQuarters } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
@@ -821,24 +822,86 @@ function ComparativoTab({
         </label>
 
         {compararPeriodo && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-            <div>
-              <p className="text-xs text-slate-500 font-medium mb-2">Periodo 1 (actual)</p>
-              <DateRangeFilter
-                fechaInicio={fechaPeriodo1}
-                fechaFin={fechaFinPeriodo1}
-                onChange={onPeriodo1Change}
-              />
+          <>
+            {/* Filtros rápidos de pares equivalente */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              {[
+                {
+                  label: "Día anterior — Día actual",
+                  apply: () => {
+                    const hoy = new Date();
+                    const ayer = subDays(hoy, 1);
+                    onPeriodo1Change(format(startOfDay(hoy), "yyyy-MM-dd"), format(endOfDay(hoy), "yyyy-MM-dd"));
+                    onCompararFechaChange(format(startOfDay(ayer), "yyyy-MM-dd"), format(endOfDay(ayer), "yyyy-MM-dd"));
+                  },
+                },
+                {
+                  label: "Sem. anterior — Sem. actual",
+                  apply: () => {
+                    const now = new Date();
+                    const semanaActualInicio = startOfWeek(now, { weekStartsOn: 1 });
+                    const semanaActualFin = endOfWeek(now, { weekStartsOn: 1 });
+                    const semanaAnteriorInicio = subDays(semanaActualInicio, 7);
+                    const semanaAnteriorFin = subDays(semanaActualFin, 7);
+                    onPeriodo1Change(format(semanaActualInicio, "yyyy-MM-dd"), format(semanaActualFin, "yyyy-MM-dd"));
+                    onCompararFechaChange(format(semanaAnteriorInicio, "yyyy-MM-dd"), format(semanaAnteriorFin, "yyyy-MM-dd"));
+                  },
+                },
+                {
+                  label: "Mes anterior — Mes actual",
+                  apply: () => {
+                    const now = new Date();
+                    const mesActualInicio = startOfMonth(now);
+                    const mesActualFin = endOfMonth(now);
+                    const mesAnteriorInicio = startOfMonth(subMonths(now, 1));
+                    const mesAnteriorFin = endOfMonth(subMonths(now, 1));
+                    onPeriodo1Change(format(mesActualInicio, "yyyy-MM-dd"), format(mesActualFin, "yyyy-MM-dd"));
+                    onCompararFechaChange(format(mesAnteriorInicio, "yyyy-MM-dd"), format(mesAnteriorFin, "yyyy-MM-dd"));
+                  },
+                },
+                {
+                  label: "Trim. anterior — Trim. actual",
+                  apply: () => {
+                    const now = new Date();
+                    const trimActualInicio = startOfQuarter(now);
+                    const trimActualFin = endOfQuarter(now);
+                    const trimAnteriorInicio = startOfQuarter(subQuarters(now, 1));
+                    const trimAnteriorFin = endOfQuarter(subQuarters(now, 1));
+                    onPeriodo1Change(format(trimActualInicio, "yyyy-MM-dd"), format(trimActualFin, "yyyy-MM-dd"));
+                    onCompararFechaChange(format(trimAnteriorInicio, "yyyy-MM-dd"), format(trimAnteriorFin, "yyyy-MM-dd"));
+                  },
+                },
+              ].map((opt) => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={opt.apply}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2.5 py-1.5 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
-            <div>
-              <p className="text-xs text-slate-500 font-medium mb-2">Periodo 2 (comparar)</p>
-              <DateRangeFilter
-                fechaInicio={compararFechaInicio}
-                fechaFin={compararFechaFin}
-                onChange={onCompararFechaChange}
-              />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              <div>
+                <p className="text-xs text-slate-500 font-medium mb-2">Periodo 1 (actual)</p>
+                <DateRangeFilter
+                  fechaInicio={fechaPeriodo1}
+                  fechaFin={fechaFinPeriodo1}
+                  onChange={onPeriodo1Change}
+                />
+              </div>
+              <div>
+                <p className="text-xs text-slate-500 font-medium mb-2">Periodo 2 (comparar)</p>
+                <DateRangeFilter
+                  fechaInicio={compararFechaInicio}
+                  fechaFin={compararFechaFin}
+                  onChange={onCompararFechaChange}
+                />
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
 
