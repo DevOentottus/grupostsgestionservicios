@@ -19,8 +19,16 @@ import { DateRangeFilter } from "@/app/components/filters/DateRangeFilter.js";
 import { AreaFilter } from "@/app/components/filters/AreaFilter.js";
 import { PieChartCard } from "@/app/components/charts/PieChart.js";
 import { BarChartCard } from "@/app/components/charts/BarChart.js";
-import { SatisfactionByAreaChart } from "@/app/components/charts/SatisfactionByAreaChart.js";
 import { TrendLineChart } from "@/app/components/charts/TrendLineChart.js";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 import { cn } from "@/app/lib/utils";
 import type { DashboardFilters, DashboardV2Response } from "@shared/index.js";
 
@@ -508,52 +516,31 @@ function GraficosTab({ data }: { data: DashboardV2Response | undefined }) {
     },
   ];
 
+  const SAT_COLORS = [
+    "#22c55e",
+    "#3b82f6",
+    "#f59e0b",
+    "#ef4444",
+    "#8b5cf6",
+    "#ec4899",
+  ];
+
+  // Ordenar satisfacción por área de mayor a menor
+  const satAreaSorted = [...graficos.satisfaccion_por_area].sort(
+    (a, b) => b.promedio - a.promedio,
+  );
+
+  const satAreaChartData = satAreaSorted.map((d) => ({
+    name: d.area_nombre,
+    value: d.promedio,
+    cantidad: d.cantidad,
+  }));
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="flex flex-col gap-6">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
           <PieChartCard title="Distribución de Servicios por Estado" data={estadoPieData} />
-        </div>
-        {/* Satisfacción general */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Star className="w-5 h-5 text-yellow-500" />
-            <h3 className="text-gray-800 font-semibold">Satisfacción general</h3>
-          </div>
-
-          {/* Número y estrellas */}
-          <div className="flex items-center gap-3 mb-5">
-            <span className="text-3xl font-bold text-gray-900">{avg.toFixed(1)}</span>
-            <div className="flex items-center gap-0.5">
-              {Array.from({ length: maxStars }).map((_, i) => (
-                <Star
-                  key={i}
-                  className={cn(
-                    "w-5 h-5",
-                    i < roundStars ? "fill-yellow-400 text-yellow-400" : "text-gray-200",
-                  )}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Barras horizontales */}
-          <div className="space-y-4">
-            {satBars.map((bar) => (
-              <div key={bar.label}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">{bar.label}</span>
-                  <span className="font-semibold text-gray-800">{bar.pct}%</span>
-                </div>
-                <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${bar.color}`}
-                    style={{ width: `${Math.min(bar.pct, 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
@@ -564,11 +551,85 @@ function GraficosTab({ data }: { data: DashboardV2Response | undefined }) {
           color="#3b82f6"
         />
       </div>
-      <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <SatisfactionByAreaChart
-          title="Satisfacción por Área"
-          data={graficos.satisfaccion_por_area}
-        />
+      <div className="lg:col-span-2">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Satisfacción general */}
+          <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Star className="w-5 h-5 text-yellow-500" />
+              <h3 className="text-gray-800 font-semibold">Satisfacción general</h3>
+            </div>
+
+            {/* Número y estrellas */}
+            <div className="flex items-center gap-3 mb-5">
+              <span className="text-3xl font-bold text-gray-900">{avg.toFixed(1)}</span>
+              <div className="flex items-center gap-0.5">
+                {Array.from({ length: maxStars }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={cn(
+                      "w-5 h-5",
+                      i < roundStars ? "fill-yellow-400 text-yellow-400" : "text-gray-200",
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Barras horizontales */}
+            <div className="space-y-4">
+              {satBars.map((bar) => (
+                <div key={bar.label}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600">{bar.label}</span>
+                    <span className="font-semibold text-gray-800">{bar.pct}%</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${bar.color}`}
+                      style={{ width: `${Math.min(bar.pct, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Satisfacción por Área — horizontales, ordenado desc */}
+          <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-blue-500" />
+              <h3 className="text-gray-800 font-semibold">Satisfacción por Área</h3>
+            </div>
+            {satAreaChartData.length === 0 ? (
+              <div className="flex items-center justify-center h-64 text-slate-400 text-sm">
+                No hay datos de satisfacción disponibles
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={satAreaChartData} layout="vertical" margin={{ left: 10, right: 10 }}>
+                  <XAxis type="number" domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} tick={{ fontSize: 11 }} axisLine={{ stroke: "#e2e8f0" }} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} axisLine={{ stroke: "#e2e8f0" }} tickLine={false} width={90} />
+                  <Tooltip
+                    formatter={(value, _name, entry) => {
+                      const payload = entry?.payload as Record<string, unknown> | undefined;
+                      return [
+                        `${typeof value === "number" ? value.toFixed(1) : value} / 5`,
+                        `Promedio (${payload?.cantidad ?? 0} eval.)`,
+                      ];
+                    }}
+                    contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "13px" }}
+                  />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                    {satAreaChartData.map((_entry, index) => (
+                      <Cell key={`cell-${index}`} fill={SAT_COLORS[index % SAT_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
