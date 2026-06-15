@@ -151,19 +151,19 @@ export function DashboardPage() {
     <div className="space-y-6">
       {/* Welcome Banner - Figma gradient style */}
       <div className="bg-gradient-to-r from-blue-900 to-blue-700 rounded-2xl p-6 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-white text-xl" style={{ fontWeight: 700 }}>Bienvenido, {user?.nombres || "Usuario"}</h1>
-            <p className="text-blue-200 text-sm mt-1">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-4">
+            <h1 className="text-white text-xl font-bold">Bienvenido, {user?.nombres || "Usuario"}</h1>
+            <span className="text-blue-200 text-sm">·</span>
+            <span className="text-blue-200 text-sm">
               {currentTime.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" })} — {currentTime.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-            </p>
+            </span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-2xl font-bold text-white">{data?.total_servicios ?? 0}</p>
-              <p className="text-blue-200 text-xs">Total servicios</p>
-              <p className="text-green-300 text-lg font-semibold">{data?.completados ?? 0}</p>
-              <p className="text-blue-200 text-xs">Completados</p>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-blue-200">Total: <strong className="text-white">{data?.total_servicios ?? 0}</strong></span>
+              <span className="text-blue-200">·</span>
+              <span className="text-blue-200">Completados: <strong className="text-green-300">{data?.completados ?? 0}</strong></span>
             </div>
             <button
               onClick={() => refetch()}
