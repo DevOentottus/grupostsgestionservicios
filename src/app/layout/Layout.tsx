@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
 import { cn } from "@/app/lib/utils";
-import { HelpButton } from "@/app/help/HelpButton";
 import { HelpDrawer } from "@/app/help/HelpDrawer";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
 import {
@@ -19,7 +18,7 @@ import {
   Tv,
   Menu,
   X,
-  Settings,
+  HelpCircle,
   ChevronRight,
   Home,
 } from "lucide-react";
@@ -307,27 +306,25 @@ export default function Layout() {
             <Menu className="w-5 h-5 text-gray-600" />
           </button>
 
-          {/* Breadcrumb */}
+          {/* Breadcrumb + Help */}
           <div className="flex items-center gap-2 text-sm min-w-0">
             <span className="text-muted-foreground hidden sm:inline">Pages</span>
             <ChevronRight className="w-3.5 h-3.5 text-muted-foreground hidden sm:block shrink-0" />
             <span className="font-medium text-gray-900 truncate">{pageTitle}</span>
+
+            <button
+              onClick={() => setIsHelpOpen(true)}
+              className="ml-2 inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              aria-label="Abrir ayuda contextual"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              Ayuda
+            </button>
           </div>
 
           {/* Right actions */}
           <div className="ml-auto flex items-center gap-1">
-            {/* Settings */}
-            <button
-              className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-              aria-label="Configuración"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-
-            {/* Help */}
-            <HelpButton onClick={() => setIsHelpOpen(true)} />
-
-            {/* User avatar */}
+            {/* User avatar with dropdown */}
             <div className="relative" ref={userMenuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}

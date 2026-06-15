@@ -17,7 +17,6 @@ import { useAuth } from "@/lib/auth.js";
 import { useDashboard } from "@/api/queries/useDashboard.js";
 import { DateRangeFilter } from "@/app/components/filters/DateRangeFilter.js";
 import { AreaFilter } from "@/app/components/filters/AreaFilter.js";
-import { PeriodComparisonToggle } from "@/app/components/filters/PeriodComparisonToggle.js";
 import { PieChartCard } from "@/app/components/charts/PieChart.js";
 import { BarChartCard } from "@/app/components/charts/BarChart.js";
 import { SatisfactionByAreaChart } from "@/app/components/charts/SatisfactionByAreaChart.js";
@@ -77,13 +76,27 @@ export function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>("alertas");
-  const [filters, setFilters] = useState<DashboardFilters>({});
+
+  // Fecha por defecto: 1er día del mes actual → hoy
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const defaultInicio = firstDay.toISOString().split("T")[0];
+  const defaultFin = today.toISOString().split("T")[0];
+
+  const [filters, setFilters] = useState<DashboardFilters>({
+    fecha_inicio: defaultInicio,
+    fecha_fin: defaultFin,
+  });
   const [compararPeriodo, setCompararPeriodo] = useState(false);
+  const [compararFechaInicio, setCompararFechaInicio] = useState("");
+  const [compararFechaFin, setCompararFechaFin] = useState("");
 
   const queryFilters = useMemo<DashboardFilters>(() => ({
     ...filters,
     comparar_periodo: compararPeriodo || undefined,
-  }), [filters, compararPeriodo]);
+    comparar_fecha_inicio: compararPeriodo ? (compararFechaInicio || undefined) : undefined,
+    comparar_fecha_fin: compararPeriodo ? (compararFechaFin || undefined) : undefined,
+  }), [filters, compararPeriodo, compararFechaInicio, compararFechaFin]);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useDashboard(queryFilters);
 
@@ -97,6 +110,11 @@ export function DashboardPage() {
 
   const handleAreaChange = useCallback((areaId: number | undefined) => {
     setFilters((prev) => ({ ...prev, area_id: areaId }));
+  }, []);
+
+  const handleCompararFechaChange = useCallback((inicio: string, fin: string) => {
+    setCompararFechaInicio(inicio);
+    setCompararFechaFin(fin);
   }, []);
 
   if (isError) {
@@ -126,9 +144,6 @@ export function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="bg-yellow-400/20 text-yellow-300 text-sm px-3 py-1.5 rounded-full" style={{ fontWeight: 600 }}>
-              Administrador
-            </span>
             <button
               onClick={() => refetch()}
               disabled={isFetching}
@@ -153,10 +168,6 @@ export function DashboardPage() {
             onChange={handleDateChange}
           />
           <AreaFilter value={filters.area_id} onChange={handleAreaChange} />
-          <PeriodComparisonToggle
-            enabled={compararPeriodo}
-            onChange={setCompararPeriodo}
-          />
         </div>
       </div>
 
@@ -191,7 +202,19 @@ export function DashboardPage() {
           {activeTab === "indicadores" && <IndicadoresTab data={data} />}
           {activeTab === "graficos" && <GraficosTab data={data} />}
           {activeTab === "ranking" && <RankingTab data={data} navigate={navigate} />}
-          {activeTab === "comparativo" && <ComparativoTab data={data} />}
+          {activeTab === "comparativo" && (
+            <ComparativoTab
+              data={data}
+              compararPeriodo={compararPeriodo}
+              onToggleComparar={setCompararPeriodo}
+              fechaPeriodo1={filters.fecha_inicio ?? ""}
+              fechaFinPeriodo1={filters.fecha_fin ?? ""}
+              onPeriodo1Change={handleDateChange}
+              compararFechaInicio={compararFechaInicio}
+              compararFechaFin={compararFechaFin}
+              onCompararFechaChange={handleCompararFechaChange}
+            />
+          )}
         </>
       )}
     </div>
@@ -446,7 +469,7 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
 
 function GraficosTab({ data }: { data: DashboardV2Response | undefined }) {
   if (!data) return null;
-  const { graficos } = data;
+  const { graficos, kpi } = data;
 
   const estadoPieData = [
     { name: "Pendiente", value: graficos.estado_servicios.pendiente, color: "#f59e0b" },
@@ -461,10 +484,77 @@ function GraficosTab({ data }: { data: DashboardV2Response | undefined }) {
     completados: a.completados,
   }));
 
+  const maxStars = 5;
+  const avg = kpi.satisfaccion_visibilidad;
+  const fullStars = Math.floor(avg);
+  const hasHalf = avg - fullStars >= 0.25 && avg - fullStars < 0.75;
+  const roundStars = Math.round(avg);
+
+  const satBars = [
+    {
+      label: "Clientes que califican",
+      pct: kpi.servicios_evaluados_pct,
+      color: "bg-blue-500",
+    },
+    {
+      label: "Calificaciones positivas (≥3)",
+      pct: kpi.calificaciones_positivas_pct,
+      color: "bg-green-500",
+    },
+    {
+      label: "Calificaciones negativas (<3)",
+      pct: kpi.calificaciones_negativas_pct,
+      color: "bg-red-400",
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <PieChartCard title="Distribución de Servicios por Estado" data={estadoPieData} />
+      <div className="flex flex-col gap-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <PieChartCard title="Distribución de Servicios por Estado" data={estadoPieData} />
+        </div>
+        {/* Satisfacción general */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Star className="w-5 h-5 text-yellow-500" />
+            <h3 className="text-gray-800 font-semibold">Satisfacción general</h3>
+          </div>
+
+          {/* Número y estrellas */}
+          <div className="flex items-center gap-3 mb-5">
+            <span className="text-3xl font-bold text-gray-900">{avg.toFixed(1)}</span>
+            <div className="flex items-center gap-0.5">
+              {Array.from({ length: maxStars }).map((_, i) => (
+                <Star
+                  key={i}
+                  className={cn(
+                    "w-5 h-5",
+                    i < roundStars ? "fill-yellow-400 text-yellow-400" : "text-gray-200",
+                  )}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Barras horizontales */}
+          <div className="space-y-4">
+            {satBars.map((bar) => (
+              <div key={bar.label}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-600">{bar.label}</span>
+                  <span className="font-semibold text-gray-800">{bar.pct}%</span>
+                </div>
+                <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${bar.color}`}
+                    style={{ width: `${Math.min(bar.pct, 100)}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
         <BarChartCard
@@ -622,12 +712,75 @@ function RankingTab({
 
 // ── Comparativo Tab ──
 
-function ComparativoTab({ data }: { data: DashboardV2Response | undefined }) {
+function ComparativoTab({
+  data,
+  compararPeriodo,
+  onToggleComparar,
+  fechaPeriodo1,
+  fechaFinPeriodo1,
+  onPeriodo1Change,
+  compararFechaInicio,
+  compararFechaFin,
+  onCompararFechaChange,
+}: {
+  data: DashboardV2Response | undefined;
+  compararPeriodo: boolean;
+  onToggleComparar: (v: boolean) => void;
+  fechaPeriodo1: string;
+  fechaFinPeriodo1: string;
+  onPeriodo1Change: (inicio: string, fin: string) => void;
+  compararFechaInicio: string;
+  compararFechaFin: string;
+  onCompararFechaChange: (inicio: string, fin: string) => void;
+}) {
   if (!data) return null;
   const { indicadores, kpi, period_comparison } = data;
 
   return (
     <div className="space-y-6">
+      {/* Comparison Toggle + Date Ranges */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <span className="text-sm text-slate-700 font-medium">Comparar periodos</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={compararPeriodo}
+            onClick={() => onToggleComparar(!compararPeriodo)}
+            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+              compararPeriodo ? "bg-blue-600" : "bg-slate-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${
+                compararPeriodo ? "translate-x-[18px]" : "translate-x-[2px]"
+              }`}
+            />
+          </button>
+        </label>
+
+        {compararPeriodo && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            <div>
+              <p className="text-xs text-slate-500 font-medium mb-2">Periodo 1 (actual)</p>
+              <DateRangeFilter
+                fechaInicio={fechaPeriodo1}
+                fechaFin={fechaFinPeriodo1}
+                onChange={onPeriodo1Change}
+              />
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 font-medium mb-2">Periodo 2 (comparar)</p>
+              <DateRangeFilter
+                fechaInicio={compararFechaInicio}
+                fechaFin={compararFechaFin}
+                onChange={onCompararFechaChange}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Period Comparison Detail */}
       {period_comparison && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

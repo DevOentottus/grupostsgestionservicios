@@ -8,16 +8,20 @@ export function useDashboard(filters?: DashboardFilters) {
     fecha_fin,
     area_id,
     comparar_periodo,
+    comparar_fecha_inicio,
+    comparar_fecha_fin,
   } = filters ?? {};
 
   return useQuery({
-    queryKey: ["dashboard", "v2", fecha_inicio, fecha_fin, area_id, comparar_periodo],
+    queryKey: ["dashboard", "v2", fecha_inicio, fecha_fin, area_id, comparar_periodo, comparar_fecha_inicio, comparar_fecha_fin],
     queryFn: async () => {
       const r = await dashboardApi.getAll({
         fecha_inicio,
         fecha_fin,
         area_id,
         comparar_periodo,
+        comparar_fecha_inicio,
+        comparar_fecha_fin,
       });
       return r.data.data as DashboardV2Response;
     },

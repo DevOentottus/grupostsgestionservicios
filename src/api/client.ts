@@ -270,6 +270,8 @@ export const dashboardApi = {
     fecha_fin?: string;
     area_id?: number;
     comparar_periodo?: boolean;
+    comparar_fecha_inicio?: string;
+    comparar_fecha_fin?: string;
   }) => api.get("/dashboard", { params: filters }),
 };
 

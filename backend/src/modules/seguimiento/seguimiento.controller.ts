@@ -219,6 +219,8 @@ export async function seguimientoController(app: FastifyInstance) {
       fecha_fin?: string;
       area_id?: string;
       comparar_periodo?: string;
+      comparar_fecha_inicio?: string;
+      comparar_fecha_fin?: string;
     };
 
     const desde = query.fecha_inicio || query.desde || null;
@@ -279,6 +281,8 @@ export async function seguimientoController(app: FastifyInstance) {
     const conFeedback = calificaciones?.filter(
       (c: any) => c.calificacion_comentario || c.calificacion_sugerencia
     ).length || 0;
+    const positivas = calificaciones?.filter((c: any) => c.calificacion_puntaje >= 3).length || 0;
+    const negativas = calificaciones?.filter((c: any) => c.calificacion_puntaje < 3).length || 0;
 
     // ── Servicios por área ──
     const porAreaMap: Record<number, { total: number; completados: number }> = {};
@@ -362,9 +366,16 @@ export async function seguimientoController(app: FastifyInstance) {
     // ── Period comparison ──
     let periodComparison = undefined;
     if (compararPeriodo && fechaInicio && fechaFin) {
-      const periodDuration = fechaFin.getTime() - fechaInicio.getTime();
-      const anteriorInicio = new Date(fechaInicio.getTime() - periodDuration);
-      const anteriorFin = new Date(fechaFin.getTime() - periodDuration);
+      // Usar fechas explícitas de comparación si se pasaron, o calcular automáticamente
+      const compararDesde = query.comparar_fecha_inicio
+        ? new Date(query.comparar_fecha_inicio)
+        : null;
+      const compararHasta = query.comparar_fecha_fin
+        ? new Date(query.comparar_fecha_fin)
+        : null;
+
+      const anteriorInicio = compararDesde ?? new Date(fechaInicio.getTime() - (fechaFin.getTime() - fechaInicio.getTime()));
+      const anteriorFin = compararHasta ?? new Date(fechaFin.getTime() - (fechaFin.getTime() - fechaInicio.getTime()));
 
       const getPeriodMetrics = async (inicio: Date, fin: Date) => {
         const { data: svcs } = await supabase
@@ -411,6 +422,8 @@ export async function seguimientoController(app: FastifyInstance) {
           satisfaccion_visibilidad: Math.round(promedioCalificacion * 10) / 10,
           servicios_evaluados_pct: completados ? Math.round((totalCalificaciones / completados) * 100) : 0,
           servicios_con_comentarios_pct: completados ? Math.round((conFeedback / completados) * 100) : 0,
+          calificaciones_positivas_pct: totalCalificaciones > 0 ? Math.round((positivas / totalCalificaciones) * 100) : 0,
+          calificaciones_negativas_pct: totalCalificaciones > 0 ? Math.round((negativas / totalCalificaciones) * 100) : 0,
         },
         servicios_recientes: (allServicios || []).slice(0, 10).map((s: any) => ({
           ...s,

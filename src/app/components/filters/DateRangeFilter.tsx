@@ -95,7 +95,7 @@ export function DateRangeFilter({ fechaInicio, fechaFin, onChange }: DateRangeFi
           onClick={() => setShowQuick(!showQuick)}
           className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1.5 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
         >
-          Rápido
+            Filtro rápido
         </button>
         {showQuick && (
           <>

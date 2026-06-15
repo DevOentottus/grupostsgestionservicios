@@ -134,6 +134,8 @@ export interface DashboardKPI {
   satisfaccion_visibilidad: number;
   servicios_evaluados_pct: number;
   servicios_con_comentarios_pct: number;
+  calificaciones_positivas_pct: number;
+  calificaciones_negativas_pct: number;
 }
 
 // ── Area ──
@@ -588,6 +590,8 @@ export interface DashboardFilters {
   fecha_fin?: string;
   area_id?: number;
   comparar_periodo?: boolean;
+  comparar_fecha_inicio?: string;
+  comparar_fecha_fin?: string;
 }
 
 // ── Solicitud Interna ──
