@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useDesempeno, useMiArea } from "@/api/queries/useManager.js";
+import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import { useAuth } from "@/lib/auth.js";
 
 function formatMinutos(m: number): string {
@@ -12,7 +13,9 @@ function formatMinutos(m: number): string {
 
 export function ManagerDesempenoPage() {
   const { user } = useAuth();
+  const esSupervisor = user?.rol === "sistema" || user?.rol === "admin";
   const { data: miArea } = useMiArea();
+  const { data: todosUsuarios } = useUsuarios();
 
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -25,8 +28,20 @@ export function ManagerDesempenoPage() {
     today.toISOString().split("T")[0]
   );
 
-  // Get colaboradores from Mi Área (solo los del área del encargado)
-  const colaboradores = miArea?.colaboradores || [];
+  // Colaboradores del área (encargado) o todos los colaboradores (sistema/admin)
+  const colaboradores = useMemo(() => {
+    if (esSupervisor) {
+      // Sistema/admin ven todos los usuarios con rol colaborador/encargado
+      return (todosUsuarios || [])
+        .filter((u) => u.rol === "colaborador" || u.rol === "encargado")
+        .map((u) => ({
+          usuario_id: u.id,
+          nombres: u.nombres,
+        }));
+    }
+    // Encargado ve solo los de su área
+    return miArea?.colaboradores || [];
+  }, [esSupervisor, todosUsuarios, miArea]);
 
   const { data, isLoading, isError } = useDesempeno(
     parseInt(colaboradorId),
