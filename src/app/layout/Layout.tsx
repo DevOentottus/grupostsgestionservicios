@@ -166,8 +166,7 @@ export default function Layout() {
             </div>
             {!sidebarCollapsed && (
               <div className="min-w-0">
-                <h1 className="text-base font-bold leading-tight">ServicioLocal</h1>
-                <p className="text-xs text-blue-200">STS</p>
+                <h1 className="text-base font-bold leading-tight">ServicioSTS</h1>
               </div>
             )}
           </div>
@@ -207,7 +206,7 @@ export default function Layout() {
                   to={to}
                   onClick={closeSidebar}
                   className={cn(
-                    "flex items-center justify-center lg:justify-start gap-3 px-2 py-2 rounded-lg text-sm transition-colors",
+                    "flex items-center justify-start gap-3 px-2 py-2 rounded-lg text-sm transition-colors",
                     isActive
                       ? "bg-yellow-400 text-blue-900 font-medium"
                       : "text-blue-100 hover:bg-blue-800 hover:text-white",
@@ -275,7 +274,7 @@ export default function Layout() {
           {/* Collapse toggle — desktop only */}
           <button
             onClick={() => setSidebarCollapsed((c) => !c)}
-            className="hidden lg:flex w-full items-center justify-center lg:justify-start gap-3 px-2 py-2 rounded-lg text-sm text-blue-200 hover:text-white hover:bg-blue-800 transition-colors"
+            className="hidden lg:flex w-full items-center justify-start gap-3 px-2 py-2 rounded-lg text-sm text-blue-200 hover:text-white hover:bg-blue-800 transition-colors"
             title={sidebarCollapsed ? "Expandir menú" : "Colapsar menú"}
           >
             <Menu className="w-4 h-4 shrink-0" />
@@ -284,7 +283,7 @@ export default function Layout() {
           {/* Logout */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center lg:justify-start gap-3 px-2 py-2 rounded-lg text-sm text-blue-200 hover:text-white hover:bg-blue-800 transition-colors"
+            className="w-full flex items-center justify-start gap-3 px-2 py-2 rounded-lg text-sm text-blue-200 hover:text-white hover:bg-blue-800 transition-colors"
             title="Cerrar sesión"
           >
             <LogOut className="w-4 h-4 shrink-0" />

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, subDays, subMonths, subQuarters } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import {
@@ -96,6 +96,12 @@ export function DashboardPage() {
     fecha_inicio: defaultInicio,
     fecha_fin: defaultFin,
   });
+  const [currentTime, setCurrentTime] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
   const [compararPeriodo, setCompararPeriodo] = useState(false);
   const [compararFechaInicio, setCompararFechaInicio] = useState("");
   const [compararFechaFin, setCompararFechaFin] = useState("");
@@ -147,12 +153,18 @@ export function DashboardPage() {
       <div className="bg-gradient-to-r from-blue-900 to-blue-700 rounded-2xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-white text-xl mb-1" style={{ fontWeight: 700 }}>Bienvenido, {user?.nombres || "Usuario"}</h1>
-            <p className="text-blue-200 text-sm">
-              Panel de Administración — {new Date().toLocaleDateString("es-PE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+            <h1 className="text-white text-xl" style={{ fontWeight: 700 }}>Bienvenido, {user?.nombres || "Usuario"}</h1>
+            <p className="text-blue-200 text-sm mt-1">
+              {currentTime.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" })} — {currentTime.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-2xl font-bold text-white">{data?.total_servicios ?? 0}</p>
+              <p className="text-blue-200 text-xs">Total servicios</p>
+              <p className="text-green-300 text-lg font-semibold">{data?.completados ?? 0}</p>
+              <p className="text-blue-200 text-xs">Completados</p>
+            </div>
             <button
               onClick={() => refetch()}
               disabled={isFetching}
@@ -163,9 +175,6 @@ export function DashboardPage() {
             </button>
           </div>
         </div>
-        <p className="text-blue-200 text-xs mt-2">
-          {data?.total_servicios ?? 0} servicios registrados · {data?.completados ?? 0} completados
-        </p>
       </div>
 
       {/* Filters */}
