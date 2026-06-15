@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
 import { cn } from "@/app/lib/utils";
+import { HelpButton } from "@/app/help/HelpButton";
+import { HelpDrawer } from "@/app/help/HelpDrawer";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
 import {
   LayoutDashboard,
@@ -93,6 +95,7 @@ export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {
@@ -321,6 +324,9 @@ export default function Layout() {
               <Settings className="w-5 h-5" />
             </button>
 
+            {/* Help */}
+            <HelpButton onClick={() => setIsHelpOpen(true)} />
+
             {/* User avatar */}
             <div className="relative" ref={userMenuRef}>
               <button
@@ -367,6 +373,9 @@ export default function Layout() {
           </div>
         </main>
       </div>
+
+      {/* Help Drawer */}
+      <HelpDrawer open={isHelpOpen} onOpenChange={setIsHelpOpen} />
     </div>
   );
 }
