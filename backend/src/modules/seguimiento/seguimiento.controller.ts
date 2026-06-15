@@ -284,6 +284,14 @@ export async function seguimientoController(app: FastifyInstance) {
     const positivas = calificaciones?.filter((c: any) => c.calificacion_puntaje >= 3).length || 0;
     const negativas = calificaciones?.filter((c: any) => c.calificacion_puntaje < 3).length || 0;
 
+    // ── Mapa servicio_id → area_id ──
+    const svcAreaMap: Record<number, number> = {};
+    for (const s of allServicios || []) {
+      const sId = (s as any).servicio_id;
+      const aId = (s as any).area_id;
+      if (sId && aId) svcAreaMap[sId] = aId;
+    }
+
     // ── Servicios por área ──
     const porAreaMap: Record<number, { total: number; completados: number }> = {};
     for (const s of allServicios || []) {
@@ -411,6 +419,32 @@ export async function seguimientoController(app: FastifyInstance) {
       };
     }
 
+    // ── Satisfacción por área ──
+    const satPorAreaMap: Record<number, { suma: number; cantidad: number }> = {};
+    for (const c of calificaciones || []) {
+      const sId = (c as any).servicio_id;
+      const aId = svcAreaMap[sId];
+      if (!aId) continue;
+      if (!satPorAreaMap[aId]) satPorAreaMap[aId] = { suma: 0, cantidad: 0 };
+      satPorAreaMap[aId].suma += (c as any).calificacion_puntaje;
+      satPorAreaMap[aId].cantidad++;
+    }
+
+    const satisfaccionPorArea = await Promise.all(
+      Object.entries(satPorAreaMap).map(async ([aid, datos]) => {
+        const { data: areas } = await supabase
+          .from("areas")
+          .select("area_nombre")
+          .eq("area_id", parseInt(aid))
+          .limit(1);
+        return {
+          area_nombre: areas?.[0]?.area_nombre || `Área #${aid}`,
+          promedio: Math.round((datos.suma / datos.cantidad) * 10) / 10,
+          cantidad: datos.cantidad,
+        };
+      })
+    );
+
     return {
       data: {
         kpi: {
@@ -468,7 +502,7 @@ export async function seguimientoController(app: FastifyInstance) {
             bloqueado: bloqueados,
           },
           servicios_por_area: serviciosPorArea,
-          satisfaccion_por_area: [],
+          satisfaccion_por_area: satisfaccionPorArea,
         },
         rankings: {
           colaboradores_destacados: colaboradoresDestacados,
