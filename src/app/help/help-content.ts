@@ -7,11 +7,24 @@ import type { Rol as HelpRol } from "./help-types";
  * y se guardan en public/help/{rol}-{slug}.png
  */
 export function getHelpScreenshot(pathname: string, rol: string): string | null {
-  const normalized = pathname
-    .replace(/\/\d+/g, "")
-    .replace(/\/nuevo/g, "-nuevo")
-    .replace(/^\/+|\/+$/g, "")
-    .replace(/\//g, "-");
+  // Detectar rutas de detalle (con ID numérico)
+  const isDetail = /\/\w+\/\d+/.test(pathname);
+
+  let normalized: string;
+  if (isDetail) {
+    // Rutas detalle: /servicios/123 → servicios-detalle
+    normalized = pathname
+      .replace(/\/nuevo/g, "-nuevo")
+      .replace(/\/\d+/g, "-detalle")
+      .replace(/^\/+|\/+$/g, "")
+      .replace(/\//g, "-");
+  } else {
+    normalized = pathname
+      .replace(/\/\d+/g, "")
+      .replace(/\/nuevo/g, "-nuevo")
+      .replace(/^\/+|\/+$/g, "")
+      .replace(/\//g, "-");
+  }
 
   // Mapa de rutas a nombres de screenshot
   // El sufijo de screenshot es el mismo para todos los roles
@@ -20,6 +33,7 @@ export function getHelpScreenshot(pathname: string, rol: string): string | null 
     "miarea": "miarea",
     "servicios": "servicios",
     "servicios-nuevo": "servicios-nuevo",
+    "servicios-detalle": "servicios-detalle",
     "areas": "areas",
     "usuarios": "usuarios",
     "plantillas": "plantillas",
@@ -312,6 +326,170 @@ export const helpRegistry: HelpRegistry = {
     },
   },
 
+  // ─── Seguimiento / Detalle de Servicio ───
+  "/servicios/:id": {
+    admin: {
+      title: "Servicio — Detalle y Seguimiento",
+      sections: [
+        {
+          id: "detalle-cabecera",
+          title: "Cabecera del servicio",
+          steps: [
+            { number: 1, description: "La cabecera muestra el código del servicio, el título (editable haciendo clic), la prioridad y el estado actual." },
+            { number: 2, description: "El estado se puede cambiar usando las acciones rápidas en la barra superior." },
+            { number: 3, description: "El botón de volver (←) te lleva de vuelta a la lista de servicios." },
+          ],
+        },
+        {
+          id: "detalle-qr-compartir",
+          title: "Código QR y compartir",
+          steps: [
+            { number: 1, description: "El código QR permite al cliente hacer seguimiento del servicio desde su celular sin necesidad de iniciar sesión." },
+            { number: 2, description: "Usá el botón de WhatsApp (ícono de Share2) para compartir el enlace de seguimiento con el cliente." },
+            { number: 3, description: "El enlace público funciona con el número de DNI del cliente como validación." },
+          ],
+        },
+        {
+          id: "detalle-tareas",
+          title: "Pestaña Tareas",
+          steps: [
+            { number: 1, description: "Las tareas son los pasos concretos que se deben completar para finalizar el servicio." },
+            { number: 2, description: "Cada tarea tiene: título, descripción, tipo (técnico, administrativo, cliente), tiempo estimado y colaborador asignado." },
+            { number: 3, description: "Podés agregar tareas nuevas con el botón 'Agregar Tarea'. Se abre un formulario en línea." },
+            { number: 4, description: "Las tareas se pueden marcar como completadas, reabrir si es necesario, o eliminar." },
+            { number: 5, description: "Los tipos de tarea ayudan a clasificar el trabajo: técnico (campo), administrativo (oficina), cliente (responsabilidad del cliente)." },
+          ],
+        },
+        {
+          id: "detalle-flujo",
+          title: "Pestaña Flujo",
+          steps: [
+            { number: 1, description: "La pestaña Flujo muestra un diagrama visual del proceso completo del servicio." },
+            { number: 2, description: "Cada paso del flujo representa una etapa del servicio (recepción, diagnóstico, reparación, etc.)." },
+            { number: 3, description: "Los pasos completados aparecen en verde, el paso actual en azul, y los pendientes en gris." },
+            { number: 4, description: "El flujo se define desde la plantilla de servicio o se puede personalizar por servicio." },
+          ],
+        },
+        {
+          id: "detalle-comentarios",
+          title: "Pestaña Comentarios",
+          steps: [
+            { number: 1, description: "En la pestaña Comentarios podés ver y agregar notas internas sobre el servicio." },
+            { number: 2, description: "Los comentarios son internos del sistema — no los ve el cliente en el enlace público." },
+            { number: 3, description: "Usá los comentarios para dejar registro de novedades, decisiones o coordinaciones con otros colaboradores." },
+          ],
+        },
+        {
+          id: "detalle-evidencias",
+          title: "Pestaña Evidencias",
+          steps: [
+            { number: 1, description: "Las evidencias son fotos o videos que documentan el trabajo realizado en el servicio." },
+            { number: 2, description: "Podés tomar fotos desde el navegador o subir archivos existentes." },
+            { number: 3, description: "Cada tarea puede requerir evidencia obligatoria según la configuración de la plantilla." },
+            { number: 4, description: "Las evidencias se pueden ver, comentar y gestionar desde esta pestaña." },
+          ],
+        },
+        {
+          id: "detalle-cambiar-estado",
+          title: "Cambiar estado del servicio",
+          steps: [
+            { number: 1, description: "Usá el selector de estado en la cabecera para avanzar el servicio: pendiente → en_progreso → completado." },
+            { number: 2, description: "Si algo impide el avance, podés marcarlo como bloqueado y agregar el motivo en comentarios." },
+            { number: 3, description: "Un servicio completado ya no se puede modificar, pero se pueden ver todas las tareas y evidencias." },
+          ],
+        },
+      ],
+    },
+    encargado: {
+      title: "Servicio — Detalle y Seguimiento",
+      sections: [
+        {
+          id: "detalle-visualizacion-encargado",
+          title: "Visualización del servicio",
+          steps: [
+            { number: 1, description: "Ves el detalle completo del servicio: código, título, estado, prioridad y datos del cliente." },
+            { number: 2, description: "Podés ver y gestionar las tareas del servicio. Asigná tareas a los colaboradores de tu área." },
+            { number: 3, description: "El botón de WhatsApp te permite compartir el enlace de seguimiento con el cliente." },
+          ],
+        },
+        {
+          id: "detalle-gestion-tareas-encargado",
+          title: "Gestión de tareas",
+          steps: [
+            { number: 1, description: "Creá tareas nuevas asignándoselas a colaboradores específicos de tu área." },
+            { number: 2, description: "Definí el tipo de tarea (técnico, administrativo) y el tiempo estimado." },
+            { number: 3, description: "Marcá tareas como completadas cuando el colaborador informa que finalizó." },
+            { number: 4, description: "Si una tarea se completó por error, podés reabrirla para que se vuelva a trabajar." },
+          ],
+        },
+        {
+          id: "detalle-evidencias-encargado",
+          title: "Revisar evidencias",
+          steps: [
+            { number: 1, description: "Revisá las fotos y videos que subieron los colaboradores como evidencia del trabajo." },
+            { number: 2, description: "Podés dejar comentarios en cada evidencia para pedir ajustes o aprobar el trabajo." },
+            { number: 3, description: "Las evidencias son importantes para respaldar el servicio ante el cliente." },
+          ],
+        },
+      ],
+    },
+    colaborador: {
+      title: "Servicio — Mi Trabajo",
+      sections: [
+        {
+          id: "detalle-tareas-colaborador",
+          title: "Mis tareas asignadas",
+          steps: [
+            { number: 1, description: "En la pestaña Tareas ves solo las tareas que te asignaron a vos." },
+            { number: 2, description: "Cada tarea muestra el título, descripción, tipo y tiempo estimado." },
+            { number: 3, description: "Cuando termines una tarea, marcala como completada usando el botón ✓." },
+            { number: 4, description: "Si no podés completar una tarea, dejá un comentario explicando el motivo." },
+          ],
+        },
+        {
+          id: "detalle-evidencias-colaborador",
+          title: "Subir evidencias",
+          steps: [
+            { number: 1, description: "Cuando una tarea lo requiera, subí fotos o videos como evidencia del trabajo realizado." },
+            { number: 2, description: "Usá el botón de la cámara para tomar una foto directamente desde tu celular o computadora." },
+            { number: 3, description: "Las evidencias quedan asociadas al servicio y las puede revisar tu encargado." },
+          ],
+        },
+        {
+          id: "detalle-flujo-colaborador",
+          title: "Flujo del servicio",
+          steps: [
+            { number: 1, description: "La pestaña Flujo te muestra en qué etapa está el servicio y qué pasos siguen." },
+            { number: 2, description: "Esto te ayuda a entender el contexto del servicio más allá de tus tareas individuales." },
+          ],
+        },
+      ],
+    },
+    sistema: {
+      title: "Servicio — Detalle y Monitoreo",
+      sections: [
+        {
+          id: "detalle-visualizacion-sistema",
+          title: "Monitoreo del servicio",
+          steps: [
+            { number: 1, description: "Como usuario sistema ves toda la información del servicio pero sin opciones de edición." },
+            { number: 2, description: "Podés ver las tareas, el flujo, los comentarios y las evidencias cargadas." },
+            { number: 3, description: "Esta vista es útil para auditoría y monitoreo del estado de los servicios." },
+          ],
+        },
+        {
+          id: "detalle-qr-sistema",
+          title: "Código QR y enlace público",
+          steps: [
+            { number: 1, description: "El código QR permite al cliente hacer seguimiento del servicio desde su celular." },
+            { number: 2, description: "Podés compartir el enlace por WhatsApp con el cliente si lo solicita." },
+            { number: 3, description: "El seguimiento público solo requiere el DNI del cliente para validar su identidad." },
+          ],
+        },
+      ],
+    },
+  },
+
   "/servicios/nuevo": {
     admin: {
       title: "Nuevo Servicio — Wizard",
@@ -419,171 +597,6 @@ export const helpRegistry: HelpRegistry = {
           steps: [
             { number: 1, description: "El wizard completo de 3 pasos para crear servicios." },
             { number: 2, description: "Seleccioná el área, cliente, completá detalles y agregá tareas." },
-          ],
-        },
-      ],
-    },
-  },
-
-  "/servicios/:id": {
-    admin: {
-      title: "Detalle del Servicio",
-      sections: [
-        {
-          id: "detalle-estructura",
-          title: "Detalle del servicio",
-          steps: [
-            { number: 1, description: "La página de detalle muestra toda la información del servicio: cabecera con datos principales, pestañas de navegación, y timeline." },
-            { number: 2, description: "En la cabecera ves: código, título, cliente, área, colaborador asignado, prioridad y estado actual." },
-            { number: 3, description: "El código QR permite al cliente hacer seguimiento desde su celular. Podés compartirlo por WhatsApp." },
-            { number: 4, description: "Usá las pestañas para alternar entre Tareas, Flujo, Comentarios y Evidencias." },
-          ],
-        },
-        {
-          id: "detalle-timeline",
-          title: "Timeline y seguimiento",
-          steps: [
-            { number: 1, description: "La pestaña 'Flujo' muestra la línea de tiempo del servicio: cambios de estado, comentarios y eventos importantes." },
-            { number: 2, description: "Cada evento en el timeline muestra fecha, hora, usuario responsable y descripción." },
-            { number: 3, description: "Usá esta vista para entender el historial completo del servicio de un vistazo." },
-          ],
-        },
-        {
-          id: "detalle-tareas",
-          title: "Tareas del servicio",
-          steps: [
-            { number: 1, description: "La pestaña 'Tareas' lista todas las tareas del servicio con su estado (pendiente, en_progreso, completada)." },
-            { number: 2, description: "Podés marcar una tarea como completada, o reabrirla si es necesario." },
-            { number: 3, description: "Usá el botón 'Agregar tarea' para añadir nuevas tareas al servicio." },
-            { number: 4, description: "También podés editar el título de una tarea haciendo clic en el texto (edición inline)." },
-          ],
-        },
-        {
-          id: "detalle-comentarios",
-          title: "Comentarios y notas",
-          steps: [
-            { number: 1, description: "La pestaña 'Comentarios' permite agregar notas internas visibles para todo el equipo." },
-            { number: 2, description: "Escribí tu comentario en el campo de texto y presioná 'Enviar' o Enter." },
-            { number: 3, description: "Cada comentario muestra el autor, la fecha y hora. No se pueden editar ni eliminar." },
-            { number: 4, description: "Usá los comentarios para comunicar novedades, pedir información o dejar instrucciones." },
-          ],
-        },
-        {
-          id: "detalle-acciones",
-          title: "Acciones disponibles",
-          steps: [
-            { number: 1, description: "Cambiar estado: usá el botón de estado para mover el servicio entre pendiente, en_progreso, completado, bloqueado." },
-            { number: 2, description: "Reasignar: podés cambiar el colaborador asignado al servicio si es necesario." },
-            { number: 3, description: "Evidencias: en la pestaña 'Evidencias' podés subir fotos del trabajo realizado." },
-            { number: 4, description: "Compartir: usá el botón de WhatsApp para compartir el enlace de seguimiento con el cliente." },
-            { number: 5, description: "Completar: cuando todas las tareas estén hechas, marcá el servicio como completado para cerrarlo." },
-          ],
-        },
-      ],
-    },
-    encargado: {
-      title: "Detalle del Servicio",
-      sections: [
-        {
-          id: "detalle-estructura-encargado",
-          title: "Vista del servicio",
-          steps: [
-            { number: 1, description: "Ves la información completa del servicio: código, cliente, colaborador, prioridad y estado." },
-            { number: 2, description: "Usá las pestañas para navegar entre Tareas, Flujo, Comentarios y Evidencias." },
-            { number: 3, description: "Podés compartir el enlace de seguimiento con el cliente vía WhatsApp." },
-          ],
-        },
-        {
-          id: "detalle-timeline",
-          title: "Timeline",
-          steps: [
-            { number: 1, description: "La pestaña 'Flujo' muestra la historia completa del servicio: cambios de estado y eventos." },
-          ],
-        },
-        {
-          id: "detalle-tareas-encargado",
-          title: "Tareas",
-          steps: [
-            { number: 1, description: "Revisá las tareas del servicio y su progreso. Podés agregar tareas adicionales si hace falta." },
-            { number: 2, description: "Marcá tareas como completadas, reabrilas o editá sus títulos." },
-          ],
-        },
-        {
-          id: "detalle-comentarios-encargado",
-          title: "Comentarios",
-          steps: [
-            { number: 1, description: "Agregá comentarios para dejar instrucciones al colaborador o coordinar el trabajo." },
-          ],
-        },
-        {
-          id: "detalle-acciones-encargado",
-          title: "Acciones",
-          steps: [
-            { number: 1, description: "Cambiá el estado del servicio según avance." },
-            { number: 2, description: "Reasigná el servicio a otro colaborador de tu área si es necesario." },
-            { number: 3, description: "Marcá como completado cuando todas las tareas estén finalizadas." },
-          ],
-        },
-      ],
-    },
-    colaborador: {
-      title: "Detalle del Servicio",
-      sections: [
-        {
-          id: "detalle-visualizacion-colaborador",
-          title: "Tu servicio asignado",
-          steps: [
-            { number: 1, description: "Esta es la página principal para trabajar en un servicio. Ves toda la información relevante." },
-            { number: 2, description: "En la cabecera: código del servicio, cliente, prioridad y estado actual." },
-            { number: 3, description: "Usá las pestañas para gestionar Tareas, ver el Flujo, agregar Comentarios o subir Evidencias." },
-          ],
-        },
-        {
-          id: "detalle-tareas-colaborador",
-          title: "Gestionar tareas",
-          steps: [
-            { number: 1, description: "En la pestaña 'Tareas' ves tu checklist de trabajo. Completá cada tarea a medida que la terminás." },
-            { number: 2, description: "Hacé clic en el checkbox para marcar una tarea como completada." },
-            { number: 3, description: "Si cometiste un error, podés reabrir una tarea completada." },
-          ],
-        },
-        {
-          id: "detalle-evidencias-colaborador",
-          title: "Subir evidencias",
-          steps: [
-            { number: 1, description: "En la pestaña 'Evidencias' podés subir fotos como comprobante del trabajo realizado." },
-            { number: 2, description: "Hacé clic en 'Subir foto' y seleccioná una imagen desde tu computadora." },
-            { number: 3, description: "Las evidencias quedan asociadas al servicio para consulta del encargado y del cliente." },
-          ],
-        },
-        {
-          id: "detalle-comentarios-colaborador",
-          title: "Comunicarte",
-          steps: [
-            { number: 1, description: "Usá la pestaña 'Comentarios' para consultar dudas o reportar novedades al encargado." },
-            { number: 2, description: "Escribí tu mensaje y presioná Enter. Todos los involucrados pueden verlo." },
-          ],
-        },
-        {
-          id: "detalle-acciones-colaborador",
-          title: "Acciones que podés hacer",
-          steps: [
-            { number: 1, description: "Cambiar estado del servicio: pendiente → en_progreso cuando empezás, o bloqueado si necesitás algo." },
-            { number: 2, description: "Cuando termines todas las tareas, comunicáselo al encargado para que complete el servicio." },
-            { number: 3, description: "Usá el botón de WhatsApp para compartir el seguimiento con el cliente si lo solicita." },
-          ],
-        },
-      ],
-    },
-    sistema: {
-      title: "Detalle del Servicio",
-      sections: [
-        {
-          id: "detalle-sistema",
-          title: "Vista de monitoreo",
-          steps: [
-            { number: 1, description: "Ves la información completa del servicio y todas las pestañas: Tareas, Flujo, Comentarios, Evidencias." },
-            { number: 2, description: "Como usuario sistema, tenés acceso de solo lectura para verificar el funcionamiento del sistema." },
           ],
         },
       ],
