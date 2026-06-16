@@ -2,9 +2,6 @@ import { useState } from "react";
 import {
   useAreas,
   useArea,
-  useCrearArea,
-  useEditarArea,
-  useEliminarArea,
   useAsignarColaborador,
   useRemoverColaborador,
 } from "@/api/queries/useAreas.js";
@@ -12,10 +9,10 @@ import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import { useServicios } from "@/api/queries/useServicios.js";
 import { useAuth } from "@/lib/auth.js";
 import { cn } from "@/app/lib/utils";
-import type { AreaWithEncargado, AreaWithColaboradores } from "@shared/index.js";
+import type { AreaWithEncargado } from "@shared/index.js";
 import {
-  MapPin, Users, ClipboardList, CheckCircle2, Clock, AlertTriangle,
-  Plus, Edit2, Trash2, X, ChevronRight, ArrowLeft,
+  MapPin, Users, ClipboardList, CheckCircle2, Clock,
+  Plus, X, ChevronRight, ArrowLeft,
 } from "lucide-react";
 
 export function AreasPage() {
@@ -23,58 +20,13 @@ export function AreasPage() {
   const { data: areas, isLoading: areasLoading } = useAreas();
   const { data: usuarios } = useUsuarios();
   const { data: servicios } = useServicios();
-  const crearArea = useCrearArea();
-  const editarArea = useEditarArea();
-  const eliminarArea = useEliminarArea();
   const asignarColaborador = useAsignarColaborador();
   const removerColaborador = useRemoverColaborador();
 
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const { data: selectedDetail, isLoading: detailLoading } = useArea(selectedId ?? 0);
-  const [showModal, setShowModal] = useState(false);
-  const [editingArea, setEditingArea] = useState<AreaWithEncargado | null>(null);
-  const [form, setForm] = useState({ nombre: "", encargado_id: "" });
-  const [deleteConfirm, setDeleteConfirm] = useState<AreaWithEncargado | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "detail">("list");
   const [newColabUserId, setNewColabUserId] = useState("");
-
-  const resetForm = () => {
-    setForm({ nombre: "", encargado_id: "" });
-    setEditingArea(null);
-    setShowModal(false);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const data = {
-      nombre: form.nombre,
-      encargado_id: form.encargado_id ? parseInt(form.encargado_id) : null,
-    };
-    if (editingArea) {
-      await editarArea.mutateAsync({ id: editingArea.id, data });
-    } else {
-      await crearArea.mutateAsync(data);
-    }
-    resetForm();
-  };
-
-  const handleEdit = (area: AreaWithEncargado) => {
-    setEditingArea(area);
-    setForm({
-      nombre: area.nombre,
-      encargado_id: area.encargado_id?.toString() || "",
-    });
-    setShowModal(true);
-  };
-
-  const handleDelete = async () => {
-    if (!deleteConfirm) return;
-    await eliminarArea.mutateAsync(deleteConfirm.id);
-    if (selectedId === deleteConfirm.id) {
-      setSelectedId(null);
-    }
-    setDeleteConfirm(null);
-  };
 
   const handleAsignarColaborador = async () => {
     if (!selectedId || !newColabUserId) return;
@@ -139,15 +91,6 @@ export function AreasPage() {
           <h1 className="text-gray-900 font-bold">Áreas de Servicio</h1>
           <p className="text-gray-500 text-sm">{visibleAreas.length} áreas registradas</p>
         </div>
-        {user?.rol !== "encargado" && (
-          <button
-            onClick={() => { resetForm(); setShowModal(true); }}
-            className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition"
-          >
-            <Plus className="w-4 h-4" />
-            Nueva Área
-          </button>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -227,38 +170,18 @@ export function AreasPage() {
               <div className="space-y-4">
                 {/* Header card */}
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-blue-900 rounded-2xl flex items-center justify-center">
-                        <MapPin className="w-6 h-6 text-yellow-400" />
-                      </div>
-                      <div>
-                        <h2 className="text-gray-900 font-bold">Área: {selectedDetail.nombre}</h2>
-                        <p className="text-gray-500 text-sm">ID: {selectedDetail.id}</p>
-                      </div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 bg-blue-900 rounded-2xl flex items-center justify-center">
+                      <MapPin className="w-6 h-6 text-yellow-400" />
                     </div>
-                    {user?.rol !== "encargado" && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(visibleAreas.find((a: any) => a.id === selectedId) as AreaWithEncargado)}
-                        className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition"
-                        title="Editar"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirm(visibleAreas.find((a: any) => a.id === selectedId) as AreaWithEncargado)}
-                        className="p-2 rounded-xl hover:bg-red-50 text-red-500 transition"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div>
+                      <h2 className="text-gray-900 font-bold">Área: {selectedDetail.nombre}</h2>
+                      <p className="text-gray-500 text-sm">ID: {selectedDetail.id}</p>
                     </div>
-                    )}
                   </div>
 
                   {/* Stats cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
                       { label: "Servicios", value: getAreaServiceStats(selectedId).total, icon: ClipboardList, color: "bg-blue-100 text-blue-700" },
                       { label: "En Progreso", value: getAreaServiceStats(selectedId).en_progreso, icon: Clock, color: "bg-blue-100 text-blue-700" },
@@ -283,7 +206,7 @@ export function AreasPage() {
                     <h3 className="text-gray-800 font-semibold">Colaboradores del Área</h3>
                   </div>
 
-                  {/* Add collaborator — arriba de la lista */}
+                  {/* Add collaborator */}
                   {disponibles.length > 0 && (
                     <div className="mb-4 flex gap-2 items-end">
                       <div className="flex-1">
@@ -353,99 +276,6 @@ export function AreasPage() {
           )}
         </div>
       </div>
-
-      {/* Create/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h3 className="text-gray-900 font-bold">
-                {editingArea ? "Editar Área" : "Nueva Área"}
-              </h3>
-              <button onClick={resetForm} className="p-2 rounded-lg hover:bg-gray-100">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div className="px-6 py-4 space-y-4">
-                <div>
-                  <label className="block text-xs text-gray-600 font-semibold mb-1">Nombre del Área *</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Mantenimiento Industrial"
-                    value={form.nombre}
-                    onChange={(e) => setForm((p) => ({ ...p, nombre: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-gray-50"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-600 font-semibold mb-1">
-                    Encargado <span className="text-gray-400 font-normal">(opcional)</span>
-                  </label>
-                  <select
-                    value={form.encargado_id}
-                    onChange={(e) => setForm((p) => ({ ...p, encargado_id: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-gray-50"
-                  >
-                    <option value="">Sin encargado</option>
-                    {usuarios
-                      ?.filter((u: any) => u.rol !== "sistema")
-                      .map((u: any) => (
-                        <option key={u.id} value={u.id}>
-                          {u.nombres} ({u.rol})
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              </div>
-              <div className="flex gap-3 px-6 py-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="flex-1 border border-gray-200 text-gray-700 rounded-xl py-2.5 text-sm hover:bg-gray-50 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={crearArea.isPending || editarArea.isPending}
-                  className="flex-1 bg-blue-900 text-white rounded-xl py-2.5 text-sm hover:bg-blue-800 transition disabled:opacity-50 font-semibold"
-                >
-                  {editarArea.isPending || crearArea.isPending ? "Guardando..." : editingArea ? "Actualizar" : "Crear Área"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
-            <h3 className="text-gray-900 font-bold">Eliminar Área</h3>
-            <p className="text-sm text-gray-600">
-              ¿Estás seguro de eliminar el área <strong>"{deleteConfirm.nombre}"</strong>? Esta acción no se puede deshacer.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 border border-gray-200 text-gray-700 rounded-xl py-2.5 text-sm hover:bg-gray-50 transition"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={eliminarArea.isPending}
-                className="flex-1 bg-red-600 text-white rounded-xl py-2.5 text-sm hover:bg-red-700 transition disabled:opacity-50 font-semibold"
-              >
-                {eliminarArea.isPending ? "Eliminando..." : "Eliminar"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

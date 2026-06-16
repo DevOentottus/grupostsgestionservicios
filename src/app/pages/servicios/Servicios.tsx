@@ -42,6 +42,7 @@ export function ServiciosPage() {
     filterStatus === "todos" ? undefined : filterStatus
   );
   const { data: areas } = useAreas();
+  const areaMap = new Map((areas || []).map((a: any) => [a.id, a.nombre]));
   const { data: plantillas } = usePlantillas();
   const crearServicio = useCrearServicio();
   const aplicarPlantilla = useAplicarPlantilla();
@@ -230,7 +231,7 @@ export function ServiciosPage() {
                     {srv.area_id && (
                       <span className="bg-gray-100 px-2 py-1 rounded-lg flex items-center gap-1">
                         <Wrench className="w-3 h-3" />
-                        Área #{srv.area_id}
+                        {areaMap.get(srv.area_id) || `Área #${srv.area_id}`}
                       </span>
                     )}
                     {srv.colaborador_nombre && (

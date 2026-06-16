@@ -806,6 +806,7 @@ function ComparativoTab({
 }) {
   if (!data) return null;
   const { indicadores, kpi, period_comparison } = data;
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
@@ -817,7 +818,10 @@ function ComparativoTab({
             type="button"
             role="switch"
             aria-checked={compararPeriodo}
-            onClick={() => onToggleComparar(!compararPeriodo)}
+            onClick={() => {
+              if (compararPeriodo) setActiveFilter(null);
+              onToggleComparar(!compararPeriodo);
+            }}
             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
               compararPeriodo ? "bg-blue-600" : "bg-slate-300"
             }`}
@@ -884,10 +888,18 @@ function ComparativoTab({
                 <button
                   key={opt.label}
                   type="button"
-                  onClick={opt.apply}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2.5 py-1.5 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                  onClick={() => {
+                    setActiveFilter(opt.label);
+                    opt.apply();
+                  }}
+                  className={cn(
+                    "text-xs font-medium px-2.5 py-1.5 border rounded-lg transition-colors",
+                    activeFilter === opt.label
+                      ? "bg-blue-900 text-white border-blue-900"
+                      : "text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-800",
+                  )}
                 >
-                  {opt.label}
+                  {activeFilter === opt.label ? "✓ " + opt.label.replace(" — ", " vs ") : opt.label}
                 </button>
               ))}
             </div>

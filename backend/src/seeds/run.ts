@@ -226,10 +226,8 @@ async function seed() {
   console.log("🏢 Insertando áreas…");
 
   const areasData = [
-    { nombre: "Soporte Técnico", encargadoKey: "carlos.garcia" },
-    { nombre: "Instalaciones", encargadoKey: "maria.lopez" },
-    { nombre: "Mantenimiento", encargadoKey: null },
-    { nombre: "Desarrollo", encargadoKey: null },
+    { nombre: "Computadoras e impresoras", encargadoKey: "carlos.garcia" },
+    { nombre: "Televisores", encargadoKey: "maria.lopez" },
   ];
 
   const areaMap = new Map<string, any>();
@@ -261,14 +259,13 @@ async function seed() {
   console.log("🔗 Asignando colaboradores a áreas…");
 
   const areaColabData = [
-    { area: "Soporte Técnico", colaborador: "jose.ramirez" },
-    { area: "Soporte Técnico", colaborador: "luis.fernandez" },
-    { area: "Soporte Técnico", colaborador: "roberto.quispe" },
-    { area: "Instalaciones", colaborador: "ana.martinez" },
-    { area: "Mantenimiento", colaborador: "jose.ramirez" },
-    { area: "Desarrollo", colaborador: "demo" },
-    { area: "Soporte Técnico", colaborador: "sofia.vega" },
-    { area: "Instalaciones", colaborador: "diego.paredes" },
+    { area: "Computadoras e impresoras", colaborador: "jose.ramirez" },
+    { area: "Computadoras e impresoras", colaborador: "luis.fernandez" },
+    { area: "Computadoras e impresoras", colaborador: "roberto.quispe" },
+    { area: "Televisores", colaborador: "ana.martinez" },
+    { area: "Computadoras e impresoras", colaborador: "demo" },
+    { area: "Computadoras e impresoras", colaborador: "sofia.vega" },
+    { area: "Televisores", colaborador: "diego.paredes" },
   ];
 
   const areaColabPromises = areaColabData.map(({ area, colaborador }) => {
@@ -364,10 +361,8 @@ async function seed() {
   // ── 6. Servicios ────────────────────────────────────────────────────
   console.log("📋 Insertando servicios…");
 
-  const areaSoporte = areaMap.get("Soporte Técnico")!;
-  const areaInstalaciones = areaMap.get("Instalaciones")!;
-  const areaMantenimiento = areaMap.get("Mantenimiento")!;
-  const areaDesarrollo = areaMap.get("Desarrollo")!;
+  const areaComputo = areaMap.get("Computadoras e impresoras")!;
+  const areaTv = areaMap.get("Televisores")!;
 
   const serviciosData = [
     {
@@ -377,7 +372,7 @@ async function seed() {
         "Instalación completa de red para el cliente ABC incluyendo cableado estructurado y configuración de switches.",
       estado: "en_progreso",
       tiempo_estimado: 120,
-      area_id: areaSoporte.area_id,
+      area_id: areaComputo.area_id,
       clienteKey: "Juan Carlos García",
       fecha_inicio: daysAgo(1),
       hora_inicio: "09:00:00",
@@ -389,7 +384,7 @@ async function seed() {
         "Mantenimiento preventivo programado a servidores principales y de respaldo.",
       estado: "pendiente",
       tiempo_estimado: 180,
-      area_id: areaMantenimiento.area_id,
+      area_id: areaComputo.area_id,
       clienteKey: "María Elena López",
     },
     {
@@ -399,7 +394,7 @@ async function seed() {
         "Desarrollo del nuevo módulo de facturación electrónica para el sistema interno.",
       estado: "pendiente",
       tiempo_estimado: 480,
-      area_id: areaDesarrollo.area_id,
+      area_id: areaComputo.area_id,
       clienteKey: "Juan Carlos García",
     },
     {
@@ -409,7 +404,7 @@ async function seed() {
         "Caída del sistema principal de ventas. Se requiere diagnóstico y restauración urgente.",
       estado: "bloqueado",
       tiempo_estimado: 60,
-      area_id: areaSoporte.area_id,
+      area_id: areaComputo.area_id,
       clienteKey: "Pedro Miguel Torres",
       fecha_inicio: td,
       hora_inicio: tt,
@@ -421,7 +416,7 @@ async function seed() {
         "Instalación de sistema de cámaras de seguridad para oficinas principales.",
       estado: "completado",
       tiempo_estimado: 240,
-      area_id: areaInstalaciones.area_id,
+      area_id: areaTv.area_id,
       clienteKey: "María Elena López",
       fecha_inicio: daysAgo(3),
       hora_inicio: "08:00:00",
@@ -435,7 +430,7 @@ async function seed() {
         "Actualización de software de oficina a la última versión disponible.",
       estado: "pendiente",
       tiempo_estimado: 90,
-      area_id: areaSoporte.area_id,
+      area_id: areaComputo.area_id,
       clienteKey: "Pedro Miguel Torres",
     },
   ];

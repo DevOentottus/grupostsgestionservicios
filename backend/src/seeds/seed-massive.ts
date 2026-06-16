@@ -117,12 +117,8 @@ async function seedMassive() {
   console.log("🏢 Insertando áreas…");
 
   const areasData = [
-    { nombre: "Soporte Técnico", encargadoKey: "carlos.garcia" },
-    { nombre: "Redes y Comunicaciones", encargadoKey: null },
-    { nombre: "Software", encargadoKey: null },
-    { nombre: "Instalaciones", encargadoKey: "maria.lopez" },
-    { nombre: "Mantenimiento", encargadoKey: null },
-    { nombre: "Desarrollo", encargadoKey: null },
+    { nombre: "Computadoras e impresoras", encargadoKey: "carlos.garcia" },
+    { nombre: "Televisores", encargadoKey: "maria.lopez" },
   ];
 
   const areaMap = new Map<string, any>();
