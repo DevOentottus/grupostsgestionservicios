@@ -136,8 +136,8 @@ export function AreasPage() {
               Volver a ├íreas
             </button>
           ) : null}
-          <h1 className="text-gray-900 font-bold">├üreas de Servicio</h1>
-          <p className="text-gray-500 text-sm">{visibleAreas.length} ├íreas registradas</p>
+          <h1 className="text-gray-900 font-bold">Áreas de Servicio</h1>
+          <p className="text-gray-500 text-sm">{visibleAreas.length} áreas registradas</p>
         </div>
         {user?.rol !== "encargado" && (
           <button
