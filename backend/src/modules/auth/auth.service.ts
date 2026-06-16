@@ -72,7 +72,7 @@ export async function loginUser(
     user: {
       id: usuario.usuario_id,
       username: usuario.usuario_username,
-      nombres: `${usuario.usuario_nombres} ${usuario.usuario_apellido_paterno || ""}`.trim(),
+      nombres: usuario.usuario_nombres,
       email: usuario.usuario_correo,
       rol: (usuario.usuario_rol?.toLowerCase() || "colaborador") as Rol,
       activo: usuario.usuario_activo,

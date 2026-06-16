@@ -27,6 +27,9 @@ interface UsuarioForm {
   username: string;
   password: string;
   nombres: string;
+  apellidos: string;
+  dni: string;
+  telefono: string;
   email: string;
   rol: string;
   area_ids: number[];
@@ -36,6 +39,9 @@ const emptyForm: UsuarioForm = {
   username: "",
   password: "",
   nombres: "",
+  apellidos: "",
+  dni: "",
+  telefono: "",
   email: "",
   rol: "colaborador",
   area_ids: [],
@@ -76,6 +82,9 @@ export function UsuariosPage() {
       username: u.username,
       password: "",
       nombres: u.nombres,
+      apellidos: u.apellidos || "",
+      dni: u.dni || "",
+      telefono: u.telefono || "",
       email: u.email,
       rol: u.rol,
       area_ids: u.area_ids || [],
@@ -87,6 +96,9 @@ export function UsuariosPage() {
     if (!form.nombres || !form.email) return;
     const payload: Record<string, unknown> = {
       nombres: form.nombres,
+      apellidos: form.apellidos || undefined,
+      dni: form.dni || undefined,
+      telefono: form.telefono || undefined,
       email: form.email,
       rol: form.rol,
     };
@@ -328,11 +340,21 @@ export function UsuariosPage() {
                   <label className="block text-xs text-gray-600 font-semibold mb-1">Nombres *</label>
                   <input
                     type="text"
-                    placeholder="Nombres completos"
+                    placeholder="Nombres"
                     value={form.nombres}
                     onChange={(e) => setForm((p) => ({ ...p, nombres: e.target.value }))}
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
                     required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 font-semibold mb-1">Apellidos</label>
+                  <input
+                    type="text"
+                    placeholder="Apellido paterno y materno"
+                    value={form.apellidos}
+                    onChange={(e) => setForm((p) => ({ ...p, apellidos: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
                   />
                 </div>
                 <div>
@@ -344,6 +366,26 @@ export function UsuariosPage() {
                     onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
                     required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 font-semibold mb-1">DNI</label>
+                  <input
+                    type="text"
+                    placeholder="Nro. de documento"
+                    value={form.dni}
+                    onChange={(e) => setForm((p) => ({ ...p, dni: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 font-semibold mb-1">Teléfono</label>
+                  <input
+                    type="text"
+                    placeholder="Nro. de teléfono"
+                    value={form.telefono}
+                    onChange={(e) => setForm((p) => ({ ...p, telefono: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
                   />
                 </div>
               </div>
