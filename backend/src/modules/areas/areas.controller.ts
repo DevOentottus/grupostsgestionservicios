@@ -1,15 +1,73 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
-import { NotFoundError, ValidationError } from "@/core/errors/index.js";
+import { NotFoundError, ValidationError, ConflictError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
+import { z } from "zod";
+
+const crearAreaSchema = z.object({
+  nombre: z.string().min(1, "Nombre requerido").max(150),
+  encargado_id: z.number().int().nullable().optional(),
+});
+
+const actualizarAreaSchema = z.object({
+  nombre: z.string().min(1).max(150).optional(),
+  encargado_id: z.number().int().nullable().optional(),
+});
+
+/** Upgrade un colaborador a encargado, y revierte el anterior si queda sin ├íreas */
+async function sincronizarRolEncargado(
+  nuevoEncargadoId: number | null,
+  viejoEncargadoId: number | null,
+) {
+  // Subir rol del nuevo encargado si era colaborador
+  if (nuevoEncargadoId) {
+    const { data: user } = await supabase
+      .from("usuarios")
+      .select("usuario_id, usuario_rol")
+      .eq("usuario_id", nuevoEncargadoId)
+      .limit(1)
+      .single();
+
+    if (user && user.usuario_rol === "colaborador") {
+      await supabase
+        .from("usuarios")
+        .update({ usuario_rol: "encargado" })
+        .eq("usuario_id", nuevoEncargadoId);
+    }
+  }
+
+  // Bajar rol del anterior encargado si ya no es encargado de ninguna ├írea
+  if (viejoEncargadoId && viejoEncargadoId !== nuevoEncargadoId) {
+    const { data: otrasAreas } = await supabase
+      .from("areas")
+      .select("area_id")
+      .eq("area_encargado_id", viejoEncargadoId);
+
+    if (!otrasAreas?.length) {
+      const { data: oldUser } = await supabase
+        .from("usuarios")
+        .select("usuario_id, usuario_rol")
+        .eq("usuario_id", viejoEncargadoId)
+        .limit(1)
+        .single();
+
+      if (oldUser && oldUser.usuario_rol === "encargado") {
+        await supabase
+          .from("usuarios")
+          .update({ usuario_rol: "colaborador" })
+          .eq("usuario_id", viejoEncargadoId);
+      }
+    }
+  }
+}
 
 export async function areasController(app: FastifyInstance) {
   // NOTA: No usar app.addHook("preHandler", authenticate) en serverless/emit.
   // El hook de scope + route-level preHandler combinados causan timeout en Vercel.
   // Cada ruta debe incluir authenticate + authorize en su propio preHandler.
 
-  // ── GET /api/areas — listar todas las áreas ──
+  // ÔöÇÔöÇ GET /api/areas ÔÇö listar todas las ├íreas ÔöÇÔöÇ
   app.get(
     "/api/areas",
     { preHandler: [requireRoles("admin", "sistema", "encargado", "colaborador")] },
@@ -20,7 +78,7 @@ export async function areasController(app: FastifyInstance) {
         area_id: number | null;
       };
 
-      // 1. Obtener IDs de áreas según el rol
+      // 1. Obtener IDs de ├íreas seg├║n el rol
       let areaIds: number[] | null = null;
 
       if (user.rol === "encargado" || user.rol === "colaborador") {
@@ -46,7 +104,7 @@ export async function areasController(app: FastifyInstance) {
       if (error) throw new Error(error.message);
       if (!areasData?.length) return { data: [] };
 
-      // Deduplicar por nombre de área (conservar el área más antigua)
+      // Deduplicar por nombre de ├írea (conservar el ├írea m├ís antigua)
       const seen = new Map<string, any>();
       for (const a of areasData) {
         if (!seen.has(a.area_nombre)) {
@@ -92,7 +150,7 @@ export async function areasController(app: FastifyInstance) {
     }
   );
 
-  // ── GET /api/areas/:id — obtener área con colaboradores ──
+  // ÔöÇÔöÇ GET /api/areas/:id ÔÇö obtener ├írea con colaboradores ÔöÇÔöÇ
   app.get(
     "/api/areas/:id",
     { preHandler: [requireRoles("admin", "sistema", "encargado")] },
@@ -107,7 +165,7 @@ export async function areasController(app: FastifyInstance) {
         .limit(1);
 
       const area = areas?.[0];
-      if (!area) throw new NotFoundError("Área no encontrada");
+      if (!area) throw new NotFoundError("├ürea no encontrada");
 
       // Obtener colaboradores
       const { data: asignaciones } = await supabase
@@ -146,7 +204,137 @@ export async function areasController(app: FastifyInstance) {
     }
   );
 
-  // ── POST /api/areas/:id/colaboradores — agregar colaborador ──
+  // ÔöÇÔöÇ POST /api/areas ÔÇö crear ├írea ÔöÇÔöÇ
+  app.post(
+    "/api/areas",
+    { preHandler: [requireRoles("admin", "sistema")] },
+    async (request, reply) => {
+      const input = crearAreaSchema.parse(request.body);
+      const now = new Date();
+
+      const { data: newAreas, error } = await supabase
+        .from("areas")
+        .insert({
+          area_nombre: input.nombre,
+          area_encargado_id: input.encargado_id ?? null,
+          area_fecha_creacion: now.toISOString().split("T")[0],
+        })
+        .select();
+
+      if (error) throw new Error(error.message);
+      const area = newAreas?.[0];
+      if (!area) throw new Error("No se pudo crear el ├írea");
+
+      const authUser = request.user as { user_id: number };
+      await auditLog(null, authUser.user_id, "CREATE", "area", area.area_id, {
+        nombre: input.nombre,
+      });
+
+      // Sincronizar rol del usuario asignado como encargado
+      await sincronizarRolEncargado(input.encargado_id ?? null, null);
+
+      return reply.status(201).send({
+        data: {
+          id: area.area_id,
+          nombre: area.area_nombre,
+          encargado_id: area.area_encargado_id,
+          created_at: area.area_fecha_creacion,
+        },
+      });
+    }
+  );
+
+  // ÔöÇÔöÇ PUT /api/areas/:id ÔÇö actualizar ├írea ÔöÇÔöÇ
+  app.put(
+    "/api/areas/:id",
+    { preHandler: [requireRoles("admin", "sistema")] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const input = actualizarAreaSchema.parse(request.body);
+      const areaId = parseInt(id);
+
+      const { data: existing } = await supabase
+        .from("areas")
+        .select("area_id, area_encargado_id")
+        .eq("area_id", areaId)
+        .limit(1);
+
+      if (!existing?.length) throw new NotFoundError("├ürea no encontrada");
+
+      const oldEncargadoId = existing[0].area_encargado_id ?? null;
+
+      const updateData: Record<string, unknown> = {};
+      if (input.nombre !== undefined) updateData.area_nombre = input.nombre;
+      if (input.encargado_id !== undefined) updateData.area_encargado_id = input.encargado_id;
+
+      const { data: updatedAreas } = await supabase
+        .from("areas")
+        .update(updateData)
+        .eq("area_id", areaId)
+        .select();
+
+      const updated = updatedAreas?.[0];
+
+      const authUser = request.user as { user_id: number };
+      await auditLog(null, authUser.user_id, "UPDATE", "area", areaId, {
+        campos: Object.keys(input),
+      });
+
+      // Sincronizar rol del nuevo/anterior encargado
+      const nuevoEncargadoId = input.encargado_id !== undefined ? input.encargado_id : oldEncargadoId;
+      await sincronizarRolEncargado(nuevoEncargadoId, oldEncargadoId);
+
+      return reply.send({
+        data: updated
+          ? {
+              id: updated.area_id,
+              nombre: updated.area_nombre,
+              encargado_id: updated.area_encargado_id,
+            }
+          : null,
+      });
+    }
+  );
+
+  // ÔöÇÔöÇ DELETE /api/areas/:id ÔÇö eliminar ├írea ÔöÇÔöÇ
+  app.delete(
+    "/api/areas/:id",
+    { preHandler: [requireRoles("admin", "sistema")] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const areaId = parseInt(id);
+
+      const { data: areas } = await supabase
+        .from("areas")
+        .select("area_id, area_nombre")
+        .eq("area_id", areaId)
+        .limit(1);
+
+      const area = areas?.[0];
+      if (!area) throw new NotFoundError("├ürea no encontrada");
+
+      // Verificar que no tenga servicios asignados
+      const { count } = await supabase
+        .from("servicios")
+        .select("*", { count: "exact", head: true })
+        .eq("area_id", areaId);
+
+      if (count && count > 0) {
+        throw new ConflictError("No se puede eliminar el ├írea porque tiene servicios asignados");
+      }
+
+      await supabase.from("areas").delete().eq("area_id", areaId);
+
+      const authUser = request.user as { user_id: number };
+      await auditLog(null, authUser.user_id, "DELETE", "area", areaId, {
+        nombre: area.area_nombre,
+      });
+
+      return reply.status(204).send();
+    }
+  );
+
+  // ÔöÇÔöÇ POST /api/areas/:id/colaboradores ÔÇö agregar colaborador ÔöÇÔöÇ
   app.post(
     "/api/areas/:id/colaboradores",
     { preHandler: [requireRoles("admin", "sistema", "encargado")] },
@@ -165,7 +353,7 @@ export async function areasController(app: FastifyInstance) {
         .eq("area_id", areaId)
         .limit(1);
 
-      if (!areas?.length) throw new NotFoundError("Área no encontrada");
+      if (!areas?.length) throw new NotFoundError("├ürea no encontrada");
 
       const { data: usuarios } = await supabase
         .from("usuarios")
@@ -196,7 +384,7 @@ export async function areasController(app: FastifyInstance) {
     }
   );
 
-  // ── GET /api/areas/:id/servicios — servicios del área ──
+  // ÔöÇÔöÇ GET /api/areas/:id/servicios ÔÇö servicios del ├írea ÔöÇÔöÇ
   app.get(
     "/api/areas/:id/servicios",
     { preHandler: [requireRoles("admin", "sistema", "encargado")] },
@@ -210,7 +398,7 @@ export async function areasController(app: FastifyInstance) {
         .eq("area_id", areaId)
         .limit(1);
 
-      if (!areas?.length) throw new NotFoundError("Área no encontrada");
+      if (!areas?.length) throw new NotFoundError("├ürea no encontrada");
       const area = areas[0];
 
       const { data: serviciosData } = await supabase
@@ -258,7 +446,7 @@ export async function areasController(app: FastifyInstance) {
     }
   );
 
-  // ── DELETE /api/areas/:id/colaboradores/:usuario_id — remover colaborador ──
+  // ÔöÇÔöÇ DELETE /api/areas/:id/colaboradores/:usuario_id ÔÇö remover colaborador ÔöÇÔöÇ
   app.delete(
     "/api/areas/:id/colaboradores/:usuario_id",
     { preHandler: [requireRoles("admin", "sistema", "encargado")] },
