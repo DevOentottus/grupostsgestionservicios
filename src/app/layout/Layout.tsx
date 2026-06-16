@@ -60,9 +60,15 @@ function RolBadge({ rol }: { rol: string }) {
     encargado: "bg-blue-500/20 text-blue-300",
     colaborador: "bg-slate-500/20 text-slate-300",
   };
+  const labels: Record<string, string> = {
+    sistema: "Sistema",
+    admin: "Administrador",
+    encargado: "Encargado",
+    colaborador: "Colaborador",
+  };
   return (
     <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wider", styles[rol] || styles.colaborador)}>
-      {rol}
+      {labels[rol] || rol}
     </span>
   );
 }

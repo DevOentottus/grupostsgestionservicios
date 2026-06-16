@@ -16,6 +16,22 @@ export interface LoginResult {
   };
 }
 
+function nombreCompleto(
+  nombres: string,
+  apellido_paterno: string | null,
+  apellido_materno: string | null
+): string {
+  const base = (nombres || "").trim();
+  const parts = [base];
+  for (const ap of [apellido_paterno, apellido_materno]) {
+    const s = (ap || "").trim();
+    if (!s) continue;
+    if (base.toLowerCase().includes(s.toLowerCase())) continue;
+    parts.push(s);
+  }
+  return parts.join(" ");
+}
+
 export async function loginUser(
   username: string,
   password: string
@@ -23,7 +39,7 @@ export async function loginUser(
   const { data: usuarios, error } = await supabase
     .from("usuarios")
     .select(
-      "usuario_id, usuario_username, usuario_contrasena, usuario_nombres, usuario_apellido_paterno, usuario_correo, usuario_rol, usuario_activo"
+      "usuario_id, usuario_username, usuario_contrasena, usuario_nombres, usuario_apellido_paterno, usuario_apellido_materno, usuario_correo, usuario_rol, usuario_activo"
     )
     .eq("usuario_username", username)
     .limit(1);
@@ -72,7 +88,11 @@ export async function loginUser(
     user: {
       id: usuario.usuario_id,
       username: usuario.usuario_username,
-      nombres: usuario.usuario_nombres,
+      nombres: nombreCompleto(
+        usuario.usuario_nombres,
+        usuario.usuario_apellido_paterno,
+        usuario.usuario_apellido_materno,
+      ),
       email: usuario.usuario_correo,
       rol: (usuario.usuario_rol?.toLowerCase() || "colaborador") as Rol,
       activo: usuario.usuario_activo,

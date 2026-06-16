@@ -63,7 +63,7 @@ export function UsuariosPage() {
   const [confirmToggle, setConfirmToggle] = useState<Usuario | null>(null);
 
   const filtered = (usuarios || []).filter((u: Usuario) => {
-    const matchSearch = `${u.nombres} ${u.username} ${u.email}`
+    const matchSearch = `${u.nombres} ${u.apellidos || ""} ${u.username} ${u.email}`
       .toLowerCase()
       .includes(search.toLowerCase());
     const matchRol = filterRol === "Todos" || u.rol === filterRol;
@@ -233,17 +233,17 @@ export function UsuariosPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3">
                         <div className={cn(
                           "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0",
                           u.rol === "encargado" ? "bg-blue-700" : u.rol === "admin" ? "bg-purple-700" : "bg-blue-900",
                         )}>
                           <span className="text-white text-xs font-bold">
-                            {u.nombres?.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                            {`${u.nombres} ${u.apellidos || ""}`.trim().split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
                           </span>
                         </div>
                         <div>
-                          <p className="text-gray-900 text-sm font-semibold">{u.nombres}</p>
+                          <p className="text-gray-900 text-sm font-semibold">{`${u.nombres} ${u.apellidos || ""}`.trim()}</p>
                         </div>
                       </div>
                     </td>
@@ -501,8 +501,8 @@ export function UsuariosPage() {
             </h3>
             <p className="text-sm text-gray-600">
               {confirmToggle.activo
-                ? `¿Estás seguro de desactivar a "${confirmToggle.nombres}"? El usuario no podrá iniciar sesión.`
-                : `¿Estás seguro de activar a "${confirmToggle.nombres}"?`}
+                ? `¿Estás seguro de desactivar a "${`${confirmToggle.nombres} ${confirmToggle.apellidos || ""}`.trim()}"? El usuario no podrá iniciar sesión.`
+                : `¿Estás seguro de activar a "${`${confirmToggle.nombres} ${confirmToggle.apellidos || ""}`.trim()}"?`}
             </p>
             <div className="flex gap-3">
               <button
