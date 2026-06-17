@@ -130,21 +130,22 @@ export function AudioRecorder({
       reader.readAsDataURL(audioBlob);
       reader.onloadend = async () => {
         const base64 = reader.result as string;
-        try {
-          const { data } = await audioApi.upload({
-            audio_base64: base64,
-            content_type: audioBlob.type,
-          });
-          onAudioUploaded?.(data.data.url);
-          // Liberar blob URL
-          if (audioUrl) URL.revokeObjectURL(audioUrl);
-          setAudioBlob(null);
-          setAudioUrl(null);
-        } catch (err: any) {
-          setError(err?.response?.data?.message || "Error al subir el audio");
-        } finally {
-          setUploading(false);
-        }
+      try {
+        const { data } = await audioApi.upload({
+          audio_base64: base64,
+          content_type: audioBlob.type,
+        });
+        onAudioUploaded?.(data.data.url);
+        // Liberar blob URL
+        if (audioUrl) URL.revokeObjectURL(audioUrl);
+        setAudioBlob(null);
+        setAudioUrl(null);
+      } catch (err: any) {
+        const serverMsg = err?.response?.data?.detail || err?.response?.data?.message;
+        setError(serverMsg || "Error al subir el audio");
+      } finally {
+        setUploading(false);
+      }
       };
     } catch (err: any) {
       setError("Error al procesar el audio");

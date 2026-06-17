@@ -422,7 +422,12 @@ export function UsuariosPage() {
                   )}
                 >
                   <option value="colaborador">Colaborador</option>
-                  <option value="encargado">Encargado</option>
+                  {/* Encargado visible pero bloqueado en edición — se asigna desde el área */}
+                  {editingUser?.rol === "colaborador" && (
+                    <option value="encargado" disabled className="text-gray-400">
+                      Encargado (asignar desde el área)
+                    </option>
+                  )}
                   <option value="admin">Administrador</option>
                   <option value="sistema">Sistema</option>
                 </select>
