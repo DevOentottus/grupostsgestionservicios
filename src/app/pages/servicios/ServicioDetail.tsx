@@ -51,7 +51,6 @@ function compartirWhatsApp(codigo: string, titulo: string) {
 // -- Tab Definitions --
 const TABS = [
   { id: "tareas", label: "Tareas", icon: CheckCircle2 },
-  { id: "flujo", label: "Flujo", icon: ChevronRight },
   { id: "comentarios", label: "Comentarios", icon: MessageSquare },
   { id: "evidencias", label: "Evidencias", icon: Camera },
 ] as const;
@@ -623,6 +622,11 @@ export function ServicioDetailPage() {
               </div>
             </div>
 
+            {/* Flujo de Proceso — arriba de la lista de tareas */}
+            <div className="px-5 pb-4">
+              <ProcessFlow steps={flowSteps} />
+            </div>
+
             {/* Task list */}
             {tareasLoading ? (
               <div className="p-4 space-y-2">
@@ -781,9 +785,6 @@ export function ServicioDetailPage() {
 
           </div>
         )}
-
-        {/* FLUJO TAB */}
-        {activeTab === "flujo" && <ProcessFlow steps={flowSteps} />}
 
         {/* COMENTARIOS TAB */}
         {activeTab === "comentarios" && (
