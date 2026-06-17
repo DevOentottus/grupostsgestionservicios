@@ -33,6 +33,10 @@ export function useEditarUsuario() {
       qc.invalidateQueries({ queryKey: ["usuarios"] });
       toast.success("Usuario actualizado");
     },
+    onError: (err: any) => {
+      console.error("PUT /usuarios error:", err.response?.data);
+      toast.error(err.response?.data?.detail || err.response?.data?.error || "Error al actualizar");
+    },
   });
 }
 
@@ -44,5 +48,6 @@ export function useToggleUsuario() {
       qc.invalidateQueries({ queryKey: ["usuarios"] });
       toast.success("Estado cambiado");
     },
+    onError: (err: any) => toast.error(err.response?.data?.detail || "Error al cambiar estado"),
   });
 }

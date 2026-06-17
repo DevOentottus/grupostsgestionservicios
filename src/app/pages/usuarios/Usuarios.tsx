@@ -319,7 +319,7 @@ export function UsuariosPage() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+            <form id="user-form" className="flex-1 overflow-y-auto px-6 py-4 space-y-4" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-gray-600 font-semibold mb-1">Username</label>
@@ -437,7 +437,7 @@ export function UsuariosPage() {
                 )}
               </div>
 
-            </div>
+            </form>
 
             <div className="flex gap-3 px-6 py-4 border-t border-gray-100 flex-shrink-0">
               <button
@@ -447,7 +447,8 @@ export function UsuariosPage() {
                 Cancelar
               </button>
               <button
-                onClick={handleSave}
+                type="submit"
+                form="user-form"
                 disabled={editarUsuario.isPending || crearUsuario.isPending}
                 className="flex-1 bg-blue-900 text-white rounded-xl py-2.5 text-sm hover:bg-blue-800 transition disabled:opacity-50 flex items-center justify-center gap-2 font-semibold"
               >
