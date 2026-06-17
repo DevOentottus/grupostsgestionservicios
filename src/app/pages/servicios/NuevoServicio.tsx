@@ -85,25 +85,28 @@ const SelectField = memo(function SelectField({
 });
 
 const CheckboxToggle = memo(function CheckboxToggle({
-  checked, onChange, label, description, icon,
+  checked, onChange, label, description, icon, disabled,
 }: {
   checked: boolean;
-  onChange: (v: boolean) => void;
+  onChange?: (v: boolean) => void;
   label: string;
   description?: string;
   icon?: React.ReactNode;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
-      onClick={() => onChange(!checked)}
+      onClick={() => onChange && !disabled && onChange(!checked)}
       className={`w-full flex items-start gap-3 p-3 rounded-xl border transition text-left ${
+        disabled ? "opacity-60 cursor-not-allowed" : ""
+      } ${
         checked
           ? "border-blue-200 bg-blue-50/60"
           : "border-gray-200 bg-white hover:bg-gray-50"
       }`}
     >
-      <span className={`mt-0.5 flex-shrink-0 ${checked ? "text-blue-600" : "text-gray-300"}`}>
+      <span className={`mt-0.5 flex-shrink-0 ${checked ? "text-blue-600" : "text-gray-300"} ${disabled ? "opacity-50" : ""}`}>
         {checked ? (
           <CheckSquare className="w-5 h-5" />
         ) : icon ? (
@@ -115,6 +118,7 @@ const CheckboxToggle = memo(function CheckboxToggle({
       <div>
         <p className={`text-sm font-medium ${checked ? "text-blue-800" : "text-gray-700"}`}>
           {label}
+          {disabled && <span className="ml-2 text-xs text-gray-400 font-normal">(bloqueado)</span>}
         </p>
         {description && (
           <p className="text-xs text-gray-500 mt-0.5">{description}</p>
@@ -140,6 +144,7 @@ export function NuevoServicioPage() {
   const crearServicio = useCrearServicio();
 
   const isColaborador = currentUser?.rol === "colaborador";
+  const puedeToggleEvidencia = currentUser?.rol === "admin" || currentUser?.rol === "sistema";
 
   // -- Form state --
   const [form, setForm] = useState({
@@ -164,7 +169,10 @@ export function NuevoServicioPage() {
   });
 
   const [guiarEntrada, setGuiarEntrada] = useState(false);
-  const [permiteEvidencia, setPermiteEvidencia] = useState(true);
+  const [permiteEvidencia, setPermiteEvidencia] = useState(() => {
+    const stored = localStorage.getItem("default_permite_evidencia");
+    return stored !== null ? stored === "true" : true;
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [paso, setPaso] = useState(1);
 
@@ -303,9 +311,14 @@ export function NuevoServicioPage() {
         />
         <CheckboxToggle
           checked={permiteEvidencia}
-          onChange={setPermiteEvidencia}
+          onChange={puedeToggleEvidencia ? setPermiteEvidencia : undefined}
+          disabled={!puedeToggleEvidencia}
           label="Mostrar evidencias del servicio"
-          description="Muestra las evidencias (fotos/videos) en la vista de detalle del servicio."
+          description={
+            puedeToggleEvidencia
+              ? "Muestra las evidencias (fotos/videos) en la vista de detalle del servicio."
+              : "Solo administradores pueden desactivar esta opción."
+          }
           icon={<Camera className="w-5 h-5 text-gray-300" />}
         />
       </div>

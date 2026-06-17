@@ -12,7 +12,7 @@ import { cn } from "@/app/lib/utils";
 import type { Servicio, PlantillaTarea } from "@shared/index.js";
 import {
   Plus, Search, ClipboardList, ArrowRight, AlertTriangle, AlertCircle,
-  CheckCircle2, Clock, X, Users, Wrench, Calendar,
+  CheckCircle2, Clock, X, Users, Wrench, Calendar, Camera,
 } from "lucide-react";
 
 const statusConfig: Record<string, { bg: string; text: string; dot: string; bar: string }> = {
@@ -69,7 +69,12 @@ export function ServiciosPage() {
     return matchSearch;
   });
 
+  const esAdminSistema = currentUser?.rol === "admin" || currentUser?.rol === "sistema";
   const canCreate = currentUser?.rol === "admin" || currentUser?.rol === "encargado" || currentUser?.rol === "sistema" || currentUser?.rol === "colaborador";
+  const [defaultEvidencia, setDefaultEvidencia] = useState(() => {
+    const stored = localStorage.getItem("default_permite_evidencia");
+    return stored !== null ? stored === "true" : true;
+  });
 
   const handleCreate = async () => {
     if (!form.titulo || !form.cliente_nombre) return;
@@ -121,15 +126,36 @@ export function ServiciosPage() {
             {servicios?.length || 0} servicios
           </p>
         </div>
-        {canCreate && (
-          <button
-            onClick={() => navigate("/servicios/nuevo")}
-            className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-4 py-2.5 rounded-xl text-sm font-bold transition"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Servicio
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {esAdminSistema && (
+            <button
+              onClick={() => {
+                const newVal = !defaultEvidencia;
+                setDefaultEvidencia(newVal);
+                localStorage.setItem("default_permite_evidencia", String(newVal));
+              }}
+              className={`flex items-center gap-2 border px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+                defaultEvidencia
+                  ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                  : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
+              }`}
+              title={`Mostrar evidencias por defecto: ${defaultEvidencia ? "activado" : "desactivado"}`}
+            >
+              <Camera className="w-4 h-4" />
+              <span className="hidden sm:inline">Evidencias</span>
+              <span className={`w-2.5 h-2.5 rounded-full ${defaultEvidencia ? "bg-green-500" : "bg-gray-300"}`} />
+            </button>
+          )}
+          {canCreate && (
+            <button
+              onClick={() => navigate("/servicios/nuevo")}
+              className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-4 py-2.5 rounded-xl text-sm font-bold transition"
+            >
+              <Plus className="w-4 h-4" />
+              Nuevo Servicio
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Status filter buttons */}
