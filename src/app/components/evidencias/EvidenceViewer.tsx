@@ -18,6 +18,8 @@ interface EvidenceViewerProps {
   onComentarioAdded?: () => void;
   /** Map tarea_id -> titulo, para agrupar evidencias por tarea */
   tareaNombres?: Record<number, string>;
+  /** Rol del usuario autenticado (admin/encargado/colaborador). Solo admin/encargado ven botones aprobar/rechazar */
+  userRol?: string;
 }
 
 export function EvidenceViewer({
@@ -29,6 +31,7 @@ export function EvidenceViewer({
   dni,
   onComentarioAdded,
   tareaNombres,
+  userRol,
 }: EvidenceViewerProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [comentarios, setComentarios] = useState<Record<number, string>>({});
@@ -126,8 +129,8 @@ export function EvidenceViewer({
           </div>
         </div>
 
-        {/* Status actions (admin/encargado only) */}
-        {!readOnly && showStatus && ev.estado === "pendiente" && (
+        {/* Status actions (solo encargado/admin) */}
+        {!readOnly && showStatus && ev.estado === "pendiente" && (userRol === "admin" || userRol === "encargado") && (
           <div className="flex gap-2 px-4 py-2 bg-slate-50 border-t border-slate-100">
             <button
               onClick={() => cambiarEstado.mutate({ evidenciaId: ev.id, estado: "aprobado" })}

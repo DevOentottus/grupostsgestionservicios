@@ -117,7 +117,7 @@ const HEADER_BG: Record<string, string> = {
 };
 
 // -- Evidencias Tab Component --
-function EvidenciasTabContent({ servicioId, tareas }: { servicioId: number; tareas: Tarea[] }) {
+function EvidenciasTabContent({ servicioId, tareas, userRol }: { servicioId: number; tareas: Tarea[]; userRol?: string }) {
   const { data: evidencias, isLoading } = useEvidencias(servicioId);
   const [tareaSeleccionada, setTareaSeleccionada] = useState<number | null>(null);
 
@@ -179,6 +179,7 @@ function EvidenciasTabContent({ servicioId, tareas }: { servicioId: number; tare
             evidencias={evidencias || []}
             showStatus
             tareaNombres={tareaNombres}
+            userRol={userRol}
           />
         )}
       </div>
@@ -795,7 +796,7 @@ export function ServicioDetailPage() {
 
         {/* EVIDENCIAS TAB */}
         {activeTab === "evidencias" && (
-          <EvidenciasTabContent servicioId={servicioId} tareas={tareas || []} />
+          <EvidenciasTabContent servicioId={servicioId} tareas={tareas || []} userRol={user?.rol} />
         )}
       </div>
 
