@@ -879,7 +879,28 @@ async function reporteTecnicoPDF(request: any, reply: any) {
     eviPorTarea[tid].push(ev);
   }
 
-  // 5. Generar PDF con pdfkit — envuelto en Promise para que Fastify espere
+  // 5. Pre-fetchear imágenes (pdfkit no soporta URLs HTTP directamente)
+  const imgBuffers = new Map<string, Buffer | null>();
+  const todasEvis = evidencias || [];
+  if (todasEvis.length > 0) {
+    await Promise.all(
+      todasEvis.map(async (ev) => {
+        const url = ev.archivo_url;
+        if (!url) return;
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const ab = await res.arrayBuffer();
+            imgBuffers.set(url, Buffer.from(ab));
+          }
+        } catch {
+          // imagen no disponible, queda null en el map
+        }
+      })
+    );
+  }
+
+  // 6. Generar PDF con pdfkit — envuelto en Promise para que Fastify espere
   return new Promise<void>(async (resolve, reject) => {
     try {
       const PDFDocument = (await import("pdfkit")).default;
@@ -1002,10 +1023,17 @@ async function reporteTecnicoPDF(request: any, reply: any) {
           for (const ev of evis) {
             const imgUrl = ev.archivo_url;
             if (imgUrl) {
-              try {
-                doc.image(imgUrl, { fit: [200, 150], align: "center", valign: "center" });
-                doc.moveDown(0.3);
-              } catch {
+              const buf = imgBuffers.get(imgUrl);
+              if (buf) {
+                try {
+                  doc.image(buf, { fit: [200, 150], align: "center", valign: "center" });
+                  doc.moveDown(0.3);
+                } catch {
+                  doc.fontSize(8).font("Helvetica").fillColor("#999")
+                    .text(`[Imagen no disponible]`, { align: "center" });
+                  doc.moveDown(0.3);
+                }
+              } else {
                 doc.fontSize(8).font("Helvetica").fillColor("#999")
                   .text(`[Imagen no disponible]`, { align: "center" });
                 doc.moveDown(0.3);
