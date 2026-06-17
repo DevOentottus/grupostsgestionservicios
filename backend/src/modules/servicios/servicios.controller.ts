@@ -810,19 +810,51 @@ export async function serviciosController(app: FastifyInstance) {
   app.get(
     "/api/servicios/:id/reporte-tecnico",
     async (request, reply) => {
-      const user = request.user as { user_id: number; rol: string } | undefined;
-      if (!user) {
-        // Fallback: permitir token vía query param para window.open()
-        const token = (request.query as { token?: string }).token;
-        if (!token) throw new ValidationError("No autenticado");
-        try {
-          const decoded = await app.jwt.verify(token);
-          (request as any).user = decoded;
-        } catch {
-          throw new ValidationError("Token inválido o expirado");
+      try {
+        const user = request.user as { user_id: number; rol: string } | undefined;
+        if (!user) {
+          const token = (request.query as { token?: string }).token;
+          if (!token) throw new ValidationError("No autenticado");
+          try {
+            const decoded = await app.jwt.verify(token);
+            (request as any).user = decoded;
+          } catch {
+            throw new ValidationError("Token inválido o expirado");
+          }
         }
+        // Test: intentar importar pdfkit y devolver un PDF mínimo
+        let PDFDocument: any;
+        try {
+          PDFDocument = (await import("pdfkit")).default;
+        } catch (importErr: any) {
+          return reply.status(500).send({
+            error: "pdfkit_import_failed",
+            message: importErr?.message || String(importErr),
+          });
+        }
+        // Verificar que el constructor funciona
+        try {
+          const doc = new PDFDocument({ margin: 40, size: "A4" });
+          const buffers: Buffer[] = [];
+          doc.on("data", (chunk: Buffer) => buffers.push(chunk));
+          doc.on("end", () => {
+            const pdfBuffer = Buffer.concat(buffers);
+            reply.header("Content-Type", "application/pdf");
+            reply.header("Content-Disposition", 'inline; filename="test.pdf"');
+            reply.send(pdfBuffer);
+          });
+          doc.fontSize(16).font("Helvetica-Bold").text("PDF Test OK", { align: "center" });
+          doc.end();
+        } catch (pdfErr: any) {
+          return reply.status(500).send({
+            error: "pdf_generation_failed",
+            message: pdfErr?.message || String(pdfErr),
+          });
+        }
+      } catch (err: any) {
+        console.error("[reporte-tecnico]", err);
+        throw err;
       }
-      await reporteTecnicoPDF(request, reply);
     }
   );
 }
