@@ -294,7 +294,7 @@ export function NuevoServicioPage() {
         }
       }
 
-      toast.success("Servicio creado");
+      toast.success("Servicio creado con " + tareas.length + " tareas");
       navigate(`/servicios/${servicioId}`);
     } catch (err: any) {
       const serverErrors = err?.response?.data?.errors;
