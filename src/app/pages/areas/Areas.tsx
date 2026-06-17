@@ -282,7 +282,7 @@ export function AreasPage() {
                     <h3 className="text-gray-800 font-semibold">Colaboradores del Área</h3>
                   </div>
 
-                  {/* Add collaborator ÔÇö arriba de la lista */}
+                  {/* Add collaborator -- arriba de la lista */}
                   {disponibles.length > 0 && (
                     <div className="mb-4 flex gap-2 items-end">
                       <div className="flex-1">
@@ -295,7 +295,7 @@ export function AreasPage() {
                           <option value="">Seleccionar...</option>
                           {disponibles.map((u: any) => (
                             <option key={u.id} value={u.id}>
-                              {u.nombres} ÔÇö {u.email}
+                              {u.nombres} — {u.email}
                             </option>
                           ))}
                         </select>
