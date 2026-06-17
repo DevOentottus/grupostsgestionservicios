@@ -154,6 +154,7 @@ export function NuevoServicioPage() {
     descripcion_accesorio: "",
     detalles_accesorio: "",
     titulo: "",
+    codigo_servicio: "",
     area_id: "",
     cliente_reporte: "",
     diagnostico_inicial: "",
@@ -167,7 +168,13 @@ export function NuevoServicioPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [paso, setPaso] = useState(1);
 
-  const totalPasos = guiarEntrada ? 2 : 3; // sin equipo/accesorios si guía activa
+  // Resetear paso si se activa guía desde pasos avanzados
+  const toggleGuiarEntrada = (v: boolean) => {
+    setGuiarEntrada(v);
+    if (v) setPaso(1);
+  };
+
+  const totalPasos = guiarEntrada ? 1 : 3; // guía activa: solo Servicio
 
   useEffect(() => {
     if (isColaborador && currentUser?.area_id) {
@@ -195,10 +202,10 @@ export function NuevoServicioPage() {
   // -- Validación por paso --
   const validarPaso = (step: number): boolean => {
     const errs: Record<string, string> = {};
-    if (step === 1) {
+    if (step === 1 && !guiarEntrada) {
       if (!form.cliente_nombres.trim()) errs.cliente_nombres = "Requerido";
     }
-    if (step === 3) {
+    if (step === 3 || (step === 1 && guiarEntrada)) {
       if (!form.titulo.trim()) errs.titulo = "Requerido";
     }
     setErrors(errs);
@@ -238,6 +245,7 @@ export function NuevoServicioPage() {
       detalles_accesorio: form.detalles_accesorio.trim() || null,
       cliente_reporte: form.cliente_reporte.trim() || null,
       diagnostico_inicial: form.diagnostico_inicial.trim() || null,
+      codigo: form.codigo_servicio.trim() || undefined,
       permite_evidencia: permiteEvidencia,
     };
 
@@ -277,7 +285,11 @@ export function NuevoServicioPage() {
         </button>
         <div>
           <h1 className="text-gray-900 font-bold text-lg">Nuevo Servicio Técnico</h1>
-          <p className="text-gray-500 text-xs">Paso {paso} de {totalPasos}</p>
+          {totalPasos > 1 ? (
+            <p className="text-gray-500 text-xs">Paso {paso} de {totalPasos}</p>
+          ) : (
+            <p className="text-gray-500 text-xs">Guía de entrada rápida</p>
+          )}
         </div>
       </div>
 
@@ -285,7 +297,7 @@ export function NuevoServicioPage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
         <CheckboxToggle
           checked={guiarEntrada}
-          onChange={setGuiarEntrada}
+          onChange={toggleGuiarEntrada}
           label="Continuar guía de entrada"
           description="Al activar esta opción se ocultan los campos de Equipo y Accesorios, y se muestra la lista de tareas de la plantilla seleccionada."
         />
@@ -299,40 +311,42 @@ export function NuevoServicioPage() {
       </div>
 
       {/* ═══ INDICADOR DE PASOS ═══ */}
-      <div className="flex items-center justify-center gap-0">
-        {STEPS.filter((s) => !(guiarEntrada && s.id === 2)).map((step, idx) => {
-          const StepIcon = step.icon;
-          const activo = paso === step.id;
-          const completado = paso > step.id;
-          return (
-            <div key={step.id} className="flex items-center">
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    activo
-                      ? "bg-blue-900 text-white shadow-md"
-                      : completado
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-400"
-                  }`}
-                >
-                  {completado ? <CheckSquare className="w-4 h-4" /> : <StepIcon className="w-4 h-4" />}
+      {!guiarEntrada && (
+        <div className="flex items-center justify-center gap-0">
+          {STEPS.map((step, idx) => {
+            const StepIcon = step.icon;
+            const activo = paso === step.id;
+            const completado = paso > step.id;
+            return (
+              <div key={step.id} className="flex items-center">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      activo
+                        ? "bg-blue-900 text-white shadow-md"
+                        : completado
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-400"
+                    }`}
+                  >
+                    {completado ? <CheckSquare className="w-4 h-4" /> : <StepIcon className="w-4 h-4" />}
+                  </div>
+                  <span className={`text-xs font-medium hidden sm:inline ${
+                    activo ? "text-blue-900" : completado ? "text-green-700" : "text-gray-400"
+                  }`}>
+                    {step.label}
+                  </span>
                 </div>
-                <span className={`text-xs font-medium hidden sm:inline ${
-                  activo ? "text-blue-900" : completado ? "text-green-700" : "text-gray-400"
-                }`}>
-                  {step.label}
-                </span>
+                {idx < 2 && (
+                  <div className={`w-8 sm:w-12 h-px mx-2 ${
+                    completado ? "bg-green-300" : "bg-gray-200"
+                  }`} />
+                )}
               </div>
-              {idx < (guiarEntrada ? 1 : 2) && (
-                <div className={`w-8 sm:w-12 h-px mx-2 ${
-                  completado ? "bg-green-300" : "bg-gray-200"
-                }`} />
-              )}
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* ═══ FORMULARIO POR PASO ═══ */}
       <form
@@ -342,8 +356,8 @@ export function NuevoServicioPage() {
           else irAlSiguiente();
         }}
       >
-        {/* ─── PASO 1: CLIENTE ─── */}
-        {paso === 1 && (
+        {/* ─── PASO 1: CLIENTE (solo si guía INACTIVA) ─── */}
+        {paso === 1 && !guiarEntrada && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
             <h2 className={sectionTitleClass}>
               <User className="w-4 h-4 text-blue-600" />
@@ -445,8 +459,8 @@ export function NuevoServicioPage() {
           </div>
         )}
 
-        {/* ─── PASO 3 (o 2 si guía activa): SERVICIO ─── */}
-        {(paso === 3 || (paso === 2 && guiarEntrada)) && (
+        {/* ─── PASO 3 (o único si guía activa): SERVICIO ─── */}
+        {paso === 3 || (paso === 1 && guiarEntrada) ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
             <h2 className={sectionTitleClass}>
               <Wrench className="w-4 h-4 text-blue-600" />
@@ -461,6 +475,24 @@ export function NuevoServicioPage() {
                 error={errors.titulo}
                 placeholder="Ej: Reparación de pantalla, Instalación de software..."
               />
+
+              {/* Código y DNI en guía de entrada */}
+              {guiarEntrada && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <InputField
+                    label="Código de servicio"
+                    value={form.codigo_servicio}
+                    onChange={(v) => set("codigo_servicio", v.toUpperCase())}
+                    placeholder="SRV20260617120000"
+                  />
+                  <InputField
+                    label="DNI Cliente"
+                    value={form.cliente_dni}
+                    onChange={(v) => set("cliente_dni", v)}
+                    placeholder="12345678"
+                  />
+                </div>
+              )}
 
               {isColaborador ? (
                 <SelectField
@@ -561,7 +593,7 @@ export function NuevoServicioPage() {
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* ═══ NAVEGACIÓN ═══ */}
         <div className="flex items-center justify-between gap-3 pt-4 pb-8">

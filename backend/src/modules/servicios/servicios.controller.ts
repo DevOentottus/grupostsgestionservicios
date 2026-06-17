@@ -28,6 +28,7 @@ const servicioSchema = z.object({
   id_plantilla_inicial: z.number().int().nullable().optional(),
   colaborador_id: z.number().int().nullable().optional(),
   permite_evidencia: z.boolean().optional(),
+  codigo: z.string().optional(),
 });
 
 const tareaSchema = z.object({
@@ -100,7 +101,7 @@ export async function serviciosController(app: FastifyInstance) {
     const { data: newServicios, error } = await supabase
       .from("servicios")
       .insert({
-        servicio_codigo: codigo,
+        servicio_codigo: input.codigo || codigo,
         servicio_nombre: input.titulo,
         servicio_descripcion: input.descripcion || null,
         servicio_estado: "pendiente",
