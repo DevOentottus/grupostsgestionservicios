@@ -874,175 +874,182 @@ async function reporteTecnicoPDF(request: any, reply: any) {
     eviPorTarea[tid].push(ev);
   }
 
-  // 5. Generar PDF con pdfkit
-  const PDFDocument = (await import("pdfkit")).default;
-  const doc = new PDFDocument({ margin: 40, size: "A4" });
+  // 5. Generar PDF con pdfkit — envuelto en Promise para que Fastify espere
+  return new Promise<void>(async (resolve, reject) => {
+    try {
+      const PDFDocument = (await import("pdfkit")).default;
+      const doc = new PDFDocument({ margin: 40, size: "A4" });
 
-  const buffers: Buffer[] = [];
-  doc.on("data", (chunk: Buffer) => buffers.push(chunk));
-  doc.on("end", () => {
-    const pdfBuffer = Buffer.concat(buffers);
-    reply.header("Content-Type", "application/pdf");
-    const q = request.query as { download?: string };
-    const disposition = q.download === "true" ? "attachment" : "inline";
-    const codigo = s.servicio_codigo || `SRV${s.servicio_id}`;
-    reply.header("Content-Disposition", `${disposition}; filename="reporte-tecnico-${codigo}.pdf"`);
-    reply.send(pdfBuffer);
-  });
+      const buffers: Buffer[] = [];
+      doc.on("data", (chunk: Buffer) => buffers.push(chunk));
+      doc.on("end", () => {
+        const pdfBuffer = Buffer.concat(buffers);
+        reply.header("Content-Type", "application/pdf");
+        const q = request.query as { download?: string };
+        const disposition = q.download === "true" ? "attachment" : "inline";
+        const codigo = s.servicio_codigo || `SRV${s.servicio_id}`;
+        reply.header("Content-Disposition", `${disposition}; filename="reporte-tecnico-${codigo}.pdf"`);
+        reply.send(pdfBuffer);
+        resolve();
+      });
 
-  const colab = s.usuario_colaborador;
-  const tecnicoNombre = colab
-    ? `${colab.usuario_nombres || ""} ${colab.usuario_apellido_paterno || ""}`.trim()
-    : "—";
-
-  // ─── HEADER ───
-  doc.fontSize(16).font("Helvetica-Bold").text("Hoja de Reporte Técnico", { align: "center" });
-  doc.moveDown(0.5);
-  doc.fontSize(8).font("Helvetica").fillColor("#666")
-    .text(`Generado: ${new Date().toLocaleDateString("es-PE")} ${new Date().toLocaleTimeString("es-PE")}`, { align: "right" });
-  doc.moveDown(0.8);
-
-  // ─── DATOS DEL SERVICIO ───
-  doc.fillColor("#000").fontSize(10).font("Helvetica-Bold").text("Datos del Servicio");
-  doc.moveDown(0.3);
-  doc.fontSize(9).font("Helvetica");
-
-  const svcInfo = [
-    [`Código:`, s.servicio_codigo || `SRV${s.servicio_id}`],
-    [`Nombre:`, s.servicio_nombre || "—"],
-    [`Cliente:`, [s.cliente_nombres, s.cliente_apellido_paterno, s.cliente_apellido_materno].filter(Boolean).join(" ") || "—"],
-    [`DNI:`, s.cliente_dni || "—"],
-    [`Teléfono:`, s.cliente_telefono || "—"],
-    [`Área:`, s.area_id ? `Área #${s.area_id}` : "—"],
-    [`Técnico:`, tecnicoNombre],
-    [`Estado:`, s.servicio_estado || "—"],
-    [`Creado:`, [s.servicio_fecha_creacion, s.servicio_hora_creacion].filter(Boolean).join(" ")],
-  ];
-
-  let yPos = doc.y;
-  for (const [label, value] of svcInfo) {
-    doc.text(label, 40, yPos, { width: 70, continued: true });
-    doc.text(` ${value}`, { width: 200 });
-    yPos = doc.y + 2;
-  }
-
-  doc.moveDown(1);
-
-  // ─── TAREAS ───
-  const tareasList = tareas || [];
-  doc.fillColor("#000").fontSize(10).font("Helvetica-Bold").text("Tareas", { underline: true });
-  doc.moveDown(0.5);
-
-  if (tareasList.length === 0) {
-    doc.fontSize(9).font("Helvetica").fillColor("#999").text("Sin tareas registradas.");
-    doc.moveDown(0.5);
-  } else {
-    // Tabla
-    const tableTop = doc.y;
-    const colX = [40, 220, 300, 380, 470];
-    const colW = [180, 80, 80, 90, 100];
-
-    doc.fontSize(8).font("Helvetica-Bold").fillColor("#fff");
-    doc.roundedRect(40, tableTop - 4, 510, 16, 3).fill("#1e3a5f");
-    doc.fillColor("#fff");
-    doc.text("Nombre", colX[0] + 4, tableTop, { width: colW[0] });
-    doc.text("Estado", colX[1] + 4, tableTop, { width: colW[1] });
-    doc.text("Completado por", colX[2] + 4, tableTop, { width: colW[2] });
-    doc.text("Fecha", colX[3] + 4, tableTop, { width: colW[3] });
-    doc.text("Hora", colX[4] + 4, tableTop, { width: colW[4] });
-
-    doc.moveDown(1.8);
-    let rowY = doc.y;
-
-    for (let i = 0; i < tareasList.length; i++) {
-      const t = tareasList[i];
-      const completador = t.usuario_completador
-        ? `${t.usuario_completador.usuario_nombres || ""} ${t.usuario_completador.usuario_apellido_paterno || ""}`.trim()
+      const colab = s.usuario_colaborador;
+      const tecnicoNombre = colab
+        ? `${colab.usuario_nombres || ""} ${colab.usuario_apellido_paterno || ""}`.trim()
         : "—";
 
-      // Alternar color de fila
-      if (i % 2 === 0) {
-        doc.rect(40, rowY - 2, 510, 16).fill("#f8f9fa");
-      }
-
-      doc.fillColor("#000").fontSize(8).font("Helvetica");
-      doc.text(t.tarea_titulo || "—", colX[0] + 4, rowY, { width: colW[0] });
-      doc.text(t.tarea_estado || "—", colX[1] + 4, rowY, { width: colW[1] });
-      doc.text(completador, colX[2] + 4, rowY, { width: colW[2] });
-      doc.text(t.tarea_fecha_completado || "—", colX[3] + 4, rowY, { width: colW[3] });
-      doc.text(t.tarea_hora_completado || "—", colX[4] + 4, rowY, { width: colW[4] });
-
-      rowY += 16;
-    }
-    doc.y = rowY + 8;
-  }
-
-  // ─── EVIDENCIAS ───
-  const eviList = evidencias || [];
-  if (eviList.length > 0) {
-    doc.addPage();
-    doc.fontSize(10).font("Helvetica-Bold").fillColor("#000").text("Evidencias", { underline: true });
-    doc.moveDown(0.5);
-
-    for (const t of tareasList) {
-      const evis = eviPorTarea[t.tarea_id] || [];
-      if (evis.length === 0) continue;
-
-      doc.fontSize(9).font("Helvetica-Bold").text(`Tarea: ${t.tarea_titulo}`);
-      doc.moveDown(0.3);
-
-      for (const ev of evis) {
-        const imgUrl = ev.archivo_url;
-        if (imgUrl) {
-          try {
-            doc.image(imgUrl, { fit: [200, 150], align: "center", valign: "center" });
-            doc.moveDown(0.3);
-          } catch {
-            doc.fontSize(8).font("Helvetica").fillColor("#999")
-              .text(`[Imagen no disponible]`, { align: "center" });
-            doc.moveDown(0.3);
-          }
-        }
-
-        const desc = ev.comentario_cliente || ev.comentario_colaborador;
-        if (desc) {
-          doc.fontSize(8).font("Helvetica").fillColor("#555")
-            .text(desc, { indent: 20 });
-          doc.moveDown(0.2);
-        }
-      }
+      // ─── HEADER ───
+      doc.fontSize(16).font("Helvetica-Bold").text("Hoja de Reporte Técnico", { align: "center" });
       doc.moveDown(0.5);
-    }
-  }
+      doc.fontSize(8).font("Helvetica").fillColor("#666")
+        .text(`Generado: ${new Date().toLocaleDateString("es-PE")} ${new Date().toLocaleTimeString("es-PE")}`, { align: "right" });
+      doc.moveDown(0.8);
 
-  // ─── COMENTARIOS ───
-  const cmtList = comentarios || [];
-  if (cmtList.length > 0) {
-    doc.moveDown(0.5);
-    doc.fontSize(10).font("Helvetica-Bold").fillColor("#000").text("Comentarios", { underline: true });
-    doc.moveDown(0.3);
-
-    for (const c of cmtList) {
-      const autor = c.usuarios
-        ? `${c.usuarios.usuario_nombres || ""} ${c.usuarios.usuario_apellido_paterno || ""}`.trim()
-        : "—";
-      doc.fontSize(9).font("Helvetica-Bold").fillColor("#333").text(`${autor}:`);
-      doc.fontSize(8).font("Helvetica").fillColor("#555")
-        .text(c.serviciocomentario_contenido || "—", { indent: 15 });
-      if (c.serviciocomentario_fecha) {
-        doc.fontSize(7).font("Helvetica").fillColor("#999")
-          .text(`${c.serviciocomentario_fecha} ${c.serviciocomentario_hora || ""}`.trim(), { indent: 15 });
-      }
+      // ─── DATOS DEL SERVICIO ───
+      doc.fillColor("#000").fontSize(10).font("Helvetica-Bold").text("Datos del Servicio");
       doc.moveDown(0.3);
+      doc.fontSize(9).font("Helvetica");
+
+      const svcInfo = [
+        [`Código:`, s.servicio_codigo || `SRV${s.servicio_id}`],
+        [`Nombre:`, s.servicio_nombre || "—"],
+        [`Cliente:`, [s.cliente_nombres, s.cliente_apellido_paterno, s.cliente_apellido_materno].filter(Boolean).join(" ") || "—"],
+        [`DNI:`, s.cliente_dni || "—"],
+        [`Teléfono:`, s.cliente_telefono || "—"],
+        [`Área:`, s.area_id ? `Área #${s.area_id}` : "—"],
+        [`Técnico:`, tecnicoNombre],
+        [`Estado:`, s.servicio_estado || "—"],
+        [`Creado:`, [s.servicio_fecha_creacion, s.servicio_hora_creacion].filter(Boolean).join(" ")],
+      ];
+
+      let yPos = doc.y;
+      for (const [label, value] of svcInfo) {
+        doc.text(label, 40, yPos, { width: 70, continued: true });
+        doc.text(` ${value}`, { width: 200 });
+        yPos = doc.y + 2;
+      }
+
+      doc.moveDown(1);
+
+      // ─── TAREAS ───
+      const tareasList = tareas || [];
+      doc.fillColor("#000").fontSize(10).font("Helvetica-Bold").text("Tareas", { underline: true });
+      doc.moveDown(0.5);
+
+      if (tareasList.length === 0) {
+        doc.fontSize(9).font("Helvetica").fillColor("#999").text("Sin tareas registradas.");
+        doc.moveDown(0.5);
+      } else {
+        // Tabla
+        const tableTop = doc.y;
+        const colX = [40, 220, 300, 380, 470];
+        const colW = [180, 80, 80, 90, 100];
+
+        doc.fontSize(8).font("Helvetica-Bold").fillColor("#fff");
+        doc.roundedRect(40, tableTop - 4, 510, 16, 3).fill("#1e3a5f");
+        doc.fillColor("#fff");
+        doc.text("Nombre", colX[0] + 4, tableTop, { width: colW[0] });
+        doc.text("Estado", colX[1] + 4, tableTop, { width: colW[1] });
+        doc.text("Completado por", colX[2] + 4, tableTop, { width: colW[2] });
+        doc.text("Fecha", colX[3] + 4, tableTop, { width: colW[3] });
+        doc.text("Hora", colX[4] + 4, tableTop, { width: colW[4] });
+
+        doc.moveDown(1.8);
+        let rowY = doc.y;
+
+        for (let i = 0; i < tareasList.length; i++) {
+          const t = tareasList[i];
+          const completador = t.usuario_completador
+            ? `${t.usuario_completador.usuario_nombres || ""} ${t.usuario_completador.usuario_apellido_paterno || ""}`.trim()
+            : "—";
+
+          // Alternar color de fila
+          if (i % 2 === 0) {
+            doc.rect(40, rowY - 2, 510, 16).fill("#f8f9fa");
+          }
+
+          doc.fillColor("#000").fontSize(8).font("Helvetica");
+          doc.text(t.tarea_titulo || "—", colX[0] + 4, rowY, { width: colW[0] });
+          doc.text(t.tarea_estado || "—", colX[1] + 4, rowY, { width: colW[1] });
+          doc.text(completador, colX[2] + 4, rowY, { width: colW[2] });
+          doc.text(t.tarea_fecha_completado || "—", colX[3] + 4, rowY, { width: colW[3] });
+          doc.text(t.tarea_hora_completado || "—", colX[4] + 4, rowY, { width: colW[4] });
+
+          rowY += 16;
+        }
+        doc.y = rowY + 8;
+      }
+
+      // ─── EVIDENCIAS ───
+      const eviList = evidencias || [];
+      if (eviList.length > 0) {
+        doc.addPage();
+        doc.fontSize(10).font("Helvetica-Bold").fillColor("#000").text("Evidencias", { underline: true });
+        doc.moveDown(0.5);
+
+        for (const t of tareasList) {
+          const evis = eviPorTarea[t.tarea_id] || [];
+          if (evis.length === 0) continue;
+
+          doc.fontSize(9).font("Helvetica-Bold").text(`Tarea: ${t.tarea_titulo}`);
+          doc.moveDown(0.3);
+
+          for (const ev of evis) {
+            const imgUrl = ev.archivo_url;
+            if (imgUrl) {
+              try {
+                doc.image(imgUrl, { fit: [200, 150], align: "center", valign: "center" });
+                doc.moveDown(0.3);
+              } catch {
+                doc.fontSize(8).font("Helvetica").fillColor("#999")
+                  .text(`[Imagen no disponible]`, { align: "center" });
+                doc.moveDown(0.3);
+              }
+            }
+
+            const desc = ev.comentario_cliente || ev.comentario_colaborador;
+            if (desc) {
+              doc.fontSize(8).font("Helvetica").fillColor("#555")
+                .text(desc, { indent: 20 });
+              doc.moveDown(0.2);
+            }
+          }
+          doc.moveDown(0.5);
+        }
+      }
+
+      // ─── COMENTARIOS ───
+      const cmtList = comentarios || [];
+      if (cmtList.length > 0) {
+        doc.moveDown(0.5);
+        doc.fontSize(10).font("Helvetica-Bold").fillColor("#000").text("Comentarios", { underline: true });
+        doc.moveDown(0.3);
+
+        for (const c of cmtList) {
+          const autor = c.usuarios
+            ? `${c.usuarios.usuario_nombres || ""} ${c.usuarios.usuario_apellido_paterno || ""}`.trim()
+            : "—";
+          doc.fontSize(9).font("Helvetica-Bold").fillColor("#333").text(`${autor}:`);
+          doc.fontSize(8).font("Helvetica").fillColor("#555")
+            .text(c.serviciocomentario_contenido || "—", { indent: 15 });
+          if (c.serviciocomentario_fecha) {
+            doc.fontSize(7).font("Helvetica").fillColor("#999")
+              .text(`${c.serviciocomentario_fecha} ${c.serviciocomentario_hora || ""}`.trim(), { indent: 15 });
+          }
+          doc.moveDown(0.3);
+        }
+      }
+
+      // ─── FOOTER ───
+      doc.moveDown(1);
+      doc.fontSize(7).font("Helvetica").fillColor("#aaa")
+        .text(`— Este documento fue generado automáticamente por ServicioLocalSTS —`, { align: "center" });
+
+      doc.end();
+    } catch (err) {
+      reject(err);
     }
-  }
-
-  // ─── FOOTER ───
-  doc.moveDown(1);
-  doc.fontSize(7).font("Helvetica").fillColor("#aaa")
-    .text(`— Este documento fue generado automáticamente por ServicioLocalSTS —`, { align: "center" });
-
-  doc.end();
+  });
 }
 
 // -- Helper: mapea servicio de Supabase al formato ServicioLocalSTS --
