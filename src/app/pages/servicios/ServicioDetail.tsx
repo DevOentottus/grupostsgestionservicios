@@ -22,12 +22,18 @@ import {
   ArrowLeft, CheckCircle2, Clock, MessageSquare,
   Send, AlertTriangle, Plus, X, ChevronRight,
   Pencil, MessageCircle, Mic,
-  Save, Camera, Share2, Play, Lock, RotateCcw, ChevronUp, ChevronDown,
+  Save, Camera, Share2, Play, Lock, RotateCcw, ChevronUp, ChevronDown, FileText,
 } from "lucide-react";
 import type { Tarea } from "@shared/index.js";
 
 // -- Public URL (configurable via env) --
 const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL || "https://serviciolocalsts.vercel.app";
+
+function descargarReportePDF(servicioId: number) {
+  const token = sessionStorage.getItem("auth_token");
+  if (!token) return;
+  window.open(`/api/servicios/${servicioId}/reporte-tecnico?token=${encodeURIComponent(token)}`, "_blank");
+}
 
 function compartirWhatsApp(codigo: string, titulo: string) {
   const serviceUrl = `${PUBLIC_URL}/public/servicio/${codigo}`;
@@ -406,6 +412,15 @@ export function ServicioDetailPage() {
                   </>
                 )}
               </div>
+              {/* Botón Reporte Técnico PDF */}
+              <button
+                onClick={() => servicio && descargarReportePDF(servicio.id)}
+                className="text-xs font-medium text-gray-600 hover:text-blue-700 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5"
+                title="Descargar reporte técnico en PDF"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                PDF
+              </button>
               {/* Gestion action icons: bloqueado→desbloquear, cancelado→reactivar, otherwise→bloquear/cancelar */}
               {esGestion && (servicio.estado === "bloqueado" ? (
                 <button onClick={irAEnProgreso} className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition" title="Desbloquear">

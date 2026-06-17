@@ -240,6 +240,7 @@ export function NuevoServicioPage() {
   const validarPaso = (step: number): boolean => {
     const errs: Record<string, string> = {};
     if (step === 1 && !guiarEntrada) {
+      if (!form.cliente_dni.trim()) errs.cliente_dni = "Requerido";
       if (!form.cliente_nombres.trim()) errs.cliente_nombres = "Requerido";
       if (!form.cliente_telefono.trim()) errs.cliente_telefono = "Requerido";
     }
@@ -250,6 +251,8 @@ export function NuevoServicioPage() {
     }
     if (step === 3 || (step === 1 && guiarEntrada)) {
       if (!form.titulo.trim()) errs.titulo = "Requerido";
+      if (!isColaborador && !form.colaborador_id) errs.colaborador_id = "Requerido";
+      if (guiarEntrada && !form.cliente_dni.trim()) errs.cliente_dni = "Requerido";
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -276,7 +279,7 @@ export function NuevoServicioPage() {
         ? (currentUser?.id ?? null)
         : (form.colaborador_id ? Number(form.colaborador_id) : null),
       id_plantilla_inicial: form.id_plantilla_inicial ? Number(form.id_plantilla_inicial) : null,
-      cliente_dni: form.cliente_dni.trim() || null,
+      cliente_dni: form.cliente_dni.trim(),
       cliente_apellido_paterno: form.cliente_apellido_paterno.trim() || null,
       cliente_apellido_materno: form.cliente_apellido_materno.trim() || null,
       cliente_nombres: form.cliente_nombres.trim() || null,
@@ -428,6 +431,8 @@ export function NuevoServicioPage() {
                 value={form.cliente_dni}
                 onChange={(v) => set("cliente_dni", v.replace(/\D/g, ""))}
                 placeholder="12345678"
+                required
+                error={errors.cliente_dni}
               />
               <InputField
                 label="Teléfono"
@@ -557,6 +562,8 @@ export function NuevoServicioPage() {
                     value={form.cliente_dni}
                     onChange={(v) => set("cliente_dni", v.replace(/\D/g, ""))}
                     placeholder="12345678"
+                    required
+                    error={errors.cliente_dni}
                   />
                 </div>
               )}
@@ -592,8 +599,12 @@ export function NuevoServicioPage() {
                       value: String(t.id),
                       label: `${t.nombres} ${t.apellidos || ""}`.trim(),
                     }))}
-                    placeholder="Sin asignar"
+                    placeholder="Seleccionar técnico..."
+                    required
                   />
+                  {errors.colaborador_id && (
+                    <p className="text-xs text-red-500 mt-1">{errors.colaborador_id}</p>
+                  )}
                 </div>
               )}
 
