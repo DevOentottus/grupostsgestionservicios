@@ -238,6 +238,12 @@ export function NuevoServicioPage() {
     const errs: Record<string, string> = {};
     if (step === 1 && !guiarEntrada) {
       if (!form.cliente_nombres.trim()) errs.cliente_nombres = "Requerido";
+      if (!form.cliente_telefono.trim()) errs.cliente_telefono = "Requerido";
+    }
+    if (step === 2 && !guiarEntrada) {
+      if (!form.descripcion_equipo.trim()) errs.descripcion_equipo = "Requerido";
+      if (!form.serie_equipo.trim()) errs.serie_equipo = "Requerido";
+      if (!form.descripcion_accesorio.trim()) errs.descripcion_accesorio = "Requerido";
     }
     if (step === 3 || (step === 1 && guiarEntrada)) {
       if (!form.titulo.trim()) errs.titulo = "Requerido";
@@ -415,14 +421,16 @@ export function NuevoServicioPage() {
               <InputField
                 label="DNI"
                 value={form.cliente_dni}
-                onChange={(v) => set("cliente_dni", v)}
+                onChange={(v) => set("cliente_dni", v.replace(/\D/g, ""))}
                 placeholder="12345678"
               />
               <InputField
                 label="Teléfono"
                 value={form.cliente_telefono}
-                onChange={(v) => set("cliente_telefono", v)}
-                placeholder="+51 999 888 777"
+                onChange={(v) => set("cliente_telefono", v.replace(/\D/g, ""))}
+                placeholder="999888777"
+                required
+                error={errors.cliente_telefono}
               />
               <InputField
                 label="Apellido Paterno"
@@ -464,6 +472,8 @@ export function NuevoServicioPage() {
                     value={form.descripcion_equipo}
                     onChange={(v) => set("descripcion_equipo", v)}
                     placeholder="Ej: Laptop HP Pavilion, Router TP-Link..."
+                    required
+                    error={errors.descripcion_equipo}
                   />
                 </div>
                 <InputField
@@ -471,6 +481,8 @@ export function NuevoServicioPage() {
                   value={form.serie_equipo}
                   onChange={(v) => set("serie_equipo", v)}
                   placeholder="SN-12345-ABC"
+                  required
+                  error={errors.serie_equipo}
                 />
                 <div className="sm:col-span-3">
                   <InputField
@@ -494,6 +506,8 @@ export function NuevoServicioPage() {
                   value={form.descripcion_accesorio}
                   onChange={(v) => set("descripcion_accesorio", v)}
                   placeholder="Ej: Cargador, mouse, cable HDMI..."
+                  required
+                  error={errors.descripcion_accesorio}
                 />
                 <InputField
                   label="Detalles"
@@ -536,7 +550,7 @@ export function NuevoServicioPage() {
                   <InputField
                     label="DNI Cliente"
                     value={form.cliente_dni}
-                    onChange={(v) => set("cliente_dni", v)}
+                    onChange={(v) => set("cliente_dni", v.replace(/\D/g, ""))}
                     placeholder="12345678"
                   />
                 </div>

@@ -64,7 +64,7 @@ export function SeguimientoClientePage() {
               id="dni"
               type="text"
               value={dni}
-              onChange={(e) => setDni(e.target.value)}
+              onChange={(e) => setDni(e.target.value.replace(/\D/g, ""))}
               placeholder="Ej: 12345678"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg text-center font-mono
                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent

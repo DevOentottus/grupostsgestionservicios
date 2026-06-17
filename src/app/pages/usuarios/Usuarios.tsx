@@ -393,7 +393,7 @@ export function UsuariosPage() {
                     type="text"
                     placeholder="Nro. de documento"
                     value={form.dni}
-                    onChange={(e) => setForm((p) => ({ ...p, dni: e.target.value }))}
+                    onChange={(e) => setForm((p) => ({ ...p, dni: e.target.value.replace(/\D/g, "") }))}
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
                   />
                 </div>
@@ -403,7 +403,7 @@ export function UsuariosPage() {
                     type="text"
                     placeholder="Nro. de teléfono"
                     value={form.telefono}
-                    onChange={(e) => setForm((p) => ({ ...p, telefono: e.target.value }))}
+                    onChange={(e) => setForm((p) => ({ ...p, telefono: e.target.value.replace(/\D/g, "") }))}
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
                   />
                 </div>
