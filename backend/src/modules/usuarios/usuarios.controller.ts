@@ -118,23 +118,30 @@ export async function usuariosController(app: FastifyInstance) {
 
       if (emailExist?.length) throw new ValidationError("El email ya está registrado");
 
-      // Auto-generar username si no se proporciona
-      let username = input.username;
-      if (!username) {
-        const { data: allUsers } = await supabase
-          .from("usuarios")
-          .select("usuario_username");
-        const existingUsernames = (allUsers || []).map((u) => u.usuario_username);
-        username = generarUsername(
-          input.nombres,
-          input.apellidos || input.nombres,
-          existingUsernames
-        );
+      // Obtener apellido paterno y materno
+      let apellidoPaterno = input.apellido_paterno || "";
+      let apellidoMaterno = input.apellido_materno || null;
+
+      // Compatibilidad: si mandan apellidos en un solo string, dividirlo
+      if (!apellidoPaterno && input.apellidos) {
+        const parts = splitApellidos(input.apellidos);
+        apellidoPaterno = parts.apellido_paterno;
+        apellidoMaterno = parts.apellido_materno;
       }
+
+      // Auto-generar username SIEMPRE desde nombre + apellido paterno
+      const { data: allUsers } = await supabase
+        .from("usuarios")
+        .select("usuario_username");
+      const existingUsernames = (allUsers || []).map((u) => u.usuario_username);
+      const username = generarUsername(
+        input.nombres,
+        apellidoPaterno || input.nombres,
+        existingUsernames
+      );
 
       const hash = bcrypt.hashSync(input.password, 10);
       const now = new Date();
-      const apellidos = splitApellidos(input.apellidos || input.nombres);
 
       const { data: newUsers, error } = await supabase
         .from("usuarios")
@@ -142,8 +149,8 @@ export async function usuariosController(app: FastifyInstance) {
           usuario_username: username,
           usuario_contrasena: hash,
           usuario_nombres: input.nombres,
-          usuario_apellido_paterno: apellidos.apellido_paterno,
-          usuario_apellido_materno: apellidos.apellido_materno,
+          usuario_apellido_paterno: apellidoPaterno,
+          usuario_apellido_materno: apellidoMaterno,
           usuario_dni: input.dni || null,
           usuario_telefono: input.telefono || null,
           usuario_correo: input.email,
@@ -214,7 +221,10 @@ export async function usuariosController(app: FastifyInstance) {
 
       const updateData: Record<string, unknown> = {};
       if (input.nombres !== undefined) updateData.usuario_nombres = input.nombres;
-      if (input.apellidos !== undefined) {
+      if (input.apellido_paterno !== undefined) updateData.usuario_apellido_paterno = input.apellido_paterno;
+      if (input.apellido_materno !== undefined) updateData.usuario_apellido_materno = input.apellido_materno;
+      // Compatibilidad: apellidos como string único
+      if (input.apellidos !== undefined && !input.apellido_paterno) {
         const a = splitApellidos(input.apellidos);
         updateData.usuario_apellido_paterno = a.apellido_paterno;
         updateData.usuario_apellido_materno = a.apellido_materno;
@@ -223,7 +233,6 @@ export async function usuariosController(app: FastifyInstance) {
       if (input.telefono !== undefined) updateData.usuario_telefono = input.telefono;
       if (input.email !== undefined) updateData.usuario_correo = input.email;
       if (input.rol !== undefined) updateData.usuario_rol = input.rol;
-      if (input.username !== undefined) updateData.usuario_username = input.username;
       if (input.password) {
         updateData.usuario_contrasena = await bcrypt.hash(input.password, 10);
       }

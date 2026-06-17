@@ -27,7 +27,8 @@ interface UsuarioForm {
   username: string;
   password: string;
   nombres: string;
-  apellidos: string;
+  apellido_paterno: string;
+  apellido_materno: string;
   dni: string;
   telefono: string;
   email: string;
@@ -35,11 +36,23 @@ interface UsuarioForm {
   area_ids: number[];
 }
 
+function generarUsernamePreview(nombres: string, apellidoPaterno: string): string {
+  const normalize = (s: string) =>
+    s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/ñ/g, "n").replace(/Ñ/g, "N");
+  const clean = (s: string) =>
+    normalize(s).toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
+  const pNombre = clean(nombres).split(/\s+/)[0] || "";
+  const pApellido = clean(apellidoPaterno).split(/\s+/)[0] || "";
+  if (!pNombre || !pApellido) return "";
+  return `${pNombre}.${pApellido}`;
+}
+
 const emptyForm: UsuarioForm = {
   username: "",
   password: "",
   nombres: "",
-  apellidos: "",
+  apellido_paterno: "",
+  apellido_materno: "",
   dni: "",
   telefono: "",
   email: "",
@@ -78,11 +91,13 @@ export function UsuariosPage() {
 
   const openEdit = (u: Usuario) => {
     setEditingUser(u);
+    const apellidos = (u.apellidos || "").split(" ");
     setForm({
       username: u.username,
       password: "",
       nombres: u.nombres,
-      apellidos: u.apellidos || "",
+      apellido_paterno: apellidos[0] || "",
+      apellido_materno: apellidos.slice(1).join(" ") || "",
       dni: u.dni || "",
       telefono: u.telefono || "",
       email: u.email,
@@ -96,13 +111,13 @@ export function UsuariosPage() {
     if (!form.nombres || !form.email) return;
     const payload: Record<string, unknown> = {
       nombres: form.nombres,
-      apellidos: form.apellidos || undefined,
+      apellido_paterno: form.apellido_paterno || undefined,
+      apellido_materno: form.apellido_materno || undefined,
       dni: form.dni || undefined,
       telefono: form.telefono || undefined,
       email: form.email,
       rol: form.rol,
     };
-    if (form.username) payload.username = form.username;
     if (form.password) payload.password = form.password;
     if ((form.rol === "encargado" || form.rol === "colaborador") && form.area_ids.length > 0) {
       payload.area_ids = form.area_ids;
@@ -313,14 +328,13 @@ export function UsuariosPage() {
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-gray-600 font-semibold mb-1">Username *</label>
+                  <label className="block text-xs text-gray-600 font-semibold mb-1">Username</label>
                   <input
                     type="text"
-                    placeholder="Ej: jgarcia01"
-                    value={form.username}
-                    onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
-                    required
+                    placeholder="Se genera automáticamente"
+                    value={form.username || generarUsernamePreview(form.nombres, form.apellido_paterno)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none bg-gray-100 text-gray-500"
+                    disabled
                   />
                 </div>
                 <div>
@@ -348,12 +362,23 @@ export function UsuariosPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-600 font-semibold mb-1">Apellidos</label>
+                  <label className="block text-xs text-gray-600 font-semibold mb-1">Apellido Paterno *</label>
                   <input
                     type="text"
-                    placeholder="Apellido paterno y materno"
-                    value={form.apellidos}
-                    onChange={(e) => setForm((p) => ({ ...p, apellidos: e.target.value }))}
+                    placeholder="Apellido paterno"
+                    value={form.apellido_paterno}
+                    onChange={(e) => setForm((p) => ({ ...p, apellido_paterno: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 font-semibold mb-1">Apellido Materno</label>
+                  <input
+                    type="text"
+                    placeholder="Apellido materno"
+                    value={form.apellido_materno}
+                    onChange={(e) => setForm((p) => ({ ...p, apellido_materno: e.target.value }))}
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
                   />
                 </div>
@@ -397,7 +422,7 @@ export function UsuariosPage() {
                   value={form.rol}
                   onChange={(e) => setForm((p) => {
                     const newRol = e.target.value;
-                    if (newRol !== "encargado" && newRol !== "colaborador") {
+                    if (newRol !== "colaborador") {
                       return { ...p, rol: newRol, area_ids: [] };
                     }
                     return { ...p, rol: newRol };
@@ -405,7 +430,6 @@ export function UsuariosPage() {
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
                 >
                   <option value="colaborador">Colaborador</option>
-                  <option value="encargado">Encargado</option>
                   <option value="admin">Administrador</option>
                   <option value="sistema">Sistema</option>
                 </select>

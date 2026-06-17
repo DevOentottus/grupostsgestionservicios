@@ -233,8 +233,7 @@ export function AreasPage() {
                         <MapPin className="w-6 h-6 text-yellow-400" />
                       </div>
                       <div>
-                        <h2 className="text-gray-900 font-bold">├ürea: {selectedDetail.nombre}</h2>
-                        <p className="text-gray-500 text-sm">ID: {selectedDetail.id}</p>
+                        <h2 className="text-gray-900 font-bold">{selectedDetail.nombre}</h2>
                       </div>
                     </div>
                     {user?.rol !== "encargado" && (
