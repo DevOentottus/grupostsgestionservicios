@@ -840,7 +840,7 @@ async function reporteTecnicoPDF(request: any, reply: any) {
   // 1. Obtener servicio
   const { data: servicios, error: errSvc } = await supabase
     .from("servicios")
-    .select("*, usuario_colaborador:usuarios!tecnico_principal_id(usuario_nombres, usuario_apellido_paterno)")
+    .select("*, areas!servicios_area_id_fkey(area_nombre), usuario_colaborador:usuarios!tecnico_principal_id(usuario_nombres, usuario_apellido_paterno)")
     .eq("servicio_id", servicioId)
     .limit(1);
 
@@ -921,7 +921,7 @@ async function reporteTecnicoPDF(request: any, reply: any) {
         [`Cliente:`, [s.cliente_nombres, s.cliente_apellido_paterno, s.cliente_apellido_materno].filter(Boolean).join(" ") || "—"],
         [`DNI:`, s.cliente_dni || "—"],
         [`Teléfono:`, s.cliente_telefono || "—"],
-        [`Área:`, s.area_id ? `Área #${s.area_id}` : "—"],
+        [`Área:`, s.areas?.area_nombre || "—"],
         [`Técnico:`, tecnicoNombre],
         [`Estado:`, s.servicio_estado || "—"],
         [`Creado:`, [s.servicio_fecha_creacion, s.servicio_hora_creacion].filter(Boolean).join(" ")],
