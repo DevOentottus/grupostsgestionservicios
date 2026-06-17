@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { supabase } from "@/lib/supabase.js";
+import { supabase, type TablesUpdate } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError, ConflictError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
@@ -82,16 +82,11 @@ export async function areasController(app: FastifyInstance) {
       let areaIds: number[] | null = null;
 
       if (user.rol === "encargado" || user.rol === "colaborador") {
-        const table = user.rol === "encargado" ? "areas" : "areacolaboradores";
-        const field = user.rol === "encargado" ? "area_encargado_id" : "colaborador_id";
-        const selectField = user.rol === "encargado" ? "area_id" : "area_id";
+        const { data: rows } = user.rol === "encargado"
+          ? await supabase.from("areas").select("area_id").eq("area_encargado_id", user.user_id)
+          : await supabase.from("areacolaboradores").select("area_id").eq("colaborador_id", user.user_id);
 
-        const { data: rows } = await supabase
-          .from(table)
-          .select(selectField)
-          .eq(field, user.user_id);
-
-        areaIds = ((rows || []) as any[]).map((r: any) => r.area_id);
+        areaIds = (rows || []).map((r) => r.area_id);
         if (areaIds.length === 0) return { data: [] };
       }
 
@@ -105,7 +100,7 @@ export async function areasController(app: FastifyInstance) {
       if (!areasData?.length) return { data: [] };
 
       // Deduplicar por nombre de área (conservar el área más antigua)
-      const seen = new Map<string, any>();
+      const seen = new Map<string, (typeof areasData)[number]>();
       for (const a of areasData) {
         if (!seen.has(a.area_nombre)) {
           seen.set(a.area_nombre, a);
@@ -114,18 +109,16 @@ export async function areasController(app: FastifyInstance) {
       const uniqueAreas = Array.from(seen.values());
 
       // 3. Obtener encargados y counts
-      const encargadoIds = [...new Set(uniqueAreas.map((a: any) => a.area_encargado_id).filter(Boolean))];
+      const encargadoIds = [...new Set(uniqueAreas.map((a) => a.area_encargado_id).filter(Boolean))];
 
-      const [encResult, countResult] = await Promise.all([
-        encargadoIds.length
-          ? supabase.from("usuarios").select("usuario_id, usuario_nombres, usuario_correo, usuario_username").in("usuario_id", encargadoIds)
-          : { data: [] },
-        supabase.from("areacolaboradores").select("area_id"),
-      ]);
+      const encResult = encargadoIds.length > 0
+        ? await supabase.from("usuarios").select("usuario_id, usuario_nombres, usuario_correo, usuario_username").in("usuario_id", encargadoIds)
+        : null;
+      const countResult = await supabase.from("areacolaboradores").select("area_id");
 
-      const encMap = new Map((encResult.data || []).map((u: any) => [u.usuario_id, u]));
+      const encMap = new Map((encResult?.data || []).map((u) => [u.usuario_id, u]));
       const cMap = new Map<number, number>();
-      for (const c of (countResult.data || []) as any[]) {
+      for (const c of countResult.data || []) {
         cMap.set(c.area_id, (cMap.get(c.area_id) || 0) + 1);
       }
 
@@ -263,7 +256,7 @@ export async function areasController(app: FastifyInstance) {
 
       const oldEncargadoId = existing[0].area_encargado_id ?? null;
 
-      const updateData: Record<string, unknown> = {};
+      const updateData: TablesUpdate<"areas"> = {};
       if (input.nombre !== undefined) updateData.area_nombre = input.nombre;
       if (input.encargado_id !== undefined) updateData.area_encargado_id = input.encargado_id;
 

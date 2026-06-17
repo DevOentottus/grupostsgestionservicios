@@ -2,7 +2,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { supabase } from "@/lib/supabase.js";
 
-// ─── Date/time helpers ────────────────────────────────────────────────
+// --- Date/time helpers ------------------------------------------------
 
 function todayDate(): string {
   return new Date().toISOString().split("T")[0];
@@ -16,7 +16,7 @@ function daysAgo(n: number): string {
   return d.toISOString().split("T")[0];
 }
 
-// ─── Safe insert (handles duplicates gracefully) ──────────────────────
+// --- Safe insert (handles duplicates gracefully) ----------------------
 
 async function insertSafe(
   table: string,
@@ -26,7 +26,7 @@ async function insertSafe(
   const { data, error } = await supabase.from(table).insert(values).select();
   if (error) {
     if (error.code === "23505") {
-      console.log(`  ⚠️  ${label} — ya existe, ignorado`);
+      console.log(`  ⚠️  ${label} -- ya existe, ignorado`);
       return null;
     }
     console.error(`  ❌ Error al insertar ${label}:`, error.message);
@@ -35,7 +35,7 @@ async function insertSafe(
   return data?.[0] ?? null;
 }
 
-// ─── Main seed ─────────────────────────────────────────────────────────
+// --- Main seed ---------------------------------------------------------
 
 async function seed() {
   console.log("🌱 Iniciando seed de ServicioLocalSTS…\n");
@@ -43,7 +43,7 @@ async function seed() {
   const td = todayDate();
   const tt = todayTime();
 
-  // ── 1. Hash passwords ──────────────────────────────────────────────
+  // -- 1. Hash passwords ----------------------------------------------
   console.log("🔑 Generando hashes de contraseñas…");
   const [adminHash, userHash] = await Promise.all([
     bcrypt.hash("admin123", 10),
@@ -51,7 +51,7 @@ async function seed() {
   ]);
   console.log("  ✅ Hashes generados\n");
 
-  // ── 2. Usuarios ────────────────────────────────────────────────────
+  // -- 2. Usuarios ----------------------------------------------------
   console.log("👤 Insertando usuarios…");
 
   const usersData = [
@@ -206,7 +206,7 @@ async function seed() {
         console.log(`  ✅ Usuario creado: ${u.username} / ${pwd}`);
         return;
       }
-      // Duplicate — fetch existing record so we have the ID
+      // Duplicate -- fetch existing record so we have the ID
       const { data } = await supabase
         .from("usuarios")
         .select()
@@ -222,7 +222,7 @@ async function seed() {
   await Promise.all(userPromises);
   console.log(`  📊 Total usuarios registrados: ${userMap.size}\n`);
 
-  // ── 3. Áreas ────────────────────────────────────────────────────────
+  // -- 3. Áreas --------------------------------------------------------
   console.log("🏢 Insertando áreas…");
 
   const areasData = [
@@ -255,7 +255,7 @@ async function seed() {
   await Promise.all(areaPromises);
   console.log(`  📊 Total áreas registradas: ${areaMap.size}\n`);
 
-  // ── 4. Area-Colaboradores ───────────────────────────────────────────
+  // -- 4. Area-Colaboradores -------------------------------------------
   console.log("🔗 Asignando colaboradores a áreas…");
 
   const areaColabData = [
@@ -292,7 +292,7 @@ async function seed() {
   await Promise.all(areaColabPromises);
   console.log(`  📊 Asignaciones a áreas completadas\n`);
 
-  // ── 5. Clientes ─────────────────────────────────────────────────────
+  // -- 5. Clientes -----------------------------------------------------
   console.log("👥 Insertando clientes…");
 
   const clientesData = [
@@ -342,7 +342,7 @@ async function seed() {
         console.log(`  ✅ Cliente: ${key}`);
         return;
       }
-      // Duplicate — fetch existing
+      // Duplicate -- fetch existing
       const { data } = await supabase
         .from("clientes")
         .select()
@@ -358,7 +358,7 @@ async function seed() {
   await Promise.all(clientePromises);
   console.log(`  📊 Total clientes registrados: ${clienteMap.size}\n`);
 
-  // ── 6. Servicios ────────────────────────────────────────────────────
+  // -- 6. Servicios ----------------------------------------------------
   console.log("📋 Insertando servicios…");
 
   const areaComputo = areaMap.get("Computadoras e impresoras")!;
@@ -467,10 +467,10 @@ async function seed() {
     return insertSafe("servicios", base, `servicio ${s.codigo}`).then(async (row) => {
       if (row) {
         servicioMap.set(s.codigo, row);
-        console.log(`  ✅ Servicio creado: ${s.codigo} — ${s.nombre}`);
+        console.log(`  ✅ Servicio creado: ${s.codigo} -- ${s.nombre}`);
         return;
       }
-      // Duplicate — fetch existing
+      // Duplicate -- fetch existing
       const { data } = await supabase
         .from("servicios")
         .select()
@@ -486,14 +486,14 @@ async function seed() {
   await Promise.all(servicioPromises);
   console.log(`  📊 Total servicios registrados: ${servicioMap.size}\n`);
 
-  // ── 7. Tareas ───────────────────────────────────────────────────────
+  // -- 7. Tareas -------------------------------------------------------
   console.log("✅ Insertando tareas…");
 
   const uid = (username: string): number | null =>
     userMap.get(username)?.usuario_id ?? null;
 
   const tareasData = [
-    // SRV-0001 — en_progreso
+    // SRV-0001 -- en_progreso
     {
       servicio: "SRV-0001",
       titulo: "Verificar cableado existente",
@@ -515,7 +515,7 @@ async function seed() {
       orden: 3,
       estado: "pendiente",
     },
-    // SRV-0002 — pendiente
+    // SRV-0002 -- pendiente
     {
       servicio: "SRV-0002",
       titulo: "Backup de configuración",
@@ -528,7 +528,7 @@ async function seed() {
       orden: 2,
       estado: "pendiente",
     },
-    // SRV-0003 — pendiente
+    // SRV-0003 -- pendiente
     {
       servicio: "SRV-0003",
       titulo: "Análisis de requisitos",
@@ -553,7 +553,7 @@ async function seed() {
       orden: 4,
       estado: "pendiente",
     },
-    // SRV-0004 — bloqueado
+    // SRV-0004 -- bloqueado
     {
       servicio: "SRV-0004",
       titulo: "Diagnóstico inicial",
@@ -569,7 +569,7 @@ async function seed() {
       orden: 2,
       estado: "pendiente",
     },
-    // SRV-0005 — completado
+    // SRV-0005 -- completado
     {
       servicio: "SRV-0005",
       titulo: "Revisión del sitio",
@@ -597,7 +597,7 @@ async function seed() {
       fecha_completado: daysAgo(1),
       hora_completado: "14:00:00",
     },
-    // SRV-0006 — pendiente
+    // SRV-0006 -- pendiente
     {
       servicio: "SRV-0006",
       titulo: "Inventario de equipos",
@@ -612,7 +612,7 @@ async function seed() {
     const servicioRow = servicioMap.get(t.servicio);
     if (!servicioRow) {
       console.log(
-        `  ⚠️  Saltando tarea "${t.titulo}" — servicio ${t.servicio} no encontrado`,
+        `  ⚠️  Saltando tarea "${t.titulo}" -- servicio ${t.servicio} no encontrado`,
       );
       continue;
     }
@@ -642,7 +642,7 @@ async function seed() {
 
   console.log(`  📊 Total tareas registradas: ${allTareas.length}\n`);
 
-  // ── 8. Servicio-Colaboradores ───────────────────────────────────────
+  // -- 8. Servicio-Colaboradores ---------------------------------------
   console.log("👥 Asignando colaboradores a servicios…");
 
   const servColabData = [
@@ -683,7 +683,7 @@ async function seed() {
   await Promise.all(servColabPromises);
   console.log(`  📊 Asignaciones servicio-colaborador completadas\n`);
 
-  // ── 9. Plantillas y Plantilla-Tareas ────────────────────────────────
+  // -- 9. Plantillas y Plantilla-Tareas --------------------------------
   console.log("📄 Insertando plantillas…");
 
   const plantillasData = [
@@ -744,7 +744,7 @@ async function seed() {
 
   console.log(`  📊 Plantillas completadas\n`);
 
-  // ── 10. Comentarios ──────────────────────────────────────────────────
+  // -- 10. Comentarios --------------------------------------------------
   console.log("💬 Insertando comentarios en servicios…");
 
   const comentariosData = [
@@ -795,7 +795,7 @@ async function seed() {
   await Promise.all(comentPromises);
   console.log(`  📊 Comentarios insertados\n`);
 
-  // ── 11. Calificaciones ──────────────────────────────────────────────
+  // -- 11. Calificaciones ----------------------------------------------
   console.log("⭐ Insertando calificaciones…");
 
   const srv5 = servicioMap.get("SRV-0005");
@@ -822,7 +822,7 @@ async function seed() {
 
   console.log(`  📊 Calificaciones insertadas\n`);
 
-  // ─── Resumen final ──────────────────────────────────────────────────
+  // --- Resumen final --------------------------------------------------
   console.log("═══════════════════════════════════");
   console.log("🎉 Seed completado exitosamente");
   console.log("═══════════════════════════════════");

@@ -92,7 +92,7 @@ export function AreaServiciosPage() {
         <h2 className="text-2xl font-bold text-slate-800">{area.nombre}</h2>
         <p className="text-sm text-slate-500">
           {data.servicios.length} servicios · Tiempo promedio:{" "}
-          {tiempo_promedio > 0 ? `${Math.round(tiempo_promedio)} min` : "—"}
+          {tiempo_promedio > 0 ? `${Math.round(tiempo_promedio)} min` : "--"}
         </p>
       </div>
 

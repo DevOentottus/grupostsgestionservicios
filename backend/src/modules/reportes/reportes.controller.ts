@@ -7,7 +7,7 @@ import { z } from "zod";
 export async function reportesController(app: FastifyInstance) {
   // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
 
-  // ── GET /api/reportes/colaborador ──
+  // -- GET /api/reportes/colaborador --
   app.get(
     "/api/reportes/colaborador",
     { preHandler: [requireRoles("admin", "encargado")] },
@@ -113,7 +113,7 @@ export async function reportesController(app: FastifyInstance) {
           const id = t.tarea_completado_por;
           if (!id) continue;
           if (!grouped[id]) {
-            const u = (t as any).usuarios || {};
+            const u = t.usuarios || {};
             grouped[id] = {
               usuario_id: id,
               nombres: u.usuario_nombres || null,
@@ -143,7 +143,7 @@ export async function reportesController(app: FastifyInstance) {
     }
   );
 
-  // ── GET /api/reportes/area ──
+  // -- GET /api/reportes/area --
   app.get(
     "/api/reportes/area",
     { preHandler: [requireRoles("admin", "encargado")] },
@@ -181,7 +181,7 @@ export async function reportesController(app: FastifyInstance) {
         // Contar servicios por estado en el área
         let serviciosQuery = supabase
           .from("servicios")
-          .select("servicio_estado")
+          .select("servicio_estado, servicio_fecha_creacion")
           .eq("area_id", effectiveAreaId);
 
         if (fechaInicio) {
@@ -193,19 +193,19 @@ export async function reportesController(app: FastifyInstance) {
 
         const { data: servicios } = await serviciosQuery;
         const totalServicios = servicios?.length || 0;
-        const completados = servicios?.filter((s: any) => s.servicio_estado === "completado").length || 0;
+        const completados = servicios?.filter((s) => s.servicio_estado === "completado").length || 0;
 
         // Tendencias mensuales (agrupar en memoria)
         const tendenciasMap: Record<string, { creados: number; completados: number }> = {};
         for (const s of servicios || []) {
-          const fecha = (s as any).servicio_fecha_creacion;
+          const fecha = s.servicio_fecha_creacion;
           if (!fecha) continue;
           const mes = fecha.substring(0, 7); // YYYY-MM
           if (!tendenciasMap[mes]) {
             tendenciasMap[mes] = { creados: 0, completados: 0 };
           }
           tendenciasMap[mes].creados++;
-          if ((s as any).servicio_estado === "completado") {
+          if (s.servicio_estado === "completado") {
             tendenciasMap[mes].completados++;
           }
         }
@@ -253,8 +253,8 @@ export async function reportesController(app: FastifyInstance) {
         // Agrupar en memoria
         const grouped: Record<number, any> = {};
         for (const r of rows || []) {
-          const a = (r as any).areas || {};
-          const id = (r as any).area_id;
+          const a = r.areas || {};
+          const id = r.area_id;
           if (!id) continue;
           if (!grouped[id]) {
             grouped[id] = {
@@ -265,7 +265,7 @@ export async function reportesController(app: FastifyInstance) {
             };
           }
           grouped[id].total++;
-          if ((r as any).servicio_estado === "completado") {
+          if (r.servicio_estado === "completado") {
             grouped[id].completados++;
           }
         }
@@ -288,7 +288,7 @@ export async function reportesController(app: FastifyInstance) {
     }
   );
 
-  // ── GET /api/reportes/exportar/:tipo/:formato ──
+  // -- GET /api/reportes/exportar/:tipo/:formato --
   app.get(
     "/api/reportes/exportar/:tipo/:formato",
     { preHandler: [requireRoles("admin", "encargado")] },
@@ -345,7 +345,7 @@ export async function reportesController(app: FastifyInstance) {
         for (const t of tareasData || []) {
           const id = t.tarea_completado_por;
           if (!id) continue;
-          const u = (t as any).usuarios || {};
+          const u = t.usuarios || {};
           if (!grouped[id]) {
             grouped[id] = {
               nombre: `${u.usuario_nombres || ""} ${u.usuario_apellido_paterno || ""}`.trim(),
@@ -358,8 +358,8 @@ export async function reportesController(app: FastifyInstance) {
         rows = Object.entries(grouped).map(([id, data]) => [
           data.nombre || `Usuario #${id}`,
           String(data.count),
-          "—",
-          "—",
+          "--",
+          "--",
         ]);
       } else {
         title = "Reporte por Área";
@@ -392,12 +392,12 @@ export async function reportesController(app: FastifyInstance) {
 
         const grouped: Record<string, { total: number; completados: number }> = {};
         for (const s of svcs || []) {
-          const nombre = ((s as any).areas?.area_nombre) || "Sin área";
+          const nombre = (s.areas?.area_nombre) || "Sin área";
           if (!grouped[nombre]) {
             grouped[nombre] = { total: 0, completados: 0 };
           }
           grouped[nombre].total++;
-          if ((s as any).servicio_estado === "completado") {
+          if (s.servicio_estado === "completado") {
             grouped[nombre].completados++;
           }
         }

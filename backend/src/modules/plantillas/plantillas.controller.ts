@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { supabase } from "@/lib/supabase.js";
+import { supabase, type TablesUpdate } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
@@ -39,7 +39,7 @@ const actualizarPlantillaSchema = z.object({
 export async function plantillasController(app: FastifyInstance) {
   // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
 
-  // ── GET /api/plantillas ──
+  // -- GET /api/plantillas --
   app.get(
     "/api/plantillas",
     { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
@@ -74,7 +74,7 @@ export async function plantillasController(app: FastifyInstance) {
     }
   );
 
-  // ── GET /api/plantillas/:id ──
+  // -- GET /api/plantillas/:id --
   app.get(
     "/api/plantillas/:id",
     { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
@@ -119,7 +119,7 @@ export async function plantillasController(app: FastifyInstance) {
     }
   );
 
-  // ── POST /api/plantillas ──
+  // -- POST /api/plantillas --
   app.post(
     "/api/plantillas",
     { preHandler: [requireRoles("admin", "encargado")] },
@@ -184,7 +184,7 @@ export async function plantillasController(app: FastifyInstance) {
     }
   );
 
-  // ── PUT /api/plantillas/:id ──
+  // -- PUT /api/plantillas/:id --
   app.put(
     "/api/plantillas/:id",
     { preHandler: [requireRoles("admin", "encargado")] },
@@ -202,7 +202,7 @@ export async function plantillasController(app: FastifyInstance) {
 
       if (!existing?.length) throw new NotFoundError("Plantilla no encontrada");
 
-      const updateData: Record<string, unknown> = {};
+      const updateData: TablesUpdate<"plantillas"> = {};
       if (input.nombre !== undefined) updateData.plantilla_nombre = input.nombre;
       if (input.descripcion !== undefined) updateData.plantilla_descripcion = input.descripcion;
       if (input.area_id !== undefined) updateData.area_id = input.area_id;
@@ -271,7 +271,7 @@ export async function plantillasController(app: FastifyInstance) {
     }
   );
 
-  // ── DELETE /api/plantillas/:id ──
+  // -- DELETE /api/plantillas/:id --
   app.delete(
     "/api/plantillas/:id",
     { preHandler: [requireRoles("admin", "encargado")] },
@@ -301,7 +301,7 @@ export async function plantillasController(app: FastifyInstance) {
     }
   );
 
-  // ── POST /api/plantillas/:id/aplicar/:servicioId ──
+  // -- POST /api/plantillas/:id/aplicar/:servicioId --
   app.post(
     "/api/plantillas/:id/aplicar/:servicioId",
     { preHandler: [requireRoles("admin", "encargado")] },

@@ -8,7 +8,7 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-// ── Refresh token queue ──
+// -- Refresh token queue --
 let isRefreshing = false;
 let pendingQueue: Array<{
   resolve: (token: string) => void;
@@ -92,7 +92,7 @@ export interface ApiResponse<T> {
   data: T;
 }
 
-// ── Auth API ──
+// -- Auth API --
 export const authApi = {
   login: (username: string, password: string) =>
     api.post<ApiResponse<{ token: string; user: any }>>("/auth/login", {
@@ -108,7 +108,7 @@ export const authApi = {
     api.patch("/auth/password", { current_password, new_password }),
 };
 
-// ── Usuarios API ──
+// -- Usuarios API --
 export const usuariosApi = {
   listar: () => api.get("/usuarios"),
   crear: (data: any) => api.post("/usuarios", data),
@@ -118,7 +118,7 @@ export const usuariosApi = {
     api.put(`/usuarios/${id}/password`, { password }),
 };
 
-// ── Áreas API ──
+// -- Áreas API --
 export const areasApi = {
   listar: () => api.get("/areas"),
   obtener: (id: number) => api.get(`/areas/${id}`),
@@ -132,7 +132,7 @@ export const areasApi = {
   listarServicios: (areaId: number) => api.get(`/areas/${areaId}/servicios`),
 };
 
-// ── Servicios API ──
+// -- Servicios API --
 export const serviciosApi = {
   listar: (params?: any) => api.get("/servicios", { params }),
   obtener: (id: number) => api.get(`/servicios/${id}`),
@@ -159,7 +159,7 @@ export const serviciosApi = {
     api.put("/tareas/reordenar", { tareas }),
 };
 
-// ── Plantillas API ──
+// -- Plantillas API --
 export const plantillasApi = {
   listar: () => api.get("/plantillas"),
   obtener: (id: number) => api.get(`/plantillas/${id}`),
@@ -170,8 +170,8 @@ export const plantillasApi = {
     api.post(`/plantillas/${plantillaId}/aplicar/${servicioId}`),
 };
 
-// ── Seguimiento API ──
-// ── Comentarios API ──
+// -- Seguimiento API --
+// -- Comentarios API --
 export const comentariosApi = {
   listar: (servicioId: number) =>
     api.get(`/servicios/${servicioId}/comentarios`),
@@ -180,7 +180,7 @@ export const comentariosApi = {
   eliminar: (id: number) => api.delete(`/comentarios/${id}`),
 };
 
-// ── Auditoria API ──
+// -- Auditoria API --
 export const auditoriaApi = {
   listar: (params?: {
     page?: number;
@@ -208,14 +208,14 @@ export const seguimientoApi = {
   dashboard: (params?: any) => api.get("/dashboard", { params }),
 };
 
-// ── Display API ──
+// -- Display API --
 export const displayApi = {
   tv: () => api.get("/public/display/tv"),
   trabajo: () => api.get("/display/trabajo"),
   salaEspera: (codigo: string) => api.get(`/public/display/sala-espera/${codigo}`),
 };
 
-// ── Reportes API ──
+// -- Reportes API --
 export const reportesApi = {
   colaborador: (params?: {
     fecha_inicio?: string;
@@ -238,7 +238,7 @@ export const reportesApi = {
     }),
 };
 
-// ── Solicitudes API ──
+// -- Solicitudes API --
 export const solicitudesApi = {
   listar: () => api.get("/solicitudes"),
   misSolicitudes: () => api.get("/solicitudes/mis-solicitudes"),
@@ -248,7 +248,7 @@ export const solicitudesApi = {
     api.patch(`/solicitudes/${id}/atender`, data),
 };
 
-// ── Anuncios API ──
+// -- Anuncios API --
 export const anunciosApi = {
   listar: () => api.get("/anuncios"),
   listarTodos: () => api.get("/anuncios/todos"),
@@ -258,12 +258,12 @@ export const anunciosApi = {
   eliminar: (id: number) => api.delete(`/anuncios/${id}`),
 };
 
-// ── Rendimiento API ──
+// -- Rendimiento API --
 export const rendimientoApi = {
   getRendimiento: () => api.get("/admin/rendimiento"),
 };
 
-// ── Dashboard v2 API ──
+// -- Dashboard v2 API --
 export const dashboardApi = {
   getAll: (filters?: {
     fecha_inicio?: string;
@@ -275,7 +275,7 @@ export const dashboardApi = {
   }) => api.get("/dashboard", { params: filters }),
 };
 
-// ── Evidencias API ──
+// -- Evidencias API --
 export const evidenciasApi = {
   upload: (data: {
     servicio_id: number;
@@ -298,7 +298,7 @@ export const evidenciasApi = {
   }) => api.patch(`/tareas/${tareaId}/evidencia-config`, data),
 };
 
-// ── Evidencias Públicas API ──
+// -- Evidencias Públicas API --
 export const evidenciasPublicApi = {
   listarPorCodigo: (codigo: string, dni?: string) =>
     api.get(`/public/servicios/${codigo}/evidencias`, {
@@ -311,7 +311,7 @@ export const evidenciasPublicApi = {
   }) => api.post(`/public/evidencias/${evidenciaId}/comentario`, data),
 };
 
-// ── Manager API ──
+// -- Manager API --
 export const managerApi = {
   miArea: (areaId?: number) =>
     api.get("/manager/mi-area", {

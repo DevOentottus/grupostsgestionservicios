@@ -162,7 +162,7 @@ export function SolicitudesInternasPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    await crear.mutateAsync(createForm as any);
+    await crear.mutateAsync(createForm);
     setShowCreate(false);
     setCreateForm({ tipo: "otro", descripcion: "", prioridad: "media" });
   };

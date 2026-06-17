@@ -62,7 +62,7 @@ export function DisplayTVPage() {
             <span className="text-blue-900 font-bold text-lg">STS</span>
           </div>
           <div>
-            <p className="text-white text-lg font-bold">ServicioLocalSTS — Panel General</p>
+            <p className="text-white text-lg font-bold">ServicioLocalSTS -- Panel General</p>
             <p className="text-blue-300 text-sm">
               {currentTime.toLocaleDateString("es-PE", {
                 weekday: "long",
@@ -113,7 +113,7 @@ export function DisplayTVPage() {
                     </span>
                     {svc.tecnico && (
                       <span className="text-xs text-blue-300 bg-blue-800/50 px-1.5 py-0.5 rounded">
-                        {svc.tecnico.nombres?.split(" ")[0] || "—"}
+                        {svc.tecnico.nombres?.split(" ")[0] || "--"}
                       </span>
                     )}
                   </div>

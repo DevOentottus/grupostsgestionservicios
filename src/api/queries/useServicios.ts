@@ -60,7 +60,7 @@ export function useCambiarEstado() {
   });
 }
 
-// ── Tareas ──
+// -- Tareas --
 
 export function useTareas(servicioId: number) {
   return useQuery({

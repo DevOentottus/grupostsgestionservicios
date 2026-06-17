@@ -1,8 +1,9 @@
 import { supabase } from "@/lib/supabase.js";
+import type { Json } from "@/lib/database.types.js";
 
 /**
  * Inserta un registro de auditoría.
- * NOTA: el primer parámetro `_db` se ignora — se usa `supabase` directamente.
+ * NOTA: el primer parámetro `_db` se ignora -- se usa `supabase` directamente.
  * Se mantiene la firma para no romper las llamadas existentes.
  */
 export async function auditLog(
@@ -11,7 +12,7 @@ export async function auditLog(
   accion: string,
   entidad: string,
   entidad_id: number | null,
-  detalle?: Record<string, unknown> | null
+  detalle?: Json | null
 ) {
   const now = new Date();
   await supabase.from("auditoria").insert({

@@ -8,7 +8,7 @@ import { z } from "zod";
 export async function managerController(app: FastifyInstance) {
   // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
 
-  // ── GET /api/manager/mi-area ──
+  // -- GET /api/manager/mi-area --
   app.get(
     "/api/manager/mi-area",
     { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
@@ -197,7 +197,7 @@ export async function managerController(app: FastifyInstance) {
     }
   );
 
-  // ── GET /api/manager/distribucion ──
+  // -- GET /api/manager/distribucion --
   app.get(
     "/api/manager/distribucion",
     { preHandler: [requireRoles("admin", "encargado")] },
@@ -289,7 +289,7 @@ export async function managerController(app: FastifyInstance) {
     }
   );
 
-  // ── GET /api/manager/desempeno/:usuario_id ──
+  // -- GET /api/manager/desempeno/:usuario_id --
   app.get(
     "/api/manager/desempeno/:usuario_id",
     { preHandler: [requireRoles("admin", "encargado", "sistema")] },
@@ -401,7 +401,7 @@ export async function managerController(app: FastifyInstance) {
     }
   );
 
-  // ── GET /api/manager/clientes ──
+  // -- GET /api/manager/clientes --
   app.get(
     "/api/manager/clientes",
     { preHandler: [requireRoles("admin", "sistema")] },
@@ -417,10 +417,10 @@ export async function managerController(app: FastifyInstance) {
       const { data: servicios } = await supabase
         .from("servicios")
         .select("cliente_id, servicio_id, servicio_codigo, servicio_fecha_creacion")
-        .in("cliente_id", clientes.map((c: any) => c.cliente_id));
+        .in("cliente_id", clientes.map((c) => c.cliente_id));
 
       const serviceMap: Record<number, { total: number; ultimo: { codigo: string; fecha: string } | null }> = {};
-      for (const s of (servicios || []) as any[]) {
+      for (const s of servicios || []) {
         if (!serviceMap[s.cliente_id]) {
           serviceMap[s.cliente_id] = { total: 0, ultimo: null };
         }
@@ -431,7 +431,7 @@ export async function managerController(app: FastifyInstance) {
         }
       }
 
-      const data = (clientes as any[]).map((c) => ({
+      const data = clientes.map((c) => ({
         ...c,
         total_servicios: serviceMap[c.cliente_id]?.total || 0,
         ultimo_servicio: serviceMap[c.cliente_id]?.ultimo || null,

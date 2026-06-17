@@ -21,7 +21,7 @@ import {
   CheckCircle2, Bell, X, AlertCircle, MapPin,
 } from "lucide-react";
 
-// ── Anuncios config ──
+// -- Anuncios config --
 const PRIORIDAD_CONFIG: Record<string, { icon: string; label: string; style: string }> = {
   urgente:     { icon: "🔴", label: "Urgente",     style: "bg-red-100 text-red-700" },
   importante:  { icon: "🟡", label: "Importante",  style: "bg-yellow-100 text-yellow-700" },
@@ -40,7 +40,7 @@ function formatDateShort(dateStr: string) {
   });
 }
 
-// ── Solicitudes config ──
+// -- Solicitudes config --
 const TIPO_ICON: Record<string, string> = {
   apoyo: "🤝", herramienta: "🔧", equipo: "🖥️", otro: "📋",
 };
@@ -57,11 +57,11 @@ const ESTADO_LABEL: Record<string, string> = {
   pendiente: "Pendiente", en_proceso: "En Proceso", resuelto: "Resuelto", rechazado: "Rechazado",
 };
 
-// ── Anuncio create form state ──
+// -- Anuncio create form state --
 interface AnnFormData { titulo: string; contenido: string; prioridad: string; area_alcanze: "general" | number; fecha_expiracion: string; }
 const emptyAnnForm: AnnFormData = { titulo: "", contenido: "", prioridad: "informativo", area_alcanze: "general", fecha_expiracion: "" };
 
-// ── Solicitud create form state ──
+// -- Solicitud create form state --
 interface ReqFormData { tipo: string; descripcion: string; prioridad: string; }
 const emptyReqForm: ReqFormData = { tipo: "otro", descripcion: "", prioridad: "media" };
 
@@ -109,7 +109,7 @@ export function ComunicacionesPage() {
   const solicitudesLoading = solicitudesQuery.isLoading;
   const solicitudesError = solicitudesQuery.isError;
 
-  // ── Handlers ──
+  // -- Handlers --
 
   const handleSaveAnuncio = async () => {
     if (!annForm.titulo || !annForm.contenido) return;
@@ -133,7 +133,7 @@ export function ComunicacionesPage() {
 
   const handleSaveSolicitud = async () => {
     if (!reqForm.descripcion) return;
-    await crearSolicitud.mutateAsync(reqForm as any);
+    await crearSolicitud.mutateAsync(reqForm);
     setShowModal(false);
     setReqForm(emptyReqForm);
   };
@@ -146,7 +146,7 @@ export function ComunicacionesPage() {
     setAtenderForm({ estado: "en_proceso", respuesta: "" });
   };
 
-  const solicitudesTab = solicitudes?.filter((s: Solicitud) => s.tipo !== ("instruccion" as any)) || [];
+  const solicitudesTab = solicitudes?.filter((s: Solicitud) => (s.tipo as string) !== "instruccion") || [];
   const instruccionesTab: Solicitud[] = []; // Instrucciones no son un tipo en STS -- placeholder para futuro uso
 
   const statCards = [

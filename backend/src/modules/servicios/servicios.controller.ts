@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { supabase } from "@/lib/supabase.js";
+import { supabase, type TablesUpdate } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
@@ -38,7 +38,7 @@ export async function serviciosController(app: FastifyInstance) {
   // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
   // autenticación por ruta.
 
-  // ── GET /api/servicios ──
+  // -- GET /api/servicios --
   app.get("/api/servicios", { preHandler: [requireRoles()] }, async (request) => {
     const query = request.query as { estado?: string };
     const user = request.user as { user_id: number; rol: string; area_id: number | null };
@@ -68,7 +68,7 @@ export async function serviciosController(app: FastifyInstance) {
     };
   });
 
-  // ── GET /api/servicios/:id ──
+  // -- GET /api/servicios/:id --
   app.get("/api/servicios/:id", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { data: servicios } = await supabase
@@ -83,7 +83,7 @@ export async function serviciosController(app: FastifyInstance) {
     return { data: mapServicio(servicio) };
   });
 
-  // ── POST /api/servicios ──
+  // -- POST /api/servicios --
   app.post("/api/servicios", { preHandler: [requireRoles()] }, async (request, reply) => {
     const input = servicioSchema.parse(request.body);
 
@@ -137,7 +137,7 @@ export async function serviciosController(app: FastifyInstance) {
     return reply.status(201).send({ data: mapServicio(servicio) });
   });
 
-  // ── PUT /api/servicios/:id ──
+  // -- PUT /api/servicios/:id --
   app.put("/api/servicios/:id", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const input = servicioSchema.parse(request.body);
@@ -162,7 +162,7 @@ export async function serviciosController(app: FastifyInstance) {
     return reply.send({ data: mapServicio(updatedServicios[0]) });
   });
 
-  // ── PATCH /api/servicios/:id/estado ──
+  // -- PATCH /api/servicios/:id/estado --
   app.patch("/api/servicios/:id/estado", { preHandler: [requireRoles("admin", "encargado")] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { estado, motivo } = request.body as { estado: string; motivo?: string };
@@ -179,7 +179,7 @@ export async function serviciosController(app: FastifyInstance) {
     if (!servicios?.length) throw new NotFoundError("Servicio no encontrado");
     const servicioActual = servicios[0];
 
-    const updateData: Record<string, unknown> = {
+    const updateData: TablesUpdate<"servicios"> = {
       servicio_estado: estado,
     };
 
@@ -213,7 +213,7 @@ export async function serviciosController(app: FastifyInstance) {
     return reply.send({ data: mapServicio(updatedServicios[0]) });
   });
 
-  // ── POST /api/servicios/:id/iniciar ──
+  // -- POST /api/servicios/:id/iniciar --
   app.post("/api/servicios/:id/iniciar", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const user = request.user as { user_id: number };
@@ -254,9 +254,9 @@ export async function serviciosController(app: FastifyInstance) {
     return reply.send({ data: mapServicio(updatedServicios[0]) });
   });
 
-  // ────────────────────
+  // --------------------
   // TAREAS
-  // ────────────────────
+  // --------------------
 
   // GET /api/servicios/:id/tareas
   app.get("/api/servicios/:id/tareas", { preHandler: [requireRoles()] }, async (request) => {
@@ -346,8 +346,8 @@ export async function serviciosController(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const input = tareaSchema.parse(request.body);
 
-    const updateData: Record<string, unknown> = {};
-    if (input.titulo !== undefined) updateData.tarea_titulo = input.titulo;
+      const updateData: TablesUpdate<"tareas"> = {};
+      if (input.titulo !== undefined) updateData.tarea_titulo = input.titulo;
 
     const { data: updatedTareas } = await supabase
       .from("tareas")
@@ -541,11 +541,11 @@ export async function serviciosController(app: FastifyInstance) {
 
     return reply.send({ data: { success: true } });
   });
-  // ──────────────────────────────────
+  // ----------------------------------
   // CRONÓMETRO POR TAREA (tiempo_tracking)
-  // ──────────────────────────────────
+  // ----------------------------------
 
-  // GET /api/servicios/:id/tiempos — resumen de tracking para todo el servicio
+  // GET /api/servicios/:id/tiempos -- resumen de tracking para todo el servicio
   app.get("/api/servicios/:id/tiempos", { preHandler: [requireRoles()] }, async (request) => {
     const { id } = request.params as { id: string };
     const servicioId = parseInt(id);
@@ -634,11 +634,11 @@ export async function serviciosController(app: FastifyInstance) {
       .order("tracking_inicio", { ascending: false });
 
     return {
-      data: (entries || []).map((e: any) => ({
+      data: (entries || []).map((e) => ({
         id: e.tracking_id,
         tarea_id: e.tarea_id,
         usuario_id: e.usuario_id,
-        usuario_nombre: (e as any).usuarios?.usuario_nombres || null,
+        usuario_nombre: e.usuarios?.usuario_nombres || null,
         inicio: e.tracking_inicio,
         pausa_at: e.tracking_pausa,
         fin: e.tracking_fin,
@@ -720,7 +720,7 @@ export async function serviciosController(app: FastifyInstance) {
   });
 }
 
-// ── Helper: mapea servicio de Supabase al formato ServicioLocalSTS ──
+// -- Helper: mapea servicio de Supabase al formato ServicioLocalSTS --
 function mapServicio(s: any) {
   const colab = s.usuario_colaborador;
   const colaboradorNombre = colab

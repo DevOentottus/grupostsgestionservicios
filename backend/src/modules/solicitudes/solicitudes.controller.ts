@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { supabase } from "@/lib/supabase.js";
+import { supabase, type TablesUpdate } from "@/lib/supabase.js";
 import { NotFoundError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
@@ -19,7 +19,7 @@ const atenderSolicitudSchema = z.object({
 export async function solicitudesController(app: FastifyInstance) {
   // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
 
-  // ── GET /api/solicitudes — listar solicitudes ──
+  // -- GET /api/solicitudes -- listar solicitudes --
   app.get(
     "/api/solicitudes",
     { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
@@ -124,7 +124,7 @@ export async function solicitudesController(app: FastifyInstance) {
     }
   );
 
-  // ── GET /api/solicitudes/mis-solicitudes — shortcut para usuario autenticado ──
+  // -- GET /api/solicitudes/mis-solicitudes -- shortcut para usuario autenticado --
   app.get(
     "/api/solicitudes/mis-solicitudes",
     { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
@@ -189,7 +189,7 @@ export async function solicitudesController(app: FastifyInstance) {
     }
   );
 
-  // ── POST /api/solicitudes — crear solicitud ──
+  // -- POST /api/solicitudes -- crear solicitud --
   app.post(
     "/api/solicitudes",
     { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
@@ -235,7 +235,7 @@ export async function solicitudesController(app: FastifyInstance) {
     }
   );
 
-  // ── PATCH /api/solicitudes/:id/atender — atender/resolver solicitud ──
+  // -- PATCH /api/solicitudes/:id/atender -- atender/resolver solicitud --
   app.patch(
     "/api/solicitudes/:id/atender",
     { preHandler: [requireRoles("admin", "encargado")] },
@@ -254,7 +254,7 @@ export async function solicitudesController(app: FastifyInstance) {
 
       if (!existing?.length) throw new NotFoundError("Solicitud no encontrada");
 
-      const updateData: Record<string, unknown> = {
+      const updateData: TablesUpdate<"solicitudes"> = {
         solicitud_estado: input.estado,
         atendido_por: user.user_id,
         solicitud_respuesta: input.respuesta ?? null,

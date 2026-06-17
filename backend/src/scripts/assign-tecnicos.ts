@@ -38,7 +38,7 @@ async function main() {
   // Armar map: area_id → [colaborador_id, ...]
   const colsPorArea = new Map<number, number[]>();
   for (const ac of areaCols || []) {
-    const u = ac.usuarios as any;
+    const u = ac.usuarios;
     if (u?.usuario_rol === "colaborador" && u?.usuario_activo !== false) {
       const list = colsPorArea.get(ac.area_id) || [];
       list.push(ac.colaborador_id);

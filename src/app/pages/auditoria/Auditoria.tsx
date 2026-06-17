@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import type { AuditoriaDisplay } from "@shared/index.js";
 
-// ── Action type config ──
+// -- Action type config --
 const ACCION_CONFIG: Record<string, { label: string; class: string; icon: typeof Shield }> = {
   CREATE: { label: "Creación", class: "bg-green-100 text-green-700", icon: ShieldCheck },
   DELETE: { label: "Eliminación", class: "bg-red-100 text-red-700", icon: ShieldX },
@@ -251,7 +251,7 @@ export function AuditoriaPage() {
                     <span className="text-xs text-gray-400 ml-auto">{formatFecha(log.created_at)}</span>
                   </div>
 
-                  {/* # — desktop only */}
+                  {/* # -- desktop only */}
                   <span className="hidden md:block col-span-1 text-xs text-gray-400 pt-1" style={{ fontWeight: 600 }}>
                     #{idx + 1 + (page - 1) * 20}
                   </span>
@@ -271,7 +271,7 @@ export function AuditoriaPage() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs text-gray-700 truncate" style={{ fontWeight: 500 }}>
-                        {log.usuario?.nombres || "—"}
+                        {log.usuario?.nombres || "--"}
                       </p>
                       <p className="text-[10px] text-gray-400 truncate">{log.usuario?.username || ""}</p>
                     </div>
@@ -299,7 +299,7 @@ export function AuditoriaPage() {
                   {/* Detalle */}
                   <div className="col-span-4">
                     <p className="text-xs text-gray-500 line-clamp-2">
-                      {log.detalle ? JSON.stringify(log.detalle).slice(0, 120) : "—"}
+                      {log.detalle ? JSON.stringify(log.detalle).slice(0, 120) : "--"}
                     </p>
                   </div>
                 </div>
@@ -313,7 +313,7 @@ export function AuditoriaPage() {
       {meta && meta.totalPages > 1 && (
         <div className="flex items-center justify-between text-sm">
           <span className="text-gray-500">
-            Total: {meta.total} registros — Página {meta.page} de {meta.totalPages}
+            Total: {meta.total} registros -- Página {meta.page} de {meta.totalPages}
           </span>
           <div className="flex gap-2">
             <button

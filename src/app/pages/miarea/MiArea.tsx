@@ -65,7 +65,7 @@ export function MiAreaPage() {
     return map;
   }, [data]);
 
-  // Always call this useMemo unconditionally — guard against data being null
+  // Always call this useMemo unconditionally -- guard against data being null
   const colaboradoresOrdenados = useMemo(() => {
     const cols = data?.colaboradores || [];
     return [...cols].sort((a, b) =>

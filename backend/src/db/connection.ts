@@ -1,5 +1,5 @@
 /**
- * Database connection — Supabase JS client con service_role key.
+ * Database connection -- Supabase JS client con service_role key.
  *
  * Todos los módulos importan `{ db }` desde aquí y usan la API de supabase-js:
  *

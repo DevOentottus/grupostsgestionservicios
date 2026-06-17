@@ -184,7 +184,7 @@ export function ManagerDesempenoPage() {
               <div className="bg-slate-50 rounded-lg p-3">
                 <p className="text-xs text-slate-500">Periodo evaluado</p>
                 <p className="text-sm font-medium text-slate-700">
-                  {new Date(data.periodo.desde).toLocaleDateString()} —{" "}
+                  {new Date(data.periodo.desde).toLocaleDateString()} --{" "}
                   {new Date(data.periodo.hasta).toLocaleDateString()}
                 </p>
               </div>
@@ -229,12 +229,12 @@ export function ManagerDesempenoPage() {
                       <td className="p-3 text-center text-xs text-slate-500">
                         {t.tiempo_estimado
                           ? `${t.tiempo_estimado} min`
-                          : "—"}
+                          : "--"}
                       </td>
                       <td className="p-3 text-center text-xs text-slate-400">
                         {t.completada_at
                           ? new Date(t.completada_at).toLocaleDateString()
-                          : "—"}
+                          : "--"}
                       </td>
                     </tr>
                   ))}

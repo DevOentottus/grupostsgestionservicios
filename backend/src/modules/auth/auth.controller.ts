@@ -8,7 +8,7 @@ import { auditLog } from "@/core/utils/index.js";
 import { NotFoundError, ValidationError, UnauthorizedError } from "@/core/errors/index.js";
 
 export async function authController(app: FastifyInstance) {
-  // ── POST /api/auth/login ──
+  // -- POST /api/auth/login --
   app.post("/api/auth/login", async (request, reply) => {
     const input = loginSchema.parse(request.body);
     const result = await loginUser(input.username, input.password);
@@ -33,7 +33,7 @@ export async function authController(app: FastifyInstance) {
     });
   });
 
-  // ── POST /api/auth/refresh ──
+  // -- POST /api/auth/refresh --
   app.post("/api/auth/refresh", async (request, reply) => {
     const authHeader = request.headers.authorization;
     if (!authHeader?.startsWith("Bearer ")) {
@@ -43,7 +43,7 @@ export async function authController(app: FastifyInstance) {
     const oldToken = authHeader.slice(7);
     let payload: { user_id: number; rol: string; area_id: number | null };
     try {
-      // Verificar incluso si expiró (ignoreExpiration) — el token sigue siendo válido
+      // Verificar incluso si expiró (ignoreExpiration) -- el token sigue siendo válido
       payload = app.jwt.verify<{ user_id: number; rol: string; area_id: number | null }>(
         oldToken,
         { ignoreExpiration: true }
@@ -95,7 +95,7 @@ export async function authController(app: FastifyInstance) {
     return reply.send({ data: { token: newToken } });
   });
 
-  // ── GET /api/auth/me ──
+  // -- GET /api/auth/me --
   app.get(
     "/api/auth/me",
     { preHandler: [app.authenticate] },
@@ -115,7 +115,7 @@ export async function authController(app: FastifyInstance) {
     }
   );
 
-  // ── PATCH /api/auth/password — cambiar propia contraseña ──
+  // -- PATCH /api/auth/password -- cambiar propia contraseña --
   app.patch(
     "/api/auth/password",
     { preHandler: [app.authenticate] },

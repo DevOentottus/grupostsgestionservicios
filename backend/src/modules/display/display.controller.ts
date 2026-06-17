@@ -4,10 +4,10 @@ import { NotFoundError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 
 export async function displayController(app: FastifyInstance) {
-  // ─────────────────────────────────────────────
-  // TV DISPLAY — Público (sin auth)
+  // ---------------------------------------------
+  // TV DISPLAY -- Público (sin auth)
   // GET /api/public/display/tv
-  // ─────────────────────────────────────────────
+  // ---------------------------------------------
   app.get("/api/public/display/tv", async (_request) => {
     const { data: servicios } = await supabase
       .from("servicios")
@@ -72,10 +72,10 @@ export async function displayController(app: FastifyInstance) {
     return { data: result };
   });
 
-  // ─────────────────────────────────────────────
-  // WORK ROOM DISPLAY — Autenticado
+  // ---------------------------------------------
+  // WORK ROOM DISPLAY -- Autenticado
   // GET /api/display/trabajo
-  // ─────────────────────────────────────────────
+  // ---------------------------------------------
   app.get(
     "/api/display/trabajo",
     { preHandler: [requireRoles()] },
@@ -166,10 +166,10 @@ export async function displayController(app: FastifyInstance) {
     }
   );
 
-  // ─────────────────────────────────────────────
-  // WAITING ROOM — Público (sin auth)
+  // ---------------------------------------------
+  // WAITING ROOM -- Público (sin auth)
   // GET /api/public/display/sala-espera/:codigo
-  // ─────────────────────────────────────────────
+  // ---------------------------------------------
   app.get("/api/public/display/sala-espera/:codigo", async (request, reply) => {
     const { codigo } = request.params as { codigo: string };
 

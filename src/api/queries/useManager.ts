@@ -34,7 +34,7 @@ export function useClientes() {
     queryKey: ["manager", "clientes"],
     queryFn: async () => {
       const r = await managerApi.clientes();
-      return r.data.data as any[];
+      return r.data.data;
     },
   });
 }

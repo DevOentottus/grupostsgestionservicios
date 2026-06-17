@@ -96,7 +96,7 @@ export function ManagerClientesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-600 font-mono text-xs">
-                      {c.cliente_dni || "—"}
+                      {c.cliente_dni || "--"}
                     </td>
                     <td className="px-4 py-3">
                       <div className="space-y-1">
@@ -124,7 +124,7 @@ export function ManagerClientesPage() {
                           <span className="text-xs line-clamp-2">{c.cliente_direccion}</span>
                         </div>
                       ) : (
-                        <span className="text-slate-400 text-xs">—</span>
+                        <span className="text-slate-400 text-xs">--</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -140,7 +140,7 @@ export function ManagerClientesPage() {
                           <span className="text-slate-400">{new Date(c.ultimo_servicio.fecha).toLocaleDateString("es-PE")}</span>
                         </div>
                       ) : (
-                        <span className="text-slate-400">—</span>
+                        <span className="text-slate-400">--</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-500">

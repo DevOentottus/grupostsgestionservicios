@@ -53,7 +53,7 @@ async function seedMassive() {
   ]);
   console.log("  ✅ Hashes generados\n");
 
-  // ─── 1. USUARIOS ───────────────────────────────────────────────
+  // --- 1. USUARIOS -----------------------------------------------
   console.log("👤 Insertando usuarios…");
 
   const usersData = [
@@ -113,7 +113,7 @@ async function seedMassive() {
   );
   console.log(`  📊 Total usuarios: ${userMap.size}\n`);
 
-  // ─── 2. ÁREAS ──────────────────────────────────────────────────
+  // --- 2. ÁREAS --------------------------------------------------
   console.log("🏢 Insertando áreas…");
 
   const areasData = [
@@ -140,7 +140,7 @@ async function seedMassive() {
   );
   console.log(`  📊 Total áreas: ${areaMap.size}\n`);
 
-  // ─── 3. AREA-COLABORADORES ─────────────────────────────────────
+  // --- 3. AREA-COLABORADORES -------------------------------------
   console.log("🔗 Asignando colaboradores a áreas…");
 
   const colabUsers = [...userMap.entries()].filter(([, u]) => u.usuario_rol === "colaborador");
@@ -157,7 +157,7 @@ async function seedMassive() {
   }
   console.log(`  📊 Asignaciones a áreas completadas\n`);
 
-  // ─── 4. CLIENTES ───────────────────────────────────────────────
+  // --- 4. CLIENTES -----------------------------------------------
   console.log("👥 Insertando clientes…");
 
   const rawClientes = [
@@ -211,7 +211,7 @@ async function seedMassive() {
   );
   console.log(`  📊 Total clientes: ${clienteMap.size}\n`);
 
-  // ─── 5. SERVICIOS (30+) ────────────────────────────────────────
+  // --- 5. SERVICIOS (30+) ----------------------------------------
   console.log("📋 Insertando servicios…");
 
   const allAreas = [...areaMap.values()];
@@ -246,12 +246,12 @@ async function seedMassive() {
     { codigo: "SRV-0029", nombre: "Desarrollo API integración", descripcion: "Desarrollo de API REST para integración con sistema contable.", estado: "pendiente", tiempo: 600 },
     { codigo: "SRV-0030", nombre: "Monitoreo infraestructura crítica", descripcion: "Implementación de sistema de monitoreo para servidores críticos.", estado: "pendiente", tiempo: 240 },
     // Bloqueados
-    { codigo: "SRV-0031", nombre: "Instalación fibra óptica sucursal", descripcion: "Instalación de fibra óptica en la nueva sucursal — pendiente permiso municipal.", estado: "bloqueado", tiempo: 480, fechaInicio: daysAgo(5) },
-    { codigo: "SRV-0032", nombre: "Actualización licencias Microsoft", descripcion: "Actualización de licencias Microsoft — en espera de aprobación de presupuesto.", estado: "bloqueado", tiempo: 120, fechaInicio: daysAgo(8) },
-    { codigo: "SRV-0033", nombre: "Implementación módulo RH", descripcion: "Módulo de recursos humanos — esperando definición de requerimientos.", estado: "bloqueado", tiempo: 360, fechaInicio: daysAgo(12) },
+    { codigo: "SRV-0031", nombre: "Instalación fibra óptica sucursal", descripcion: "Instalación de fibra óptica en la nueva sucursal -- pendiente permiso municipal.", estado: "bloqueado", tiempo: 480, fechaInicio: daysAgo(5) },
+    { codigo: "SRV-0032", nombre: "Actualización licencias Microsoft", descripcion: "Actualización de licencias Microsoft -- en espera de aprobación de presupuesto.", estado: "bloqueado", tiempo: 120, fechaInicio: daysAgo(8) },
+    { codigo: "SRV-0033", nombre: "Implementación módulo RH", descripcion: "Módulo de recursos humanos -- esperando definición de requerimientos.", estado: "bloqueado", tiempo: 360, fechaInicio: daysAgo(12) },
     // Cancelados
-    { codigo: "SRV-0034", nombre: "Contratación nuevo ISP", descripcion: "Contratación de nuevo proveedor de internet — cancelado por decisión de gerencia.", estado: "cancelado", tiempo: 0 },
-    { codigo: "SRV-0035", nombre: "Compra servidor adicional", descripcion: "Adquisición de servidor adicional — proyecto cancelado, se optó por cloud.", estado: "cancelado", tiempo: 0 },
+    { codigo: "SRV-0034", nombre: "Contratación nuevo ISP", descripcion: "Contratación de nuevo proveedor de internet -- cancelado por decisión de gerencia.", estado: "cancelado", tiempo: 0 },
+    { codigo: "SRV-0035", nombre: "Compra servidor adicional", descripcion: "Adquisición de servidor adicional -- proyecto cancelado, se optó por cloud.", estado: "cancelado", tiempo: 0 },
   ];
 
   const allServicioData = [
@@ -294,7 +294,7 @@ async function seedMassive() {
     const row = await insertSafe("servicios", base, `servicio ${s.codigo}`);
     if (row) {
       servicioMap.set(s.codigo, row);
-      console.log(`  ✅ Servicio: ${s.codigo} — ${s.nombre}`);
+      console.log(`  ✅ Servicio: ${s.codigo} -- ${s.nombre}`);
       srvCodigos.push(s.codigo);
     } else {
       // Recuperar existente
@@ -307,7 +307,7 @@ async function seedMassive() {
   }
   console.log(`  📊 Total servicios: ${servicioMap.size}\n`);
 
-  // ─── 6. TAREAS (masivas) ───────────────────────────────────────
+  // --- 6. TAREAS (masivas) ---------------------------------------
   console.log("✅ Insertando tareas…");
 
   const allServicioCodes = [...servicioMap.keys()];
@@ -339,7 +339,7 @@ async function seedMassive() {
   }
   console.log(`  📊 Tareas insertadas\n`);
 
-  // ─── 7. ASIGNAR COLABORADOR A SERVICIOS ────────────────────────
+  // --- 7. ASIGNAR COLABORADOR A SERVICIOS ------------------------
   console.log("👥 Asignando colaborador a cada servicio…");
 
   for (const codigo of allServicioCodes) {
@@ -359,7 +359,7 @@ async function seedMassive() {
   }
   console.log(`  📊 Asignaciones servicio-colaborador completadas\n`);
 
-  // ─── 8. PLANTILLAS ─────────────────────────────────────────────
+  // --- 8. PLANTILLAS ---------------------------------------------
   console.log("📄 Insertando plantillas…");
 
   const plantillaTareasMap: Record<string, string[]> = {
@@ -394,7 +394,7 @@ async function seedMassive() {
   }
   console.log(`  📊 Plantillas insertadas\n`);
 
-  // ─── 9. COMENTARIOS ────────────────────────────────────────────
+  // --- 9. COMENTARIOS --------------------------------------------
   console.log("💬 Insertando comentarios…");
 
   const frases = [
@@ -428,7 +428,7 @@ async function seedMassive() {
   }
   console.log(`  📊 Comentarios insertados\n`);
 
-  // ─── 10. SOLICITUDES INTERNAS ──────────────────────────────────
+  // --- 10. SOLICITUDES INTERNAS ----------------------------------
   try {
     console.log("📝 Insertando solicitudes internas…");
     const tiposSolicitud = ["apoyo", "herramienta", "equipo"];
@@ -461,7 +461,7 @@ async function seedMassive() {
     console.log(`  ⚠️  Solicitudes omitidas (tabla no disponible)\n`);
   }
 
-  // ─── 11. ANUNCIOS ──────────────────────────────────────────────
+  // --- 11. ANUNCIOS ----------------------------------------------
   try {
     console.log("📢 Insertando anuncios…");
     const anuncios = [
@@ -486,7 +486,7 @@ async function seedMassive() {
     console.log(`  ⚠️  Anuncios omitidos (tabla no disponible)\n`);
   }
 
-  // ─── 12. CALIFICACIONES ────────────────────────────────────────
+  // --- 12. CALIFICACIONES ----------------------------------------
   try {
     console.log("⭐ Insertando calificaciones…");
     for (const codigo of allServicioCodes) {
@@ -507,7 +507,7 @@ async function seedMassive() {
     console.log(`  ⚠️  Calificaciones omitidas\n`);
   }
 
-  // ─── RESUMEN ───────────────────────────────────────────────────
+  // --- RESUMEN ---------------------------------------------------
   console.log("═══════════════════════════════════");
   console.log("🎉 Seed masivo completado exitosamente");
   console.log("═══════════════════════════════════");

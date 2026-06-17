@@ -9,9 +9,9 @@ export async function seguimientoController(app: FastifyInstance) {
   // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
   // autenticación por ruta.
 
-  // ──────────────────────────────────
+  // ----------------------------------
   // ENCUESTAS (usando calificaciones en Supabase)
-  // ──────────────────────────────────
+  // ----------------------------------
 
   const encuestaSchema = z.object({
     calificacion: z.number().int().min(1).max(5),
@@ -76,9 +76,9 @@ export async function seguimientoController(app: FastifyInstance) {
     };
   });
 
-  // ──────────────────────────────────
+  // ----------------------------------
   // PORTAL CLIENTE
-  // ──────────────────────────────────
+  // ----------------------------------
 
   // GET /api/public/servicios/:codigo
   app.get("/api/public/servicios/:codigo", async (request, reply) => {
@@ -149,11 +149,11 @@ export async function seguimientoController(app: FastifyInstance) {
     }
 
     // Cliente
-    const clienteData = (servicio as any).clientes || {};
+    const clienteData = servicio?.clientes || {};
     const clienteNombre = clienteData.cliente_nombres || null;
     const clienteEmail = clienteData.cliente_correo || null;
 
-    const tareas = (tareasList || []).map((t: any) => {
+    const tareas = (tareasList || []).map((t) => {
       let completadaAt: string | null = null;
       if (t.tarea_fecha_completado) {
         const datePart = t.tarea_fecha_completado;
@@ -207,9 +207,9 @@ export async function seguimientoController(app: FastifyInstance) {
     };
   });
 
-  // ──────────────────────────────────
+  // ----------------------------------
   // DASHBOARD / KPI
-  // ──────────────────────────────────
+  // ----------------------------------
 
   app.get("/api/dashboard", { preHandler: [requireRoles()] }, async (request) => {
     const query = request.query as {
@@ -243,19 +243,19 @@ export async function seguimientoController(app: FastifyInstance) {
       return q;
     };
 
-    // ── Servicios del período ──
+    // -- Servicios del período --
     let svcQuery = supabase.from("servicios").select("servicio_id, servicio_estado, servicio_tiempo_estimado, servicio_fecha_inicio, servicio_fecha_creacion, area_id");
     svcQuery = applyDateFilter(svcQuery, "servicio_fecha_creacion");
     svcQuery = applyAreaFilter(svcQuery, "area_id");
     const { data: allServicios } = await svcQuery;
 
     const totalServicios = allServicios?.length || 0;
-    const completados = allServicios?.filter((s: any) => s.servicio_estado === "completado").length || 0;
-    const en_progreso = allServicios?.filter((s: any) => s.servicio_estado === "en_progreso").length || 0;
-    const pendientes = allServicios?.filter((s: any) => s.servicio_estado === "pendiente").length || 0;
-    const bloqueados = allServicios?.filter((s: any) => s.servicio_estado === "bloqueado").length || 0;
+    const completados = allServicios?.filter((s) => s.servicio_estado === "completado").length || 0;
+    const en_progreso = allServicios?.filter((s) => s.servicio_estado === "en_progreso").length || 0;
+    const pendientes = allServicios?.filter((s) => s.servicio_estado === "pendiente").length || 0;
+    const bloqueados = allServicios?.filter((s) => s.servicio_estado === "bloqueado").length || 0;
 
-    // ── Encuestas (calificaciones) del período ──
+    // -- Encuestas (calificaciones) del período --
     let califQuery = supabase
       .from("calificaciones")
       .select("calificacion_puntaje, calificacion_comentario, calificacion_sugerencia, servicio_id");
@@ -266,7 +266,7 @@ export async function seguimientoController(app: FastifyInstance) {
         .from("servicios")
         .select("servicio_id")
         .eq("area_id", areaId);
-      const ids = (svcIds || []).map((s: any) => s.servicio_id);
+      const ids = (svcIds || []).map((s) => s.servicio_id);
       if (ids.length > 0) {
         califQuery = califQuery.in("servicio_id", ids);
       }
@@ -276,30 +276,30 @@ export async function seguimientoController(app: FastifyInstance) {
     const { data: calificaciones } = await califQuery;
     const totalCalificaciones = calificaciones?.length || 0;
     const promedioCalificacion = totalCalificaciones > 0
-      ? calificaciones!.reduce((sum: number, c: any) => sum + c.calificacion_puntaje, 0) / totalCalificaciones
+      ? calificaciones!.reduce((sum: number, c) => sum + c.calificacion_puntaje, 0) / totalCalificaciones
       : 0;
     const conFeedback = calificaciones?.filter(
-      (c: any) => c.calificacion_comentario || c.calificacion_sugerencia
+      (c) => c.calificacion_comentario || c.calificacion_sugerencia
     ).length || 0;
-    const positivas = calificaciones?.filter((c: any) => c.calificacion_puntaje >= 3).length || 0;
-    const negativas = calificaciones?.filter((c: any) => c.calificacion_puntaje < 3).length || 0;
+    const positivas = calificaciones?.filter((c) => c.calificacion_puntaje >= 3).length || 0;
+    const negativas = calificaciones?.filter((c) => c.calificacion_puntaje < 3).length || 0;
 
-    // ── Mapa servicio_id → area_id ──
+    // -- Mapa servicio_id → area_id --
     const svcAreaMap: Record<number, number> = {};
     for (const s of allServicios || []) {
-      const sId = (s as any).servicio_id;
-      const aId = (s as any).area_id;
+      const sId = s.servicio_id;
+      const aId = s.area_id;
       if (sId && aId) svcAreaMap[sId] = aId;
     }
 
-    // ── Servicios por área ──
+    // -- Servicios por área --
     const porAreaMap: Record<number, { total: number; completados: number }> = {};
     for (const s of allServicios || []) {
-      const aid = (s as any).area_id;
+      const aid = s.area_id;
       if (!aid) continue;
       if (!porAreaMap[aid]) porAreaMap[aid] = { total: 0, completados: 0 };
       porAreaMap[aid].total++;
-      if ((s as any).servicio_estado === "completado") porAreaMap[aid].completados++;
+      if (s.servicio_estado === "completado") porAreaMap[aid].completados++;
     }
 
     const serviciosPorArea = await Promise.all(
@@ -318,7 +318,7 @@ export async function seguimientoController(app: FastifyInstance) {
       })
     );
 
-    // ── Colaboradores destacados ──
+    // -- Colaboradores destacados --
     const { data: tareasCompletadas } = await supabase
       .from("tareas")
       .select(`
@@ -331,7 +331,7 @@ export async function seguimientoController(app: FastifyInstance) {
     for (const t of tareasCompletadas || []) {
       const id = t.tarea_completado_por;
       if (!id) continue;
-      const u = (t as any).usuarios || {};
+      const u = t.usuarios || {};
       if (!colabMap[id]) {
         colabMap[id] = { nombres: u.usuario_nombres || `Usuario #${id}`, tareas: 0 };
       }
@@ -349,7 +349,7 @@ export async function seguimientoController(app: FastifyInstance) {
       .sort((a, b) => b.tareas_completadas - a.tareas_completadas)
       .slice(0, 5);
 
-    // ── Servicios activos (en_progreso) ──
+    // -- Servicios activos (en_progreso) --
     const { data: activos } = await supabase
       .from("servicios")
       .select("*")
@@ -371,7 +371,7 @@ export async function seguimientoController(app: FastifyInstance) {
       };
     });
 
-    // ── Period comparison ──
+    // -- Period comparison --
     let periodComparison = undefined;
     if (compararPeriodo && fechaInicio && fechaFin) {
       // Usar fechas explícitas de comparación si se pasaron, o calcular automáticamente
@@ -419,14 +419,14 @@ export async function seguimientoController(app: FastifyInstance) {
       };
     }
 
-    // ── Satisfacción por área ──
+    // -- Satisfacción por área --
     const satPorAreaMap: Record<number, { suma: number; cantidad: number }> = {};
     for (const c of calificaciones || []) {
-      const sId = (c as any).servicio_id;
+      const sId = c.servicio_id;
       const aId = svcAreaMap[sId];
       if (!aId) continue;
       if (!satPorAreaMap[aId]) satPorAreaMap[aId] = { suma: 0, cantidad: 0 };
-      satPorAreaMap[aId].suma += (c as any).calificacion_puntaje;
+      satPorAreaMap[aId].suma += c.calificacion_puntaje;
       satPorAreaMap[aId].cantidad++;
     }
 

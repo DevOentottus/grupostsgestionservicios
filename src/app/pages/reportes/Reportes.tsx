@@ -155,7 +155,7 @@ export function ReportesPage() {
         </button>
       </div>
 
-      {/* ─── Colaborador Tab ─── */}
+      {/* --- Colaborador Tab --- */}
       {tab === "colaborador" && (
         <div className="space-y-6">
           {/* Filters */}
@@ -253,7 +253,7 @@ export function ReportesPage() {
                     <tr className="bg-gray-50 border-b border-gray-100">
                       <th className="text-left px-4 py-3 text-xs text-gray-500 font-medium">Colaborador</th>
                       <th className="text-center px-4 py-3 text-xs text-gray-500 font-medium">Tareas Completadas</th>
-                      {(colabData as any).colaboradores
+                      {colabData?.colaboradores
                         ? <th className="text-center px-4 py-3 text-xs text-gray-500 font-medium">Rendimiento</th>
                         : <>
                             <th className="text-center px-4 py-3 text-xs text-gray-500 font-medium">Servicios</th>
@@ -284,13 +284,13 @@ export function ReportesPage() {
                         </td>
                       </tr>
                     ) : (
-                      (colabData as any).colaboradores?.map((c: any) => (
+                      colabData?.colaboradores?.map((c: any) => (
                         <tr key={c.usuario_id} className="hover:bg-gray-50 transition">
                           <td className="px-4 py-3 font-medium text-gray-800">
                             {c.nombres} {c.apellidos || ""}
                           </td>
                           <td className="px-4 py-3 text-center text-gray-700">{c.tareas_completadas}</td>
-                          <td className="px-4 py-3 text-center text-gray-400">—</td>
+                          <td className="px-4 py-3 text-center text-gray-400">--</td>
                         </tr>
                       ))
                     )}
@@ -302,7 +302,7 @@ export function ReportesPage() {
         </div>
       )}
 
-      {/* ─── Area Tab ─── */}
+      {/* --- Area Tab --- */}
       {tab === "area" && (
         <div className="space-y-6">
           {/* Filters */}
@@ -375,7 +375,7 @@ export function ReportesPage() {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h3 className="text-gray-800" style={{ fontWeight: 600 }}>
-                  {areaId ? `Rendimiento: ${(areaData as any).area?.nombre || ""}` : "Todas las Áreas"}
+                  {areaId ? `Rendimiento: ${areaData?.area?.nombre || ""}` : "Todas las Áreas"}
                 </h3>
                 <div className="flex gap-2">
                   <button
@@ -411,7 +411,7 @@ export function ReportesPage() {
                     {areaId ? (
                       <tr className="hover:bg-gray-50 transition">
                         <td className="px-4 py-3 font-medium text-gray-800">
-                          {(areaData as any).area?.nombre}
+                          {areaData?.area?.nombre}
                         </td>
                         <td className="px-4 py-3 text-center text-gray-700">{areaData.total_servicios}</td>
                         <td className="px-4 py-3 text-center">
@@ -423,13 +423,13 @@ export function ReportesPage() {
                         <td className="px-4 py-3 text-center text-gray-700">{areaData.tiempo_promedio_min} min</td>
                       </tr>
                     ) : (
-                      (areaData as any).areas?.map((a: any) => (
+                      areaData?.areas?.map((a: any) => (
                         <tr key={a.area_id} className="hover:bg-gray-50 transition">
                           <td className="px-4 py-3 font-medium text-gray-800">{a.nombre}</td>
                           <td className="px-4 py-3 text-center text-gray-700">{a.total}</td>
                           <td className="px-4 py-3 text-center text-gray-700">{a.completados}</td>
-                          <td className="px-4 py-3 text-center text-gray-700">{a.total > 0 ? `${Math.round((a.completados / a.total) * 100)}%` : "—"}</td>
-                          <td className="px-4 py-3 text-center text-gray-400">—</td>
+                          <td className="px-4 py-3 text-center text-gray-700">{a.total > 0 ? `${Math.round((a.completados / a.total) * 100)}%` : "--"}</td>
+                          <td className="px-4 py-3 text-center text-gray-400">--</td>
                         </tr>
                       ))
                     )}
@@ -440,7 +440,7 @@ export function ReportesPage() {
           )}
 
           {/* Tendencias mensuales */}
-          {areaData && areaId && (areaData as any).tendencias?.length > 0 && (
+          {areaData && areaId && areaData?.tendencias?.length > 0 && (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100">
                 <h3 className="text-gray-800" style={{ fontWeight: 600 }}>Tendencias Mensuales</h3>
@@ -455,7 +455,7 @@ export function ReportesPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {(areaData as any).tendencias?.map((t: any) => (
+                    {areaData?.tendencias?.map((t: any) => (
                       <tr key={t.mes} className="hover:bg-gray-50 transition">
                         <td className="px-4 py-3 font-medium text-gray-800">{t.mes}</td>
                         <td className="px-4 py-3 text-center text-gray-700">{t.creados}</td>

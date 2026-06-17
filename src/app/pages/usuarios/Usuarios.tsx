@@ -213,7 +213,7 @@ export function UsuariosPage() {
           <div>
             <p className="text-red-800 text-sm font-semibold">Error al cargar usuarios</p>
             <p className="text-red-600 text-xs mt-1">
-              {(error as any)?.response?.data?.detail || (error as any)?.message || "Error de conexión"}
+              {(error as { response?: { data?: { detail?: string } }; message?: string })?.response?.data?.detail || (error as Error)?.message || "Error de conexión"}
             </p>
           </div>
         </div>
@@ -458,7 +458,7 @@ export function UsuariosPage() {
                         className="flex items-center gap-2 cursor-pointer select-none group"
                       >
                         {form.rol === "encargado" ? (
-                          /* Radio button — single selection */
+                          /* Radio button -- single selection */
                           <div
                             onClick={() => setForm((prev) => ({ ...prev, area_ids: [a.id] }))}
                             className={cn(
@@ -471,7 +471,7 @@ export function UsuariosPage() {
                             {form.area_ids.includes(a.id) && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
                           </div>
                         ) : (
-                          /* Checkbox — multiple selection */
+                          /* Checkbox -- multiple selection */
                           <div
                             onClick={() => toggleAreaId(a.id)}
                             className={cn(

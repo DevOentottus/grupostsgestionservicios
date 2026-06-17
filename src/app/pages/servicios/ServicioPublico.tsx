@@ -192,12 +192,12 @@ export function ServicioPublicoPage() {
           <div className="w-8 h-8 bg-blue-900 rounded-lg flex items-center justify-center">
             <span className="text-yellow-400 text-xs" style={{ fontWeight: 800 }}>STS</span>
           </div>
-          <span className="text-sm text-gray-500">ServicioLocal — Seguimiento</span>
+          <span className="text-sm text-gray-500">ServicioLocal -- Seguimiento</span>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-        {/* Service Card — compacto */}
+        {/* Service Card -- compacto */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-3">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -240,7 +240,7 @@ export function ServicioPublicoPage() {
           </div>
         </div>
 
-        {/* ── Satisfacción / Seguimiento del servicio ── */}
+        {/* -- Satisfacción / Seguimiento del servicio -- */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           {/* Header */}
           <div className="flex items-center gap-2 px-5 pt-5 pb-3">
@@ -337,7 +337,7 @@ export function ServicioPublicoPage() {
             <div className="bg-white p-3 text-center">
               <p className="text-[10px] text-gray-400 uppercase tracking-wider">Restante estimado</p>
               <p className="text-base text-blue-700 font-bold mt-0.5">
-                {progreso.porcentaje === 100 ? "—" : formatETA(etaMinutos)}
+                {progreso.porcentaje === 100 ? "--" : formatETA(etaMinutos)}
               </p>
             </div>
           </div>

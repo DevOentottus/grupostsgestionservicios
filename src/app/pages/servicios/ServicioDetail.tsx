@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import type { Tarea } from "@shared/index.js";
 
-// ── Public URL (configurable via env) ──
+// -- Public URL (configurable via env) --
 const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL || "https://serviciolocalsts.vercel.app";
 
 function compartirWhatsApp(codigo: string, titulo: string) {
@@ -41,7 +41,7 @@ function compartirWhatsApp(codigo: string, titulo: string) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
-// ── Tab Definitions ──
+// -- Tab Definitions --
 const TABS = [
   { id: "tareas", label: "Tareas", icon: CheckCircle2 },
   { id: "flujo", label: "Flujo", icon: ChevronRight },
@@ -50,7 +50,7 @@ const TABS = [
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
-// ── Efficiency config (replaces old priority config) ──
+// -- Efficiency config (replaces old priority config) --
 const EFICIENCIA_CONFIG: Record<string, { label: string; class: string; icon: string }> = {
   baja: { label: "Baja", class: "bg-gray-50 text-gray-700 border-gray-200", icon: "chevron" },
   media: { label: "Media", class: "bg-blue-50 text-blue-700 border-blue-200", icon: "clock" },
@@ -70,7 +70,7 @@ function formatDateTime(fecha: string, hora?: string | null): string {
   }
 }
 
-// ── Task type badges ──
+// -- Task type badges --
 const TIPO_TAREA_CONFIG: Record<string, { label: string; class: string }> = {
   tecnico: { label: "Técnico", class: "bg-blue-100 text-blue-700" },
   administrativo: { label: "Administrativo", class: "bg-purple-100 text-purple-700" },
@@ -110,7 +110,7 @@ const HEADER_BG: Record<string, string> = {
   cancelado: "bg-gray-50/40",
 };
 
-// ── Evidencias Tab Component ──
+// -- Evidencias Tab Component --
 function EvidenciasTabContent({ servicioId, tareas }: { servicioId: number; tareas: Tarea[] }) {
   const { data: evidencias, isLoading } = useEvidencias(servicioId);
   const [tareaSeleccionada, setTareaSeleccionada] = useState<number | null>(null);
@@ -583,7 +583,7 @@ export function ServicioDetailPage() {
               <p className="text-sm text-gray-500 text-center py-8">No hay tareas. Agrega la primera.</p>
             ) : (
               <div className="divide-y divide-gray-50">
-                {tareasSorted.map((tarea, idx) => {
+                {tareasSorted.map((tarea: Tarea & { tipo?: string; responsable?: string }, idx) => {
                   const isEditing = editTareaId === tarea.id;
                   const prevIncompleta = idx > 0 && !tareasSorted[idx - 1].completada;
                   return (
@@ -654,15 +654,15 @@ export function ServicioDetailPage() {
                               {tarea.titulo}
                             </span>
                             {/* Type badge - Figma style (runtime field) */}
-                            {(tarea as any).tipo && TIPO_TAREA_CONFIG[(tarea as any).tipo] && (
-                              <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", TIPO_TAREA_CONFIG[(tarea as any).tipo].class)}>
-                                {TIPO_TAREA_CONFIG[(tarea as any).tipo].label}
+                            {tarea.tipo && TIPO_TAREA_CONFIG[tarea.tipo] && (
+                              <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", TIPO_TAREA_CONFIG[tarea.tipo].class)}>
+                                {TIPO_TAREA_CONFIG[tarea.tipo].label}
                               </span>
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
                             {tarea.tiempo_estimado && <span>{tarea.tiempo_estimado} min</span>}
-                            {tarea.completada && (tarea as any).responsable && <span>· {(tarea as any).responsable}</span>}
+                            {tarea.completada && tarea.responsable && <span>· {tarea.responsable}</span>}
                           </div>
                         </div>
                       )}
@@ -724,7 +724,7 @@ export function ServicioDetailPage() {
               <div>
                 <h3 className="text-gray-900 font-bold text-sm">Guardar como plantilla</h3>
                 <p className="text-xs text-gray-400">
-                  Creado por <span className="font-medium text-gray-600">{user?.nombres || user?.username || "—"}</span>
+                  Creado por <span className="font-medium text-gray-600">{user?.nombres || user?.username || "--"}</span>
                 </p>
               </div>
             </div>

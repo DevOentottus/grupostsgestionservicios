@@ -17,7 +17,7 @@ import { useRendimiento } from "@/api/queries/useRendimiento.js";
 import { cn } from "@/app/lib/utils";
 import type { RendimientoResponse } from "@shared/index.js";
 
-// ── Helpers ──
+// -- Helpers --
 
 function formatMinutos(m: number): string {
   if (m < 60) return `${Math.round(m)} min`;
@@ -36,7 +36,7 @@ function getEstadoClass(e: string): string {
   }
 }
 
-// ── Tabs ──
+// -- Tabs --
 
 type TabId = "visitas" | "kpi" | "calificaciones" | "colaboradores" | "sistema";
 
@@ -48,7 +48,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: "sistema", label: "Sistema", icon: <BarChart3 className="w-4 h-4" /> },
 ];
 
-// ── Page ──
+// -- Page --
 
 export function RendimientoSistemaPage() {
   const { user } = useAuth();
@@ -78,7 +78,7 @@ export function RendimientoSistemaPage() {
           <div>
             <h1 className="text-white text-xl mb-1" style={{ fontWeight: 700 }}>Rendimiento del Sistema</h1>
             <p className="text-blue-200 text-sm">
-              Panel de monitoreo — {new Date().toLocaleDateString("es-PE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+              Panel de monitoreo -- {new Date().toLocaleDateString("es-PE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -141,7 +141,7 @@ export function RendimientoSistemaPage() {
   );
 }
 
-// ── Summary Cards ──
+// -- Summary Cards --
 
 function SummaryCards({ data }: { data: RendimientoResponse }) {
   const cards = [
@@ -175,7 +175,7 @@ function SummaryCards({ data }: { data: RendimientoResponse }) {
   );
 }
 
-// ── Visitas Tab ──
+// -- Visitas Tab --
 
 function VisitasTab({ data }: { data: RendimientoResponse }) {
   const { visit_tracking: v } = data;
@@ -220,7 +220,7 @@ function VisitasTab({ data }: { data: RendimientoResponse }) {
                       <span className="text-lg font-bold text-purple-600">{s.visitas}</span>
                     </td>
                     <td className="py-3 px-4 text-right text-xs text-gray-500">
-                      {s.ultima_visita ? new Date(s.ultima_visita).toLocaleDateString("es-PE") : "—"}
+                      {s.ultima_visita ? new Date(s.ultima_visita).toLocaleDateString("es-PE") : "--"}
                     </td>
                   </tr>
                 ))}
@@ -253,7 +253,7 @@ function VisitasTab({ data }: { data: RendimientoResponse }) {
                   />
                   {/* Tooltip on hover */}
                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none z-10">
-                    {d.cantidad} visitas — {new Date(d.fecha).toLocaleDateString("es-PE", { day: "numeric", month: "short" })}
+                    {d.cantidad} visitas -- {new Date(d.fecha).toLocaleDateString("es-PE", { day: "numeric", month: "short" })}
                   </div>
                   {i % 5 === 0 && (
                     <span className="text-[9px] text-gray-400 -rotate-45 origin-left whitespace-nowrap mt-1">
@@ -273,7 +273,7 @@ function VisitasTab({ data }: { data: RendimientoResponse }) {
   );
 }
 
-// ── KPI Tab ──
+// -- KPI Tab --
 
 function KPITab({ data }: { data: RendimientoResponse }) {
   const { performance: p } = data;
@@ -372,7 +372,7 @@ function KPITab({ data }: { data: RendimientoResponse }) {
   );
 }
 
-// ── Calificaciones Tab ──
+// -- Calificaciones Tab --
 
 function CalificacionesTab({ data }: { data: RendimientoResponse }) {
   const { calificaciones: c } = data;
@@ -473,7 +473,7 @@ function CalificacionesTab({ data }: { data: RendimientoResponse }) {
                       cal.puntaje >= 3 ? "bg-yellow-100 text-yellow-700" :
                       "bg-red-100 text-red-700",
                     )}>{cal.puntaje}/5</span>
-                    <span className="text-xs text-gray-400">{cal.fecha ? new Date(cal.fecha).toLocaleDateString("es-PE") : "—"}</span>
+                    <span className="text-xs text-gray-400">{cal.fecha ? new Date(cal.fecha).toLocaleDateString("es-PE") : "--"}</span>
                   </div>
                 </div>
                 {cal.comentario && (
@@ -488,7 +488,7 @@ function CalificacionesTab({ data }: { data: RendimientoResponse }) {
   );
 }
 
-// ── Colaboradores Tab ──
+// -- Colaboradores Tab --
 
 function ColaboradoresTab({ data }: { data: RendimientoResponse }) {
   const { colaboradores: c } = data;
@@ -553,7 +553,7 @@ function ColaboradoresTab({ data }: { data: RendimientoResponse }) {
   );
 }
 
-// ── Sistema Tab ──
+// -- Sistema Tab --
 
 function SistemaTab({ data }: { data: RendimientoResponse }) {
   const { sistema: s } = data;

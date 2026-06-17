@@ -37,7 +37,7 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex" style={{ background: "linear-gradient(135deg, #1e3a5f 0%, #1e40af 50%, #2563eb 100%)" }}>
-      {/* Left panel — hidden on mobile */}
+      {/* Left panel -- hidden on mobile */}
       <div className="hidden lg:flex flex-col justify-center items-center w-1/2 p-12 text-white">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-6">
@@ -57,10 +57,10 @@ export function LoginPage() {
 
       </div>
 
-      {/* Right panel — form */}
+      {/* Right panel -- form */}
       <div className="flex flex-col justify-center items-center w-full lg:w-1/2 p-6">
         <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
-          {/* Mobile brand — visible only on small screens */}
+          {/* Mobile brand -- visible only on small screens */}
           <div className="flex items-center gap-3 mb-8 lg:hidden">
             <div className="w-12 h-12 bg-blue-800 rounded-xl flex items-center justify-center">
               <Wrench className="w-7 h-7 text-yellow-400" />

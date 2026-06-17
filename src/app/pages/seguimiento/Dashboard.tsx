@@ -33,7 +33,7 @@ import {
 import { cn } from "@/app/lib/utils";
 import type { DashboardFilters, DashboardV2Response } from "@shared/index.js";
 
-// ── Helpers ──
+// -- Helpers --
 
 function getSeverityColor(horas: number): string {
   if (horas >= 72) return "text-red-600 bg-red-50 border-red-200";
@@ -67,7 +67,7 @@ function formatMinutos(m: number): string {
   return `${h}h ${min}m`;
 }
 
-// ── Tabs ──
+// -- Tabs --
 
 type TabId = "alertas" | "indicadores" | "graficos" | "ranking" | "comparativo";
 
@@ -79,7 +79,7 @@ const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: "comparativo", label: "Comparativo", icon: <TrendingUp className="w-4 h-4" /> },
 ];
 
-// ── Dashboard Page ──
+// -- Dashboard Page --
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -156,7 +156,7 @@ export function DashboardPage() {
             <h1 className="text-white text-xl font-bold">Bienvenido, {user?.nombres || "Usuario"}</h1>
             <span className="text-blue-200 text-sm">·</span>
             <span className="text-blue-200 text-sm">
-              {currentTime.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" })} — {currentTime.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              {currentTime.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" })} -- {currentTime.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -239,7 +239,7 @@ export function DashboardPage() {
   );
 }
 
-// ── Alertas Tab ──
+// -- Alertas Tab --
 
 function AlertasTab({ data }: { data: DashboardV2Response | undefined }) {
   if (!data) return null;
@@ -342,7 +342,7 @@ function AlertasTab({ data }: { data: DashboardV2Response | undefined }) {
   );
 }
 
-// ── Indicadores Tab ──
+// -- Indicadores Tab --
 
 function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
   if (!data) return null;
@@ -483,7 +483,7 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
   );
 }
 
-// ── Gráficos Tab ──
+// -- Gráficos Tab --
 
 function GraficosTab({ data }: { data: DashboardV2Response | undefined }) {
   if (!data) return null;
@@ -605,7 +605,7 @@ function GraficosTab({ data }: { data: DashboardV2Response | undefined }) {
             </div>
           </div>
 
-          {/* Satisfacción por Área — horizontales, ordenado desc */}
+          {/* Satisfacción por Área -- horizontales, ordenado desc */}
           <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-5 h-5 text-blue-500" />
@@ -645,7 +645,7 @@ function GraficosTab({ data }: { data: DashboardV2Response | undefined }) {
   );
 }
 
-// ── Ranking Tab ──
+// -- Ranking Tab --
 
 function RankingTab({
   data,
@@ -781,7 +781,7 @@ function RankingTab({
   );
 }
 
-// ── Comparativo Tab ──
+// -- Comparativo Tab --
 
 function ComparativoTab({
   data,
@@ -840,7 +840,7 @@ function ComparativoTab({
             <div className="flex flex-wrap gap-2 pt-1">
               {[
                 {
-                  label: "Día anterior — Día actual",
+                  label: "Día anterior -- Día actual",
                   apply: () => {
                     const hoy = new Date();
                     const ayer = subDays(hoy, 1);
@@ -849,7 +849,7 @@ function ComparativoTab({
                   },
                 },
                 {
-                  label: "Sem. anterior — Sem. actual",
+                  label: "Sem. anterior -- Sem. actual",
                   apply: () => {
                     const now = new Date();
                     const semanaActualInicio = startOfWeek(now, { weekStartsOn: 1 });
@@ -861,7 +861,7 @@ function ComparativoTab({
                   },
                 },
                 {
-                  label: "Mes anterior — Mes actual",
+                  label: "Mes anterior -- Mes actual",
                   apply: () => {
                     const now = new Date();
                     const mesActualInicio = startOfMonth(now);
@@ -873,7 +873,7 @@ function ComparativoTab({
                   },
                 },
                 {
-                  label: "Trim. anterior — Trim. actual",
+                  label: "Trim. anterior -- Trim. actual",
                   apply: () => {
                     const now = new Date();
                     const trimActualInicio = startOfQuarter(now);
@@ -899,7 +899,7 @@ function ComparativoTab({
                       : "text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-800",
                   )}
                 >
-                  {activeFilter === opt.label ? "✓ " + opt.label.replace(" — ", " vs ") : opt.label}
+                  {activeFilter === opt.label ? "✓ " + opt.label.replace(" -- ", " vs ") : opt.label}
                 </button>
               ))}
             </div>

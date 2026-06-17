@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { supabase } from "@/lib/supabase.js";
+import { supabase, type TablesUpdate } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError, ForbiddenError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
 
 const STORAGE_BUCKET = "evidencia-files";
 
-// ── Helpers ──
+// -- Helpers --
 
 async function uploadBase64(
   bucket: string,
@@ -59,10 +59,10 @@ const comentarioSchema = z.object({
   contenido: z.string().min(1),
 });
 
-// ── Controller ──
+// -- Controller --
 
 export async function evidenciasController(app: FastifyInstance) {
-  // ── POST /api/evidencias/upload ──
+  // -- POST /api/evidencias/upload --
   app.post(
     "/api/evidencias/upload",
     { preHandler: [requireRoles()] },
@@ -124,7 +124,7 @@ export async function evidenciasController(app: FastifyInstance) {
     }
   );
 
-  // ── GET /api/servicios/:id/evidencias ──
+  // -- GET /api/servicios/:id/evidencias --
   app.get(
     "/api/servicios/:id/evidencias",
     { preHandler: [requireRoles()] },
@@ -163,7 +163,7 @@ export async function evidenciasController(app: FastifyInstance) {
     }
   );
 
-  // ── POST /api/evidencias/:id/comentario ──
+  // -- POST /api/evidencias/:id/comentario --
   app.post(
     "/api/evidencias/:id/comentario",
     { preHandler: [requireRoles()] },
@@ -206,7 +206,7 @@ export async function evidenciasController(app: FastifyInstance) {
     }
   );
 
-  // ── PATCH /api/evidencias/:id/estado ──
+  // -- PATCH /api/evidencias/:id/estado --
   app.patch(
     "/api/evidencias/:id/estado",
     { preHandler: [requireRoles("admin", "encargado")] },
@@ -228,7 +228,7 @@ export async function evidenciasController(app: FastifyInstance) {
     }
   );
 
-  // ── PATCH /api/tareas/:id/evidencia-config ──
+  // -- PATCH /api/tareas/:id/evidencia-config --
   app.patch(
     "/api/tareas/:id/evidencia-config",
     { preHandler: [requireRoles()] },
@@ -256,7 +256,7 @@ export async function evidenciasController(app: FastifyInstance) {
       if (!tarea) throw new NotFoundError("Tarea no encontrada");
 
       if (user.rol !== "admin" && user.rol !== "sistema") {
-        const s = (tarea as any).servicios;
+        const s = tarea.servicios;
         if (!s) throw new ForbiddenError("No tenés acceso");
 
         // Colaborador can only toggle if servicio allows it
@@ -267,7 +267,7 @@ export async function evidenciasController(app: FastifyInstance) {
         }
       }
 
-      const updateData: Record<string, any> = {};
+      const updateData: TablesUpdate<"tareas"> = {};
       if (input.requiere_evidencia !== undefined) updateData.tarea_requiere_evidencia = input.requiere_evidencia;
       if (input.modo_evidencia !== undefined) updateData.tarea_modo_evidencia = input.modo_evidencia;
       if (input.evidencia_desactivada !== undefined) updateData.tarea_evidencia_desactivada = input.evidencia_desactivada;
@@ -281,7 +281,7 @@ export async function evidenciasController(app: FastifyInstance) {
     }
   );
 
-  // ── GET /api/public/servicios/:codigo/evidencias ──
+  // -- GET /api/public/servicios/:codigo/evidencias --
   app.get("/api/public/servicios/:codigo/evidencias", async (request, reply) => {
     const { codigo } = request.params as { codigo: string };
     const query = request.query as { dni?: string };
@@ -332,7 +332,7 @@ export async function evidenciasController(app: FastifyInstance) {
     };
   });
 
-  // ── POST /api/public/evidencias/:id/comentario ──
+  // -- POST /api/public/evidencias/:id/comentario --
   app.post("/api/public/evidencias/:id/comentario", async (request) => {
     const { id } = request.params as { id: string };
     const input = z.object({
@@ -351,7 +351,7 @@ export async function evidenciasController(app: FastifyInstance) {
 
     if (!ev) throw new NotFoundError("Evidencia no encontrada");
 
-    const s = (ev as any).servicios as { servicio_codigo: string; cliente_id?: number };
+    const s = ev.servicios;
     if (s.servicio_codigo !== input.codigo) throw new ForbiddenError("Código de servicio incorrecto");
 
     // Validate DNI
@@ -360,7 +360,7 @@ export async function evidenciasController(app: FastifyInstance) {
       .select("cliente_id, clientes!inner(cliente_dni)")
       .eq("servicio_id", ev.servicio_id)
       .limit(1);
-    const clienteDni = (sv?.[0] as any)?.clientes?.cliente_dni;
+    const clienteDni = sv?.[0]?.clientes?.cliente_dni;
     if (clienteDni && clienteDni !== input.dni) {
       throw new ForbiddenError("DNI incorrecto");
     }
@@ -380,7 +380,7 @@ export async function evidenciasController(app: FastifyInstance) {
   });
 }
 
-// ── Mapper ──
+// -- Mapper --
 
 function mapEvidencia(row: any) {
   return {

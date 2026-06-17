@@ -29,7 +29,7 @@ export async function rendimientoController(app: FastifyInstance) {
   );
 }
 
-// ──────────────────── 1. Visit Tracking Stats ────────────────────
+// -------------------- 1. Visit Tracking Stats --------------------
 
 interface VisitCount {
   count: number;
@@ -89,7 +89,7 @@ async function getVisitStats() {
     };
   });
 
-  // visitas_por_dia — last 30 days, fill missing with 0
+  // visitas_por_dia -- last 30 days, fill missing with 0
   const today = new Date();
   const start = new Date(today);
   start.setDate(start.getDate() - 29);
@@ -131,7 +131,7 @@ async function getVisitStats() {
   };
 }
 
-// ──────────────────── 2. Performance KPIs ────────────────────
+// -------------------- 2. Performance KPIs --------------------
 
 async function getKPIStats() {
   // Single query to count all estados at once
@@ -176,7 +176,7 @@ async function getKPIStats() {
       ? Math.round((completados / totalServicios) * 10000) / 100
       : 0;
 
-  // Tareas — single query
+  // Tareas -- single query
   const { data: tareasData } = await supabase
     .from("tareas")
     .select("tarea_estado");
@@ -208,7 +208,7 @@ async function getKPIStats() {
   };
 }
 
-// ──────────────────── 3. Calificaciones Stats ────────────────────
+// -------------------- 3. Calificaciones Stats --------------------
 
 async function getCalificacionesStats() {
   const { count: totalCalificaciones } = await supabase
@@ -231,7 +231,7 @@ async function getCalificacionesStats() {
         ) / 100
       : 0;
 
-  // calificaciones_por_puntaje — separate query per score
+  // calificaciones_por_puntaje -- separate query per score
   const calificacionesPorPuntaje: { puntaje: number; cantidad: number }[] = [];
   for (let p = 1; p <= 5; p++) {
     const { count } = await supabase
@@ -291,7 +291,7 @@ async function getCalificacionesStats() {
   };
 }
 
-// ──────────────────── 4. Collaborator Stats ────────────────────
+// -------------------- 4. Collaborator Stats --------------------
 
 async function getCollaboratorStats() {
   const { data: tareasColab } = await supabase
@@ -349,7 +349,7 @@ async function getCollaboratorStats() {
   };
 }
 
-// ──────────────────── 5. System Health ────────────────────
+// -------------------- 5. System Health --------------------
 
 async function getSystemHealthStats() {
   const { count: totalUsuarios } = await supabase

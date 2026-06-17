@@ -1,7 +1,7 @@
-// ── Roles ──
+// -- Roles --
 export type Rol = "sistema" | "admin" | "encargado" | "colaborador";
 
-// ── Estado de servicio ──
+// -- Estado de servicio --
 export type EstadoServicio =
   | "pendiente"
   | "en_progreso"
@@ -9,10 +9,10 @@ export type EstadoServicio =
   | "cancelado"
   | "bloqueado";
 
-// ── Prioridad ──
+// -- Prioridad --
 export type Prioridad = "baja" | "media" | "alta" | "urgente";
 
-// ── Usuario ──
+// -- Usuario --
 export interface Usuario {
   id: number;
   username: string;
@@ -27,7 +27,7 @@ export interface Usuario {
   created_at: string;
 }
 
-// ── Servicio ──
+// -- Servicio --
 export interface Servicio {
   id: number;
   codigo: string;
@@ -66,7 +66,7 @@ export interface Servicio {
   updated_at: string;
 }
 
-// ── Tarea ──
+// -- Tarea --
 export interface Tarea {
   id: number;
   servicio_id: number;
@@ -83,7 +83,7 @@ export interface Tarea {
   created_at: string;
 }
 
-// ── Time Tracking ──
+// -- Time Tracking --
 export interface TiempoTracking {
   id: number;
   tarea_id: number;
@@ -107,7 +107,7 @@ export interface TiempoTrackingResumen {
   tracking_pausa: string | null;
 }
 
-// ── Encuesta ──
+// -- Encuesta --
 export interface Encuesta {
   id: number;
   servicio_id: number;
@@ -117,14 +117,14 @@ export interface Encuesta {
   created_at: string;
 }
 
-// ── JWT ──
+// -- JWT --
 export interface JwtPayload {
   user_id: number;
   rol: Rol;
   area_id: number | null;
 }
 
-// ── KPIs ──
+// -- KPIs --
 export interface DashboardKPI {
   registros_completos_pct: number;
   servicios_con_tareas_pct: number;
@@ -138,7 +138,7 @@ export interface DashboardKPI {
   calificaciones_negativas_pct: number;
 }
 
-// ── Area ──
+// -- Area --
 export interface Area {
   id: number;
   nombre: string;
@@ -157,13 +157,13 @@ export interface AreaWithColaboradores extends Area {
   }[];
 }
 
-// ── Area Colaborador ──
+// -- Area Colaborador --
 export interface AreaColaborador {
   area_id: number;
   usuario_id: number;
 }
 
-// ── Plantilla Proceso ──
+// -- Plantilla Proceso --
 export interface PlantillaProceso {
   id: number;
   nombre: string;
@@ -174,7 +174,7 @@ export interface PlantillaProceso {
   updated_at: string;
 }
 
-// ── Plantilla Tarea ──
+// -- Plantilla Tarea --
 export interface PlantillaTarea {
   id: number;
   plantilla_id: number;
@@ -185,7 +185,7 @@ export interface PlantillaTarea {
   created_at: string;
 }
 
-// ── Comentario ──
+// -- Comentario --
 export interface Comentario {
   id: number;
   servicio_id: number;
@@ -207,7 +207,7 @@ export interface ComentarioDisplay extends Comentario {
   } | null;
 }
 
-// ── Evidencias ──
+// -- Evidencias --
 export interface Evidencia {
   id: number;
   servicio_id: number;
@@ -236,14 +236,14 @@ export interface EvidenciaComentarioDisplay extends EvidenciaComentario {
   usuario_nombres?: string;
 }
 
-// ── Tarea with evidence config ──
+// -- Tarea with evidence config --
 export interface TareaEvidenciaConfig {
   requiere_evidencia: boolean;
   modo_evidencia: string | null;
   evidencia_desactivada: boolean;
 }
 
-// ── Auditoria ──
+// -- Auditoria --
 export interface Auditoria {
   id: number;
   usuario_id: number | null;
@@ -262,7 +262,7 @@ export interface AuditoriaDisplay extends Auditoria {
   } | null;
 }
 
-// ── Public Service Detail Response ──
+// -- Public Service Detail Response --
 export interface PublicServicioResponse {
   servicio: Servicio & { area_nombre: string | null };
   tareas: Tarea[];
@@ -275,7 +275,7 @@ export interface PublicServicioResponse {
   encuesta: Encuesta | null;
 }
 
-// ── Display Data ──
+// -- Display Data --
 export interface DisplayData {
   id: number;
   codigo: string;
@@ -305,7 +305,7 @@ export interface PaginatedResponse<T> {
   };
 }
 
-// ── Delayed Service ──
+// -- Delayed Service --
 export interface DelayedService {
   id: number;
   codigo: string;
@@ -317,7 +317,7 @@ export interface DelayedService {
   prioridad: string;
 }
 
-// ── Stale Service ──
+// -- Stale Service --
 export interface StaleService {
   id: number;
   codigo: string;
@@ -327,7 +327,7 @@ export interface StaleService {
   horas_sin_actividad: number;
 }
 
-// ── Dashboard V2 Response ──
+// -- Dashboard V2 Response --
 export interface DashboardV2Response {
   kpi: DashboardKPI;
   servicios_recientes?: any[];
@@ -413,7 +413,7 @@ export interface DashboardV2Response {
   };
 }
 
-// ── Rendimiento del Sistema (admin) ──
+// -- Rendimiento del Sistema (admin) --
 export interface RendimientoResponse {
   visit_tracking: {
     total_visitas: number;
@@ -471,7 +471,7 @@ export interface RendimientoResponse {
   };
 }
 
-// ── Manager ──
+// -- Manager --
 export interface ManagerMiAreaResponse {
   area: Area;
   servicios: (Servicio & {
@@ -565,7 +565,7 @@ export interface AreaServiciosResponse {
   tiempo_promedio: number;
 }
 
-// ── Waiting Room Response ──
+// -- Waiting Room Response --
 export interface SalaEsperaResponse {
   codigo: string;
   estado: string;
@@ -576,7 +576,7 @@ export interface SalaEsperaResponse {
   eta_estimado: number | null;
 }
 
-// ── Area Listing (with encargado details) ──
+// -- Area Listing (with encargado details) --
 export interface AreaWithEncargado extends Area {
   encargado_nombres: string | null;
   encargado_email: string | null;
@@ -584,7 +584,7 @@ export interface AreaWithEncargado extends Area {
   colaborador_count: number;
 }
 
-// ── Dashboard Filters ──
+// -- Dashboard Filters --
 export interface DashboardFilters {
   fecha_inicio?: string;
   fecha_fin?: string;
@@ -594,7 +594,7 @@ export interface DashboardFilters {
   comparar_fecha_fin?: string;
 }
 
-// ── Solicitud Interna ──
+// -- Solicitud Interna --
 export interface Solicitud {
   id: number;
   usuario_id: number;
@@ -609,7 +609,7 @@ export interface Solicitud {
   usuario?: { nombres: string; username: string } | null;
 }
 
-// ── Anuncio ──
+// -- Anuncio --
 export interface Anuncio {
   id: number;
   usuario_id: number;

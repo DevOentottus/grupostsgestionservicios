@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { supabase } from "@/lib/supabase.js";
+import { supabase, type TablesUpdate } from "@/lib/supabase.js";
 import { NotFoundError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
@@ -25,7 +25,7 @@ export async function anunciosController(app: FastifyInstance) {
   // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
   // Cada ruta incluye authenticate + authorize en su propio preHandler.
 
-  // ── GET /api/anuncios — listar activos (todos los roles) ──
+  // -- GET /api/anuncios -- listar activos (todos los roles) --
   app.get(
     "/api/anuncios",
     { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
@@ -78,7 +78,7 @@ export async function anunciosController(app: FastifyInstance) {
     }
   );
 
-  // ── GET /api/anuncios/todos — listar todos (admin only, incluye inactivos) ──
+  // -- GET /api/anuncios/todos -- listar todos (admin only, incluye inactivos) --
   app.get(
     "/api/anuncios/todos",
     { preHandler: [requireRoles("admin", "sistema")] },
@@ -127,7 +127,7 @@ export async function anunciosController(app: FastifyInstance) {
     }
   );
 
-  // ── POST /api/anuncios — crear anuncio (admin) ──
+  // -- POST /api/anuncios -- crear anuncio (admin) --
   app.post(
     "/api/anuncios",
     { preHandler: [requireRoles("admin", "sistema")] },
@@ -180,7 +180,7 @@ export async function anunciosController(app: FastifyInstance) {
     }
   );
 
-  // ── PATCH /api/anuncios/:id — editar/desactivar (admin) ──
+  // -- PATCH /api/anuncios/:id -- editar/desactivar (admin) --
   app.patch(
     "/api/anuncios/:id",
     { preHandler: [requireRoles("admin", "sistema")] },
@@ -198,7 +198,7 @@ export async function anunciosController(app: FastifyInstance) {
 
       if (!existing?.length) throw new NotFoundError("Anuncio no encontrado");
 
-      const updateData: Record<string, unknown> = {};
+      const updateData: TablesUpdate<"anuncios"> = {};
       if (input.titulo !== undefined) updateData.anuncio_titulo = input.titulo;
       if (input.contenido !== undefined) updateData.anuncio_contenido = input.contenido;
       if (input.prioridad !== undefined) updateData.anuncio_prioridad = input.prioridad;
@@ -237,7 +237,7 @@ export async function anunciosController(app: FastifyInstance) {
     }
   );
 
-  // ── DELETE /api/anuncios/:id — eliminar (admin) ──
+  // -- DELETE /api/anuncios/:id -- eliminar (admin) --
   app.delete(
     "/api/anuncios/:id",
     { preHandler: [requireRoles("admin", "sistema")] },

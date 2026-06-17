@@ -14,7 +14,7 @@ interface TareaFormItem {
   titulo: string;
 }
 
-// ── Confirm Dialog (inline component) ──
+// -- Confirm Dialog (inline component) --
 function ConfirmDialog({
   open,
   title,
@@ -53,7 +53,7 @@ function ConfirmDialog({
   );
 }
 
-// ── Plantilla Create Modal (sólo creación, sin edición) ──
+// -- Plantilla Create Modal (sólo creación, sin edición) --
 function PlantillaCreateModal({
   open,
   onClose,
@@ -263,7 +263,7 @@ function PlantillaCreateModal({
   );
 }
 
-// ── Task Edit Modal ──
+// -- Task Edit Modal --
 function TaskEditModal({
   open,
   tareas,
@@ -388,7 +388,7 @@ function TaskEditModal({
   );
 }
 
-// ── Main Page ──
+// -- Main Page --
 export function PlantillasPage() {
   const { data: plantillas, isLoading } = usePlantillas();
   const { data: areas } = useAreas();
@@ -425,7 +425,7 @@ export function PlantillasPage() {
         }))
       );
     } catch {
-      // silently fail — keep card readonly
+      // silently fail -- keep card readonly
     }
   };
 
@@ -512,7 +512,7 @@ export function PlantillasPage() {
               }`}
             >
               {editingId === p.id ? (
-                /* ── Inline Edit Mode ── */
+                /* -- Inline Edit Mode -- */
                 <div className="space-y-3">
                   <input
                     value={editNombre}
@@ -581,7 +581,7 @@ export function PlantillasPage() {
                   </div>
                 </div>
               ) : (
-                /* ── Read-only View ── */
+                /* -- Read-only View -- */
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-slate-800 truncate">

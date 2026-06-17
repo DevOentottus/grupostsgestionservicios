@@ -24,20 +24,20 @@ import { evidenciasController } from "@/modules/evidencias/evidencias.controller
 export async function buildApp() {
   const app = Fastify({ logger: config.isDev });
 
-  // ── Plugins ──
+  // -- Plugins --
   await app.register(cors, { origin: config.cors.origin, credentials: true });
   await app.register(jwt, { secret: config.jwt.secret });
 
-  // ── Decorators ──
+  // -- Decorators --
   app.decorate("authenticate", authenticate);
 
-  // ── Error handler ──
+  // -- Error handler --
   app.setErrorHandler(errorHandler);
 
-  // ── Health ──
+  // -- Health --
   app.get("/api/health", async () => ({ status: "ok", timestamp: new Date().toISOString() }));
 
-  // ── Módulos ──
+  // -- Módulos --
   await app.register(authController);
   await app.register(usuariosController);
   await app.register(serviciosController);

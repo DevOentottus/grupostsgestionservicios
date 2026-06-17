@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import bcrypt from "bcryptjs";
-import { supabase } from "@/lib/supabase.js";
+import { supabase, type TablesUpdate } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import {
@@ -29,7 +29,7 @@ export async function usuariosController(app: FastifyInstance) {
   // El hook de scope + route-level preHandler combinados causan timeout en Vercel.
   // Cada ruta debe incluir authenticate + authorize en su propio preHandler.
 
-  // ── GET /api/usuarios ──
+  // -- GET /api/usuarios --
   app.get(
     "/api/usuarios",
     { preHandler: [requireRoles("sistema", "admin", "encargado")] },
@@ -91,7 +91,7 @@ export async function usuariosController(app: FastifyInstance) {
     }
   );
 
-  // ── POST /api/usuarios ──
+  // -- POST /api/usuarios --
   app.post(
     "/api/usuarios",
     { preHandler: [requireRoles("sistema")] },
@@ -154,7 +154,7 @@ export async function usuariosController(app: FastifyInstance) {
           usuario_dni: input.dni || null,
           usuario_telefono: input.telefono || null,
           usuario_correo: input.email,
-          usuario_rol: input.rol, // lowercase — Supabase lo almacena como está
+          usuario_rol: input.rol, // lowercase -- Supabase lo almacena como está
           usuario_activo: true,
           usuario_fecha_creacion: now.toISOString().split("T")[0],
           usuario_hora_creacion: now.toTimeString().split(" ")[0],
@@ -169,7 +169,7 @@ export async function usuariosController(app: FastifyInstance) {
 
       // Asignar áreas si se proporcionaron
       if (input.area_ids && input.area_ids.length > 0) {
-        if (input.rol === "encargado" && input.area_ids.length > 1) {
+        if ((input.rol as string) === "encargado" && input.area_ids.length > 1) {
           throw new ValidationError("Un encargado solo puede estar asignado a un área");
         }
         await asignarAreasUsuario(user.usuario_id, input.rol, input.area_ids);
@@ -199,7 +199,7 @@ export async function usuariosController(app: FastifyInstance) {
     }
   );
 
-  // ── PUT /api/usuarios/:id ──
+  // -- PUT /api/usuarios/:id --
   app.put(
     "/api/usuarios/:id",
     { preHandler: [requireRoles("sistema")] },
@@ -219,7 +219,7 @@ export async function usuariosController(app: FastifyInstance) {
         if (existentes?.length) throw new ValidationError("El DNI ya está registrado");
       }
 
-      const updateData: Record<string, unknown> = {};
+      const updateData: TablesUpdate<"usuarios"> = {};
       if (input.nombres !== undefined) updateData.usuario_nombres = input.nombres;
       if (input.apellido_paterno !== undefined) updateData.usuario_apellido_paterno = input.apellido_paterno;
       if (input.apellido_materno !== undefined) updateData.usuario_apellido_materno = input.apellido_materno;
@@ -283,7 +283,7 @@ export async function usuariosController(app: FastifyInstance) {
     }
   );
 
-  // ── PUT /api/usuarios/:id/password ──
+  // -- PUT /api/usuarios/:id/password --
   app.put(
     "/api/usuarios/:id/password",
     { preHandler: [requireRoles("sistema")] },
@@ -318,7 +318,7 @@ export async function usuariosController(app: FastifyInstance) {
     }
   );
 
-  // ── PATCH /api/usuarios/:id/estado ──
+  // -- PATCH /api/usuarios/:id/estado --
   app.patch(
     "/api/usuarios/:id/estado",
     { preHandler: [requireRoles("sistema")] },
@@ -356,7 +356,7 @@ export async function usuariosController(app: FastifyInstance) {
   );
 }
 
-// ── Helper: asignar áreas a un usuario según su rol ──
+// -- Helper: asignar áreas a un usuario según su rol --
 async function asignarAreasUsuario(
   usuarioId: number,
   rol: string,

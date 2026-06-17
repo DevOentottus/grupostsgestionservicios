@@ -31,7 +31,7 @@ function calcularTiempoTranscurrido(completada_at: string | null, created_at?: s
   return 0;
 }
 
-// ── Loading Skeleton ──
+// -- Loading Skeleton --
 function FlowSkeleton() {
   return (
     <div className="flex gap-1 overflow-x-auto pb-2 animate-pulse">
@@ -49,7 +49,7 @@ function FlowSkeleton() {
   );
 }
 
-// ── Empty State ──
+// -- Empty State --
 function FlowEmpty() {
   return (
     <div className="text-center py-8">
@@ -58,7 +58,7 @@ function FlowEmpty() {
   );
 }
 
-// ── Error State ──
+// -- Error State --
 function FlowError({ message }: { message: string }) {
   return (
     <div className="text-center py-8">

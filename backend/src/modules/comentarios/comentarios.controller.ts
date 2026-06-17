@@ -16,7 +16,7 @@ export async function comentariosController(app: FastifyInstance) {
   // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
   // autenticación por ruta.
 
-  // ── GET /api/servicios/:servicioId/comentarios ──
+  // -- GET /api/servicios/:servicioId/comentarios --
   app.get(
     "/api/servicios/:servicioId/comentarios",
     { preHandler: [requireRoles()] },
@@ -62,7 +62,7 @@ export async function comentariosController(app: FastifyInstance) {
     }
   );
 
-  // ── POST /api/servicios/:servicioId/comentarios ──
+  // -- POST /api/servicios/:servicioId/comentarios --
   app.post(
     "/api/servicios/:servicioId/comentarios",
     { preHandler: [requireRoles()] },
@@ -113,7 +113,7 @@ export async function comentariosController(app: FastifyInstance) {
     }
   );
 
-  // ── POST /api/servicios/:servicioId/tareas/:tareaId/comentarios ──
+  // -- POST /api/servicios/:servicioId/tareas/:tareaId/comentarios --
   app.post(
     "/api/servicios/:servicioId/tareas/:tareaId/comentarios",
     { preHandler: [requireRoles()] },
@@ -168,7 +168,7 @@ export async function comentariosController(app: FastifyInstance) {
     }
   );
 
-  // ── DELETE /api/comentarios/:id ──
+  // -- DELETE /api/comentarios/:id --
   // Nota: en Supabase los comentarios de servicio y de tarea están en tablas separadas.
   // Buscamos en serviciocomentarios primero, luego en tareacomentarios.
   app.delete(

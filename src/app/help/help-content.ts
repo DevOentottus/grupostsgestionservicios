@@ -52,10 +52,10 @@ export function getHelpScreenshot(pathname: string, rol: string): string | null 
 }
 
 export const helpRegistry: HelpRegistry = {
-  // ─── T-006: Dashboard (admin) ───
+  // --- T-006: Dashboard (admin) ---
   "/dashboard": {
     admin: {
-      title: "Dashboard — Panel de Control",
+      title: "Dashboard -- Panel de Control",
       sections: [
         {
           id: "dashboard-visualizacion",
@@ -102,10 +102,10 @@ export const helpRegistry: HelpRegistry = {
     },
   },
 
-  // ─── T-007: Mi Área (colaborador, encargado) ───
+  // --- T-007: Mi Área (colaborador, encargado) ---
   "/miarea": {
     colaborador: {
-      title: "Mi Área — Panel Personal",
+      title: "Mi Área -- Panel Personal",
       sections: [
         {
           id: "miarea-visualizacion",
@@ -149,7 +149,7 @@ export const helpRegistry: HelpRegistry = {
       ],
     },
     encargado: {
-      title: "Mi Área — Panel de Encargado",
+      title: "Mi Área -- Panel de Encargado",
       sections: [
         {
           id: "miarea-visualizacion-encargado",
@@ -194,10 +194,10 @@ export const helpRegistry: HelpRegistry = {
     },
   },
 
-  // ─── T-008: Servicios (todos los roles) ───
+  // --- T-008: Servicios (todos los roles) ---
   "/servicios": {
     admin: {
-      title: "Servicios — Gestión General",
+      title: "Servicios -- Gestión General",
       sections: [
         {
           id: "servicios-lista",
@@ -243,7 +243,7 @@ export const helpRegistry: HelpRegistry = {
       ],
     },
     encargado: {
-      title: "Servicios — Mi Área",
+      title: "Servicios -- Mi Área",
       sections: [
         {
           id: "servicios-lista-encargado",
@@ -311,7 +311,7 @@ export const helpRegistry: HelpRegistry = {
       ],
     },
     sistema: {
-      title: "Servicios — Visión completa",
+      title: "Servicios -- Visión completa",
       sections: [
         {
           id: "servicios-lista-sistema",
@@ -319,17 +319,17 @@ export const helpRegistry: HelpRegistry = {
           steps: [
             { number: 1, description: "Como usuario sistema, ves todos los servicios sin restricción de área." },
             { number: 2, description: "Usá los filtros y búsqueda para encontrar servicios específicos." },
-            { number: 3, description: "Esta vista es de solo monitoreo — las acciones de gestión las realizan admin y encargados." },
+            { number: 3, description: "Esta vista es de solo monitoreo -- las acciones de gestión las realizan admin y encargados." },
           ],
         },
       ],
     },
   },
 
-  // ─── Seguimiento / Detalle de Servicio ───
+  // --- Seguimiento / Detalle de Servicio ---
   "/servicios/:id": {
     admin: {
-      title: "Servicio — Detalle y Seguimiento",
+      title: "Servicio -- Detalle y Seguimiento",
       sections: [
         {
           id: "detalle-cabecera",
@@ -375,7 +375,7 @@ export const helpRegistry: HelpRegistry = {
           title: "Pestaña Comentarios",
           steps: [
             { number: 1, description: "En la pestaña Comentarios podés ver y agregar notas internas sobre el servicio." },
-            { number: 2, description: "Los comentarios son internos del sistema — no los ve el cliente en el enlace público." },
+            { number: 2, description: "Los comentarios son internos del sistema -- no los ve el cliente en el enlace público." },
             { number: 3, description: "Usá los comentarios para dejar registro de novedades, decisiones o coordinaciones con otros colaboradores." },
           ],
         },
@@ -401,7 +401,7 @@ export const helpRegistry: HelpRegistry = {
       ],
     },
     encargado: {
-      title: "Servicio — Detalle y Seguimiento",
+      title: "Servicio -- Detalle y Seguimiento",
       sections: [
         {
           id: "detalle-visualizacion-encargado",
@@ -434,7 +434,7 @@ export const helpRegistry: HelpRegistry = {
       ],
     },
     colaborador: {
-      title: "Servicio — Mi Trabajo",
+      title: "Servicio -- Mi Trabajo",
       sections: [
         {
           id: "detalle-tareas-colaborador",
@@ -466,7 +466,7 @@ export const helpRegistry: HelpRegistry = {
       ],
     },
     sistema: {
-      title: "Servicio — Detalle y Monitoreo",
+      title: "Servicio -- Detalle y Monitoreo",
       sections: [
         {
           id: "detalle-visualizacion-sistema",
@@ -492,7 +492,7 @@ export const helpRegistry: HelpRegistry = {
 
   "/servicios/nuevo": {
     admin: {
-      title: "Nuevo Servicio — Wizard",
+      title: "Nuevo Servicio -- Wizard",
       sections: [
         {
           id: "nuevo-wizard",
@@ -538,7 +538,7 @@ export const helpRegistry: HelpRegistry = {
       ],
     },
     encargado: {
-      title: "Nuevo Servicio — Wizard",
+      title: "Nuevo Servicio -- Wizard",
       sections: [
         {
           id: "nuevo-wizard-encargado",
@@ -603,10 +603,10 @@ export const helpRegistry: HelpRegistry = {
     },
   },
 
-  // ─── T-009: Usuarios y Áreas ───
+  // --- T-009: Usuarios y Áreas ---
   "/usuarios": {
     sistema: {
-      title: "Usuarios — Gestión",
+      title: "Usuarios -- Gestión",
       sections: [
         {
           id: "usuarios-lista",
@@ -654,7 +654,7 @@ export const helpRegistry: HelpRegistry = {
 
   "/areas": {
     admin: {
-      title: "Áreas — Gestión",
+      title: "Áreas -- Gestión",
       sections: [
         {
           id: "areas-lista",
@@ -688,7 +688,7 @@ export const helpRegistry: HelpRegistry = {
       ],
     },
     sistema: {
-      title: "Áreas — Visión completa",
+      title: "Áreas -- Visión completa",
       sections: [
         {
           id: "areas-lista-sistema",
@@ -729,10 +729,10 @@ export const helpRegistry: HelpRegistry = {
     },
   },
 
-  // ─── T-010: Plantillas y Reportes ───
+  // --- T-010: Plantillas y Reportes ---
   "/plantillas": {
     admin: {
-      title: "Plantillas — Gestión",
+      title: "Plantillas -- Gestión",
       sections: [
         {
           id: "plantillas-intro",
@@ -816,7 +816,7 @@ export const helpRegistry: HelpRegistry = {
 
   "/reportes": {
     admin: {
-      title: "Reportes — Globales",
+      title: "Reportes -- Globales",
       sections: [
         {
           id: "reportes-visualizacion",
@@ -849,7 +849,7 @@ export const helpRegistry: HelpRegistry = {
       ],
     },
     encargado: {
-      title: "Reportes — Mi Área",
+      title: "Reportes -- Mi Área",
       sections: [
         {
           id: "reportes-visualizacion-encargado",
@@ -879,7 +879,7 @@ export const helpRegistry: HelpRegistry = {
     },
   },
 
-  // ─── T-011: Comunicaciones, Auditoría, Rendimiento ───
+  // --- T-011: Comunicaciones, Auditoría, Rendimiento ---
   "/comunicaciones": {
     admin: {
       title: "Comunicaciones",
@@ -1045,7 +1045,7 @@ export const helpRegistry: HelpRegistry = {
     },
   },
 
-  // ─── T-012: Manager ───
+  // --- T-012: Manager ---
   "/manager/clientes": {
     admin: {
       title: "Gestión de Clientes",
@@ -1097,7 +1097,7 @@ export const helpRegistry: HelpRegistry = {
 
   "/manager/desempeno": {
     admin: {
-      title: "Desempeño — Global",
+      title: "Desempeño -- Global",
       sections: [
         {
           id: "desempeno-visualizacion",
@@ -1128,7 +1128,7 @@ export const helpRegistry: HelpRegistry = {
       ],
     },
     encargado: {
-      title: "Desempeño — Mi Equipo",
+      title: "Desempeño -- Mi Equipo",
       sections: [
         {
           id: "desempeno-visualizacion-encargado",
@@ -1171,7 +1171,7 @@ export const helpRegistry: HelpRegistry = {
   },
 };
 
-// ─── Helper para resolver contenido con normalización de rutas ───
+// --- Helper para resolver contenido con normalización de rutas ---
 
 const ROLES_PRIORITY: HelpRol[] = ["admin", "encargado", "colaborador", "sistema"];
 

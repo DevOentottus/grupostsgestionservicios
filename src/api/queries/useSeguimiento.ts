@@ -3,7 +3,7 @@ import { seguimientoApi } from "@/api/client.js";
 import { toast } from "sonner";
 import type { DashboardKPI, TiempoTrackingResumen } from "@shared/index.js";
 
-// ── Time Tracking ──
+// -- Time Tracking --
 export function useIniciarTiempo() {
   const qc = useQueryClient();
   return useMutation({
@@ -60,7 +60,7 @@ export function useTiemposServicio(servicioId: number) {
   });
 }
 
-// ── Encuestas ──
+// -- Encuestas --
 export function useCrearEncuesta() {
   const qc = useQueryClient();
   return useMutation({
@@ -73,7 +73,7 @@ export function useCrearEncuesta() {
   });
 }
 
-// ── Dashboard ──
+// -- Dashboard --
 export function useDashboard(desde?: string, hasta?: string) {
   return useQuery({
     queryKey: ["dashboard", desde, hasta],

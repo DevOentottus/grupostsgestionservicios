@@ -42,7 +42,7 @@ export default function App() {
         <Route path="/seguimiento-cliente" element={<SeguimientoClientePage />} />
         <Route path="/public/servicio/:codigo" element={<ServicioPublicoPage />} />
 
-        {/* Protected routes — wrapped in RequireAuth */}
+        {/* Protected routes -- wrapped in RequireAuth */}
         <Route
           path="/"
           element={

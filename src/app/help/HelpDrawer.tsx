@@ -84,7 +84,7 @@ export function HelpDrawer({ open, onOpenChange }: HelpDrawerProps) {
                 );
               })()}
 
-              {/* TOC — Índice de secciones */}
+              {/* TOC -- Índice de secciones */}
               {content.sections.length > 1 && (
                 <nav className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <h4 className="text-sm font-semibold text-gray-700 mb-2">

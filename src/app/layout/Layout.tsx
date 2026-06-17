@@ -177,7 +177,7 @@ export default function Layout() {
               </div>
             )}
           </div>
-          {/* User info — only when expanded */}
+          {/* User info -- only when expanded */}
           {!sidebarCollapsed && (
             <div className="flex items-center gap-2 mt-3">
               <Avatar className="w-7 h-7 shrink-0">
@@ -281,7 +281,7 @@ export default function Layout() {
 
         {/* Bottom actions */}
         <div className={cn("border-t border-white/10 space-y-1", sidebarCollapsed ? "px-2 py-3" : "px-3 py-3")}>
-          {/* Collapse toggle — desktop only */}
+          {/* Collapse toggle -- desktop only */}
           <button
             onClick={() => setSidebarCollapsed((c) => !c)}
             className="hidden lg:flex w-full items-center justify-start gap-3 px-2 py-2 rounded-lg text-sm text-blue-200 hover:text-white hover:bg-blue-800 transition-colors"

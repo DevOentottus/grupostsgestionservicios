@@ -15,7 +15,7 @@ const inputClass = "w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm
 const labelClass = "block text-xs text-gray-600 font-semibold mb-1";
 const sectionTitleClass = "text-gray-800 font-bold text-sm flex items-center gap-2";
 
-// ─── Componentes extraídos para evitar recreación en cada render ───
+// --- Componentes extraídos para evitar recreación en cada render ---
 
 const InputField = memo(function InputField({
   label, value, onChange, placeholder, required, rows, error,
@@ -94,7 +94,7 @@ export function NuevoServicioPage() {
 
   const isColaborador = currentUser?.rol === "colaborador";
 
-  // ── Form state ──
+  // -- Form state --
   const [form, setForm] = useState({
     // Cliente
     cliente_dni: "",

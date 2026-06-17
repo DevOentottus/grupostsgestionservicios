@@ -6,7 +6,7 @@ export async function auditoriaController(app: FastifyInstance) {
   // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
   // Cada ruta incluye authenticate + authorize en su propio preHandler.
 
-  // ── GET /api/auditoria — admin only, paginated, filterable ──
+  // -- GET /api/auditoria -- admin only, paginated, filterable --
   app.get(
     "/api/auditoria",
     { preHandler: [requireRoles("sistema")] },
