@@ -1,12 +1,17 @@
 import { copyFileSync, mkdirSync, readdirSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const distData = join(__dirname, "..", "dist", "data");
+const require = createRequire(import.meta.url);
+const pdfkitPath = dirname(require.resolve("pdfkit/package.json"));
+const distData = join(dirname(fileURLToPath(import.meta.url)), "..", "dist", "data");
 
-// pdfkit ships its .afm font files in node_modules/pdfkit/data/
-const src = join(__dirname, "..", "node_modules", "pdfkit", "data");
+const src = join(pdfkitPath, "data");
+console.log("pdfkit path:", pdfkitPath);
+console.log("src data dir:", src);
+console.log("dist data dir:", distData);
+
 if (!existsSync(src)) {
   console.error("pdfkit data directory not found at:", src);
   process.exit(1);
