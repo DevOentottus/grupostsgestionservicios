@@ -79,8 +79,18 @@ export async function evidenciasController(app: FastifyInstance) {
         throw new ForbiddenError("No tenés acceso a este servicio");
       }
 
-      // Generate storage path
-      const ext = input.content_type?.includes("video") ? "mp4" : "jpg";
+      // Generate storage path — mapear MIME a extensión real
+      const mimeToExt: Record<string, string> = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+        "image/heic": "heic",
+        "image/heif": "heif",
+        "image/avif": "avif",
+        "video/mp4": "mp4",
+        "video/webm": "webm",
+      };
+      const ext = mimeToExt[input.content_type || ""] || "jpg";
       const storagePath = `servicio_${input.servicio_id}/tarea_${input.tarea_id}/${randomUUID()}.${ext}`;
 
       // Upload file

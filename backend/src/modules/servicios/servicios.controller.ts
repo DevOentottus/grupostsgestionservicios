@@ -4,6 +4,7 @@ import { NotFoundError, ValidationError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
+import sharp from "sharp";
 
 const servicioSchema = z.object({
   titulo: z.string().min(1),
@@ -879,7 +880,8 @@ async function reporteTecnicoPDF(request: any, reply: any) {
     eviPorTarea[tid].push(ev);
   }
 
-  // 5. Pre-fetchear imágenes (pdfkit no soporta URLs HTTP directamente)
+  // 5. Pre-fetchear imágenes y normalizarlas a sRGB JPEG
+  //    (pdfkit/jpeg-js no maneja perfiles ICC ni formatos como HEIC)
   const imgBuffers = new Map<string, Buffer | null>();
   const todasEvis = evidencias || [];
   if (todasEvis.length > 0) {
@@ -887,14 +889,23 @@ async function reporteTecnicoPDF(request: any, reply: any) {
       todasEvis.map(async (ev) => {
         const url = ev.archivo_url;
         if (!url) return;
+        let raw: Buffer | undefined;
         try {
           const res = await fetch(url);
           if (res.ok) {
             const ab = await res.arrayBuffer();
-            imgBuffers.set(url, Buffer.from(ab));
+            raw = Buffer.from(ab);
+            // Normalizar: convertir a sRGB JPEG — esto elimina perfiles ICC,
+            // maneja HEIC/WebP/AVIF, y asegura que pdfkit reciba JPEG puro
+            const normalized = await sharp(raw)
+              .toColorspace("srgb")
+              .jpeg({ quality: 85 })
+              .toBuffer();
+            imgBuffers.set(url, normalized);
           }
         } catch {
-          // imagen no disponible, queda null en el map
+          // Si sharp falla, usar raw como fallback (pdfkit lo intentará)
+          if (raw) imgBuffers.set(url, raw);
         }
       })
     );
@@ -1042,6 +1053,18 @@ async function reporteTecnicoPDF(request: any, reply: any) {
                   .text(`[Imagen no disponible]`, { align: "center" });
                 doc.moveDown(0.3);
               }
+            }
+
+            // Fecha/hora de la evidencia
+            const evFecha = ev.submitted_at || ev.created_at;
+            if (evFecha) {
+              const fecha = new Date(evFecha);
+              doc.fontSize(7).font("Helvetica").fillColor("#888")
+                .text(
+                  `${fecha.toLocaleDateString("es-PE")} ${fecha.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}`,
+                  { indent: 20 }
+                );
+              doc.moveDown(0.1);
             }
 
             const desc = ev.comentario_cliente || ev.comentario_colaborador;
