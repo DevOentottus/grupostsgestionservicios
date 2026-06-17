@@ -288,7 +288,7 @@ export function UsuariosPage() {
                               onClick={() => setConfirmToggle(u)}
                               className={cn(
                                 "p-1.5 rounded-lg transition",
-                                u.activo ? "hover:bg-green-50 text-green-600" : "hover:bg-red-50 text-red-600",
+                                u.activo ? "hover:bg-red-50 text-red-600" : "hover:bg-green-50 text-green-600",
                               )}
                               title={u.activo ? "Desactivar" : "Activar"}
                             >
