@@ -1,13 +1,14 @@
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
 import { useAreas } from "@/api/queries/useAreas.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
-import { useCrearServicio } from "@/api/queries/useServicios.js";
+import { useCrearServicio, useCrearTarea } from "@/api/queries/useServicios.js";
 import { usePlantillas, usePlantilla } from "@/api/queries/usePlantillas.js";
 import type { Usuario } from "@shared/index.js";
 import {
-  ArrowLeft, User, Monitor, Wrench, CheckSquare, Square, Camera, ChevronRight, ChevronLeft, Save,
+  ArrowLeft, User, Monitor, Wrench, CheckSquare, Square, Camera,
+  ChevronRight, ChevronLeft, Save, Plus, Trash2, ChevronUp, ChevronDown, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -142,6 +143,7 @@ export function NuevoServicioPage() {
   const { data: usuarios } = useUsuarios();
   const { data: plantillas } = usePlantillas();
   const crearServicio = useCrearServicio();
+  const crearTarea = useCrearTarea();
 
   const isColaborador = currentUser?.rol === "colaborador";
   const puedeToggleEvidencia = currentUser?.rol === "admin" || currentUser?.rol === "sistema";
@@ -207,6 +209,30 @@ export function NuevoServicioPage() {
   const { data: plantillaDetalle } = usePlantilla(plantillaId);
   const tareasPlantilla = plantillaDetalle?.tareas || [];
 
+  // -- Tareas editables --
+  interface TareaEditable { tempId: number; titulo: string; }
+  const nextTempId = useRef(0);
+  const [tareas, setTareas] = useState<TareaEditable[]>([]);
+  const [editandoTarea, setEditandoTarea] = useState<number | null>(null);
+  const [editText, setEditText] = useState("");
+  const [nuevaTareaTexto, setNuevaTareaTexto] = useState("");
+
+  // Sincronizar desde plantilla cuando cambia
+  const lastPlantillaId = useRef<number | null>(null);
+  useEffect(() => {
+    const pid = plantillaId || 0;
+    if (pid && pid !== lastPlantillaId.current && tareasPlantilla.length > 0) {
+      setTareas(tareasPlantilla.map((t: any) => {
+        const id = --nextTempId.current;
+        return { tempId: id, titulo: t.plantillatarea_titulo || t.titulo };
+      }));
+      lastPlantillaId.current = pid;
+    }
+    if (!pid) {
+      lastPlantillaId.current = null;
+    }
+  }, [plantillaDetalle]);
+
   // -- Validación por paso --
   const validarPaso = (step: number): boolean => {
     const errs: Record<string, string> = {};
@@ -259,8 +285,17 @@ export function NuevoServicioPage() {
 
     try {
       const res = await crearServicio.mutateAsync(payload);
+      const servicioId = res.data.data.id;
+
+      // Crear tareas personalizadas si hay
+      if (tareas.length > 0) {
+        for (const t of tareas) {
+          await crearTarea.mutateAsync({ servicioId, data: { titulo: t.titulo } });
+        }
+      }
+
       toast.success("Servicio creado");
-      navigate(`/servicios/${res.data.data.id}`);
+      navigate(`/servicios/${servicioId}`);
     } catch (err: any) {
       const serverErrors = err?.response?.data?.errors;
       if (serverErrors?.length) {
@@ -579,29 +614,160 @@ export function NuevoServicioPage() {
                 placeholder="Sin plantilla"
               />
 
-              {/* Lista de tareas si guía activa */}
-              {guiarEntrada && form.id_plantilla_inicial && (
+              {/* Lista de tareas editables */}
+              {(guiarEntrada || form.id_plantilla_inicial || tareas.length > 0) && (
                 <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3">
-                  <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                    Tareas de la plantilla
+                  <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide flex items-center justify-between">
+                    <span>Tareas del servicio</span>
+                    <span className="text-gray-400 font-normal text-[10px]">{tareas.length} tareas</span>
                   </p>
-                  {tareasPlantilla.length === 0 ? (
-                    <p className="text-sm text-gray-400 italic">Cargando tareas...</p>
+
+                  {tareas.length === 0 ? (
+                    <p className="text-sm text-gray-400 italic">Agregá tareas para este servicio</p>
                   ) : (
-                    <ol className="space-y-2">
-                      {tareasPlantilla.map((t: any, idx: number) => (
-                        <li
-                          key={t.id || idx}
-                          className="flex items-start gap-3 text-sm text-gray-700"
+                    <div className="space-y-1.5">
+                      {tareas.map((t, idx) => (
+                        <div
+                          key={t.tempId}
+                          className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm group"
                         >
-                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">
                             {idx + 1}
                           </span>
-                          <span className="pt-1">{t.titulo}</span>
-                        </li>
+
+                          {editandoTarea === t.tempId ? (
+                            <input
+                              type="text"
+                              value={editText}
+                              onChange={(e) => setEditText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  setTareas((prev) =>
+                                    prev.map((x) =>
+                                      x.tempId === t.tempId ? { ...x, titulo: editText.trim() || x.titulo } : x
+                                    )
+                                  );
+                                  setEditandoTarea(null);
+                                }
+                                if (e.key === "Escape") setEditandoTarea(null);
+                              }}
+                              onBlur={() => {
+                                setTareas((prev) =>
+                                  prev.map((x) =>
+                                    x.tempId === t.tempId ? { ...x, titulo: editText.trim() || x.titulo } : x
+                                  )
+                                );
+                                setEditandoTarea(null);
+                              }}
+                              className="flex-1 border border-blue-300 rounded-lg px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                              autoFocus
+                            />
+                          ) : (
+                            <span
+                              className="flex-1 text-gray-700 cursor-pointer hover:text-blue-700 transition"
+                              onClick={() => {
+                                setEditText(t.titulo);
+                                setEditandoTarea(t.tempId);
+                              }}
+                            >
+                              {t.titulo}
+                            </span>
+                          )}
+
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditText(t.titulo);
+                                setEditandoTarea(t.tempId);
+                              }}
+                              className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600"
+                              title="Editar"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            {idx > 0 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setTareas((prev) => {
+                                    const arr = [...prev];
+                                    [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+                                    return arr;
+                                  })
+                                }
+                                className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700"
+                                title="Subir"
+                              >
+                                <ChevronUp className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            {idx < tareas.length - 1 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setTareas((prev) => {
+                                    const arr = [...prev];
+                                    [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
+                                    return arr;
+                                  })
+                                }
+                                className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700"
+                                title="Bajar"
+                              >
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setTareas((prev) => prev.filter((x) => x.tempId !== t.tempId))
+                              }
+                              className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"
+                              title="Eliminar"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
                       ))}
-                    </ol>
+                    </div>
                   )}
+
+                  {/* Barra agregar tarea */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={nuevaTareaTexto}
+                      onChange={(e) => setNuevaTareaTexto(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const txt = nuevaTareaTexto.trim();
+                          if (txt) {
+                            setTareas((prev) => [...prev, { tempId: --nextTempId.current, titulo: txt }]);
+                            setNuevaTareaTexto("");
+                          }
+                        }
+                      }}
+                      placeholder="Escribí una tarea nueva..."
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const txt = nuevaTareaTexto.trim();
+                        if (txt) {
+                          setTareas((prev) => [...prev, { tempId: --nextTempId.current, titulo: txt }]);
+                          setNuevaTareaTexto("");
+                        }
+                      }}
+                      disabled={!nuevaTareaTexto.trim()}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-blue-900 hover:bg-blue-800 disabled:bg-gray-300 text-white rounded-lg text-sm font-semibold transition"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Agregar
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
