@@ -894,17 +894,16 @@ async function reporteTecnicoPDF(request: any, reply: any) {
               if (res.ok) {
                 const ab = await res.arrayBuffer();
                 raw = Buffer.from(ab);
-                // Normalizar: convertir a sRGB JPEG usando sharp (import dinámico
-                // para no romper módulos nativos en serverless de Vercel)
+                // Normalizar: eliminar perfiles ICC, convertir a JPEG puro
+                // (import dinámico para no romper serverless de Vercel)
                 try {
                   const sharpMod = await import("sharp");
                   const normalized = await sharpMod.default(raw)
-                    .toColorspace("srgb")
-                    .jpeg({ quality: 85 })
+                    .jpeg({ quality: 95 })
                     .toBuffer();
                   imgBuffers.set(url, normalized);
                 } catch {
-                  // sharp no disponible en este runtime (Vercel), usar raw
+                  // sharp no disponible en este runtime, usar raw
                   imgBuffers.set(url, raw);
                 }
               }
@@ -1041,10 +1040,12 @@ async function reporteTecnicoPDF(request: any, reply: any) {
               const buf = imgBuffers.get(imgUrl);
               if (buf) {
                 try {
-                  // Mostrar la imagen al ancho completo (respetando proporciones)
+                  // Mostrar la imagen con fit para mantener aspect ratio exacto
+                  const maxW = doc.page.width - 80;
                   doc.image(buf, {
-                    width: doc.page.width - 80,
+                    fit: [maxW, 600],
                     align: "center",
+                    valign: "center",
                   });
                   doc.moveDown(0.3);
                 } catch {
