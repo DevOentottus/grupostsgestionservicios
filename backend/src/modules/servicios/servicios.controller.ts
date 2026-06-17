@@ -1026,7 +1026,11 @@ async function reporteTecnicoPDF(request: any, reply: any) {
               const buf = imgBuffers.get(imgUrl);
               if (buf) {
                 try {
-                  doc.image(buf, { fit: [200, 150], align: "center", valign: "center" });
+                  // Mostrar la imagen al ancho completo (respetando proporciones)
+                  doc.image(buf, {
+                    width: doc.page.width - 80,
+                    align: "center",
+                  });
                   doc.moveDown(0.3);
                 } catch {
                   doc.fontSize(8).font("Helvetica").fillColor("#999")
