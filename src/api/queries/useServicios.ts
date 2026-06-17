@@ -81,7 +81,6 @@ export function useCrearTarea() {
     onSuccess: (_, { servicioId }) => {
       qc.invalidateQueries({ queryKey: ["tareas", servicioId] });
       qc.invalidateQueries({ queryKey: ["servicios"] });
-      toast.success("Tarea agregada");
     },
   });
 }

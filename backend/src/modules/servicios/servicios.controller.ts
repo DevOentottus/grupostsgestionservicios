@@ -35,6 +35,47 @@ const tareaSchema = z.object({
   descripcion: z.string().optional(),
 });
 
+// -- Helpers de autorización y orden --
+async function verificarPermisoModificar(
+  servicioId: number,
+  user: { user_id: number; rol: string; area_id: number | null }
+) {
+  if (user.rol === "admin" || user.rol === "sistema") return;
+  const { data: servicios } = await supabase
+    .from("servicios")
+    .select("servicio_id, tecnico_principal_id, area_id")
+    .eq("servicio_id", servicioId)
+    .limit(1);
+  if (!servicios?.length) throw new NotFoundError("Servicio no encontrado");
+  const s = servicios[0];
+  if (user.rol === "encargado") {
+    if (s.area_id !== user.area_id)
+      throw new ValidationError("No tenés permiso para modificar este servicio");
+    return;
+  }
+  if (s.tecnico_principal_id !== user.user_id)
+    throw new ValidationError("Solo el técnico asignado puede modificar este servicio");
+}
+
+async function verificarOrdenTarea(tareaId: number) {
+  const { data: tareas } = await supabase
+    .from("tareas")
+    .select("tarea_id, tarea_orden, servicio_id, tarea_estado")
+    .eq("tarea_id", tareaId)
+    .limit(1);
+  if (!tareas?.length) throw new NotFoundError("Tarea no encontrada");
+  const t = tareas[0];
+  const { data: prevTareas } = await supabase
+    .from("tareas")
+    .select("tarea_estado")
+    .eq("servicio_id", t.servicio_id)
+    .eq("tarea_orden", t.tarea_orden - 1)
+    .limit(1);
+  if (prevTareas?.length && prevTareas[0].tarea_estado !== "completado")
+    throw new ValidationError("Completá la tarea anterior primero");
+  return t;
+}
+
 export async function serviciosController(app: FastifyInstance) {
   // NOTA: No usar app.addHook + route-level preHandler combinados en serverless/emit (causa timeout).
   // autenticación por ruta.
@@ -142,7 +183,10 @@ export async function serviciosController(app: FastifyInstance) {
   // -- PUT /api/servicios/:id --
   app.put("/api/servicios/:id", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
+    const user = request.user as { user_id: number; rol: string; area_id: number | null };
     const input = servicioSchema.parse(request.body);
+
+    await verificarPermisoModificar(parseInt(id), user);
 
     const { data: updatedServicios, error } = await supabase
       .from("servicios")
@@ -218,8 +262,10 @@ export async function serviciosController(app: FastifyInstance) {
   // -- POST /api/servicios/:id/iniciar --
   app.post("/api/servicios/:id/iniciar", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const user = request.user as { user_id: number };
+    const user = request.user as { user_id: number; rol: string; area_id: number | null };
     const servicioId = parseInt(id);
+
+    await verificarPermisoModificar(servicioId, user);
 
     const { data: servicios } = await supabase
       .from("servicios")
@@ -297,7 +343,9 @@ export async function serviciosController(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const input = tareaSchema.parse(request.body);
     const servicioId = parseInt(id);
-    const user = request.user as { user_id: number };
+    const user = request.user as { user_id: number; rol: string; area_id: number | null };
+
+    await verificarPermisoModificar(servicioId, user);
 
     // Obtener el orden máximo
     const { data: maxTareas } = await supabase
@@ -346,15 +394,25 @@ export async function serviciosController(app: FastifyInstance) {
   // PUT /api/tareas/:id
   app.put("/api/tareas/:id", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
+    const user = request.user as { user_id: number; rol: string; area_id: number | null };
+    const tareaId = parseInt(id);
     const input = tareaSchema.parse(request.body);
 
-      const updateData: TablesUpdate<"tareas"> = {};
-      if (input.titulo !== undefined) updateData.tarea_titulo = input.titulo;
+    const { data: taskData } = await supabase
+      .from("tareas")
+      .select("servicio_id")
+      .eq("tarea_id", tareaId)
+      .limit(1);
+    if (!taskData?.length) throw new NotFoundError("Tarea no encontrada");
+    await verificarPermisoModificar(taskData[0].servicio_id, user);
+
+    const updateData: TablesUpdate<"tareas"> = {};
+    if (input.titulo !== undefined) updateData.tarea_titulo = input.titulo;
 
     const { data: updatedTareas } = await supabase
       .from("tareas")
       .update(updateData)
-      .eq("tarea_id", parseInt(id))
+      .eq("tarea_id", tareaId)
       .select();
 
     if (!updatedTareas?.length) throw new NotFoundError("Tarea no encontrada");
@@ -373,7 +431,7 @@ export async function serviciosController(app: FastifyInstance) {
   // DELETE /api/tareas/:id
   app.delete("/api/tareas/:id", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const user = request.user as { user_id: number };
+    const user = request.user as { user_id: number; rol: string; area_id: number | null };
     const tareaId = parseInt(id);
 
     // Obtener datos para auditoría antes de borrar
@@ -385,6 +443,7 @@ export async function serviciosController(app: FastifyInstance) {
 
     const tarea = tareas?.[0];
     if (tarea) {
+      await verificarPermisoModificar(tarea.servicio_id, user);
       // Eliminar comentarios de tarea primero
       await supabase.from("tareacomentarios").delete().eq("tarea_id", tareaId);
       await supabase.from("tareas").delete().eq("tarea_id", tareaId);
@@ -423,9 +482,12 @@ export async function serviciosController(app: FastifyInstance) {
   // PATCH /api/tareas/:id/completar
   app.patch("/api/tareas/:id/completar", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const user = request.user as { user_id: number };
+    const user = request.user as { user_id: number; rol: string; area_id: number | null };
     const now = new Date();
     const tareaId = parseInt(id);
+
+    const tarea = await verificarOrdenTarea(tareaId);
+    await verificarPermisoModificar(tarea.servicio_id, user);
 
     // Finalizar tracking activo si existe
     await supabase
@@ -492,7 +554,16 @@ export async function serviciosController(app: FastifyInstance) {
   // PATCH /api/tareas/:id/reabrir
   app.patch("/api/tareas/:id/reabrir", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const user = request.user as { user_id: number };
+    const user = request.user as { user_id: number; rol: string; area_id: number | null };
+    const tareaId = parseInt(id);
+
+    const { data: taskData } = await supabase
+      .from("tareas")
+      .select("servicio_id")
+      .eq("tarea_id", tareaId)
+      .limit(1);
+    if (!taskData?.length) throw new NotFoundError("Tarea no encontrada");
+    await verificarPermisoModificar(taskData[0].servicio_id, user);
 
     const { data: updatedTareas } = await supabase
       .from("tareas")
@@ -526,7 +597,17 @@ export async function serviciosController(app: FastifyInstance) {
   // PUT /api/tareas/reordenar
   app.put("/api/tareas/reordenar", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { tareas: items } = request.body as { tareas: { id: number; orden: number }[] };
-    const user = request.user as { user_id: number };
+    const user = request.user as { user_id: number; rol: string; area_id: number | null };
+
+    // Verificar permiso sobre la primera tarea (todas pertenecen al mismo servicio)
+    if (items.length > 0) {
+      const { data: firstTask } = await supabase
+        .from("tareas")
+        .select("servicio_id")
+        .eq("tarea_id", items[0].id)
+        .limit(1);
+      if (firstTask?.length) await verificarPermisoModificar(firstTask[0].servicio_id, user);
+    }
 
     for (const item of items) {
       await supabase
