@@ -27,6 +27,7 @@ const servicioSchema = z.object({
   diagnostico_inicial: z.string().optional(),
   id_plantilla_inicial: z.number().int().nullable().optional(),
   colaborador_id: z.number().int().nullable().optional(),
+  permite_evidencia: z.boolean().optional(),
 });
 
 const tareaSchema = z.object({
@@ -119,6 +120,7 @@ export async function serviciosController(app: FastifyInstance) {
         servicio_cliente_reporte: input.cliente_reporte || null,
         servicio_diagnostico_inicial: input.diagnostico_inicial || null,
         id_plantilla_inicial: input.id_plantilla_inicial ?? null,
+        servicio_permite_evidencia: input.permite_evidencia ?? true,
         servicio_fecha_creacion: now.toISOString().split("T")[0],
         servicio_hora_creacion: now.toTimeString().split(" ")[0],
       })

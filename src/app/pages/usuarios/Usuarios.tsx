@@ -422,6 +422,7 @@ export function UsuariosPage() {
                   )}
                 >
                   <option value="colaborador">Colaborador</option>
+                  <option value="encargado">Encargado</option>
                   <option value="admin">Administrador</option>
                   <option value="sistema">Sistema</option>
                 </select>

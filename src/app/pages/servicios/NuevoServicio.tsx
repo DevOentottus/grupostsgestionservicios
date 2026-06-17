@@ -4,10 +4,11 @@ import { useAuth } from "@/lib/auth.js";
 import { useAreas } from "@/api/queries/useAreas.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import { useCrearServicio } from "@/api/queries/useServicios.js";
-import { usePlantillas } from "@/api/queries/usePlantillas.js";
+import { usePlantillas, usePlantilla } from "@/api/queries/usePlantillas.js";
 import type { Usuario } from "@shared/index.js";
 import {
   ArrowLeft, Save, User, Monitor, Package, Wrench,
+  CheckSquare, Square, Camera,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -84,6 +85,46 @@ const SelectField = memo(function SelectField({
   );
 });
 
+const CheckboxToggle = memo(function CheckboxToggle({
+  checked, onChange, label, description, icon,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+  description?: string;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`w-full flex items-start gap-3 p-3 rounded-xl border transition text-left ${
+        checked
+          ? "border-blue-200 bg-blue-50/60"
+          : "border-gray-200 bg-white hover:bg-gray-50"
+      }`}
+    >
+      <span className={`mt-0.5 flex-shrink-0 ${checked ? "text-blue-600" : "text-gray-300"}`}>
+        {checked ? (
+          <CheckSquare className="w-5 h-5" />
+        ) : icon ? (
+          icon
+        ) : (
+          <Square className="w-5 h-5" />
+        )}
+      </span>
+      <div>
+        <p className={`text-sm font-medium ${checked ? "text-blue-800" : "text-gray-700"}`}>
+          {label}
+        </p>
+        {description && (
+          <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+        )}
+      </div>
+    </button>
+  );
+});
+
 export function NuevoServicioPage() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
@@ -122,6 +163,10 @@ export function NuevoServicioPage() {
     id_plantilla_inicial: "",
   });
 
+  // -- Checkboxes --
+  const [guiarEntrada, setGuiarEntrada] = useState(false);
+  const [permiteEvidencia, setPermiteEvidencia] = useState(true);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Si es colaborador, autocompletar su área
@@ -143,6 +188,10 @@ export function NuevoServicioPage() {
   const plantillasFiltradas = (plantillas || []).filter((p: any) =>
     !form.area_id || !p.area_id || p.area_id === Number(form.area_id)
   );
+
+  // -- Cargar tareas de la plantilla seleccionada --
+  const plantillaId = form.id_plantilla_inicial ? Number(form.id_plantilla_inicial) : 0;
+  const { data: plantillaDetalle } = usePlantilla(plantillaId);
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
@@ -172,7 +221,7 @@ export function NuevoServicioPage() {
       cliente_nombres: form.cliente_nombres.trim() || null,
       cliente_telefono: form.cliente_telefono.trim() || null,
 
-      // Equipo
+      // Equipo (siempre se envían, el backend los guarda como null si están vacíos)
       descripcion_equipo: form.descripcion_equipo.trim() || null,
       serie_equipo: form.serie_equipo.trim() || null,
       detalles_equipo: form.detalles_equipo.trim() || null,
@@ -184,6 +233,9 @@ export function NuevoServicioPage() {
       // Servicio
       cliente_reporte: form.cliente_reporte.trim() || null,
       diagnostico_inicial: form.diagnostico_inicial.trim() || null,
+
+      // Evidencias
+      permite_evidencia: permiteEvidencia,
     };
 
     try {
@@ -206,6 +258,8 @@ export function NuevoServicioPage() {
     }
   };
 
+  const tareasPlantilla = plantillaDetalle?.tareas || [];
+
   return (
     <div className="max-w-3xl mx-auto space-y-5">
       {/* Header */}
@@ -223,6 +277,23 @@ export function NuevoServicioPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        {/* ═══ GUÍA DE ENTRADA ═══ */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+          <CheckboxToggle
+            checked={guiarEntrada}
+            onChange={setGuiarEntrada}
+            label="Continuar guía de entrada"
+            description="Al activar esta opción se ocultan los campos de Equipo y Accesorios, y se muestra la lista de tareas de la plantilla seleccionada."
+          />
+          <CheckboxToggle
+            checked={permiteEvidencia}
+            onChange={setPermiteEvidencia}
+            label="Solicitar evidencias al cliente"
+            description="El cliente podrá subir fotos y videos como evidencia del servicio."
+            icon={<Camera className="w-5 h-5 text-gray-300" />}
+          />
+        </div>
+
         {/* ═══ CLIENTE ═══ */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
           <h2 className={sectionTitleClass}>
@@ -264,61 +335,65 @@ export function NuevoServicioPage() {
           </div>
         </div>
 
-        {/* ═══ EQUIPO ═══ */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-          <h2 className={sectionTitleClass}>
-            <Monitor className="w-4 h-4 text-blue-600" />
-            Equipo
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2">
+        {/* ═══ EQUIPO — oculto si guía de entrada activa ═══ */}
+        {!guiarEntrada && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+            <h2 className={sectionTitleClass}>
+              <Monitor className="w-4 h-4 text-blue-600" />
+              Equipo
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-2">
+                <InputField
+                  label="Descripción"
+                  value={form.descripcion_equipo}
+                  onChange={(v) => set("descripcion_equipo", v)}
+                  placeholder="Ej: Laptop HP Pavilion, Router TP-Link..."
+                />
+              </div>
+              <InputField
+                label="N° de Serie"
+                value={form.serie_equipo}
+                onChange={(v) => set("serie_equipo", v)}
+                placeholder="SN-12345-ABC"
+              />
+              <div className="sm:col-span-3">
+                <InputField
+                  label="Detalles"
+                  value={form.detalles_equipo}
+                  onChange={(v) => set("detalles_equipo", v)}
+                  rows={2}
+                  placeholder="Color, marca, modelo, estado físico..."
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ ACCESORIOS — oculto si guía de entrada activa ═══ */}
+        {!guiarEntrada && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+            <h2 className={sectionTitleClass}>
+              <Package className="w-4 h-4 text-blue-600" />
+              Accesorios
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <InputField
                 label="Descripción"
-                value={form.descripcion_equipo}
-                onChange={(v) => set("descripcion_equipo", v)}
-                placeholder="Ej: Laptop HP Pavilion, Router TP-Link..."
+                value={form.descripcion_accesorio}
+                onChange={(v) => set("descripcion_accesorio", v)}
+                placeholder="Ej: Cargador, mouse, cable HDMI..."
               />
-            </div>
-            <InputField
-              label="N° de Serie"
-              value={form.serie_equipo}
-              onChange={(v) => set("serie_equipo", v)}
-              placeholder="SN-12345-ABC"
-            />
-            <div className="sm:col-span-3">
               <InputField
                 label="Detalles"
-                value={form.detalles_equipo}
-                onChange={(v) => set("detalles_equipo", v)}
+                value={form.detalles_accesorio}
+                onChange={(v) => set("detalles_accesorio", v)}
                 rows={2}
-                placeholder="Color, marca, modelo, estado físico..."
+                placeholder="Cantidad, estado, observaciones..."
               />
             </div>
           </div>
-        </div>
-
-        {/* ═══ ACCESORIOS ═══ */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-          <h2 className={sectionTitleClass}>
-            <Package className="w-4 h-4 text-blue-600" />
-            Accesorios
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InputField
-              label="Descripción"
-              value={form.descripcion_accesorio}
-              onChange={(v) => set("descripcion_accesorio", v)}
-              placeholder="Ej: Cargador, mouse, cable HDMI..."
-            />
-            <InputField
-              label="Detalles"
-              value={form.detalles_accesorio}
-              onChange={(v) => set("detalles_accesorio", v)}
-              rows={2}
-              placeholder="Cantidad, estado, observaciones..."
-            />
-          </div>
-        </div>
+        )}
 
         {/* ═══ SERVICIO ═══ */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
@@ -408,6 +483,32 @@ export function NuevoServicioPage() {
               }))}
               placeholder="Sin plantilla"
             />
+
+            {/* ═══ LISTA DE TAREAS DE LA PLANTILLA (solo si guía activa) ═══ */}
+            {guiarEntrada && form.id_plantilla_inicial && (
+              <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3">
+                <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                  Tareas de la plantilla
+                </p>
+                {tareasPlantilla.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">Cargando tareas...</p>
+                ) : (
+                  <ol className="space-y-2">
+                    {tareasPlantilla.map((t: any, idx: number) => (
+                      <li
+                        key={t.id || idx}
+                        className="flex items-start gap-3 text-sm text-gray-700"
+                      >
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">
+                          {idx + 1}
+                        </span>
+                        <span className="pt-1">{t.titulo}</span>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
