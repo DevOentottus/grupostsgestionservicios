@@ -612,7 +612,7 @@ export const helpRegistry: HelpRegistry = {
           id: "usuarios-lista",
           title: "Gestión de usuarios",
           steps: [
-            { number: 1, description: "Esta página muestra la tabla de todos los usuarios del sistema con sus datos: nombre, email, rol y área." },
+            { number: 1, description: "Esta página muestra la tabla de todos los usuarios del sistema con sus datos: nombre, email, rol y fecha de registro." },
             { number: 2, description: "Cada fila muestra también el estado del usuario (activo/inactivo) y la fecha de registro." },
             { number: 3, description: "Usá la barra de búsqueda para encontrar usuarios por nombre o email." },
             { number: 4, description: "Hacé clic en cualquier fila para ver el detalle o editar el usuario." },
@@ -623,7 +623,7 @@ export const helpRegistry: HelpRegistry = {
           title: "Crear/editar usuario",
           steps: [
             { number: 1, description: "Hacé clic en 'Nuevo Usuario' para abrir el formulario de creación." },
-            { number: 2, description: "Completá: nombres, email, contraseña, rol y área asignada." },
+            { number: 2, description: "Completá: nombres, apellidos, email, contraseña y rol." },
             { number: 3, description: "El email debe ser único en el sistema. La contraseña debe tener al menos 6 caracteres." },
             { number: 4, description: "Para editar un usuario existente, hacé clic en el ícono de lápiz en la fila correspondiente." },
           ],

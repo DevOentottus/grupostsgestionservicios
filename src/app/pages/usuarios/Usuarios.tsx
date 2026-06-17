@@ -135,6 +135,9 @@ export function UsuariosPage() {
   };
 
   const canManage = currentUser?.rol === "sistema";
+  const rolBloqueado = editingUser
+    ? editingUser.rol === "sistema" || (editingUser.rol === "colaborador" && (editingUser.area_ids?.length ?? 0) > 0)
+    : false;
 
   return (
     <div className="space-y-5">
@@ -207,7 +210,7 @@ export function UsuariosPage() {
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                {["Usuario", "Nombres", "Email", "Rol", "Estado", "Acciones"].map((h) => (
+                {["Usuario", "Nombres", "Email", "Rol", "Fecha Reg.", "Estado", "Acciones"].map((h) => (
                   <th key={h} className="text-left text-xs text-gray-500 px-4 py-3 font-semibold">{h}</th>
                 ))}
               </tr>
@@ -215,13 +218,13 @@ export function UsuariosPage() {
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-gray-400 text-sm">
+                  <td colSpan={7} className="px-4 py-12 text-center text-gray-400 text-sm">
                     Cargando usuarios...
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-gray-400 text-sm">
+                  <td colSpan={7} className="px-4 py-12 text-center text-gray-400 text-sm">
                     No se encontraron usuarios
                   </td>
                 </tr>
@@ -257,6 +260,11 @@ export function UsuariosPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
+                      <span className="text-xs text-gray-500">
+                        {u.created_at ? new Date(u.created_at).toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" }) : "-"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
                       <span className={cn(
                         "inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium",
                         u.activo ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500",
@@ -280,7 +288,7 @@ export function UsuariosPage() {
                               onClick={() => setConfirmToggle(u)}
                               className={cn(
                                 "p-1.5 rounded-lg transition",
-                                u.activo ? "hover:bg-red-50 text-red-600" : "hover:bg-green-50 text-green-600",
+                                u.activo ? "hover:bg-green-50 text-green-600" : "hover:bg-red-50 text-red-600",
                               )}
                               title={u.activo ? "Desactivar" : "Activar"}
                             >
@@ -406,19 +414,25 @@ export function UsuariosPage() {
                 <label className="block text-xs text-gray-600 font-semibold mb-1">Rol</label>
                 <select
                   value={form.rol}
-                  onChange={(e) => setForm((p) => {
-                    const newRol = e.target.value;
-                    if (newRol !== "colaborador") {
-                      return { ...p, rol: newRol, area_ids: [] };
-                    }
-                    return { ...p, rol: newRol };
-                  })}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-gray-50"
+                  onChange={(e) => setForm((p) => ({ ...p, rol: e.target.value }))}
+                  disabled={rolBloqueado}
+                  className={cn(
+                    "w-full border rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500",
+                    rolBloqueado ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "bg-gray-50",
+                  )}
                 >
                   <option value="colaborador">Colaborador</option>
                   <option value="admin">Administrador</option>
                   <option value="sistema">Sistema</option>
                 </select>
+                {rolBloqueado && (
+                  <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    {editingUser?.rol === "sistema"
+                      ? "No podés cambiar el rol de un usuario Sistema"
+                      : `Este colaborador está asignado a ${editingUser?.area_ids?.length ?? 0} área${(editingUser?.area_ids?.length ?? 0) !== 1 ? "s" : ""}. Desasignalo del área primero para cambiarle el rol`}
+                  </p>
+                )}
               </div>
 
             </div>
