@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "build": "tsc",
-    "build:serverless": "esbuild src/serverless.ts --bundle --platform=node --format=cjs --outfile=dist/serverless.cjs --alias:@=./src && node scripts/copy-pdfkit-data.mjs",
+    "build:serverless": "esbuild src/serverless.ts --bundle --platform=node --format=cjs --outfile=dist/serverless.cjs --alias:@=./src --external:sharp && node scripts/copy-pdfkit-data.mjs",
     "start": "node dist/src/app.js",
     "seed": "tsx src/seeds/run.ts",
     "seed:massive": "tsx src/seeds/seed-massive.ts",

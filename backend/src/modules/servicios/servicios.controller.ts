@@ -4,7 +4,6 @@ import { NotFoundError, ValidationError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
-import sharp from "sharp";
 
 const servicioSchema = z.object({
   titulo: z.string().min(1),
@@ -889,24 +888,29 @@ async function reporteTecnicoPDF(request: any, reply: any) {
       todasEvis.map(async (ev) => {
         const url = ev.archivo_url;
         if (!url) return;
-        let raw: Buffer | undefined;
-        try {
-          const res = await fetch(url);
-          if (res.ok) {
-            const ab = await res.arrayBuffer();
-            raw = Buffer.from(ab);
-            // Normalizar: convertir a sRGB JPEG — esto elimina perfiles ICC,
-            // maneja HEIC/WebP/AVIF, y asegura que pdfkit reciba JPEG puro
-            const normalized = await sharp(raw)
-              .toColorspace("srgb")
-              .jpeg({ quality: 85 })
-              .toBuffer();
-            imgBuffers.set(url, normalized);
-          }
-        } catch {
-          // Si sharp falla, usar raw como fallback (pdfkit lo intentará)
-          if (raw) imgBuffers.set(url, raw);
-        }
+            let raw: Buffer | undefined;
+            try {
+              const res = await fetch(url);
+              if (res.ok) {
+                const ab = await res.arrayBuffer();
+                raw = Buffer.from(ab);
+                // Normalizar: convertir a sRGB JPEG usando sharp (import dinámico
+                // para no romper módulos nativos en serverless de Vercel)
+                try {
+                  const sharpMod = await import("sharp");
+                  const normalized = await sharpMod.default(raw)
+                    .toColorspace("srgb")
+                    .jpeg({ quality: 85 })
+                    .toBuffer();
+                  imgBuffers.set(url, normalized);
+                } catch {
+                  // sharp no disponible en este runtime (Vercel), usar raw
+                  imgBuffers.set(url, raw);
+                }
+              }
+            } catch {
+              if (raw) imgBuffers.set(url, raw);
+            }
       })
     );
   }
