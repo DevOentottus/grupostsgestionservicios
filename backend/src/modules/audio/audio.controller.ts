@@ -27,7 +27,9 @@ export async function audioController(app: FastifyInstance) {
         if (!user) throw new ValidationError("Usuario no autenticado");
 
         const input = uploadAudioSchema.parse(request.body);
-        const mime = input.content_type || "audio/webm";
+        const rawMime = input.content_type || "audio/webm";
+        // Sanitizar: Supabase no acepta parámetros como codecs=opus
+        const mime = rawMime.split(";")[0].trim();
 
         // Generar ruta única en storage
         const extension = mime.includes("mp3")
