@@ -235,8 +235,13 @@ export function MiAreaPage() {
               return (
                 <div
                   key={s.id}
-                  onClick={() => navigate(`/servicios/${s.id}`)}
-                  className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-blue-300 hover:shadow-sm cursor-pointer transition-all"
+                  onClick={user?.rol !== "colaborador" ? () => navigate(`/servicios/${s.id}`) : undefined}
+                  className={cn(
+                    "bg-white rounded-xl border border-slate-200 overflow-hidden transition-all",
+                    user?.rol !== "colaborador"
+                      ? "hover:border-blue-300 hover:shadow-sm cursor-pointer"
+                      : "opacity-80"
+                  )}
                 >
                   {/* Colored top bar */}
                   <div className={cn("h-1.5", cfg.bar)} />

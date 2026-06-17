@@ -528,7 +528,7 @@ export function ServicioDetailPage() {
 
         {/* Action buttons */}
         <div className="flex gap-2 mt-4">
-          {isPendiente && (
+          {isPendiente && completadasCount === 0 && (
             <button
               onClick={irAEnProgreso}
               disabled={cambiarEstado.isPending}
@@ -705,7 +705,7 @@ export function ServicioDetailPage() {
                         className={cn(
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition",
                           tarea.completada
-                            ? "bg-green-500 border-green-500"
+                            ? "bg-green-500 border-green-500 cursor-not-allowed"
                             : prevIncompleta
                             ? "border-gray-200 bg-gray-50 cursor-not-allowed"
                             : "border-gray-300 hover:border-blue-500",
@@ -735,10 +735,11 @@ export function ServicioDetailPage() {
                           <div className="flex items-center gap-2">
                             <span
                               className={cn(
-                                "text-sm cursor-pointer",
+                                "text-sm",
                                 tarea.completada ? "line-through text-gray-500" : "text-gray-800",
+                                tarea.completada || prevIncompleta ? "cursor-not-allowed" : "cursor-pointer",
                               )}
-                              onClick={() => handleStartTitleEdit(tarea)}
+                              onClick={tarea.completada || prevIncompleta ? undefined : () => handleStartTitleEdit(tarea)}
                               style={{ fontWeight: tarea.completada ? 400 : 500 }}
                             >
                               {tarea.titulo}
