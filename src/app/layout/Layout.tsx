@@ -35,8 +35,7 @@ const nav: NavItem[] = [
   { to: "/miarea", label: "Mi Área", icon: <Home className="w-4 h-4" />, roles: ["colaborador", "encargado"] },
   { to: "/servicios", label: "Servicios", icon: <Wrench className="w-4 h-4" /> },
   { to: "/plantillas", label: "Plantillas", icon: <FileText className="w-4 h-4" /> },
-  { to: "/areas", label: "Áreas", icon: <Building2 className="w-4 h-4" />, roles: ["admin", "sistema"] },
-  { to: "/usuarios", label: "Usuarios", icon: <Users className="w-4 h-4" />, roles: ["sistema"] },
+
   { to: "/reportes", label: "Reportes", icon: <BarChart3 className="w-4 h-4" />, roles: ["admin", "encargado"] },
   { to: "/auditoria", label: "Auditoría", icon: <ScrollText className="w-4 h-4" />, roles: ["admin"] },
   { to: "/admin/rendimiento", label: "Rendimiento", icon: <TrendingUp className="w-4 h-4" />, roles: ["admin", "sistema"] },
@@ -44,6 +43,8 @@ const nav: NavItem[] = [
 ];
 
 const managerNav: NavItem[] = [
+  { to: "/areas", label: "Áreas", icon: <Building2 className="w-4 h-4" />, roles: ["admin", "sistema"] },
+  { to: "/usuarios", label: "Usuarios", icon: <Users className="w-4 h-4" />, roles: ["sistema"] },
   { to: "/manager/clientes", label: "Clientes", icon: <Users className="w-4 h-4" />, roles: ["admin", "sistema"] },
   { to: "/manager/desempeno", label: "Desempeño", icon: <TrendingUp className="w-4 h-4" />, roles: ["admin", "encargado", "sistema"] },
 ];
@@ -226,11 +227,13 @@ export default function Layout() {
             })}
 
           {/* Gestión section */}
-          {canSee(["admin", "encargado"]) && !sidebarCollapsed && (
+          {managerNav.filter((item) => canSee(item.roles)).length > 0 && (
             <>
-              <p className="text-[10px] text-blue-300 uppercase tracking-wider px-3 pt-4 pb-1 font-semibold">
-                Gestión
-              </p>
+              {!sidebarCollapsed && (
+                <p className="text-[10px] text-blue-300 uppercase tracking-wider px-3 pt-4 pb-1 font-semibold">
+                  Gestión
+                </p>
+              )}
               {managerNav.filter((item) => canSee(item.roles)).map(({ to, label, icon }) => {
                 const isActive = location.pathname === to || location.pathname.startsWith(to + "/");
                 return (
@@ -239,14 +242,15 @@ export default function Layout() {
                     to={to}
                     onClick={closeSidebar}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                      "flex items-center justify-start gap-3 px-2 py-2 rounded-lg text-sm transition-colors",
                       isActive
                         ? "bg-yellow-400 text-blue-900 font-medium"
                         : "text-blue-100 hover:bg-blue-800 hover:text-white",
                     )}
+                    title={sidebarCollapsed ? label : undefined}
                   >
-                    {icon}
-                    {label}
+                    <span className="shrink-0">{icon}</span>
+                    {!sidebarCollapsed && <span className="truncate">{label}</span>}
                   </NavLink>
                 );
               })}

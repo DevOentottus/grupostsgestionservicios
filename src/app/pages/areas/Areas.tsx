@@ -95,7 +95,7 @@ export function AreasPage() {
     setMobileView("detail");
   };
 
-  // Encargado: solo ve su propia ├írea
+  // Encargado: solo ve su propia área
   const visibleAreas = user?.rol === "encargado"
     ? (areas || []).filter((a) => a.id === user.area_id)
     : (areas || []);
@@ -119,7 +119,7 @@ export function AreasPage() {
   ) || [];
 
   if (areasLoading) {
-    return <p className="text-gray-500">Cargando ├íreas...</p>;
+    return <p className="text-gray-500">Cargando áreas...</p>;
   }
 
   return (
@@ -133,7 +133,7 @@ export function AreasPage() {
               className="lg:hidden flex items-center gap-2 text-sm text-blue-700 font-semibold mb-2"
             >
               <ArrowLeft className="w-4 h-4" />
-              Volver a ├íreas
+              Volver a áreas
             </button>
           ) : null}
           <h1 className="text-gray-900 font-bold">Áreas de Servicio</h1>
@@ -145,7 +145,7 @@ export function AreasPage() {
             className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition"
           >
             <Plus className="w-4 h-4" />
-            Nueva ├ürea
+            Nueva Área
           </button>
         )}
       </div>
@@ -209,7 +209,7 @@ export function AreasPage() {
           {visibleAreas.length === 0 && (
             <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
               <MapPin className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-400 text-sm">No hay ├íreas registradas</p>
+              <p className="text-gray-400 text-sm">No hay áreas registradas</p>
             </div>
           )}
         </div>
@@ -279,7 +279,7 @@ export function AreasPage() {
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
                   <div className="flex items-center gap-2 mb-4">
                     <Users className="w-5 h-5 text-blue-800" />
-                    <h3 className="text-gray-800 font-semibold">Colaboradores del ├ürea</h3>
+                    <h3 className="text-gray-800 font-semibold">Colaboradores del Área</h3>
                   </div>
 
                   {/* Add collaborator ÔÇö arriba de la lista */}
@@ -327,27 +327,27 @@ export function AreasPage() {
                         <button
                           onClick={() => handleRemoverColaborador(col.usuario_id)}
                           className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition"
-                          title="Remover del ├írea"
+                          title="Remover del área"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ))}
                     {(!selectedDetail.colaboradores || selectedDetail.colaboradores.length === 0) && (
-                      <p className="text-gray-400 text-sm col-span-2">No hay colaboradores asignados a esta ├írea</p>
+                      <p className="text-gray-400 text-sm col-span-2">No hay colaboradores asignados a esta área</p>
                     )}
                   </div>
                 </div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 text-center">
-                <p className="text-gray-400">Error al cargar el detalle del ├írea</p>
+                <p className="text-gray-400">Error al cargar el detalle del área</p>
               </div>
             )
           ) : (
             <div className="bg-white rounded-2xl p-12 shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center h-full min-h-64">
               <MapPin className="w-12 h-12 text-gray-200 mb-3" />
-              <p className="text-gray-400 text-sm">Seleccion├í un ├írea para ver su detalle</p>
+              <p className="text-gray-400 text-sm">Seleccioná un área para ver su detalle</p>
             </div>
           )}
         </div>
@@ -359,7 +359,7 @@ export function AreasPage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h3 className="text-gray-900 font-bold">
-                {editingArea ? "Editar ├ürea" : "Nueva ├ürea"}
+                {editingArea ? "Editar Área" : "Nueva Área"}
               </h3>
               <button onClick={resetForm} className="p-2 rounded-lg hover:bg-gray-100">
                 <X className="w-5 h-5 text-gray-500" />
@@ -368,7 +368,7 @@ export function AreasPage() {
             <form onSubmit={handleSubmit}>
               <div className="px-6 py-4 space-y-4">
                 <div>
-                  <label className="block text-xs text-gray-600 font-semibold mb-1">Nombre del ├ürea *</label>
+                  <label className="block text-xs text-gray-600 font-semibold mb-1">Nombre del Área *</label>
                   <input
                     type="text"
                     placeholder="Ej: Mantenimiento Industrial"
@@ -411,7 +411,7 @@ export function AreasPage() {
                   disabled={crearArea.isPending || editarArea.isPending}
                   className="flex-1 bg-blue-900 text-white rounded-xl py-2.5 text-sm hover:bg-blue-800 transition disabled:opacity-50 font-semibold"
                 >
-                  {editarArea.isPending || crearArea.isPending ? "Guardando..." : editingArea ? "Actualizar" : "Crear ├ürea"}
+                  {editarArea.isPending || crearArea.isPending ? "Guardando..." : editingArea ? "Actualizar" : "Crear Área"}
                 </button>
               </div>
             </form>
@@ -423,9 +423,9 @@ export function AreasPage() {
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
-            <h3 className="text-gray-900 font-bold">Eliminar ├ürea</h3>
+            <h3 className="text-gray-900 font-bold">Eliminar Área</h3>
             <p className="text-sm text-gray-600">
-              ┬┐Est├ís seguro de eliminar el ├írea <strong>"{deleteConfirm.nombre}"</strong>? Esta acci├│n no se puede deshacer.
+              ¿Estás seguro de eliminar el área <strong>"{deleteConfirm.nombre}"</strong>? Esta acción no se puede deshacer.
             </p>
             <div className="flex gap-3">
               <button

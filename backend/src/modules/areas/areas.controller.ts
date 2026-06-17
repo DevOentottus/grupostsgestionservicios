@@ -15,7 +15,7 @@ const actualizarAreaSchema = z.object({
   encargado_id: z.number().int().nullable().optional(),
 });
 
-/** Upgrade un colaborador a encargado, y revierte el anterior si queda sin ├íreas */
+/** Upgrade un colaborador a encargado, y revierte el anterior si queda sin áreas */
 async function sincronizarRolEncargado(
   nuevoEncargadoId: number | null,
   viejoEncargadoId: number | null,
@@ -37,7 +37,7 @@ async function sincronizarRolEncargado(
     }
   }
 
-  // Bajar rol del anterior encargado si ya no es encargado de ninguna ├írea
+  // Bajar rol del anterior encargado si ya no es encargado de ninguna área
   if (viejoEncargadoId && viejoEncargadoId !== nuevoEncargadoId) {
     const { data: otrasAreas } = await supabase
       .from("areas")
@@ -67,7 +67,7 @@ export async function areasController(app: FastifyInstance) {
   // El hook de scope + route-level preHandler combinados causan timeout en Vercel.
   // Cada ruta debe incluir authenticate + authorize en su propio preHandler.
 
-  // ÔöÇÔöÇ GET /api/areas ÔÇö listar todas las ├íreas ÔöÇÔöÇ
+  // ÔöÇÔöÇ GET /api/areas ÔÇö listar todas las áreas ÔöÇÔöÇ
   app.get(
     "/api/areas",
     { preHandler: [requireRoles("admin", "sistema", "encargado", "colaborador")] },
@@ -78,7 +78,7 @@ export async function areasController(app: FastifyInstance) {
         area_id: number | null;
       };
 
-      // 1. Obtener IDs de ├íreas seg├║n el rol
+      // 1. Obtener IDs de áreas según el rol
       let areaIds: number[] | null = null;
 
       if (user.rol === "encargado" || user.rol === "colaborador") {
@@ -104,7 +104,7 @@ export async function areasController(app: FastifyInstance) {
       if (error) throw new Error(error.message);
       if (!areasData?.length) return { data: [] };
 
-      // Deduplicar por nombre de ├írea (conservar el ├írea m├ís antigua)
+      // Deduplicar por nombre de área (conservar el área más antigua)
       const seen = new Map<string, any>();
       for (const a of areasData) {
         if (!seen.has(a.area_nombre)) {
@@ -150,7 +150,7 @@ export async function areasController(app: FastifyInstance) {
     }
   );
 
-  // ÔöÇÔöÇ GET /api/areas/:id ÔÇö obtener ├írea con colaboradores ÔöÇÔöÇ
+  // ÔöÇÔöÇ GET /api/areas/:id ÔÇö obtener área con colaboradores ÔöÇÔöÇ
   app.get(
     "/api/areas/:id",
     { preHandler: [requireRoles("admin", "sistema", "encargado")] },
@@ -165,7 +165,7 @@ export async function areasController(app: FastifyInstance) {
         .limit(1);
 
       const area = areas?.[0];
-      if (!area) throw new NotFoundError("├ürea no encontrada");
+      if (!area) throw new NotFoundError("Área no encontrada");
 
       // Obtener colaboradores
       const { data: asignaciones } = await supabase
@@ -204,7 +204,7 @@ export async function areasController(app: FastifyInstance) {
     }
   );
 
-  // ÔöÇÔöÇ POST /api/areas ÔÇö crear ├írea ÔöÇÔöÇ
+  // ÔöÇÔöÇ POST /api/areas ÔÇö crear área ÔöÇÔöÇ
   app.post(
     "/api/areas",
     { preHandler: [requireRoles("admin", "sistema")] },
@@ -223,7 +223,7 @@ export async function areasController(app: FastifyInstance) {
 
       if (error) throw new Error(error.message);
       const area = newAreas?.[0];
-      if (!area) throw new Error("No se pudo crear el ├írea");
+      if (!area) throw new Error("No se pudo crear el área");
 
       const authUser = request.user as { user_id: number };
       await auditLog(null, authUser.user_id, "CREATE", "area", area.area_id, {
@@ -244,7 +244,7 @@ export async function areasController(app: FastifyInstance) {
     }
   );
 
-  // ÔöÇÔöÇ PUT /api/areas/:id ÔÇö actualizar ├írea ÔöÇÔöÇ
+  // ÔöÇÔöÇ PUT /api/areas/:id ÔÇö actualizar área ÔöÇÔöÇ
   app.put(
     "/api/areas/:id",
     { preHandler: [requireRoles("admin", "sistema")] },
@@ -259,7 +259,7 @@ export async function areasController(app: FastifyInstance) {
         .eq("area_id", areaId)
         .limit(1);
 
-      if (!existing?.length) throw new NotFoundError("├ürea no encontrada");
+      if (!existing?.length) throw new NotFoundError("Área no encontrada");
 
       const oldEncargadoId = existing[0].area_encargado_id ?? null;
 
@@ -296,7 +296,7 @@ export async function areasController(app: FastifyInstance) {
     }
   );
 
-  // ÔöÇÔöÇ DELETE /api/areas/:id ÔÇö eliminar ├írea ÔöÇÔöÇ
+  // ÔöÇÔöÇ DELETE /api/areas/:id ÔÇö eliminar área ÔöÇÔöÇ
   app.delete(
     "/api/areas/:id",
     { preHandler: [requireRoles("admin", "sistema")] },
@@ -311,7 +311,7 @@ export async function areasController(app: FastifyInstance) {
         .limit(1);
 
       const area = areas?.[0];
-      if (!area) throw new NotFoundError("├ürea no encontrada");
+      if (!area) throw new NotFoundError("Área no encontrada");
 
       // Verificar que no tenga servicios asignados
       const { count } = await supabase
@@ -320,7 +320,7 @@ export async function areasController(app: FastifyInstance) {
         .eq("area_id", areaId);
 
       if (count && count > 0) {
-        throw new ConflictError("No se puede eliminar el ├írea porque tiene servicios asignados");
+        throw new ConflictError("No se puede eliminar el área porque tiene servicios asignados");
       }
 
       await supabase.from("areas").delete().eq("area_id", areaId);
@@ -353,7 +353,7 @@ export async function areasController(app: FastifyInstance) {
         .eq("area_id", areaId)
         .limit(1);
 
-      if (!areas?.length) throw new NotFoundError("├ürea no encontrada");
+      if (!areas?.length) throw new NotFoundError("Área no encontrada");
 
       const { data: usuarios } = await supabase
         .from("usuarios")
@@ -384,7 +384,7 @@ export async function areasController(app: FastifyInstance) {
     }
   );
 
-  // ÔöÇÔöÇ GET /api/areas/:id/servicios ÔÇö servicios del ├írea ÔöÇÔöÇ
+  // ÔöÇÔöÇ GET /api/areas/:id/servicios ÔÇö servicios del área ÔöÇÔöÇ
   app.get(
     "/api/areas/:id/servicios",
     { preHandler: [requireRoles("admin", "sistema", "encargado")] },
@@ -398,7 +398,7 @@ export async function areasController(app: FastifyInstance) {
         .eq("area_id", areaId)
         .limit(1);
 
-      if (!areas?.length) throw new NotFoundError("├ürea no encontrada");
+      if (!areas?.length) throw new NotFoundError("Área no encontrada");
       const area = areas[0];
 
       const { data: serviciosData } = await supabase
