@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth.js";
 import { useUsuarios, useCrearUsuario, useEditarUsuario, useToggleUsuario } from "@/api/queries/useUsuarios.js";
-import { useAreas } from "@/api/queries/useAreas.js";
+
 import { cn } from "@/app/lib/utils";
 import type { Usuario } from "@shared/index.js";
 import {
   UserPlus, Search, Edit2, ToggleRight, ToggleLeft, X, Check, ChevronDown,
-  Shield, MapPin, AlertCircle,
+  AlertCircle,
 } from "lucide-react";
 
 const rolDisplay: Record<string, string> = {
@@ -33,7 +33,6 @@ interface UsuarioForm {
   telefono: string;
   email: string;
   rol: string;
-  area_ids: number[];
 }
 
 function generarUsernamePreview(nombres: string, apellidoPaterno: string): string {
@@ -57,13 +56,11 @@ const emptyForm: UsuarioForm = {
   telefono: "",
   email: "",
   rol: "colaborador",
-  area_ids: [],
 };
 
 export function UsuariosPage() {
   const { user: currentUser } = useAuth();
   const { data: usuarios, isLoading, isError, error } = useUsuarios();
-  const { data: areas } = useAreas();
   const crearUsuario = useCrearUsuario();
   const editarUsuario = useEditarUsuario();
   const toggleUsuario = useToggleUsuario();
@@ -102,7 +99,6 @@ export function UsuariosPage() {
       telefono: u.telefono || "",
       email: u.email,
       rol: u.rol,
-      area_ids: u.area_ids || [],
     });
     setShowModal(true);
   };
@@ -123,11 +119,6 @@ export function UsuariosPage() {
       payload.username = generatedUsername;
     }
     if (form.password) payload.password = form.password;
-    if ((form.rol === "encargado" || form.rol === "colaborador") && form.area_ids.length > 0) {
-      payload.area_ids = form.area_ids;
-    } else {
-      payload.area_ids = [];
-    }
 
     if (editingUser) {
       await editarUsuario.mutateAsync({ id: editingUser.id, data: payload });
@@ -141,15 +132,6 @@ export function UsuariosPage() {
   const handleToggle = async (u: Usuario) => {
     await toggleUsuario.mutateAsync(u.id);
     setConfirmToggle(null);
-  };
-
-  const toggleAreaId = (areaId: number) => {
-    setForm((prev) => ({
-      ...prev,
-      area_ids: prev.area_ids.includes(areaId)
-        ? prev.area_ids.filter((id) => id !== areaId)
-        : [...prev.area_ids, areaId],
-    }));
   };
 
   const canManage = currentUser?.rol === "sistema";
@@ -438,65 +420,6 @@ export function UsuariosPage() {
                   <option value="sistema">Sistema</option>
                 </select>
               </div>
-
-              {/* Area assignment for encargado/colaborador */}
-              {(form.rol === "encargado" || form.rol === "colaborador") && areas && areas.length > 0 && (
-                <div className="border border-blue-100 rounded-xl p-4 bg-blue-50 space-y-3">
-                  <p className="text-xs text-blue-800 font-bold flex items-center gap-1">
-                    <MapPin className="w-3.5 h-3.5" />
-                    ASIGNACIÓN DE ÁREAS
-                  </p>
-                  <p className="text-xs text-blue-600">
-                    {form.rol === "encargado"
-                      ? "Seleccioná el área que va a supervisar (solo una):"
-                      : "Seleccioná las áreas donde va a trabajar:"}
-                  </p>
-                  <div className="space-y-2">
-                    {areas.map((a: any) => (
-                      <label
-                        key={a.id}
-                        className="flex items-center gap-2 cursor-pointer select-none group"
-                      >
-                        {form.rol === "encargado" ? (
-                          /* Radio button -- single selection */
-                          <div
-                            onClick={() => setForm((prev) => ({ ...prev, area_ids: [a.id] }))}
-                            className={cn(
-                              "w-5 h-5 rounded-full border-2 flex items-center justify-center transition",
-                              form.area_ids.includes(a.id)
-                                ? "border-blue-600"
-                                : "border-gray-300 group-hover:border-blue-400",
-                            )}
-                          >
-                            {form.area_ids.includes(a.id) && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
-                          </div>
-                        ) : (
-                          /* Checkbox -- multiple selection */
-                          <div
-                            onClick={() => toggleAreaId(a.id)}
-                            className={cn(
-                              "w-5 h-5 rounded border-2 flex items-center justify-center transition",
-                              form.area_ids.includes(a.id)
-                                ? "bg-blue-600 border-blue-600"
-                                : "bg-white border-gray-300 group-hover:border-blue-400",
-                            )}
-                          >
-                            {form.area_ids.includes(a.id) && <Check className="w-3 h-3 text-white" />}
-                          </div>
-                        )}
-                        <span className="text-sm text-gray-700">{a.nombre}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {form.area_ids.length > 0 && (
-                    <div className="bg-white rounded-lg px-3 py-2 border border-gray-200 text-xs text-gray-600">
-                      <Shield className="w-3 h-3 inline mr-1 text-blue-600" />
-                      Áreas asignadas: <span className="font-semibold">{form.area_ids.length}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
 
             </div>
 

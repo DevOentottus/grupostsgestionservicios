@@ -389,7 +389,14 @@ export function AreasPage() {
                   >
                     <option value="">Sin encargado</option>
                     {usuarios
-                      ?.filter((u: any) => u.rol !== "sistema")
+                      ?.filter((u: any) => {
+                        if (editingArea && selectedDetail) {
+                          // Solo colaboradores del área + el encargado actual (por si ya no es colaborador)
+                          return selectedDetail.colaboradores.some((c) => c.usuario_id === u.id)
+                            || u.id === editingArea.encargado_id;
+                        }
+                        return u.rol !== "sistema";
+                      })
                       .map((u: any) => (
                         <option key={u.id} value={u.id}>
                           {u.nombres} ({u.rol})

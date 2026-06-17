@@ -43,8 +43,8 @@ const nav: NavItem[] = [
 ];
 
 const managerNav: NavItem[] = [
-  { to: "/areas", label: "Áreas", icon: <Building2 className="w-4 h-4" />, roles: ["admin", "sistema"] },
   { to: "/usuarios", label: "Usuarios", icon: <Users className="w-4 h-4" />, roles: ["sistema"] },
+  { to: "/areas", label: "Áreas", icon: <Building2 className="w-4 h-4" />, roles: ["admin", "sistema"] },
   { to: "/manager/clientes", label: "Clientes", icon: <Users className="w-4 h-4" />, roles: ["admin", "sistema"] },
   { to: "/manager/desempeno", label: "Desempeño", icon: <TrendingUp className="w-4 h-4" />, roles: ["admin", "encargado", "sistema"] },
 ];
