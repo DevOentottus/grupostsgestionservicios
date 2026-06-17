@@ -53,6 +53,13 @@ export async function loginUser(
   const valida = bcrypt.compareSync(password, usuario.usuario_contrasena);
   if (!valida) throw new UnauthorizedError("Credenciales inválidas");
 
+  // Registrar fecha de último login
+  const today = new Date().toISOString().split("T")[0];
+  await supabase
+    .from("usuarios")
+    .update({ usuario_ultimo_login: today })
+    .eq("usuario_id", usuario.usuario_id);
+
   // Obtener área del usuario (encargado → area_encargado_id, colaborador → areacolaboradores)
   let area_id: number | null = null;
   let area_nombre: string | null = null;

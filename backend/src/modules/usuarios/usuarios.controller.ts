@@ -233,6 +233,7 @@ export async function usuariosController(app: FastifyInstance) {
       if (input.telefono !== undefined) updateData.usuario_telefono = input.telefono;
       if (input.email !== undefined) updateData.usuario_correo = input.email;
       if (input.rol !== undefined) updateData.usuario_rol = input.rol;
+      if (input.username !== undefined) updateData.usuario_username = input.username;
       if (input.password) {
         updateData.usuario_contrasena = await bcrypt.hash(input.password, 10);
       }

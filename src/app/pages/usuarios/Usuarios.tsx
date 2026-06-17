@@ -109,6 +109,7 @@ export function UsuariosPage() {
 
   const handleSave = async () => {
     if (!form.nombres || !form.email) return;
+    const generatedUsername = generarUsernamePreview(form.nombres, form.apellido_paterno);
     const payload: Record<string, unknown> = {
       nombres: form.nombres,
       apellido_paterno: form.apellido_paterno || undefined,
@@ -118,6 +119,9 @@ export function UsuariosPage() {
       email: form.email,
       rol: form.rol,
     };
+    if (editingUser && generatedUsername !== editingUser.username) {
+      payload.username = generatedUsername;
+    }
     if (form.password) payload.password = form.password;
     if ((form.rol === "encargado" || form.rol === "colaborador") && form.area_ids.length > 0) {
       payload.area_ids = form.area_ids;
@@ -332,7 +336,7 @@ export function UsuariosPage() {
                   <input
                     type="text"
                     placeholder="Se genera automáticamente"
-                    value={form.username || generarUsernamePreview(form.nombres, form.apellido_paterno)}
+                    value={generarUsernamePreview(form.nombres, form.apellido_paterno) || form.username}
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none bg-gray-100 text-gray-500"
                     disabled
                   />
