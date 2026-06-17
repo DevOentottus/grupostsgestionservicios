@@ -136,7 +136,7 @@ export function UsuariosPage() {
 
   const canManage = currentUser?.rol === "sistema";
   const rolBloqueado = editingUser
-    ? editingUser.rol === "sistema" || (editingUser.rol === "colaborador" && (editingUser.area_ids?.length ?? 0) > 0)
+    ? editingUser.rol === "sistema" || editingUser.rol === "encargado" || (editingUser.rol === "colaborador" && (editingUser.area_ids?.length ?? 0) > 0)
     : false;
 
   return (
@@ -430,7 +430,9 @@ export function UsuariosPage() {
                     <AlertCircle className="w-3 h-3 shrink-0" />
                     {editingUser?.rol === "sistema"
                       ? "No podés cambiar el rol de un usuario Sistema"
-                      : `Este colaborador está asignado a ${editingUser?.area_ids?.length ?? 0} área${(editingUser?.area_ids?.length ?? 0) !== 1 ? "s" : ""}. Desasignalo del área primero para cambiarle el rol`}
+                      : editingUser?.rol === "encargado"
+                        ? "No podés cambiar el rol de un Encargado. Desasignalo del área primero."
+                        : `Este colaborador está asignado a ${editingUser?.area_ids?.length ?? 0} área${(editingUser?.area_ids?.length ?? 0) !== 1 ? "s" : ""}. Desasignalo del área primero para cambiarle el rol`}
                   </p>
                 )}
               </div>
