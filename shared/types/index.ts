@@ -52,6 +52,8 @@ export interface Servicio {
   detalles_accesorio: string | null;
   cliente_reporte: string | null;
   diagnostico_inicial: string | null;
+  servicio_audio_cliente: string | null;
+  servicio_audio_diagnostico: string | null;
   id_plantilla_inicial: number | null;
   datos_completos: boolean;
   consultado_cliente: boolean;

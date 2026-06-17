@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   useServicio, useTareas,
   useCrearTarea, useCompletarTarea, useReabrirTarea, useEliminarTarea,
-  useCambiarEstado, useEditarTareaInline,
+  useCambiarEstado, useEditarTareaInline, useReordenarTareas,
 } from "@/api/queries/useServicios.js";
 
 import { useCrearPlantilla } from "@/api/queries/usePlantillas.js";
@@ -13,6 +13,7 @@ import { useEvidencias } from "@/api/queries/useEvidencias.js";
 import { EvidenceUploader } from "@/app/components/evidencias/EvidenceUploader.js";
 import { EvidenceViewer } from "@/app/components/evidencias/EvidenceViewer.js";
 import { ConfirmDialog } from "@/app/components/ConfirmDialog.js";
+import { AudioRecorder } from "@/app/components/AudioRecorder.js";
 import { useAuth } from "@/lib/auth.js";
 import { toast } from "sonner";
 import { cn } from "@/app/lib/utils";
@@ -20,8 +21,8 @@ import QRCode from "qrcode";
 import {
   ArrowLeft, CheckCircle2, Clock, MessageSquare,
   Send, AlertTriangle, Plus, X, ChevronRight,
-  Pencil, MessageCircle,
-  Save, Camera, Share2, Play, Lock, RotateCcw,
+  Pencil, MessageCircle, Mic,
+  Save, Camera, Share2, Play, Lock, RotateCcw, ChevronUp, ChevronDown,
 } from "lucide-react";
 import type { Tarea } from "@shared/index.js";
 
@@ -206,6 +207,7 @@ export function ServicioDetailPage() {
   const cambiarEstado = useCambiarEstado();
   const editarTareaInline = useEditarTareaInline();
   const crearPlantilla = useCrearPlantilla();
+  const reordenarTareas = useReordenarTareas();
 
   const [nuevaTarea, setNuevaTarea] = useState("");
   const [editTareaId, setEditTareaId] = useState<number | null>(null);
@@ -455,6 +457,40 @@ export function ServicioDetailPage() {
           <p className="text-sm text-gray-600 mt-3 bg-gray-50 rounded-xl p-3 border border-gray-100">{servicio.descripcion}</p>
         )}
 
+        {/* Reporte del Cliente y Diagnóstico */}
+        {(servicio.cliente_reporte || servicio.diagnostico_inicial || servicio.servicio_audio_cliente || servicio.servicio_audio_diagnostico) && (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {(servicio.cliente_reporte || servicio.servicio_audio_cliente) && (
+              <div>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <Mic className="w-3.5 h-3.5" />
+                  Reporte del Cliente
+                </h4>
+                {servicio.cliente_reporte && (
+                  <p className="text-sm text-gray-700 bg-slate-50 rounded-xl p-3 border border-slate-100">{servicio.cliente_reporte}</p>
+                )}
+                {servicio.servicio_audio_cliente && (
+                  <audio src={servicio.servicio_audio_cliente} controls className="w-full h-10 mt-2" preload="metadata" />
+                )}
+              </div>
+            )}
+            {(servicio.diagnostico_inicial || servicio.servicio_audio_diagnostico) && (
+              <div>
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <Mic className="w-3.5 h-3.5" />
+                  Diagnóstico Inicial
+                </h4>
+                {servicio.diagnostico_inicial && (
+                  <p className="text-sm text-gray-700 bg-slate-50 rounded-xl p-3 border border-slate-100">{servicio.diagnostico_inicial}</p>
+                )}
+                {servicio.servicio_audio_diagnostico && (
+                  <audio src={servicio.servicio_audio_diagnostico} controls className="w-full h-10 mt-2" preload="metadata" />
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Progress Bar - Figma gradient style */}
         <div className="mt-4">
           <div className="flex justify-between text-sm mb-1.5">
@@ -590,10 +626,44 @@ export function ServicioDetailPage() {
                     <div
                       key={tarea.id}
                       className={cn(
-                        "flex items-center gap-3 px-5 py-3.5 transition group",
+                        "flex items-center gap-1 px-5 py-3.5 transition group",
                         tarea.completada ? "bg-green-50/30" : "hover:bg-gray-50",
                       )}
                     >
+                      {/* Reorder arrows */}
+                      <div className="flex flex-col items-center gap-0.5 mr-1 flex-shrink-0">
+                        {idx > 0 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              reordenarTareas.mutate([
+                                { id: tareasSorted[idx].id, orden: tareasSorted[idx - 1].orden },
+                                { id: tareasSorted[idx - 1].id, orden: tareasSorted[idx].orden },
+                              ])
+                            }
+                            className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"
+                            title="Subir"
+                          >
+                            <ChevronUp className="w-3 h-3" />
+                          </button>
+                        )}
+                        {idx < tareasSorted.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              reordenarTareas.mutate([
+                                { id: tareasSorted[idx].id, orden: tareasSorted[idx + 1].orden },
+                                { id: tareasSorted[idx + 1].id, orden: tareasSorted[idx].orden },
+                              ])
+                            }
+                            className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"
+                            title="Bajar"
+                          >
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+
                       {/* Checkbox */}
                       <button
                         onClick={async () => {

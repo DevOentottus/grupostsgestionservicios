@@ -5,10 +5,11 @@ import { useAreas } from "@/api/queries/useAreas.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import { useCrearServicio, useCrearTarea } from "@/api/queries/useServicios.js";
 import { usePlantillas, usePlantilla } from "@/api/queries/usePlantillas.js";
+import { AudioRecorder } from "@/app/components/AudioRecorder.js";
 import type { Usuario } from "@shared/index.js";
 import {
   ArrowLeft, User, Monitor, Wrench, CheckSquare, Square, Camera,
-  ChevronRight, ChevronLeft, Save, Plus, Trash2, ChevronUp, ChevronDown, Pencil,
+  ChevronRight, ChevronLeft, Save, Plus, Trash2, ChevronUp, ChevronDown, Pencil, Mic,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -165,6 +166,8 @@ export function NuevoServicioPage() {
     area_id: "",
     cliente_reporte: "",
     diagnostico_inicial: "",
+    servicio_audio_cliente: "",
+    servicio_audio_diagnostico: "",
     descripcion: "",
     colaborador_id: "",
     id_plantilla_inicial: "",
@@ -285,6 +288,8 @@ export function NuevoServicioPage() {
       detalles_accesorio: form.detalles_accesorio.trim() || null,
       cliente_reporte: form.cliente_reporte.trim() || null,
       diagnostico_inicial: form.diagnostico_inicial.trim() || null,
+      servicio_audio_cliente: form.servicio_audio_cliente || null,
+      servicio_audio_diagnostico: form.servicio_audio_diagnostico || null,
       codigo: form.codigo_servicio.trim() || undefined,
       permite_evidencia: permiteEvidencia,
     };
@@ -593,20 +598,36 @@ export function NuevoServicioPage() {
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <InputField
-                  label="Reporte del Cliente"
-                  value={form.cliente_reporte}
-                  onChange={(v) => set("cliente_reporte", v)}
-                  rows={2}
-                  placeholder="¿Qué reportó el cliente?"
-                />
-                <InputField
-                  label="Diagnóstico Inicial"
-                  value={form.diagnostico_inicial}
-                  onChange={(v) => set("diagnostico_inicial", v)}
-                  rows={2}
-                  placeholder="Primera impresión técnica"
-                />
+                <div className="space-y-2">
+                  <InputField
+                    label="Reporte del Cliente"
+                    value={form.cliente_reporte}
+                    onChange={(v) => set("cliente_reporte", v)}
+                    rows={2}
+                    placeholder="¿Qué reportó el cliente?"
+                  />
+                  <AudioRecorder
+                    label="Audio del reporte"
+                    existingUrl={form.servicio_audio_cliente || null}
+                    onAudioUploaded={(url) => set("servicio_audio_cliente", url)}
+                    onAudioRemoved={() => set("servicio_audio_cliente", "")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <InputField
+                    label="Diagnóstico Inicial"
+                    value={form.diagnostico_inicial}
+                    onChange={(v) => set("diagnostico_inicial", v)}
+                    rows={2}
+                    placeholder="Primera impresión técnica"
+                  />
+                  <AudioRecorder
+                    label="Audio del diagnóstico"
+                    existingUrl={form.servicio_audio_diagnostico || null}
+                    onAudioUploaded={(url) => set("servicio_audio_diagnostico", url)}
+                    onAudioRemoved={() => set("servicio_audio_diagnostico", "")}
+                  />
+                </div>
               </div>
 
               <InputField

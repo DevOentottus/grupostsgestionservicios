@@ -298,6 +298,14 @@ export const evidenciasApi = {
   }) => api.patch(`/tareas/${tareaId}/evidencia-config`, data),
 };
 
+// -- Audio API --
+export const audioApi = {
+  upload: (data: {
+    audio_base64: string;
+    content_type: string;
+  }) => api.post<ApiResponse<{ url: string }>>("/upload/audio", data),
+};
+
 // -- Evidencias Públicas API --
 export const evidenciasPublicApi = {
   listarPorCodigo: (codigo: string, dni?: string) =>

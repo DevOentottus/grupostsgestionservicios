@@ -539,8 +539,6 @@ export type Database = {
           cliente_telefono: string | null
           id_plantilla_inicial: number | null
           plantilla_id: number | null
-          servicio_audio_cliente: string | null
-          servicio_audio_diagnostico: string | null
           servicio_cliente_reporte: string | null
           servicio_codigo: string
           servicio_codigo_acceso: string | null
@@ -576,8 +574,6 @@ export type Database = {
           cliente_telefono?: string | null
           id_plantilla_inicial?: number | null
           plantilla_id?: number | null
-          servicio_audio_cliente?: string | null
-          servicio_audio_diagnostico?: string | null
           servicio_cliente_reporte?: string | null
           servicio_codigo: string
           servicio_codigo_acceso?: string | null
@@ -613,8 +609,6 @@ export type Database = {
           cliente_telefono?: string | null
           id_plantilla_inicial?: number | null
           plantilla_id?: number | null
-          servicio_audio_cliente?: string | null
-          servicio_audio_diagnostico?: string | null
           servicio_cliente_reporte?: string | null
           servicio_codigo?: string
           servicio_codigo_acceso?: string | null

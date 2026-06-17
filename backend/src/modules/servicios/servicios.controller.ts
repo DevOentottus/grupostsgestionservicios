@@ -24,6 +24,8 @@ const servicioSchema = z.object({
   detalles_accesorio: z.string().nullable().optional(),
   cliente_reporte: z.string().nullable().optional(),
   diagnostico_inicial: z.string().nullable().optional(),
+  servicio_audio_cliente: z.string().nullable().optional(),
+  servicio_audio_diagnostico: z.string().nullable().optional(),
   id_plantilla_inicial: z.number().int().nullable().optional(),
   colaborador_id: z.number().int().nullable().optional(),
   permite_evidencia: z.boolean().nullable().optional(),
@@ -160,6 +162,8 @@ export async function serviciosController(app: FastifyInstance) {
         servicio_detalles_accesorio: input.detalles_accesorio || null,
         servicio_cliente_reporte: input.cliente_reporte || null,
         servicio_diagnostico_inicial: input.diagnostico_inicial || null,
+        servicio_audio_cliente: input.servicio_audio_cliente || null,
+        servicio_audio_diagnostico: input.servicio_audio_diagnostico || null,
         id_plantilla_inicial: input.id_plantilla_inicial ?? null,
         servicio_permite_evidencia: input.permite_evidencia ?? true,
         servicio_fecha_creacion: now.toISOString().split("T")[0],
@@ -834,6 +838,8 @@ function mapServicio(s: any) {
     detalles_accesorio: s.servicio_detalles_accesorio || null,
     cliente_reporte: s.servicio_cliente_reporte || null,
     diagnostico_inicial: s.servicio_diagnostico_inicial || null,
+    servicio_audio_cliente: s.servicio_audio_cliente || null,
+    servicio_audio_diagnostico: s.servicio_audio_diagnostico || null,
     id_plantilla_inicial: s.id_plantilla_inicial || null,
     datos_completos: false, // no disponible en Supabase
     consultado_cliente: false, // no disponible en Supabase
