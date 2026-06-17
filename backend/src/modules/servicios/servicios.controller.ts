@@ -894,16 +894,17 @@ async function reporteTecnicoPDF(request: any, reply: any) {
               if (res.ok) {
                 const ab = await res.arrayBuffer();
                 raw = Buffer.from(ab);
-                // Normalizar: eliminar perfiles ICC, convertir a JPEG puro
-                // (import dinámico para no romper serverless de Vercel)
+                // Normalizar: convertir a PNG (pdfkit lo maneja sin problemas
+                // de perfiles ICC, a diferencia de JPEG/jpeg-js)
+                // Import dinámico para no romper serverless de Vercel
                 try {
                   const sharpMod = await import("sharp");
                   const normalized = await sharpMod.default(raw)
-                    .jpeg({ quality: 95 })
+                    .png()
                     .toBuffer();
                   imgBuffers.set(url, normalized);
                 } catch {
-                  // sharp no disponible en este runtime, usar raw
+                  // sharp no disponible, usar raw
                   imgBuffers.set(url, raw);
                 }
               }
@@ -1040,12 +1041,10 @@ async function reporteTecnicoPDF(request: any, reply: any) {
               const buf = imgBuffers.get(imgUrl);
               if (buf) {
                 try {
-                  // Mostrar la imagen con fit para mantener aspect ratio exacto
-                  const maxW = doc.page.width - 80;
+                  // Mostrar la imagen a lo ancho (pdfkit respeta aspect ratio)
                   doc.image(buf, {
-                    fit: [maxW, 600],
+                    width: doc.page.width - 80,
                     align: "center",
-                    valign: "center",
                   });
                   doc.moveDown(0.3);
                 } catch {
