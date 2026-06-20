@@ -832,6 +832,54 @@ export async function serviciosController(app: FastifyInstance) {
   );
 }
 
+// -- Helper: remueve perfil ICC de un JPEG sin dependencias --
+function stripICCProfile(buf: Buffer): Buffer {
+  // Busca el marcador APP2 (0xFF 0xE2) donde va el perfil ICC en JPEG
+  let i = 0;
+  while (i < buf.length - 1) {
+    if (buf[i] === 0xFF && buf[i + 1] === 0xE2) {
+      const len = (buf[i + 2] << 8) + buf[i + 3] + 2; // incluye los 2 bytes de longitud
+      return Buffer.concat([buf.subarray(0, i), buf.subarray(i + len)]);
+    }
+    // Saltar otros marcadores APPn (0xFFE0–0xFFEF)
+    if (buf[i] === 0xFF && buf[i + 1] >= 0xE0 && buf[i + 1] <= 0xEF) {
+      const len = (buf[i + 2] << 8) + buf[i + 3] + 2;
+      i += len;
+    } else {
+      i++;
+    }
+  }
+  return buf; // sin ICC que remover
+}
+
+// -- Helper: normaliza imagen para PDF (intenta sharp, fallback a strip ICC) --
+async function normalizeImageForPDF(raw: Buffer): Promise<Buffer> {
+  // Estrategia 1: Sharp → JPEG sRGB sin ICC
+  try {
+    const sharpMod = await import("sharp");
+    try {
+      return await sharpMod.default(raw)
+        .toColorspace("srgb")
+        .jpeg({ force: true })
+        .toBuffer();
+    } catch {
+      // Estrategia 2: Sharp → PNG (pdfkit lo maneja bien)
+      try {
+        return await sharpMod.default(raw)
+          .toColorspace("srgb")
+          .png({ force: true })
+          .toBuffer();
+      } catch {
+        // sharp no pudo procesar esta imagen → continuar con raw
+      }
+    }
+  } catch {
+    // Sharp no disponible en este entorno
+  }
+  // Estrategia 3: remover ICC manualmente del JPEG (sin dependencias)
+  return stripICCProfile(raw);
+}
+
 // -- Helper: genera PDF de reporte técnico --
 async function reporteTecnicoPDF(request: any, reply: any) {
   const { id } = request.params as { id: string };
@@ -879,8 +927,7 @@ async function reporteTecnicoPDF(request: any, reply: any) {
     eviPorTarea[tid].push(ev);
   }
 
-  // 5. Pre-fetchear imágenes y normalizarlas a sRGB JPEG
-  //    (pdfkit/jpeg-js no maneja perfiles ICC ni formatos como HEIC)
+  // 5. Pre-fetchear imágenes y normalizarlas (sharp → strip ICC → raw)
   const imgBuffers = new Map<string, Buffer | null>();
   const todasEvis = evidencias || [];
   if (todasEvis.length > 0) {
@@ -888,29 +935,17 @@ async function reporteTecnicoPDF(request: any, reply: any) {
       todasEvis.map(async (ev) => {
         const url = ev.archivo_url;
         if (!url) return;
-            let raw: Buffer | undefined;
-            try {
-              const res = await fetch(url);
-              if (res.ok) {
-                const ab = await res.arrayBuffer();
-                raw = Buffer.from(ab);
-                // Normalizar: convertir a PNG (pdfkit lo maneja sin problemas
-                // de perfiles ICC, a diferencia de JPEG/jpeg-js)
-                // Import dinámico para no romper serverless de Vercel
-                try {
-                  const sharpMod = await import("sharp");
-                  const normalized = await sharpMod.default(raw)
-                    .png()
-                    .toBuffer();
-                  imgBuffers.set(url, normalized);
-                } catch {
-                  // sharp no disponible, usar raw
-                  imgBuffers.set(url, raw);
-                }
-              }
-            } catch {
-              if (raw) imgBuffers.set(url, raw);
-            }
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const ab = await res.arrayBuffer();
+            const raw = Buffer.from(ab);
+            const normalized = await normalizeImageForPDF(raw);
+            imgBuffers.set(url, normalized);
+          }
+        } catch {
+          // error de fetch, ignorar
+        }
       })
     );
   }
