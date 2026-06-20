@@ -46,6 +46,17 @@ export function useCambiarEstadoEvidencia() {
   });
 }
 
+export function useCambiarMostrarCliente() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ evidenciaId, mostrar_cliente }: { evidenciaId: number; mostrar_cliente: boolean }) =>
+      evidenciasApi.cambiarMostrarCliente(evidenciaId, mostrar_cliente),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["evidencias"] });
+    },
+  });
+}
+
 export function useConfigurarEvidenciaTarea() {
   const qc = useQueryClient();
   return useMutation({

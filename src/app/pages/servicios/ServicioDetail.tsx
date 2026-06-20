@@ -65,6 +65,26 @@ const EFICIENCIA_CONFIG: Record<string, { label: string; class: string; icon: st
 };
 
 /** Combinar fecha + hora del backend a locale legible */
+function formatElapsed(fromDate: string, fromTime?: string | null, now?: number): string {
+  try {
+    const start = new Date(`${fromDate}T${fromTime || "00:00:00"}`);
+    const diff = (now ?? Date.now()) - start.getTime();
+    if (diff < 0) return "—";
+    const segs = Math.floor(diff / 1000);
+    const mins = Math.floor(segs / 60);
+    const hrs = Math.floor(mins / 60);
+    const days = Math.floor(hrs / 24);
+    const parts: string[] = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hrs % 24 > 0) parts.push(`${hrs % 24}h`);
+    if (mins % 60 > 0) parts.push(`${mins % 60}m`);
+    if (parts.length === 0) return "< 1m";
+    return parts.join(" ");
+  } catch {
+    return "—";
+  }
+}
+
 function formatDateTime(fecha: string, hora?: string | null): string {
   try {
     const d = new Date(`${fecha}T${hora || "00:00:00"}`);
@@ -224,6 +244,13 @@ export function ServicioDetailPage() {
   const [showCompartir, setShowCompartir] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState("");
+
+  // Ticker para contador de tiempo transcurrido
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   // Generar QR cuando se abre el modal
   useEffect(() => {
@@ -421,21 +448,21 @@ export function ServicioDetailPage() {
                 <FileText className="w-3.5 h-3.5" />
                 PDF
               </button>
-              {/* Gestion action icons: bloqueado→desbloquear, cancelado→reactivar, otherwise→bloquear/cancelar */}
+              {/* Gestion action buttons: estilo tipo PDF */}
               {esGestion && (servicio.estado === "bloqueado" ? (
-                <button onClick={irAEnProgreso} className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition" title="Desbloquear">
+                <button onClick={irAEnProgreso} className="text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5" title="Desbloquear">
                   <Lock className="w-3.5 h-3.5" />
                 </button>
               ) : servicio.estado === "cancelado" ? (
-                <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "pendiente" })} className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition" title="Reactivar">
+                <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "pendiente" })} className="text-xs font-medium text-green-600 hover:text-green-700 hover:bg-green-50 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5" title="Reactivar">
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
               ) : (
                 <>
-                  <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado" })} className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition" title="Bloquear">
+                  <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado" })} className="text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5" title="Bloquear">
                     <Lock className="w-3.5 h-3.5" />
                   </button>
-                  <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition" title="Cancelar">
+                  <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })} className="text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5" title="Cancelar">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </>
@@ -448,11 +475,14 @@ export function ServicioDetailPage() {
                   {eficienciaConf.label}
                 </span>
               )}
-              {/* Hora de registro */}
+              {/* FI: fecha de inicio + contador de tiempo transcurrido */}
               {servicio.created_at && (
-                <span className="text-xs text-gray-500 flex items-center gap-1 ml-1">
-                  <Clock className="w-3 h-3" />
-                  {formatDateTime(servicio.created_at, servicio.hora_creacion)}
+                <span className="text-xs text-gray-500 flex items-center gap-1 ml-1" title={`Creado: ${servicio.created_at} ${servicio.hora_creacion || ""}`}>
+                  <Clock className="w-3 h-3 shrink-0" />
+                  <span className="font-medium text-gray-600">FI:</span>
+                  <span>{formatDateTime(servicio.created_at, servicio.hora_creacion)}</span>
+                  <span className="text-gray-300 mx-0.5">·</span>
+                  <span className="font-mono text-gray-600">{formatElapsed(servicio.created_at, servicio.hora_creacion, now)}</span>
                 </span>
               )}
             </div>
@@ -650,39 +680,41 @@ export function ServicioDetailPage() {
                         tarea.completada ? "bg-green-50/30" : "hover:bg-gray-50",
                       )}
                     >
-                      {/* Reorder arrows */}
-                      <div className="flex flex-col items-center gap-0.5 mr-1 flex-shrink-0">
-                        {idx > 0 && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              reordenarTareas.mutate([
-                                { id: tareasSorted[idx].id, orden: tareasSorted[idx - 1].orden },
-                                { id: tareasSorted[idx - 1].id, orden: tareasSorted[idx].orden },
-                              ])
-                            }
-                            className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"
-                            title="Subir"
-                          >
-                            <ChevronUp className="w-3 h-3" />
-                          </button>
-                        )}
-                        {idx < tareasSorted.length - 1 && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              reordenarTareas.mutate([
-                                { id: tareasSorted[idx].id, orden: tareasSorted[idx + 1].orden },
-                                { id: tareasSorted[idx + 1].id, orden: tareasSorted[idx].orden },
-                              ])
-                            }
-                            className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"
-                            title="Bajar"
-                          >
-                            <ChevronDown className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
+                      {/* Reorder arrows — solo entre incompletas */}
+                      {!tarea.completada && (
+                        <div className="flex flex-col items-center gap-0.5 mr-1 flex-shrink-0">
+                          {idx > 0 && !tareasSorted[idx - 1].completada && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                reordenarTareas.mutate([
+                                  { id: tareasSorted[idx].id, orden: tareasSorted[idx - 1].orden },
+                                  { id: tareasSorted[idx - 1].id, orden: tareasSorted[idx].orden },
+                                ])
+                              }
+                              className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"
+                              title="Subir"
+                            >
+                              <ChevronUp className="w-3 h-3" />
+                            </button>
+                          )}
+                          {idx < tareasSorted.length - 1 && !tareasSorted[idx + 1].completada && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                reordenarTareas.mutate([
+                                  { id: tareasSorted[idx].id, orden: tareasSorted[idx + 1].orden },
+                                  { id: tareasSorted[idx + 1].id, orden: tareasSorted[idx].orden },
+                                ])
+                              }
+                              className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"
+                              title="Bajar"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      )}
 
                       {/* Checkbox */}
                       <button

@@ -291,6 +291,8 @@ export const evidenciasApi = {
     api.post(`/evidencias/${evidenciaId}/comentario`, data),
   cambiarEstado: (evidenciaId: number, estado: string) =>
     api.patch(`/evidencias/${evidenciaId}/estado`, { estado }),
+  cambiarMostrarCliente: (evidenciaId: number, mostrar_cliente: boolean) =>
+    api.patch(`/evidencias/${evidenciaId}/mostrar-cliente`, { mostrar_cliente }),
   configurarTarea: (tareaId: number, data: {
     requiere_evidencia?: boolean;
     modo_evidencia?: string | null;

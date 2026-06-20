@@ -238,6 +238,28 @@ export async function evidenciasController(app: FastifyInstance) {
     }
   );
 
+  // -- PATCH /api/evidencias/:id/mostrar-cliente --
+  app.patch(
+    "/api/evidencias/:id/mostrar-cliente",
+    { preHandler: [requireRoles("admin", "sistema")] },
+    async (request) => {
+      const { id } = request.params as { id: string };
+      const input = z.object({ mostrar_cliente: z.boolean() }).parse(request.body);
+      const user = request.user as { user_id: number; rol: string; };
+      const evidenciaId = parseInt(id);
+
+      const { error } = await supabase
+        .from("evidencias")
+        .update({ mostrar_cliente: input.mostrar_cliente })
+        .eq("evidencia_id", evidenciaId);
+
+      if (error) throw new ValidationError("Error al actualizar mostrar_cliente: " + error.message);
+
+      await auditLog(null, user.user_id, "UPDATE", "evidencias", evidenciaId, { mostrar_cliente: input.mostrar_cliente });
+      return { data: { id: evidenciaId, mostrar_cliente: input.mostrar_cliente } };
+    }
+  );
+
   // -- PATCH /api/tareas/:id/evidencia-config --
   app.patch(
     "/api/tareas/:id/evidencia-config",
@@ -325,6 +347,7 @@ export async function evidenciasController(app: FastifyInstance) {
       .from("evidencias")
       .select("*, comentariosevidencias(*)")
       .eq("servicio_id", s.servicio_id)
+      .eq("mostrar_cliente", true)
       .neq("estado", "rechazado")
       .order("created_at", { ascending: false });
 
@@ -406,5 +429,6 @@ function mapEvidencia(row: any) {
     submitted_by: row.submitted_by,
     submitted_at: row.submitted_at,
     created_at: row.created_at,
+    mostrar_cliente: row.mostrar_cliente ?? false,
   };
 }

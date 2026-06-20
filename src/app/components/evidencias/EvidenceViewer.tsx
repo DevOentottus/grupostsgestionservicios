@@ -2,10 +2,10 @@ import { useState, useMemo } from "react";
 import { cn } from "@/app/lib/utils";
 import {
   Image, FileVideo, MessageCircle, Send, CheckCircle2,
-  XCircle, Clock, ThumbsUp, ThumbsDown, ChevronRight,
+  XCircle, Clock, ThumbsUp, ThumbsDown, ChevronRight, Eye,
 } from "lucide-react";
 import type { Evidencia, EvidenciaComentario } from "@shared/index.js";
-import { useAgregarComentarioEvidencia, useCambiarEstadoEvidencia } from "@/api/queries/useEvidencias.js";
+import { useAgregarComentarioEvidencia, useCambiarEstadoEvidencia, useCambiarMostrarCliente } from "@/api/queries/useEvidencias.js";
 import { evidenciasPublicApi } from "@/api/client.js";
 
 interface EvidenceViewerProps {
@@ -37,6 +37,7 @@ export function EvidenceViewer({
   const [comentarios, setComentarios] = useState<Record<number, string>>({});
   const addComentario = useAgregarComentarioEvidencia();
   const cambiarEstado = useCambiarEstadoEvidencia();
+  const cambiarMostrarCliente = useCambiarMostrarCliente();
 
   // Agrupar evidencias por tarea_id
   const grouped = useMemo(() => {
@@ -147,6 +148,22 @@ export function EvidenceViewer({
               Rechazar
             </button>
           </div>
+        )}
+
+        {/* Mostrar al cliente (solo admin/sistema) */}
+        {!readOnly && (userRol === "admin" || userRol === "sistema") && (
+          <label className="flex items-center gap-2 px-4 py-2 border-t border-slate-100 cursor-pointer select-none hover:bg-slate-50 transition">
+            <input
+              type="checkbox"
+              checked={ev.mostrar_cliente}
+              onChange={() =>
+                cambiarMostrarCliente.mutate({ evidenciaId: ev.id, mostrar_cliente: !ev.mostrar_cliente })
+              }
+              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+            />
+            <Eye className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-xs text-slate-600 font-medium">Mostrar al cliente</span>
+          </label>
         )}
 
         {/* Colaborador comment */}

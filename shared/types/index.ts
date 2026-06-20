@@ -223,6 +223,7 @@ export interface Evidencia {
   submitted_by: number | null;
   submitted_at: string;
   created_at: string;
+  mostrar_cliente: boolean;
 }
 
 export interface EvidenciaComentario {
