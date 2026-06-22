@@ -196,7 +196,7 @@ export function ServicioPublicoPage() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Top bar */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="w-full px-4 py-3 flex items-center gap-3">
           <Link to="/" className="text-gray-400 hover:text-gray-600 transition">
             <ArrowLeft className="w-5 h-5" />
           </Link>
@@ -207,7 +207,7 @@ export function ServicioPublicoPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="w-full px-4 py-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
 
           {/* Left column (3/4): Vista de seguimiento */}

@@ -489,10 +489,13 @@ export function ServicioDetailPage() {
         <div className={cn("p-4 md:p-6 transition-colors", HEADER_BG[servicio.estado] || "bg-white")}>
           <div className="flex flex-col md:flex-row justify-between items-start gap-4">
             <div className="flex-1">
-              <div className="flex items-center gap-3 flex-wrap">
-                <h2 className="text-xl text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
-              </div>
-              <p className="text-sm text-gray-500 mt-0.5">{servicio.cliente_nombre}</p>
+              <p className="text-sm text-gray-500">{servicio.cliente_nombre}</p>
+              {servicio.colaborador_nombre && (
+                <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                  Técnico: {servicio.colaborador_nombre}
+                </p>
+              )}
             </div>
 
             {/* Estado badge */}
@@ -501,8 +504,10 @@ export function ServicioDetailPage() {
             </span>
           </div>
 
+          <h2 className="text-xl text-gray-900 mt-4" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
+
           {servicio.descripcion && (
-            <p className="text-sm text-gray-600 mt-3 bg-gray-50 rounded-xl p-3 border border-gray-100">{servicio.descripcion}</p>
+            <p className="text-sm text-gray-600 mt-2 bg-gray-50 rounded-xl p-3 border border-gray-100">{servicio.descripcion}</p>
           )}
 
           {/* Reporte del Cliente y Diagnóstico */}
