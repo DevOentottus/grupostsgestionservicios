@@ -51,10 +51,10 @@ export function HelpDrawer({ open, onOpenChange }: HelpDrawerProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="sm:max-w-[400px] w-full p-0 gap-0"
+        className="sm:max-w-[400px] w-full p-0 gap-0 bg-[#f5f0eb]"
         aria-describedby={undefined}
       >
-        <SheetHeader className="bg-yellow-50 border-b border-yellow-200 p-4">
+        <SheetHeader className="bg-[#efe8e0] border-b border-[#e0d6cb] p-4">
           <div className="flex items-center justify-between gap-2 pr-8">
             <SheetTitle className="text-lg font-semibold">
               Ayuda: {pageTitle}
@@ -86,7 +86,7 @@ export function HelpDrawer({ open, onOpenChange }: HelpDrawerProps) {
 
               {/* TOC -- Índice de secciones */}
               {content.sections.length > 1 && (
-                <nav className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <nav className="mb-6 p-4 bg-[#efe8e0] rounded-lg border border-[#e0d6cb]">
                   <h4 className="text-sm font-semibold text-gray-700 mb-2">
                     En esta guía:
                   </h4>
