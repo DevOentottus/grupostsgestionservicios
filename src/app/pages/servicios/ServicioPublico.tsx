@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { PublicServicioResponse, Encuesta, Evidencia, EvidenciaComentario } from "@shared/index.js";
 import { EvidenceViewer } from "@/app/components/evidencias/EvidenceViewer.js";
+import { ProcessFlow } from "@/app/components/flow/ProcessFlow.js";
 
 function formatETA(minutes: number): string {
   if (minutes < 1) return "Menos de 1 min";
@@ -176,6 +177,16 @@ export function ServicioPublicoPage() {
   // Satisfaction rating state
   const encuestaYaEnviada = !!data?.encuesta;
 
+  // Convert tareas to flow steps
+  const flowSteps = tareas.map((t: any) => ({
+    id: t.id,
+    titulo: t.titulo,
+    completada: t.completada,
+    orden: t.orden,
+    completada_at: t.completada_at,
+    tiempo_estimado: t.tiempo_estimado,
+  }));
+
   // Build timeline from completed tasks
   const timelineItems = tareas
     .filter((t: any) => t.completada && t.completada_at)
@@ -185,7 +196,7 @@ export function ServicioPublicoPage() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Top bar */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link to="/" className="text-gray-400 hover:text-gray-600 transition">
             <ArrowLeft className="w-5 h-5" />
           </Link>
@@ -196,7 +207,7 @@ export function ServicioPublicoPage() {
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
+      <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
         {/* Service Card -- compacto */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-5 space-y-3">
           <div className="h-1.5 bg-blue-600 -mx-5 -mt-5 mb-3" />
@@ -241,127 +252,132 @@ export function ServicioPublicoPage() {
           </div>
         </div>
 
-        {/* -- Satisfacción / Seguimiento del servicio -- */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center gap-2 px-5 pt-5 pb-3">
-            <div className={cn(
-              "w-8 h-8 rounded-xl flex items-center justify-center",
-              servicio.estado === "completado" ? "bg-green-100" : "bg-blue-100",
-            )}>
-              {servicio.estado === "completado" ? (
-                <CheckCircle2 className="w-4 h-4 text-green-600" />
-              ) : (
-                <Clock className="w-4 h-4 text-blue-600" />
+        {/* Grid: seguimiento (2/3) + carrusel (1/3) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {/* Left column — Seguimiento */}
+          <div className="md:col-span-2 space-y-5">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center gap-2 px-5 pt-5 pb-3">
+                <div className={cn(
+                  "w-8 h-8 rounded-xl flex items-center justify-center",
+                  servicio.estado === "completado" ? "bg-green-100" : "bg-blue-100",
+                )}>
+                  {servicio.estado === "completado" ? (
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <Clock className="w-4 h-4 text-blue-600" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-sm text-gray-900 font-semibold">Seguimiento del servicio</h3>
+                  <p className="text-[10px] text-gray-400">
+                    {servicio.estado === "completado" ? "Servicio finalizado" : "Estado actual del servicio"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Process Flow — progreso por tareas con números */}
+              <div className="px-5 pb-4">
+                <ProcessFlow steps={flowSteps} />
+              </div>
+
+              {/* Time metrics row */}
+              <div className="grid grid-cols-2 gap-px bg-gray-100 mx-5 mb-4 rounded-xl overflow-hidden">
+                <div className="bg-white p-3 text-center">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">Transcurrido</p>
+                  <p className="text-base text-gray-900 font-bold mt-0.5">
+                    {formatETA(tiempo_transcurrido_minutos)}
+                  </p>
+                </div>
+                <div className="bg-white p-3 text-center">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">Restante estimado</p>
+                  <p className="text-base text-blue-700 font-bold mt-0.5">
+                    {progreso.porcentaje === 100 ? "--" : formatETA(etaMinutos)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Timeline */}
+              {timelineItems.length > 0 && (
+                <div className="border-t border-gray-100 px-5 py-4">
+                  <h4 className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-3">Línea de tiempo</h4>
+                  <div className="relative pl-5 space-y-3">
+                    <div className="absolute left-[7px] top-1 bottom-0 w-0.5 bg-gray-100" />
+                    {timelineItems.map((item: any) => (
+                      <div key={item.id} className="relative">
+                        <div className="absolute -left-[18px] top-0.5 w-3.5 h-3.5 rounded-full bg-green-100 flex items-center justify-center">
+                          <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        </div>
+                        <p className="text-xs text-gray-700 leading-snug">{item.titulo}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          {new Date(item.completada_at).toLocaleString("es-PE", {
+                            day: "numeric",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-            <div>
-              <h3 className="text-sm text-gray-900 font-semibold">Seguimiento del servicio</h3>
-              <p className="text-[10px] text-gray-400">
-                {servicio.estado === "completado" ? "Servicio finalizado" : "Estado actual del servicio"}
-              </p>
-            </div>
           </div>
 
-          {/* Progress bar */}
-          <div className="px-5 pb-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-gray-500 font-medium">Progreso</span>
-              <span className="text-xs text-gray-900 font-bold">{progreso.porcentaje}%</span>
-            </div>
-            <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-1000 ease-out"
-                style={{
-                  width: `${progreso.porcentaje}%`,
-                  background: progreso.porcentaje === 100
-                    ? "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)"
-                    : "linear-gradient(90deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%)",
-                }}
-              />
-            </div>
-            <p className="text-[10px] text-gray-400 mt-1.5 text-center">
-              {progreso.completadas} de {progreso.total} tareas completadas
-            </p>
-          </div>
+          {/* Right column — Carrusel de ofertas y promociones */}
+          <div className="space-y-4">
+            <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-5 text-white shadow-sm">
+              <h3 className="text-sm font-bold mb-1">Ofertas y Promociones</h3>
+              <p className="text-[10px] text-blue-200 mb-4">Aprovechá estos beneficios exclusivos</p>
 
-          {/* Time metrics row */}
-          <div className="grid grid-cols-2 gap-px bg-gray-100 mx-5 mb-4 rounded-xl overflow-hidden">
-            <div className="bg-white p-3 text-center">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider">Transcurrido</p>
-              <p className="text-base text-gray-900 font-bold mt-0.5">
-                {formatETA(tiempo_transcurrido_minutos)}
-              </p>
-            </div>
-            <div className="bg-white p-3 text-center">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider">Restante estimado</p>
-              <p className="text-base text-blue-700 font-bold mt-0.5">
-                {progreso.porcentaje === 100 ? "--" : formatETA(etaMinutos)}
-              </p>
-            </div>
-          </div>
-
-          {/* Task list */}
-          <div className="px-5 pb-4">
-            <h4 className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2.5">
-              Tareas
-              <span className="text-gray-300 font-normal ml-1">({progreso.completadas}/{progreso.total})</span>
-            </h4>
-            <div className="space-y-1">
-              {tareas
-                .sort((a: any, b: any) => a.orden - b.orden)
-                .map((tarea: any) => (
-                  <div
-                    key={tarea.id}
-                    className={cn(
-                      "flex items-center gap-2.5 p-2 rounded-lg transition",
-                      tarea.completada ? "bg-green-50" : "bg-gray-50",
-                    )}
-                  >
-                    {tarea.completada ? (
-                      <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    ) : (
-                      <div className="w-4 h-4 border-2 border-gray-300 rounded-full flex-shrink-0" />
-                    )}
-                    <span className={cn(
-                      "text-xs flex-1 leading-snug",
-                      tarea.completada ? "line-through text-gray-400" : "text-gray-700",
-                    )}>
-                      {tarea.titulo}
-                    </span>
-                    {tarea.tiempo_estimado && !tarea.completada && (
-                      <span className="text-[10px] text-gray-400 flex-shrink-0">{tarea.tiempo_estimado} min</span>
-                    )}
-                  </div>
-                ))}
-            </div>
-          </div>
-
-          {/* Timeline */}
-          {timelineItems.length > 0 && (
-            <div className="border-t border-gray-100 px-5 py-4">
-              <h4 className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-3">Línea de tiempo</h4>
-              <div className="relative pl-5 space-y-3">
-                <div className="absolute left-[7px] top-1 bottom-0 w-0.5 bg-gray-100" />
-                {timelineItems.map((item: any) => (
-                  <div key={item.id} className="relative">
-                    <div className="absolute -left-[18px] top-0.5 w-3.5 h-3.5 rounded-full bg-green-100 flex items-center justify-center">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              {/* Carousel cards */}
+              <div className="overflow-x-auto -mx-2 pb-2">
+                <div className="flex gap-3 px-2 min-w-max">
+                  {/* Card 1 */}
+                  <div className="w-56 bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-shrink-0">
+                    <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center mb-3">
+                      <span className="text-blue-900 text-lg font-bold">%</span>
                     </div>
-                    <p className="text-xs text-gray-700 leading-snug">{item.titulo}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">
-                      {new Date(item.completada_at).toLocaleString("es-PE", {
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
+                    <h4 className="text-sm font-semibold mb-1">Mantenimiento Preventivo</h4>
+                    <p className="text-[10px] text-blue-200 leading-relaxed mb-3">20% de descuento en contratación de plan anual. Revisión completa incluida.</p>
+                    <span className="inline-block text-[10px] font-bold text-yellow-300 bg-yellow-400/20 px-2 py-0.5 rounded-full">Válido hasta 30/06</span>
                   </div>
-                ))}
+
+                  {/* Card 2 */}
+                  <div className="w-56 bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-shrink-0">
+                    <div className="w-10 h-10 bg-green-400 rounded-xl flex items-center justify-center mb-3">
+                      <span className="text-white text-lg font-bold">⚡</span>
+                    </div>
+                    <h4 className="text-sm font-semibold mb-1">Servicio Express 24h</h4>
+                    <p className="text-[10px] text-blue-200 leading-relaxed mb-3">Respuesta en menos de 24 horas. Sin recargo por urgencia en tu primer servicio.</p>
+                    <span className="inline-block text-[10px] font-bold text-green-300 bg-green-400/20 px-2 py-0.5 rounded-full">Nuevo cliente</span>
+                  </div>
+
+                  {/* Card 3 */}
+                  <div className="w-56 bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-shrink-0">
+                    <div className="w-10 h-10 bg-purple-400 rounded-xl flex items-center justify-center mb-3">
+                      <span className="text-white text-lg font-bold">★</span>
+                    </div>
+                    <h4 className="text-sm font-semibold mb-1">Garantía Extendida</h4>
+                    <p className="text-[10px] text-blue-200 leading-relaxed mb-3">Extendé tu garantía a 12 meses por solo S/49. Reparaciones cubiertas sin costo.</p>
+                    <span className="inline-block text-[10px] font-bold text-purple-300 bg-purple-400/20 px-2 py-0.5 rounded-full">Solo hoy</span>
+                  </div>
+
+                  {/* Card 4 */}
+                  <div className="w-56 bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-shrink-0">
+                    <div className="w-10 h-10 bg-pink-400 rounded-xl flex items-center justify-center mb-3">
+                      <span className="text-white text-lg font-bold">⊕</span>
+                    </div>
+                    <h4 className="text-sm font-semibold mb-1">Plan Familia</h4>
+                    <p className="text-[10px] text-blue-200 leading-relaxed mb-3">3 servicios técnicos al mes por S/79. Ideal para hogares con múltiples equipos.</p>
+                    <span className="inline-block text-[10px] font-bold text-pink-300 bg-pink-400/20 px-2 py-0.5 rounded-full">Más vendido</span>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Evidencias section */}
