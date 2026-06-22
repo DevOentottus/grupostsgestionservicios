@@ -385,7 +385,13 @@ export function ServicioPublicoPage() {
           <div className="space-y-4">
             <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-5 text-white shadow-sm sticky top-4">
               <h3 className="text-sm font-bold mb-1">Ofertas y Promociones</h3>
-              <p className="text-[10px] text-blue-200 mb-4">Aprovechá estos beneficios exclusivos</p>
+              <p className="text-[10px] text-blue-200 mb-2">Aprovechá estos beneficios exclusivos</p>
+              <div className="flex items-center gap-1.5 bg-yellow-400/20 text-yellow-200 text-[9px] px-2 py-1 rounded-lg mb-3 font-medium">
+                <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                Ofertas inválidas — solo prueba de sistema
+              </div>
 
               <div className="flex flex-col gap-3">
                 {/* Card 1 */}

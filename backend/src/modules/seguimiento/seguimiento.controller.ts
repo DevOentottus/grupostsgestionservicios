@@ -106,7 +106,7 @@ export async function seguimientoController(app: FastifyInstance) {
 
     const { data: servicios } = await supabase
       .from("servicios")
-      .select(`*, clientes!servicios_cliente_id_fkey(cliente_nombres, cliente_correo)`)
+      .select("*, clientes!servicios_cliente_id_fkey(cliente_nombres, cliente_correo)")
       .eq("servicio_codigo", codigo)
       .limit(1);
 
@@ -161,10 +161,11 @@ export async function seguimientoController(app: FastifyInstance) {
       }
     }
 
-    // Cliente
-    const clienteData = servicio?.clientes || {};
-    const clienteNombre = clienteData.cliente_nombres || null;
-    const clienteEmail = clienteData.cliente_correo || null;
+    // Cliente — usar campos denormalizados de servicios, fallback a tabla clientes
+    const clienteNombre = [servicio.cliente_nombres, servicio.cliente_apellido_paterno, servicio.cliente_apellido_materno].filter(Boolean).join(" ")
+      || servicio.clientes?.cliente_nombres
+      || null;
+    const clienteEmail = servicio.cliente_correo || servicio.clientes?.cliente_correo || null;
 
     const tareas = (tareasList || []).map((t) => {
       let completadaAt: string | null = null;
