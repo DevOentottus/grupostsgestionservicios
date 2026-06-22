@@ -129,6 +129,14 @@ const HEADER_BG: Record<string, string> = {
   cancelado: "bg-gray-50/40",
 };
 
+const HEADER_BAR_COLOR: Record<string, string> = {
+  pendiente: "bg-yellow-500",
+  en_progreso: "bg-blue-600",
+  completado: "bg-green-600",
+  bloqueado: "bg-red-600",
+  cancelado: "bg-gray-400",
+};
+
 // -- Evidencias Tab Component --
 function EvidenciasTabContent({ servicioId, tareas, userRol }: { servicioId: number; tareas: Tarea[]; userRol?: string }) {
   const { data: evidencias, isLoading } = useEvidencias(servicioId);
@@ -385,7 +393,7 @@ export function ServicioDetailPage() {
       {/* Header Card */}
       <div className="rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Blue header bar — código, botones, tiempo */}
-        <div className="bg-blue-600 px-4 md:px-6 py-2 flex items-center gap-2 flex-wrap">
+        <div className={cn("px-4 md:px-6 py-2 flex items-center gap-2 flex-wrap", HEADER_BAR_COLOR[servicio.estado] || "bg-blue-600")}>
           <span className="text-xs font-semibold text-white/90 bg-blue-500 px-2 py-0.5 rounded-lg font-mono shadow-sm">{servicio.codigo}</span>
           {/* Botón Compartir */}
           <div className="relative">

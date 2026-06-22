@@ -41,6 +41,14 @@ function estadoColor(estado: string): string {
   }
 }
 
+const HEADER_BAR_COLOR: Record<string, string> = {
+  pendiente: "bg-yellow-500",
+  en_progreso: "bg-blue-600",
+  completado: "bg-green-600",
+  bloqueado: "bg-red-600",
+  cancelado: "bg-gray-400",
+};
+
 function StarRating({ value, onChange, readonly }: {
   value: number;
   onChange?: (v: number) => void;
@@ -215,7 +223,7 @@ export function ServicioPublicoPage() {
 
         {/* Service Card -- compacto */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-5 space-y-3">
-          <div className="h-1.5 bg-blue-600 -mx-5 -mt-5 mb-3" />
+          <div className={cn("h-1.5 -mx-5 -mt-5 mb-3", HEADER_BAR_COLOR[servicio.estado] || "bg-blue-600")} />
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -245,15 +253,6 @@ export function ServicioPublicoPage() {
                 {servicio.area_nombre}
               </span>
             )}
-            <span className={cn(
-              "px-2 py-0.5 rounded-full font-medium",
-              servicio.prioridad === "urgente" ? "bg-red-50 text-red-700" :
-              servicio.prioridad === "alta" ? "bg-orange-50 text-orange-700" :
-              servicio.prioridad === "media" ? "bg-blue-50 text-blue-700" :
-              "bg-gray-100 text-gray-600",
-            )}>
-              {servicio.prioridad}
-            </span>
           </div>
         </div>
 
