@@ -38,6 +38,7 @@ export function ServiciosPage() {
   const { user: currentUser } = useAuth();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
+  const [filterArea, setFilterArea] = useState<number | "">("");
   const { data: servicios, isLoading } = useServicios(
     filterStatus === "todos" ? undefined : filterStatus
   );
@@ -66,7 +67,8 @@ export function ServiciosPage() {
     const matchSearch = `${s.codigo} ${s.cliente_nombre} ${s.titulo}`
       .toLowerCase()
       .includes(search.toLowerCase());
-    return matchSearch;
+    const matchArea = !filterArea || s.area_id === filterArea;
+    return matchSearch && matchArea;
   });
 
   const esAdminSistema = currentUser?.rol === "admin" || currentUser?.rol === "sistema";
@@ -191,6 +193,21 @@ export function ServiciosPage() {
         ))}
       </div>
     </div>
+
+      {/* Area filter */}
+      <div className="flex items-center gap-2">
+        <label className="text-sm text-gray-500 font-medium whitespace-nowrap">Área:</label>
+        <select
+          value={filterArea}
+          onChange={(e) => setFilterArea(e.target.value ? Number(e.target.value) : "")}
+          className="border border-gray-200 bg-white rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        >
+          <option value="">Todas las áreas</option>
+          {(areas || []).map((a: any) => (
+            <option key={a.id} value={a.id}>{a.nombre}</option>
+          ))}
+        </select>
+      </div>
 
       {/* Search */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">

@@ -198,7 +198,8 @@ export function ServicioPublicoPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
         {/* Service Card -- compacto */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-3">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-5 space-y-3">
+          <div className="h-1.5 bg-blue-600 -mx-5 -mt-5 mb-3" />
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -259,48 +260,6 @@ export function ServicioPublicoPage() {
               <p className="text-[10px] text-gray-400">
                 {servicio.estado === "completado" ? "Servicio finalizado" : "Estado actual del servicio"}
               </p>
-            </div>
-          </div>
-
-          {/* Status stepper */}
-          <div className="px-5 pb-3">
-            <div className="flex items-center gap-0">
-              {["Pendiente", "En Progreso", "Completado"].map((step, i) => {
-                const estados = ["pendiente", "en_progreso", "completado"];
-                const currentIdx = estados.indexOf(servicio.estado);
-                const isActive = i <= currentIdx;
-                const isLast = i === 2;
-                return (
-                  <div key={step} className="flex items-center flex-1">
-                    <div className="flex flex-col items-center">
-                      <div className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all",
-                        isActive ? "bg-blue-600 text-white shadow-sm" : "bg-gray-100 text-gray-400",
-                      )}>
-                        {isActive && i < 2 ? (
-                          <span className="text-white text-xs">{i + 1}</span>
-                        ) : isActive && i === 2 ? (
-                          <CheckCircle2 className="w-4 h-4" />
-                        ) : (
-                          <span className="text-xs">{i + 1}</span>
-                        )}
-                      </div>
-                      <span className={cn(
-                        "text-[10px] mt-1 whitespace-nowrap",
-                        isActive ? "text-blue-700 font-medium" : "text-gray-400",
-                      )}>
-                        {step}
-                      </span>
-                    </div>
-                    {!isLast && (
-                      <div className={cn(
-                        "flex-1 h-0.5 mx-1 mt-[-1.2rem]",
-                        i < currentIdx ? "bg-blue-500" : "bg-gray-100",
-                      )} />
-                    )}
-                  </div>
-                );
-              })}
             </div>
           </div>
 
