@@ -52,6 +52,7 @@ export function MiAreaPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [rankingSort, setRankingSort] = useState<"desc" | "asc">("desc");
+  const [showInactivos, setShowInactivos] = useState(false);
   const { data, isLoading, isError } = useMiArea(user?.area_id ?? undefined);
 
   const serviciosPorEstado = useMemo(() => {
@@ -67,13 +68,13 @@ export function MiAreaPage() {
 
   // Always call this useMemo unconditionally -- guard against data being null
   const colaboradoresOrdenados = useMemo(() => {
-    const cols = (data?.colaboradores || []).filter((c) => c.activo !== false);
+    const cols = showInactivos ? (data?.colaboradores || []) : (data?.colaboradores || []).filter((c) => c.activo !== false);
     return [...cols].sort((a, b) =>
       rankingSort === "desc"
         ? (b.servicios_completados || 0) - (a.servicios_completados || 0)
         : (a.servicios_completados || 0) - (b.servicios_completados || 0)
     );
-  }, [data?.colaboradores, rankingSort]);
+  }, [data?.colaboradores, rankingSort, showInactivos]);
 
   if (isLoading) {
     return (
@@ -164,14 +165,28 @@ export function MiAreaPage() {
                 <Trophy className="w-3.5 h-3.5 text-amber-500" />
                 Ranking por servicios completados
               </h4>
-              <button
-                onClick={() => setRankingSort((s) => (s === "desc" ? "asc" : "desc"))}
-                className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors"
-                title={rankingSort === "desc" ? "Cambiar a ascendente" : "Cambiar a descendente"}
-              >
-                <ArrowUpDown className="w-3 h-3" />
-                {rankingSort === "desc" ? "Menor a mayor" : "Mayor a menor"}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowInactivos((v) => !v)}
+                  className={cn(
+                    "flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors",
+                    showInactivos
+                      ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                      : "bg-slate-100 text-slate-500 hover:bg-slate-200",
+                  )}
+                  title={showInactivos ? "Ocultar colaboradores inactivos" : "Mostrar colaboradores inactivos"}
+                >
+                  {showInactivos ? "Ocultar inactivos" : "Ver inactivos"}
+                </button>
+                <button
+                  onClick={() => setRankingSort((s) => (s === "desc" ? "asc" : "desc"))}
+                  className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors"
+                  title={rankingSort === "desc" ? "Cambiar a ascendente" : "Cambiar a descendente"}
+                >
+                  <ArrowUpDown className="w-3 h-3" />
+                  {rankingSort === "desc" ? "Menor a mayor" : "Mayor a menor"}
+                </button>
+              </div>
             </div>
             <div className="space-y-1">
               {colaboradoresOrdenados.map((col, idx) => {
@@ -193,6 +208,9 @@ export function MiAreaPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-800 truncate">
                         {[col.nombres, col.apellidos].filter(Boolean).join(" ")}
+                        {col.activo === false && (
+                          <span className="ml-2 text-[10px] text-red-500 font-normal bg-red-50 px-1.5 py-0.5 rounded-full">inactivo</span>
+                        )}
                       </p>
                     </div>
                     {/* Calificación promedio */}

@@ -101,7 +101,8 @@ export async function managerController(app: FastifyInstance) {
           usuarios!areacolaboradores_colaborador_id_fkey (
             usuario_id,
             usuario_nombres,
-            usuario_apellidos,
+            usuario_apellido_paterno,
+            usuario_apellido_materno,
             usuario_correo,
             usuario_username,
             usuario_rol,
@@ -167,7 +168,7 @@ export async function managerController(app: FastifyInstance) {
             usuario_id: colId,
             id: colId,
             nombres: u.usuario_nombres || null,
-            apellidos: u.usuario_apellidos || null,
+            apellidos: [u.usuario_apellido_paterno, u.usuario_apellido_materno].filter(Boolean).join(" ") || null,
             email: u.usuario_correo || null,
             username: u.usuario_username || null,
             rol: u.usuario_rol?.toLowerCase() || null,

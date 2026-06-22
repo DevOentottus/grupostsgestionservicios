@@ -67,6 +67,7 @@ export function UsuariosPage() {
 
   const [search, setSearch] = useState("");
   const [filterRol, setFilterRol] = useState("Todos");
+  const [filterEstado, setFilterEstado] = useState("Todos");
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<Usuario | null>(null);
   const [form, setForm] = useState<UsuarioForm>(emptyForm);
@@ -77,7 +78,10 @@ export function UsuariosPage() {
       .toLowerCase()
       .includes(search.toLowerCase());
     const matchRol = filterRol === "Todos" || u.rol === filterRol;
-    return matchSearch && matchRol;
+    const matchEstado = filterEstado === "Todos"
+      || (filterEstado === "Activo" && u.activo)
+      || (filterEstado === "Inactivo" && !u.activo);
+    return matchSearch && matchRol && matchEstado;
   });
 
   const openAdd = () => {
@@ -185,6 +189,18 @@ export function UsuariosPage() {
               <option value="encargado">Encargado</option>
               <option value="colaborador">Colaborador</option>
               <option value="sistema">Sistema</option>
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
+          <div className="relative">
+            <select
+              value={filterEstado}
+              onChange={(e) => setFilterEstado(e.target.value)}
+              className="appearance-none pl-3 pr-8 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-blue-500 bg-gray-50 cursor-pointer"
+            >
+              <option value="Todos">Todos los estados</option>
+              <option value="Activo">Activo</option>
+              <option value="Inactivo">Inactivo</option>
             </select>
             <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
