@@ -67,7 +67,7 @@ export function MiAreaPage() {
 
   // Always call this useMemo unconditionally -- guard against data being null
   const colaboradoresOrdenados = useMemo(() => {
-    const cols = data?.colaboradores || [];
+    const cols = (data?.colaboradores || []).filter((c) => c.activo !== false);
     return [...cols].sort((a, b) =>
       rankingSort === "desc"
         ? (b.servicios_completados || 0) - (a.servicios_completados || 0)
@@ -187,11 +187,13 @@ export function MiAreaPage() {
                     </span>
                     <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
                       <span className="text-[10px] font-semibold text-slate-600">
-                        {col.nombres?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                        {`${col.nombres || ""} ${col.apellidos || ""}`.split(" ").filter(Boolean).map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800 truncate">{col.nombres}</p>
+                      <p className="text-sm font-medium text-slate-800 truncate">
+                        {[col.nombres, col.apellidos].filter(Boolean).join(" ")}
+                      </p>
                     </div>
                     {/* Calificación promedio */}
                     {col.calificacion_promedio != null && (

@@ -101,9 +101,11 @@ export async function managerController(app: FastifyInstance) {
           usuarios!areacolaboradores_colaborador_id_fkey (
             usuario_id,
             usuario_nombres,
+            usuario_apellidos,
             usuario_correo,
             usuario_username,
-            usuario_rol
+            usuario_rol,
+            usuario_activo
           )
         `)
         .eq("area_id", areaId);
@@ -165,9 +167,11 @@ export async function managerController(app: FastifyInstance) {
             usuario_id: colId,
             id: colId,
             nombres: u.usuario_nombres || null,
+            apellidos: u.usuario_apellidos || null,
             email: u.usuario_correo || null,
             username: u.usuario_username || null,
             rol: u.usuario_rol?.toLowerCase() || null,
+            activo: u.usuario_activo ?? true,
             tareas_activas: tareasPend,
             tareas_completadas: tareasComp?.length || 0,
             servicios_completados: serviciosCompletados,

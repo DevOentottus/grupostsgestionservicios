@@ -497,9 +497,11 @@ export interface ManagerMiAreaResponse {
     usuario_id: number;
     id: number;
     nombres: string;
+    apellidos: string | null;
     email: string;
     username: string;
     rol: string;
+    activo: boolean;
     tareas_activas: number;
     tareas_completadas: number;
     servicios_completados: number;
