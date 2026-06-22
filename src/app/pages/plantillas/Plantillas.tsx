@@ -497,6 +497,17 @@ export function PlantillasPage() {
     return p?.nombre ?? "";
   };
 
+  // Área → tono de gris para la barra superior (fondo blanco)
+  const AREA_THEME: Record<number, string> = {
+    90:  "bg-gray-300",   // Computadoras → gris claro
+    92:  "bg-gray-400",   // Televisores → gris medio
+    93:  "bg-gray-500",   // Redes → gris oscuro
+  };
+  const DEFAULT_BAR = "bg-gray-200";
+
+  const areaBarClass = (areaId: number | null) =>
+    areaId ? AREA_THEME[areaId] || DEFAULT_BAR : DEFAULT_BAR;
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -527,10 +538,12 @@ export function PlantillasPage() {
       {/* List */}
       {!isLoading && plantillas && plantillas.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {(plantillas as PlantillaListItem[]).map((p) => (
+          {(plantillas as PlantillaListItem[]).map((p) => {
+            const barClass = areaBarClass(p.area_id);
+            return (
             <div
               key={p.id}
-              className={`bg-white rounded-xl border transition-shadow p-4 ${
+              className={`rounded-xl border transition-shadow overflow-hidden bg-white ${
                 editingId === p.id
                   ? "ring-2 ring-blue-400 shadow-md"
                   : expandedId === p.id
@@ -538,6 +551,9 @@ export function PlantillasPage() {
                   : "hover:shadow-sm"
               }`}
             >
+              {/* Área top bar — escala de grises */}
+              <div className={`h-1.5 ${barClass}`} />
+              <div className="p-4">
               {editingId === p.id ? (
                 /* -- Inline Edit Mode -- */
                 <div className="space-y-3">
@@ -691,7 +707,9 @@ export function PlantillasPage() {
                 </div>
               )}
             </div>
-          ))}
+            </div>
+            );
+          })}
         </div>
       )}
 
