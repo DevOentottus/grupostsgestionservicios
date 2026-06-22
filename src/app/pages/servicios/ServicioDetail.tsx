@@ -58,10 +58,11 @@ type TabId = (typeof TABS)[number]["id"];
 
 
 /** Combinar fecha + hora del backend a locale legible */
-function formatElapsed(fromDate: string, fromTime?: string | null, now?: number): string {
+function formatElapsed(fromDate: string, fromTime?: string | null, now?: number, toDate?: string | null, toTime?: string | null): string {
   try {
     const start = new Date(`${fromDate}T${fromTime || "00:00:00"}`);
-    const diff = (now ?? Date.now()) - start.getTime();
+    const end = toDate ? new Date(`${toDate}T${toTime || "00:00:00"}`) : new Date(now ?? Date.now());
+    const diff = end.getTime() - start.getTime();
     if (diff < 0) return "—";
     const segs = Math.floor(diff / 1000);
     const mins = Math.floor(segs / 60);
@@ -501,15 +502,22 @@ export function ServicioDetailPage() {
               </>
             );
           })({ bloqueado: servicio.estado === "bloqueado", cancelado: servicio.estado === "cancelado" })}
-          {/* FI: fecha de inicio + contador de tiempo transcurrido */}
+          {/* FI: fecha de inicio · FC: fecha de cierre · Tiempo */}
           {servicio.created_at && (
-            <span className="text-xs text-white/70 flex items-center gap-1" title={`Creado: ${servicio.created_at} ${servicio.hora_creacion || ""}`}>
+            <span className="text-xs text-white/70 flex items-center gap-1" title={`Creado: ${servicio.created_at} ${servicio.hora_creacion || ""}${servicio.fecha_fin ? ` · Finalizado: ${servicio.fecha_fin} ${servicio.hora_fin || ""}` : ""}`}>
               <Clock className="w-3 h-3 shrink-0" />
-              <span className="hidden md:inline font-medium text-white/90">FI:</span>
+              <span className="hidden md:inline font-medium text-white/90">FR:</span>
               <span className="text-white/80 truncate max-w-[85px] md:max-w-none">{formatDateTime(servicio.created_at, servicio.hora_creacion)}</span>
-              <span className="text-white/40 mx-0.5 hidden md:inline">·</span>
+              {servicio.fecha_fin && (
+                <>
+                  <span className="text-white/40 mx-0.5">·</span>
+                  <span className="hidden md:inline font-medium text-white/90">FC:</span>
+                  <span className="hidden md:inline text-white/80">{formatDateTime(servicio.fecha_fin, servicio.hora_fin)}</span>
+                </>
+              )}
+              <span className="text-white/40 mx-0.5">·</span>
               <span className="hidden md:inline font-medium text-white/90">Tiempo:</span>
-              <span className="font-mono text-white/80">{formatElapsed(servicio.created_at, servicio.hora_creacion, now)}</span>
+              <span className="font-mono text-white/80">{formatElapsed(servicio.created_at, servicio.hora_creacion, now, servicio.fecha_fin, servicio.hora_fin)}</span>
             </span>
           )}
           {/* Right section: estado badge */}
