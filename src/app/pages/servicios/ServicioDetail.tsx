@@ -214,12 +214,12 @@ export function ServicioDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const servicioId = parseInt(id!);
 
+  const { data: servicio, isLoading: svcLoading } = useServicio(servicioId);
+  const { data: tareas, isLoading: tareasLoading } = useTareas(servicioId);
+
   const esAdmin = user?.rol === "admin";
   const esAsignado = !esAdmin && user?.id === servicio?.colaborador_id;
   const puedeModificar = esAdmin || esAsignado;
-
-  const { data: servicio, isLoading: svcLoading } = useServicio(servicioId);
-  const { data: tareas, isLoading: tareasLoading } = useTareas(servicioId);
 
   const activeTab = (searchParams.get("tab") as TabId) || "tareas";
   const setActiveTab = (tab: TabId) => {
