@@ -374,14 +374,20 @@ export function ServicioDetailPage() {
             <p className="text-sm font-medium text-red-800">Servicio Bloqueado</p>
             <p className="text-sm text-red-600 mt-0.5">{servicio.bloqueado_motivo}</p>
           </div>
-          {puedeModificar && (
-            <button
-              onClick={irAEnProgreso}
-              className="text-sm px-3 py-1.5 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors flex-shrink-0"
-            >
-              Reabrir
-            </button>
-          )}
+          <button
+            onClick={irAEnProgreso}
+            disabled={!puedeModificar}
+            title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Reabrir servicio"}
+            className={cn(
+              "text-sm px-3 py-1.5 rounded-xl transition-colors flex-shrink-0 flex items-center gap-1.5",
+              puedeModificar
+                ? "bg-red-600 text-white hover:bg-red-700"
+                : "bg-gray-100 text-gray-300 cursor-not-allowed",
+            )}
+          >
+            {!puedeModificar && <Lock className="w-3.5 h-3.5" />}
+            Reabrir
+          </button>
         </div>
       )}
 
@@ -450,25 +456,30 @@ export function ServicioDetailPage() {
                 <FileText className="w-3.5 h-3.5" />
                 PDF
               </button>
-              {/* Gestion action buttons: solo admin o asignado */}
-              {puedeModificar && (servicio.estado === "bloqueado" ? (
-                <button onClick={irAEnProgreso} className="text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5" title="Desbloquear">
-                  <Lock className="w-3.5 h-3.5" />
-                </button>
-              ) : servicio.estado === "cancelado" ? (
-                <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "pendiente" })} className="text-xs font-medium text-green-600 hover:text-green-700 hover:bg-green-50 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5" title="Reactivar">
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </button>
-              ) : (
-                <>
-                  <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado" })} className="text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5" title="Bloquear">
-                    <Lock className="w-3.5 h-3.5" />
+              {/* Gestion action buttons: solo admin o asignado — siempre visibles, deshabilitados con candado */}
+              {(({ bloqueado, cancelado }: { bloqueado: boolean; cancelado: boolean }) => {
+                const btnBase = "text-xs font-medium px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5";
+                if (bloqueado) return (
+                  <button onClick={irAEnProgreso} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Desbloquear"} className={cn(btnBase, puedeModificar ? "text-red-500 hover:text-red-700 hover:bg-red-50" : "text-gray-300 cursor-not-allowed")}>
+                    <Lock className={cn("w-3.5 h-3.5", !puedeModificar && "text-gray-300")} />
                   </button>
-                  <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })} className="text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5" title="Cancelar">
-                    <X className="w-3.5 h-3.5" />
+                );
+                if (cancelado) return (
+                  <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "pendiente" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Reactivar"} className={cn(btnBase, puedeModificar ? "text-green-600 hover:text-green-700 hover:bg-green-50" : "text-gray-300 cursor-not-allowed")}>
+                    <RotateCcw className={cn("w-3.5 h-3.5", !puedeModificar && "text-gray-300")} />
                   </button>
-                </>
-              ))}
+                );
+                return (
+                  <>
+                    <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Bloquear"} className={cn(btnBase, puedeModificar ? "text-gray-500 hover:text-red-600 hover:bg-red-50" : "text-gray-300 cursor-not-allowed")}>
+                      <Lock className={cn("w-3.5 h-3.5", !puedeModificar && "text-gray-300")} />
+                    </button>
+                    <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Cancelar"} className={cn(btnBase, puedeModificar ? "text-gray-500 hover:text-gray-700 hover:bg-gray-100" : "text-gray-300 cursor-not-allowed")}>
+                      <X className={cn("w-3.5 h-3.5", !puedeModificar && "text-gray-300")} />
+                    </button>
+                  </>
+                );
+              })({ bloqueado: servicio.estado === "bloqueado", cancelado: servicio.estado === "cancelado" })}
               {servicio.prioridad && (
                 <span className={cn("text-xs font-semibold px-3 py-1 rounded-lg border shadow-sm flex items-center gap-1.5 select-none", eficienciaConf.class)}>
                   {eficienciaConf.icon === "alert" ? <AlertTriangle className="w-3 h-3" /> :
@@ -560,13 +571,20 @@ export function ServicioDetailPage() {
 
         {/* Action buttons */}
         <div className="flex gap-2 mt-4">
-          {isPendiente && completadasCount === 0 && puedeModificar && (
+          {isPendiente && completadasCount === 0 && (
             <button
               onClick={irAEnProgreso}
-              disabled={cambiarEstado.isPending}
-              className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+              disabled={cambiarEstado.isPending || !puedeModificar}
+              title={!puedeModificar ? "Solo el técnico asignado puede modificar" : undefined}
+              className={cn(
+                "px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5",
+                puedeModificar
+                  ? "bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                  : "bg-gray-100 text-gray-300 cursor-not-allowed",
+              )}
             >
-               <Play className="w-4 h-4" /> Iniciar Servicio
+              {!puedeModificar ? <Lock className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              Iniciar Servicio
             </button>
           )}
           {isEnProgreso && (
@@ -634,28 +652,43 @@ export function ServicioDetailPage() {
               )}
             </div>
 
-            {/* Add task input — solo admin o asignado */}
-            {puedeModificar && (
-              <div className="px-5 pb-4">
-                <div className="flex gap-2">
+            {/* Add task input — siempre visible, deshabilitado con candado si no tiene permiso */}
+            <div className="px-5 pb-4">
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
                   <input
                     value={nuevaTarea}
                     onChange={(e) => setNuevaTarea(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleAddTarea()}
-                    placeholder="Nueva tarea..."
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:border-blue-500 outline-none"
+                    placeholder={puedeModificar ? "Nueva tarea..." : "Sin permiso para agregar tareas"}
+                    disabled={!puedeModificar}
+                    className={cn(
+                      "w-full px-3 py-2 border border-gray-200 rounded-xl text-sm outline-none transition",
+                      puedeModificar
+                        ? "bg-gray-50 focus:border-blue-500"
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed",
+                    )}
                   />
-                  <button
-                    onClick={handleAddTarea}
-                    disabled={crearTarea.isPending || !nuevaTarea.trim()}
-                    className="bg-blue-600 text-white px-3 py-2 rounded-xl text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-1"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Agregar
-                  </button>
+                  {!puedeModificar && (
+                    <Lock className="w-3.5 h-3.5 text-gray-300 absolute right-3 top-1/2 -translate-y-1/2" />
+                  )}
                 </div>
+                <button
+                  onClick={handleAddTarea}
+                  disabled={crearTarea.isPending || !nuevaTarea.trim() || !puedeModificar}
+                  title={!puedeModificar ? "Solo el técnico asignado puede modificar" : undefined}
+                  className={cn(
+                    "px-3 py-2 rounded-xl text-sm transition-colors flex items-center gap-1",
+                    puedeModificar
+                      ? "bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                      : "bg-gray-100 text-gray-300 cursor-not-allowed",
+                  )}
+                >
+                  {!puedeModificar ? <Lock className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  Agregar
+                </button>
               </div>
-            )}
+            </div>
 
             {/* Flujo de Proceso — arriba de la lista de tareas */}
             <div className="px-5 pb-4">
@@ -756,6 +789,7 @@ export function ServicioDetailPage() {
                         )}
                       >
                         {tarea.completada && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                        {!tarea.completada && !puedeModificar && <Lock className="w-2.5 h-2.5 text-gray-300" />}
                       </button>
 
                       {/* Title (editable) */}
