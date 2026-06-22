@@ -586,13 +586,21 @@ async function seedMassive() {
     if (!tareasTrack) continue;
     for (const tarea of tareasTrack) {
       const colab = pick(allColabUsers);
-      const inicio = hoursAgo(randomInt(48, 720));
-      const fin = tarea.tarea_estado === "completado" ? hoursAgo(randomInt(1, 47)) : null;
+      // tracking_inicio entre 30min y 720h atrás
+      const inicioDate = new Date();
+      inicioDate.setHours(inicioDate.getHours() - randomInt(48, 720));
+      const trackingInicio = inicioDate.toISOString().replace("T", " ").split(".")[0];
+      let trackingFin: string | null = null;
+      if (tarea.tarea_estado === "completado") {
+        // Duración realista: 30-240 min después del inicio
+        inicioDate.setMinutes(inicioDate.getMinutes() + randomInt(30, 240));
+        trackingFin = inicioDate.toISOString().replace("T", " ").split(".")[0];
+      }
       await insertSafe("tiempo_tracking", {
         tarea_id: tarea.tarea_id,
         usuario_id: colab.usuario_id,
-        tracking_inicio: inicio,
-        tracking_fin: fin,
+        tracking_inicio: trackingInicio,
+        tracking_fin: trackingFin,
       }, `tracking ${codigo}#T${tarea.tarea_orden}`);
       ttCount++;
     }

@@ -244,7 +244,7 @@ export async function seguimientoController(app: FastifyInstance) {
     };
 
     // -- Servicios del período --
-    let svcQuery = supabase.from("servicios").select("servicio_id, servicio_estado, servicio_tiempo_estimado, servicio_fecha_inicio, servicio_fecha_creacion, area_id");
+    let svcQuery = supabase.from("servicios").select("servicio_id, servicio_estado, servicio_tiempo_estimado, servicio_fecha_inicio, servicio_fecha_creacion, area_id, servicio_cliente_reporte, servicio_diagnostico_inicial");
     svcQuery = applyDateFilter(svcQuery, "servicio_fecha_creacion");
     svcQuery = applyAreaFilter(svcQuery, "area_id");
     const { data: allServicios } = await svcQuery;
@@ -318,8 +318,77 @@ export async function seguimientoController(app: FastifyInstance) {
       })
     );
 
+    // -- Tareas completadas del período --
+    let tareasQuery = supabase
+      .from("tareas")
+      .select("tarea_id, tarea_estado, servicio_id, tarea_completado_por, tarea_tiempo_real")
+      .eq("tarea_estado", "completado");
+
+    // Filtrar tareas por servicios en el período
+    const svcIdsPeriodo = (allServicios || []).map((s) => s.servicio_id);
+    if (svcIdsPeriodo.length > 0) {
+      tareasQuery = tareasQuery.in("servicio_id", svcIdsPeriodo);
+    }
+    const { data: tareasCompletadasPeriodo } = await tareasQuery;
+    const tareasCompletadasCount = tareasCompletadasPeriodo?.length || 0;
+
+    // -- Tiempo real desde tiempo_tracking --
+    let trackingQuery = supabase
+      .from("tiempo_tracking")
+      .select("tarea_id, tracking_inicio, tracking_fin, usuarios!tiempo_tracking_usuario_id_fkey (usuario_id)");
+
+    const tareaIdsInPeriodo = (tareasCompletadasPeriodo || []).map((t) => t.tarea_id);
+    if (tareaIdsInPeriodo.length > 0) {
+      trackingQuery = trackingQuery.in("tarea_id", tareaIdsInPeriodo);
+    }
+    const { data: trackingData } = await trackingQuery;
+
+    let sumaTiempoReal = 0;
+    let tareasConTiempo = 0;
+    for (const tr of trackingData || []) {
+      if (tr.tracking_inicio && tr.tracking_fin) {
+        const diffMin = Math.floor(
+          (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
+        );
+        if (diffMin > 0) {
+          sumaTiempoReal += diffMin;
+          tareasConTiempo++;
+        }
+      }
+    }
+    const tiempoPromedioMin = tareasConTiempo > 0 ? Math.round(sumaTiempoReal / tareasConTiempo) : 0;
+
+    // -- Retrasos (tarea con tiempo estimado vs real) --
+    // Usamos servicio_tiempo_estimado como referencia vs diff tracking
+    let retrasos = 0;
+    let dentroTiempo = 0;
+    const svcTiempoMap: Record<number, number> = {};
+    for (const s of allServicios || []) {
+      if (s.servicio_id && s.servicio_tiempo_estimado) {
+        svcTiempoMap[s.servicio_id] = s.servicio_tiempo_estimado;
+      }
+    }
+    for (const tr of trackingData || []) {
+      const tarea = (tareasCompletadasPeriodo || []).find((t) => t.tarea_id === tr.tarea_id);
+      if (!tarea || !tr.tracking_fin || !tr.tracking_inicio) continue;
+      const realMin = Math.floor(
+        (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
+      );
+      const estimado = svcTiempoMap[tarea.servicio_id] || 0;
+      if (realMin > 0 && estimado > 0) {
+        if (realMin <= estimado) {
+          dentroTiempo++;
+        } else {
+          retrasos++;
+        }
+      }
+    }
+    const porcentajeATiempo = (dentroTiempo + retrasos) > 0
+      ? Math.round((dentroTiempo / (dentroTiempo + retrasos)) * 100)
+      : 0;
+
     // -- Colaboradores destacados --
-    const { data: tareasCompletadas } = await supabase
+    const { data: tareasCompletadasRaw } = await supabase
       .from("tareas")
       .select(`
         tarea_completado_por,
@@ -328,7 +397,7 @@ export async function seguimientoController(app: FastifyInstance) {
       .eq("tarea_estado", "completado");
 
     const colabMap: Record<number, { nombres: string; tareas: number }> = {};
-    for (const t of tareasCompletadas || []) {
+    for (const t of tareasCompletadasRaw || []) {
       const id = t.tarea_completado_por;
       if (!id) continue;
       const u = t.usuarios || {};
@@ -445,14 +514,63 @@ export async function seguimientoController(app: FastifyInstance) {
       })
     );
 
+    // -- Servicios con tareas (tiene al menos una tarea asociada) --
+    let serviciosConTareas = 0;
+    if (svcIdsPeriodo.length > 0) {
+      const { data: svcConTareas } = await supabase
+        .from("tareas")
+        .select("servicio_id")
+        .in("servicio_id", svcIdsPeriodo);
+      const uniqueIds = new Set((svcConTareas || []).map((t: any) => t.servicio_id));
+      serviciosConTareas = uniqueIds.size;
+    }
+    const serviciosConTareasPct = totalServicios > 0
+      ? Math.round((serviciosConTareas / totalServicios) * 100)
+      : 0;
+
+    // -- Servicios consultados (tiene al menos una serviciovisita) --
+    let serviciosConsultados = 0;
+    if (svcIdsPeriodo.length > 0) {
+      const { data: svcConsultados } = await supabase
+        .from("serviciovisitas")
+        .select("servicio_id")
+        .in("servicio_id", svcIdsPeriodo);
+      const uniqueVisitIds = new Set((svcConsultados || []).map((v: any) => v.servicio_id));
+      serviciosConsultados = uniqueVisitIds.size;
+    }
+    const serviciosConsultadosPct = totalServicios > 0
+      ? Math.round((serviciosConsultados / totalServicios) * 100)
+      : 0;
+
+    // -- Colaboradores activos (distintos en serviciocolaboradores en el período) --
+    let colaboradoresActivos = 0;
+    if (svcIdsPeriodo.length > 0) {
+      const { data: colabActivos } = await supabase
+        .from("serviciocolaboradores")
+        .select("colaborador_id")
+        .in("servicio_id", svcIdsPeriodo);
+      const uniqueColabs = new Set((colabActivos || []).map((c: any) => c.colaborador_id));
+      colaboradoresActivos = uniqueColabs.size;
+    }
+    const promedioPorColaborador = colaboradoresActivos > 0
+      ? Math.round((tareasCompletadasCount / colaboradoresActivos) * 10) / 10
+      : 0;
+
+    // -- KPIs del sistema -- completados_dentro_tiempo sobre servicios completados
+    const completadosDentroTiempoPct = completados > 0
+      ? Math.round((dentroTiempo / Math.max(dentroTiempo + retrasos, 1)) * 100)
+      : 0;
+
     return {
       data: {
         kpi: {
-          registros_completos_pct: totalServicios ? 0 : 0,
-          servicios_con_tareas_pct: 0,
-          tiempo_promedio_min: 0,
-          completados_dentro_tiempo_pct: 0,
-          servicios_consultados_pct: 0,
+          registros_completos_pct: totalServicios > 0
+            ? Math.round((allServicios!.filter((s: any) => s.servicio_cliente_reporte && s.servicio_diagnostico_inicial).length / totalServicios) * 100)
+            : 0,
+          servicios_con_tareas_pct: serviciosConTareasPct,
+          tiempo_promedio_min: tiempoPromedioMin,
+          completados_dentro_tiempo_pct: completadosDentroTiempoPct,
+          servicios_consultados_pct: serviciosConsultadosPct,
           satisfaccion_visibilidad: Math.round(promedioCalificacion * 10) / 10,
           servicios_evaluados_pct: completados ? Math.round((totalCalificaciones / completados) * 100) : 0,
           servicios_con_comentarios_pct: completados ? Math.round((conFeedback / completados) * 100) : 0,
@@ -476,17 +594,17 @@ export async function seguimientoController(app: FastifyInstance) {
         indicadores: {
           productividad: {
             servicios_completados: completados,
-            tareas_completadas: 0,
-            promedio_por_colaborador: 0,
+            tareas_completadas: tareasCompletadasCount,
+            promedio_por_colaborador: promedioPorColaborador,
             periodo: {
               desde: fechaInicio?.toISOString() ?? "",
               hasta: fechaFin?.toISOString() ?? "",
             },
           },
           eficiencia: {
-            tiempo_promedio_min: 0,
-            porcentaje_a_tiempo: 0,
-            cantidad_retrasos: 0,
+            tiempo_promedio_min: tiempoPromedioMin,
+            porcentaje_a_tiempo: porcentajeATiempo,
+            cantidad_retrasos: retrasos,
           },
           satisfaccion: {
             promedio_calificacion: Math.round(promedioCalificacion * 10) / 10,
