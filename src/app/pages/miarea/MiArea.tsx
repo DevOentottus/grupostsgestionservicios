@@ -163,157 +163,139 @@ export function MiAreaPage() {
         ))}
       </div>
 
-      {/* Colaboradores section */}
-      {colaboradores.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-              <Users className="w-4 h-4 text-slate-400" />
-              Colaboradores del área
-            </h3>
-          </div>
+      {/* Servicios + Ranking side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left: Servicios — 3 columnas */}
+        <div className="lg:col-span-3">
+          <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+            <Wrench className="w-4 h-4 text-slate-400" />
+            Servicios del área
+          </h3>
 
-          {/* Ranking */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                Ranking por servicios completados
-              </h4>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowInactivos((v) => !v)}
-                  className={cn(
-                    "flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors",
-                    showInactivos
-                      ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                      : "bg-slate-100 text-slate-500 hover:bg-slate-200",
-                  )}
-                  title={showInactivos ? "Ocultar colaboradores inactivos" : "Mostrar colaboradores inactivos"}
-                >
-                  {showInactivos ? "Ocultar inactivos" : "Ver inactivos"}
-                </button>
-                <button
-                  onClick={() => setRankingSort((s) => (s === "desc" ? "asc" : "desc"))}
-                  className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors"
-                  title={rankingSort === "desc" ? "Cambiar a ascendente" : "Cambiar a descendente"}
-                >
-                  <ArrowUpDown className="w-3 h-3" />
-                  {rankingSort === "desc" ? "Menor a mayor" : "Mayor a menor"}
-                </button>
-              </div>
+          {servicios.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
+              <Wrench className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm text-slate-400">No hay servicios en esta área</p>
             </div>
-            <div className="space-y-1">
-              {colaboradoresOrdenados.map((col, idx) => {
-                const pos = idx + 1;
-                const medal = pos === 1 ? "text-yellow-500" : pos === 2 ? "text-gray-400" : pos === 3 ? "text-amber-700" : "text-slate-300";
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {servicios.map((s) => {
+                const cfg = statusConfig[s.estado] || statusConfig.pendiente;
                 return (
                   <div
-                    key={col.usuario_id}
-                    className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 transition-colors"
+                    key={s.id}
+                    onClick={user?.rol !== "colaborador" ? () => navigate(`/servicios/${s.id}`) : undefined}
+                    className={cn(
+                      "bg-white rounded-xl border border-slate-200 overflow-hidden transition-all",
+                      user?.rol !== "colaborador"
+                        ? "hover:border-blue-300 hover:shadow-sm cursor-pointer"
+                        : "opacity-80"
+                    )}
                   >
-                    <span className={`w-6 text-center text-sm font-bold ${medal}`}>
-                      {pos <= 3 ? ["1°","2°","3°"][pos-1] : `#${pos}`}
-                    </span>
-                    <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                      <span className="text-[10px] font-semibold text-slate-600">
-                        {`${col.nombres || ""} ${col.apellidos || ""}`.split(" ").filter(Boolean).map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800 truncate">
-                        {[col.nombres, col.apellidos].filter(Boolean).join(" ")}
-                        {col.activo === false && (
-                          <span className="ml-2 text-[10px] text-red-500 font-normal bg-red-50 px-1.5 py-0.5 rounded-full">inactivo</span>
-                        )}
-                      </p>
-                    </div>
-                    {/* Calificación promedio */}
-                    {col.calificacion_promedio != null && (
-                      <div className="text-right shrink-0 mr-3">
-                        <div className="flex items-center gap-1">
-                          <StarRating rating={col.calificacion_promedio} />
-                          <span className="text-[11px] font-semibold text-slate-500">
-                            {col.calificacion_promedio.toFixed(1)}
-                          </span>
+                    <div className={cn("h-1.5", cfg.bar)} />
+                    <div className="p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-mono text-slate-400">{s.codigo}</span>
+                            <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", cfg.bg, cfg.text)}>
+                              {statusDisplay[s.estado] || s.estado}
+                            </span>
+                          </div>
+                          <p className="text-sm font-medium text-slate-800 truncate">{s.titulo}</p>
                         </div>
                       </div>
-                    )}
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-bold text-green-600">{col.servicios_completados || 0}</p>
-                      <p className="text-[10px] text-slate-400">completados</p>
+                      <div className="mt-3">
+                        <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+                          <span>Progreso</span>
+                          <span>{s.progreso}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={cn("h-full rounded-full transition-all", cfg.bar)}
+                            style={{ width: `${s.progreso}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
+                        <Users className="w-3 h-3" />
+                        {s.tecnico?.nombres || <span className="italic">Sin técnico</span>}
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
+          )}
         </div>
-      )}
 
-      {/* Servicios section */}
-      <div>
-        <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-          <Wrench className="w-4 h-4 text-slate-400" />
-          Servicios del área
-        </h3>
-
-        {servicios.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
-            <Wrench className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="text-sm text-slate-400">No hay servicios en esta área</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {servicios.map((s) => {
-              const cfg = statusConfig[s.estado] || statusConfig.pendiente;
-              return (
-                <div
-                  key={s.id}
-                  onClick={user?.rol !== "colaborador" ? () => navigate(`/servicios/${s.id}`) : undefined}
-                  className={cn(
-                    "bg-white rounded-xl border border-slate-200 overflow-hidden transition-all",
-                    user?.rol !== "colaborador"
-                      ? "hover:border-blue-300 hover:shadow-sm cursor-pointer"
-                      : "opacity-80"
-                  )}
-                >
-                  {/* Colored top bar */}
-                  <div className={cn("h-1.5", cfg.bar)} />
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-mono text-slate-400">{s.codigo}</span>
-                          <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", cfg.bg, cfg.text)}>
-                            {statusDisplay[s.estado] || s.estado}
-                          </span>
-                        </div>
-                        <p className="text-sm font-medium text-slate-800 truncate">{s.titulo}</p>
-                      </div>
-                    </div>
-                    {/* Progress bar */}
-                    <div className="mt-3">
-                      <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-                        <span>Progreso</span>
-                        <span>{s.progreso}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className={cn("h-full rounded-full transition-all", cfg.bar)}
-                          style={{ width: `${s.progreso}%` }}
-                        />
-                      </div>
-                    </div>
-                    {/* Técnico asignado */}
-                    <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
-                      <Users className="w-3 h-3" />
-                      {s.tecnico?.nombres || <span className="italic">Sin técnico</span>}
-                    </div>
-                  </div>
+        {/* Right: Ranking */}
+        {colaboradores.length > 0 && (
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 sticky top-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-amber-500" />
+                  Ranking
+                </h3>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setShowInactivos((v) => !v)}
+                    className={cn(
+                      "text-xs px-2 py-1 rounded-lg transition-colors",
+                      showInactivos
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-slate-100 text-slate-500 hover:bg-slate-200",
+                    )}
+                    title={showInactivos ? "Ocultar inactivos" : "Mostrar inactivos"}
+                  >
+                    {showInactivos ? "Inactivos" : "Activos"}
+                  </button>
+                  <button
+                    onClick={() => setRankingSort((s) => (s === "desc" ? "asc" : "desc"))}
+                    className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg transition-colors"
+                    title={rankingSort === "desc" ? "Ascendente" : "Descendente"}
+                  >
+                    <ArrowUpDown className="w-3 h-3" />
+                  </button>
                 </div>
-              );
-            })}
+              </div>
+              <div className="space-y-1">
+                {colaboradoresOrdenados.map((col, idx) => {
+                  const pos = idx + 1;
+                  const medal = pos === 1 ? "text-yellow-500" : pos === 2 ? "text-gray-400" : pos === 3 ? "text-amber-700" : "text-slate-300";
+                  return (
+                    <div
+                      key={col.usuario_id}
+                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 transition-colors"
+                    >
+                      <span className={`w-5 text-center text-sm font-bold ${medal}`}>
+                        {pos <= 3 ? ["1°","2°","3°"][pos-1] : `#${pos}`}
+                      </span>
+                      <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                        <span className="text-[9px] font-semibold text-slate-600">
+                          {`${col.nombres || ""} ${col.apellidos || ""}`.split(" ").filter(Boolean).map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-slate-800 truncate">
+                          {[col.nombres, col.apellidos].filter(Boolean).join(" ")}
+                          {col.activo === false && (
+                            <span className="ml-1 text-[9px] text-red-500 bg-red-50 px-1 rounded-full">inactivo</span>
+                          )}
+                        </p>
+                      </div>
+                      {col.calificacion_promedio != null && (
+                        <StarRating rating={col.calificacion_promedio} />
+                      )}
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-bold text-green-600">{col.servicios_completados || 0}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
       </div>
