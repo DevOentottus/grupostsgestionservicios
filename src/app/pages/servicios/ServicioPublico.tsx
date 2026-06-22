@@ -49,6 +49,14 @@ const HEADER_BAR_COLOR: Record<string, string> = {
   cancelado: "bg-gray-400",
 };
 
+const ESTADO_BAR_STYLE: Record<string, string> = {
+  pendiente: "bg-yellow-400/25 text-yellow-100",
+  en_progreso: "bg-white/20 text-white",
+  completado: "bg-green-400/25 text-green-100",
+  bloqueado: "bg-red-400/25 text-red-100",
+  cancelado: "bg-white/10 text-gray-200",
+};
+
 function StarRating({ value, onChange, readonly }: {
   value: number;
   onChange?: (v: number) => void;
@@ -222,47 +230,59 @@ export function ServicioPublicoPage() {
           <div className="md:col-span-3 space-y-5">
 
         {/* Service Card -- compacto */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-5 space-y-3">
-          <div className={cn("h-1.5 -mx-5 -mt-5 mb-3", HEADER_BAR_COLOR[servicio.estado] || "bg-blue-600")} />
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md font-medium">
-                  {servicio.codigo}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* Header bar — mismo formato que detalle */}
+          <div className={cn("px-4 md:px-6 py-2 flex items-center gap-2 flex-wrap", HEADER_BAR_COLOR[servicio.estado] || "bg-blue-600")}>
+            <span className="text-xs font-semibold text-white bg-black px-2 py-0.5 rounded-lg font-mono shadow-sm">{servicio.codigo}</span>
+            {/* Compartir */}
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/public/servicio/${servicio.codigo}`;
+                navigator.clipboard.writeText(url);
+                toast.success("Link copiado al portapapeles");
+              }}
+              className="text-xs font-medium text-white/80 hover:text-white hover:bg-white/20 px-2.5 py-1 rounded-lg border border-white/30 shadow-sm transition flex items-center gap-1.5"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              Compartir
+            </button>
+
+            {/* Right section: tags + estado */}
+            <span className="ml-auto flex items-center gap-2 flex-wrap">
+              {servicio.colaborador_nombre && (
+                <span className="text-[10px] bg-white/15 text-white/90 px-2 py-0.5 rounded-full font-medium">
+                  Colaborador: {servicio.colaborador_nombre}
                 </span>
-                <span className={cn(
-                  "px-2.5 py-0.5 rounded-full text-xs text-white",
-                  estadoColor(servicio.estado),
-                )} style={{ fontWeight: 600 }}>
-                  {estadoLabel(servicio.estado)}
+              )}
+              {servicio.cliente_nombre && (
+                <span className="text-[10px] bg-white/15 text-white/90 px-2 py-0.5 rounded-full font-medium">
+                  Cliente: {servicio.cliente_nombre}
                 </span>
-              </div>
-              <h2 className="text-lg text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
-              <p className="text-sm text-gray-500">{servicio.cliente_nombre}</p>
-            </div>
+              )}
+              <span className={cn("text-xs px-2.5 py-1 rounded-full font-medium", ESTADO_BAR_STYLE[servicio.estado] || "bg-white/10 text-white")}>
+                {estadoLabel(servicio.estado)}
+              </span>
+            </span>
           </div>
 
-          {servicio.descripcion && (
-            <p className="text-xs text-gray-500 bg-gray-50 rounded-lg p-2.5 leading-relaxed">{servicio.descripcion}</p>
-          )}
+          {/* Card body */}
+          <div className="p-5 space-y-3">
+            <h2 className="text-lg text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
 
-          {/* Tags */}
-          <div className="flex flex-wrap gap-1.5 text-[10px]">
-            {servicio.area_nombre && (
-              <span className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium">
-                {servicio.area_nombre}
-              </span>
+            {servicio.descripcion && (
+              <p className="text-xs text-gray-500 bg-gray-50 rounded-lg p-2.5 leading-relaxed">{servicio.descripcion}</p>
             )}
-            {servicio.colaborador_nombre && (
-              <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-                Colaborador: {servicio.colaborador_nombre}
-              </span>
-            )}
-            {servicio.cliente_nombre && (
-              <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                Cliente: {servicio.cliente_nombre}
-              </span>
-            )}
+
+            {/* Tags: área */}
+            <div className="flex flex-wrap gap-1.5 text-[10px]">
+              {servicio.area_nombre && (
+                <span className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium">
+                  {servicio.area_nombre}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

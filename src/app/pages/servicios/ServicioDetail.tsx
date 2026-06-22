@@ -226,9 +226,10 @@ export function ServicioDetailPage() {
   const { data: servicio, isLoading: svcLoading } = useServicio(servicioId);
   const { data: tareas, isLoading: tareasLoading } = useTareas(servicioId);
 
-  const esAdmin = user?.rol === "admin";
+  const esAdmin = user?.rol === "admin" || user?.rol === "sistema";
   const esAsignado = !esAdmin && user?.id === servicio?.colaborador_id;
-  const puedeModificar = esAdmin || esAsignado;
+  const esEncargado = user?.rol === "encargado";
+  const puedeModificar = esAdmin || esAsignado || esEncargado;
 
   const activeTab = (searchParams.get("tab") as TabId) || "tareas";
   const setActiveTab = (tab: TabId) => {
@@ -499,21 +500,22 @@ export function ServicioDetailPage() {
               <span className="font-mono text-white/80">{formatElapsed(servicio.created_at, servicio.hora_creacion, now)}</span>
             </span>
           )}
-          {/* Estado badge */}
-          <span className={cn("ml-auto text-xs px-2.5 py-1 rounded-full font-medium", ESTADO_BAR_STYLE[servicio.estado] || "bg-white/10 text-white")}>
-            {ESTADO_LABEL[servicio.estado] || servicio.estado}
+          {/* Right section: tags + estado badge */}
+          <span className="ml-auto flex items-center gap-2 flex-wrap">
+            {servicio.colaborador_nombre && (
+              <span className="text-[10px] bg-white/15 text-white/90 px-2 py-0.5 rounded-full font-medium">
+                Colaborador: {servicio.colaborador_nombre}
+              </span>
+            )}
+            {servicio.cliente_nombre && (
+              <span className="text-[10px] bg-white/15 text-white/90 px-2 py-0.5 rounded-full font-medium">
+                Cliente: {servicio.cliente_nombre}
+              </span>
+            )}
+            <span className={cn("text-xs px-2.5 py-1 rounded-full font-medium", ESTADO_BAR_STYLE[servicio.estado] || "bg-white/10 text-white")}>
+              {ESTADO_LABEL[servicio.estado] || servicio.estado}
+            </span>
           </span>
-          {/* Tags colaborador / cliente */}
-          {servicio.colaborador_nombre && (
-            <span className="text-[10px] bg-white/15 text-white/90 px-2 py-0.5 rounded-full font-medium">
-              Colaborador: {servicio.colaborador_nombre}
-            </span>
-          )}
-          {servicio.cliente_nombre && (
-            <span className="text-[10px] bg-white/15 text-white/90 px-2 py-0.5 rounded-full font-medium">
-              Cliente: {servicio.cliente_nombre}
-            </span>
-          )}
         </div>
 
         {/* Card body */}
