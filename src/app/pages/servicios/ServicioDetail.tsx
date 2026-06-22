@@ -228,9 +228,8 @@ export function ServicioDetailPage() {
   const { data: tareas, isLoading: tareasLoading } = useTareas(servicioId);
 
   const esAdmin = user?.rol === "admin" || user?.rol === "sistema";
-  const esAsignado = !esAdmin && user?.id === servicio?.colaborador_id;
-  const esEncargado = user?.rol === "encargado";
-  const puedeModificar = esAdmin || esAsignado || esEncargado;
+  const esAsignado = user?.id === servicio?.colaborador_id;
+  const puedeModificar = esAdmin || esAsignado;
 
   const activeTab = (searchParams.get("tab") as TabId) || "tareas";
   const setActiveTab = (tab: TabId) => {
