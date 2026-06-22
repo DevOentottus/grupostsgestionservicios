@@ -275,14 +275,6 @@ export function ServicioPublicoPage() {
               <p className="text-xs text-gray-500 bg-gray-50 rounded-lg p-2.5 leading-relaxed">{servicio.descripcion}</p>
             )}
 
-            {/* Tags: área */}
-            <div className="flex flex-wrap gap-1.5 text-[10px]">
-              {servicio.area_nombre && (
-                <span className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-medium">
-                  {servicio.area_nombre}
-                </span>
-              )}
-            </div>
           </div>
         </div>
 
