@@ -207,7 +207,12 @@ export function ServicioPublicoPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6 space-y-5">
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+
+          {/* Left column (3/4): Vista de seguimiento */}
+          <div className="md:col-span-3 space-y-5">
+
         {/* Service Card -- compacto */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-5 space-y-3">
           <div className="h-1.5 bg-blue-600 -mx-5 -mt-5 mb-3" />
@@ -252,10 +257,7 @@ export function ServicioPublicoPage() {
           </div>
         </div>
 
-        {/* Grid: seguimiento (2/3) + carrusel (1/3) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {/* Left column — Seguimiento */}
-          <div className="md:col-span-2 space-y-5">
+            {/* Seguimiento card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {/* Header */}
               <div className="flex items-center gap-2 px-5 pt-5 pb-3">
@@ -277,7 +279,7 @@ export function ServicioPublicoPage() {
                 </div>
               </div>
 
-              {/* Process Flow — progreso por tareas con números */}
+              {/* Process Flow */}
               <div className="px-5 pb-4">
                 <ProcessFlow steps={flowSteps} />
               </div>
@@ -324,83 +326,80 @@ export function ServicioPublicoPage() {
                 </div>
               )}
             </div>
+
+            {/* Evidencias section */}
+            {evidencias.length > 0 && dni && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Camera className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h3 className="text-gray-900" style={{ fontWeight: 600 }}>
+                    Evidencias del servicio
+                  </h3>
+                </div>
+                <EvidenceViewer
+                  evidencias={evidencias}
+                  readOnly
+                  showStatus={false}
+                  codigo={codigo}
+                  dni={dni}
+                  onComentarioAdded={() => evidenciasQuery.refetch()}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Right column — Carrusel de ofertas y promociones */}
+          {/* Right column (1/4): Carrusel de ofertas */}
           <div className="space-y-4">
-            <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-5 text-white shadow-sm">
+            <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-5 text-white shadow-sm sticky top-4">
               <h3 className="text-sm font-bold mb-1">Ofertas y Promociones</h3>
               <p className="text-[10px] text-blue-200 mb-4">Aprovechá estos beneficios exclusivos</p>
 
-              {/* Carousel cards */}
-              <div className="overflow-x-auto -mx-2 pb-2">
-                <div className="flex gap-3 px-2 min-w-max">
-                  {/* Card 1 */}
-                  <div className="w-56 bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-shrink-0">
-                    <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center mb-3">
-                      <span className="text-blue-900 text-lg font-bold">%</span>
-                    </div>
-                    <h4 className="text-sm font-semibold mb-1">Mantenimiento Preventivo</h4>
-                    <p className="text-[10px] text-blue-200 leading-relaxed mb-3">20% de descuento en contratación de plan anual. Revisión completa incluida.</p>
-                    <span className="inline-block text-[10px] font-bold text-yellow-300 bg-yellow-400/20 px-2 py-0.5 rounded-full">Válido hasta 30/06</span>
+              <div className="flex flex-col gap-3">
+                {/* Card 1 */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center mb-3">
+                    <span className="text-blue-900 text-lg font-bold">%</span>
                   </div>
+                  <h4 className="text-sm font-semibold mb-1">Mantenimiento Preventivo</h4>
+                  <p className="text-[10px] text-blue-200 leading-relaxed mb-3">20% de descuento en contratación de plan anual. Revisión completa incluida.</p>
+                  <span className="inline-block text-[10px] font-bold text-yellow-300 bg-yellow-400/20 px-2 py-0.5 rounded-full">Válido hasta 30/06</span>
+                </div>
 
-                  {/* Card 2 */}
-                  <div className="w-56 bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-shrink-0">
-                    <div className="w-10 h-10 bg-green-400 rounded-xl flex items-center justify-center mb-3">
-                      <span className="text-white text-lg font-bold">⚡</span>
-                    </div>
-                    <h4 className="text-sm font-semibold mb-1">Servicio Express 24h</h4>
-                    <p className="text-[10px] text-blue-200 leading-relaxed mb-3">Respuesta en menos de 24 horas. Sin recargo por urgencia en tu primer servicio.</p>
-                    <span className="inline-block text-[10px] font-bold text-green-300 bg-green-400/20 px-2 py-0.5 rounded-full">Nuevo cliente</span>
+                {/* Card 2 */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <div className="w-10 h-10 bg-green-400 rounded-xl flex items-center justify-center mb-3">
+                    <span className="text-white text-lg font-bold">⚡</span>
                   </div>
+                  <h4 className="text-sm font-semibold mb-1">Servicio Express 24h</h4>
+                  <p className="text-[10px] text-blue-200 leading-relaxed mb-3">Respuesta en menos de 24 horas. Sin recargo por urgencia en tu primer servicio.</p>
+                  <span className="inline-block text-[10px] font-bold text-green-300 bg-green-400/20 px-2 py-0.5 rounded-full">Nuevo cliente</span>
+                </div>
 
-                  {/* Card 3 */}
-                  <div className="w-56 bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-shrink-0">
-                    <div className="w-10 h-10 bg-purple-400 rounded-xl flex items-center justify-center mb-3">
-                      <span className="text-white text-lg font-bold">★</span>
-                    </div>
-                    <h4 className="text-sm font-semibold mb-1">Garantía Extendida</h4>
-                    <p className="text-[10px] text-blue-200 leading-relaxed mb-3">Extendé tu garantía a 12 meses por solo S/49. Reparaciones cubiertas sin costo.</p>
-                    <span className="inline-block text-[10px] font-bold text-purple-300 bg-purple-400/20 px-2 py-0.5 rounded-full">Solo hoy</span>
+                {/* Card 3 */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <div className="w-10 h-10 bg-purple-400 rounded-xl flex items-center justify-center mb-3">
+                    <span className="text-white text-lg font-bold">★</span>
                   </div>
+                  <h4 className="text-sm font-semibold mb-1">Garantía Extendida</h4>
+                  <p className="text-[10px] text-blue-200 leading-relaxed mb-3">Extendé tu garantía a 12 meses por solo S/49. Reparaciones cubiertas sin costo.</p>
+                  <span className="inline-block text-[10px] font-bold text-purple-300 bg-purple-400/20 px-2 py-0.5 rounded-full">Solo hoy</span>
+                </div>
 
-                  {/* Card 4 */}
-                  <div className="w-56 bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-shrink-0">
-                    <div className="w-10 h-10 bg-pink-400 rounded-xl flex items-center justify-center mb-3">
-                      <span className="text-white text-lg font-bold">⊕</span>
-                    </div>
-                    <h4 className="text-sm font-semibold mb-1">Plan Familia</h4>
-                    <p className="text-[10px] text-blue-200 leading-relaxed mb-3">3 servicios técnicos al mes por S/79. Ideal para hogares con múltiples equipos.</p>
-                    <span className="inline-block text-[10px] font-bold text-pink-300 bg-pink-400/20 px-2 py-0.5 rounded-full">Más vendido</span>
+                {/* Card 4 */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <div className="w-10 h-10 bg-pink-400 rounded-xl flex items-center justify-center mb-3">
+                    <span className="text-white text-lg font-bold">⊕</span>
                   </div>
+                  <h4 className="text-sm font-semibold mb-1">Plan Familia</h4>
+                  <p className="text-[10px] text-blue-200 leading-relaxed mb-3">3 servicios técnicos al mes por S/79. Ideal para hogares con múltiples equipos.</p>
+                  <span className="inline-block text-[10px] font-bold text-pink-300 bg-pink-400/20 px-2 py-0.5 rounded-full">Más vendido</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Evidencias section */}
-        {evidencias.length > 0 && dni && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Camera className="w-4 h-4 text-blue-600" />
-              </div>
-              <h3 className="text-gray-900" style={{ fontWeight: 600 }}>
-                Evidencias del servicio
-              </h3>
-            </div>
-            <EvidenceViewer
-              evidencias={evidencias}
-              readOnly
-              showStatus={false}
-              codigo={codigo}
-              dni={dni}
-              onComentarioAdded={() => evidenciasQuery.refetch()}
-            />
-          </div>
-        )}
 
         {/* Botón flotante de calificación */}
         {servicioCompletado && (
