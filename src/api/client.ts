@@ -121,6 +121,7 @@ export const usuariosApi = {
 // -- Áreas API --
 export const areasApi = {
   listar: () => api.get("/areas"),
+  listarTodas: () => api.get("/areas", { params: { todas: "true" } }),
   obtener: (id: number) => api.get(`/areas/${id}`),
   crear: (data: any) => api.post("/areas", data),
   editar: (id: number, data: any) => api.put(`/areas/${id}`, data),

@@ -13,6 +13,16 @@ export function useAreas() {
   });
 }
 
+export function useAreasTodas() {
+  return useQuery({
+    queryKey: ["areas", "todas"],
+    queryFn: async () => {
+      const r = await areasApi.listarTodas();
+      return r.data.data as AreaWithEncargado[];
+    },
+  });
+}
+
 export function useArea(id: number) {
   return useQuery({
     queryKey: ["areas", id],

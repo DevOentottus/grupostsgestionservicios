@@ -5,7 +5,7 @@ import {
   useEditarPlantilla,
   useEliminarPlantilla,
 } from "@/api/queries/usePlantillas.js";
-import { useAreas } from "@/api/queries/useAreas.js";
+import { useAreasTodas } from "@/api/queries/useAreas.js";
 import { plantillasApi } from "@/api/client.js";
 import type { PlantillaWithTareas, PlantillaListItem } from "@/api/queries/usePlantillas.js";
 
@@ -62,7 +62,7 @@ function PlantillaCreateModal({
   onClose: () => void;
 }) {
   const crearPlantilla = useCrearPlantilla();
-  const { data: areas } = useAreas();
+  const { data: areas } = useAreasTodas();
 
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -391,7 +391,7 @@ function TaskEditModal({
 // -- Main Page --
 export function PlantillasPage() {
   const { data: plantillas, isLoading } = usePlantillas();
-  const { data: areas } = useAreas();
+  const { data: areas } = useAreasTodas();
   const editarPlantilla = useEditarPlantilla();
   const eliminarPlantilla = useEliminarPlantilla();
 

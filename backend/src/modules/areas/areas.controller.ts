@@ -77,11 +77,12 @@ export async function areasController(app: FastifyInstance) {
         user_id: number;
         area_id: number | null;
       };
+      const query = request.query as { todas?: string };
 
-      // 1. Obtener IDs de áreas según el rol
+      // 1. Obtener IDs de áreas según el rol (saltear si ?todas=true)
       let areaIds: number[] | null = null;
 
-      if (user.rol === "encargado" || user.rol === "colaborador") {
+      if (query.todas !== "true" && (user.rol === "encargado" || user.rol === "colaborador")) {
         const { data: rows } = user.rol === "encargado"
           ? await supabase.from("areas").select("area_id").eq("area_encargado_id", user.user_id)
           : await supabase.from("areacolaboradores").select("area_id").eq("colaborador_id", user.user_id);
