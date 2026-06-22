@@ -497,16 +497,16 @@ export function PlantillasPage() {
     return p?.nombre ?? "";
   };
 
-  // Área → tono de gris para la barra superior (fondo blanco)
-  const AREA_THEME: Record<number, string> = {
-    90:  "bg-gray-300",   // Computadoras → gris claro
-    92:  "bg-gray-500",   // Televisores → gris medio
-    93:  "bg-gray-700",   // Redes → gris oscuro
+  // Área → tono de gris para la barra superior + contraste de texto
+  const AREA_THEME: Record<number, { bar: string; text: string }> = {
+    90:  { bar: "bg-gray-300", text: "text-gray-900" },
+    92:  { bar: "bg-gray-500", text: "text-white"     },
+    93:  { bar: "bg-gray-700", text: "text-white"     },
   };
-  const DEFAULT_BAR = "bg-gray-200";
+  const DEFAULT_THEME = { bar: "bg-gray-200", text: "text-gray-900" };
 
-  const areaBarClass = (areaId: number | null) =>
-    areaId ? AREA_THEME[areaId] || DEFAULT_BAR : DEFAULT_BAR;
+  const areaTheme = (areaId: number | null) =>
+    areaId ? AREA_THEME[areaId] || DEFAULT_THEME : DEFAULT_THEME;
 
   return (
     <div className="space-y-4">
@@ -539,7 +539,7 @@ export function PlantillasPage() {
       {!isLoading && plantillas && plantillas.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {(plantillas as PlantillaListItem[]).map((p) => {
-            const barClass = areaBarClass(p.area_id);
+            const theme = areaTheme(p.area_id);
             return (
             <div
               key={p.id}
@@ -552,7 +552,7 @@ export function PlantillasPage() {
               }`}
             >
               {/* Área top bar — escala de grises */}
-              <div className={`h-1.5 ${barClass}`} />
+              <div className={`h-1.5 ${theme.bar}`} />
               <div className="p-4">
               {editingId === p.id ? (
                 /* -- Inline Edit Mode -- */

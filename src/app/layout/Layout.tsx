@@ -395,7 +395,7 @@ export default function Layout() {
         </header>
 
         {/* ===== PAGE CONTENT ===== */}
-        <main className="flex-1 overflow-y-auto bg-gray-100">
+        <main className="flex-1 overflow-y-auto bg-gray-200">
           <div className="p-4 md:p-6">
             <Outlet />
           </div>

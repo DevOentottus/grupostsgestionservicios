@@ -157,16 +157,15 @@ export function AreasPage() {
           {visibleAreas.map((area: AreaWithEncargado) => {
             const stats = getAreaServiceStats(area.id);
             const isSelected = selectedId === area.id;
-  // Área → tono de gris para la barra superior
-  const AREA_THEME: Record<number, string> = {
-    90: "bg-gray-300",
-    92: "bg-gray-500",
-    93: "bg-gray-700",
-  };
-  const DEFAULT_BAR = "bg-gray-200";
-  const areaBarClass = (areaId: number) => AREA_THEME[areaId] || DEFAULT_BAR;
-
-  return (
+            // Área → tono de gris para la barra superior + contraste
+            const themes: Record<number, { bar: string; text: string }> = {
+              90: { bar: "bg-gray-300", text: "text-gray-900" },
+              92: { bar: "bg-gray-500", text: "text-white"     },
+              93: { bar: "bg-gray-700", text: "text-white"     },
+            };
+            const def = { bar: "bg-gray-200", text: "text-gray-900" };
+            const t = themes[area.id] || def;
+            return (
               <button
                 key={area.id}
                 onClick={() => selectArea(area.id)}
@@ -177,7 +176,7 @@ export function AreasPage() {
                     : "bg-white border-gray-100 hover:border-blue-200",
                 )}
               >
-                <div className={`h-1.5 ${areaBarClass(area.id)}`} />
+                <div className={`h-1.5 ${t.bar}`} />
                 <div className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">

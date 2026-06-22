@@ -108,13 +108,14 @@ export function MiAreaPage() {
   const activos = colaboradores.filter((c) => c.activo !== false).length;
   const encargadoNombre = area.encargado_nombre || null;
 
-  // Área → tono de gris para la barra superior
-  const AREA_THEME: Record<number, string> = {
-    90: "bg-gray-300",
-    92: "bg-gray-500",
-    93: "bg-gray-700",
+  // Área → tono de gris para la barra superior + contraste de texto
+  const AREA_THEME: Record<number, { bar: string; text: string }> = {
+    90: { bar: "bg-gray-300", text: "text-gray-900" },
+    92: { bar: "bg-gray-500", text: "text-white"     },
+    93: { bar: "bg-gray-700", text: "text-white"     },
   };
-  const DEFAULT_BAR = "bg-gray-200";
+  const DEFAULT_THEME = { bar: "bg-gray-200", text: "text-gray-900" };
+  const theme = AREA_THEME[area.id] || DEFAULT_THEME;
 
   const pct = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0;
 
@@ -128,19 +129,18 @@ export function MiAreaPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header — card con barra de área */}
+      {/* Header — barra con nombre, stats y encargado */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className={`h-1.5 ${AREA_THEME[area.id] || DEFAULT_BAR}`} />
-        <div className="p-4 flex items-center gap-2 text-sm text-slate-600 flex-wrap">
-          <span className="font-bold text-slate-800">{area.nombre}</span>
-          <span className="text-slate-300">·</span>
+        <div className={`${theme.bar} ${theme.text} px-4 py-2.5 flex items-center gap-2 text-sm flex-wrap`}>
+          <span className="font-bold">{area.nombre}</span>
+          <span className="opacity-40">·</span>
           <span>{servicios.length} servicios</span>
-          <span className="text-slate-300">·</span>
+          <span className="opacity-40">·</span>
           <span>{activos} colaboradores</span>
           {encargadoNombre && (
             <>
-              <span className="text-slate-300">·</span>
-              <span className="text-slate-500">Encargado: {encargadoNombre}</span>
+              <span className="opacity-40">·</span>
+              <span>Encargado: {encargadoNombre}</span>
             </>
           )}
         </div>
@@ -264,7 +264,7 @@ export function MiAreaPage() {
             <p className="text-sm text-slate-400">No hay servicios en esta área</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {servicios.map((s) => {
               const cfg = statusConfig[s.estado] || statusConfig.pendiente;
               return (
