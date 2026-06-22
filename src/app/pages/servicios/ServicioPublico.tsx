@@ -253,6 +253,16 @@ export function ServicioPublicoPage() {
                 {servicio.area_nombre}
               </span>
             )}
+            {servicio.colaborador_nombre && (
+              <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                Colaborador: {servicio.colaborador_nombre}
+              </span>
+            )}
+            {servicio.cliente_nombre && (
+              <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                Cliente: {servicio.cliente_nombre}
+              </span>
+            )}
           </div>
         </div>
 

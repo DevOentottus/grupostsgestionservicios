@@ -394,7 +394,7 @@ export function ServicioDetailPage() {
       <div className="rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Blue header bar — código, botones, tiempo */}
         <div className={cn("px-4 md:px-6 py-2 flex items-center gap-2 flex-wrap", HEADER_BAR_COLOR[servicio.estado] || "bg-blue-600")}>
-          <span className="text-xs font-semibold text-white/90 bg-blue-500 px-2 py-0.5 rounded-lg font-mono shadow-sm">{servicio.codigo}</span>
+          <span className="text-xs font-semibold text-white bg-black px-2 py-0.5 rounded-lg font-mono shadow-sm">{servicio.codigo}</span>
           {/* Botón Compartir */}
           <div className="relative">
             <button
@@ -517,6 +517,20 @@ export function ServicioDetailPage() {
           {servicio.descripcion && (
             <p className="text-sm text-gray-600 mt-2 bg-gray-50 rounded-xl p-3 border border-gray-100">{servicio.descripcion}</p>
           )}
+
+          {/* Tags: Colaborador y Cliente */}
+          <div className="flex flex-wrap gap-1.5 text-[10px] mt-3">
+            {servicio.colaborador_nombre && (
+              <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                Colaborador: {servicio.colaborador_nombre}
+              </span>
+            )}
+            {servicio.cliente_nombre && (
+              <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                Cliente: {servicio.cliente_nombre}
+              </span>
+            )}
+          </div>
 
           {/* Reporte del Cliente y Diagnóstico */}
           {(servicio.cliente_reporte || servicio.diagnostico_inicial || servicio.servicio_audio_cliente || servicio.servicio_audio_diagnostico) && (
