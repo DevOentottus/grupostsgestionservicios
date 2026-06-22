@@ -59,7 +59,7 @@ export function LoginPage() {
 
       {/* Right panel -- form */}
       <div className="flex flex-col justify-center items-center w-full lg:w-1/2 p-6">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md">
+        <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-md">
           {/* Mobile brand -- visible only on small screens */}
           <div className="flex items-center gap-3 mb-8 lg:hidden">
             <div className="w-12 h-12 bg-blue-800 rounded-xl flex items-center justify-center">

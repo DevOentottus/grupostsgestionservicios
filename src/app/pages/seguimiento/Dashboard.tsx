@@ -189,23 +189,25 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Tab Navigation - Figma style with shadcn accent bottom border */}
-      <div className="flex gap-1 border-b border-gray-200">
-        {TABS.map(({ id, label, icon }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={cn(
-              "flex items-center gap-1.5 px-4 py-2.5 text-sm transition-colors rounded-t-lg",
-              activeTab === id
-                ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 font-medium"
-                : "text-slate-500 hover:text-slate-700 hover:bg-slate-50",
-            )}
-          >
-            {icon}
-            {label}
-          </button>
-        ))}
+      {/* Tab Navigation - responsive scroll en mobile */}
+      <div className="overflow-x-auto -mx-4 md:mx-0">
+        <div className="flex gap-1 border-b border-gray-200 px-4 md:px-0 min-w-max md:min-w-0">
+          {TABS.map(({ id, label, icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 md:px-4 py-2.5 text-sm whitespace-nowrap transition-colors rounded-t-lg",
+                activeTab === id
+                  ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50/50 font-medium"
+                  : "text-slate-500 hover:text-slate-700 hover:bg-slate-50",
+              )}
+            >
+              {icon}
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Content */}

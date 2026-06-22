@@ -338,7 +338,7 @@ export function NuevoServicioPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
+    <div className="max-w-5xl mx-auto space-y-4 md:space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
         <button
@@ -358,7 +358,7 @@ export function NuevoServicioPage() {
       </div>
 
       {/* ═══ OPCIONES ═══ */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-5 space-y-3">
         <CheckboxToggle
           checked={guiarEntrada}
           onChange={toggleGuiarEntrada}
@@ -427,7 +427,7 @@ export function NuevoServicioPage() {
       >
         {/* ─── PASO 1: CLIENTE (solo si guía INACTIVA) ─── */}
         {paso === 1 && !guiarEntrada && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-5 space-y-3 md:space-y-4">
             <h2 className={sectionTitleClass}>
               <User className="w-4 h-4 text-blue-600" />
               Cliente
@@ -476,7 +476,7 @@ export function NuevoServicioPage() {
 
         {/* ─── PASO 2: EQUIPO Y ACCESORIOS (solo si guía INACTIVA) ─── */}
         {paso === 2 && !guiarEntrada && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-5 space-y-3 md:space-y-4">
             <h2 className={sectionTitleClass}>
               <Monitor className="w-4 h-4 text-blue-600" />
               Equipo y accesorios
@@ -542,7 +542,7 @@ export function NuevoServicioPage() {
 
         {/* ─── PASO 3 (o único si guía activa): SERVICIO ─── */}
         {paso === 3 || (paso === 1 && guiarEntrada) ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-5 space-y-3 md:space-y-4">
             <h2 className={sectionTitleClass}>
               <Wrench className="w-4 h-4 text-blue-600" />
               Servicio

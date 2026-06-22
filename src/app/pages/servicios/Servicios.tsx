@@ -158,28 +158,29 @@ export function ServiciosPage() {
         </div>
       </div>
 
-      {/* Status filter buttons */}
-      <div className="flex flex-wrap gap-2">
-        {statusFilters.map((status) => (
-          <button
-            key={status}
-            onClick={() => setFilterStatus(status)}
-            className={cn(
-              "px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2",
-              filterStatus === status
-                ? "bg-yellow-400 text-blue-900"
-                : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50",
-            )}
-          >
-            <span className={cn(
-              "w-2 h-2 rounded-full",
-              status === "todos" && "bg-blue-600",
-              status === "pendiente" && "bg-yellow-500",
-              status === "en_progreso" && "bg-blue-500",
-              status === "completado" && "bg-green-500",
-              status === "bloqueado" && "bg-red-500",
-            )} />
-            <span>{status === "todos" ? "Todos" : statusDisplay[status] || status}</span>
+      {/* Status filter buttons — scroll horizontal en mobile */}
+      <div className="overflow-x-auto -mx-4 md:mx-0">
+        <div className="flex gap-2 px-4 md:px-0 min-w-max md:min-w-0">
+          {statusFilters.map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              className={cn(
+                "px-3 md:px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 whitespace-nowrap",
+                filterStatus === status
+                  ? "bg-yellow-400 text-blue-900"
+                  : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50",
+              )}
+            >
+              <span className={cn(
+                "w-2 h-2 rounded-full",
+                status === "todos" && "bg-blue-600",
+                status === "pendiente" && "bg-yellow-500",
+                status === "en_progreso" && "bg-blue-500",
+                status === "completado" && "bg-green-500",
+                status === "bloqueado" && "bg-red-500",
+              )} />
+              <span>{status === "todos" ? "Todos" : statusDisplay[status] || status}</span>
             <span className={cn(
               "text-xs px-1.5 py-0.5 rounded-full",
               filterStatus === status ? "bg-blue-900/20 text-blue-900" : "bg-gray-100 text-gray-500",
@@ -189,6 +190,7 @@ export function ServiciosPage() {
           </button>
         ))}
       </div>
+    </div>
 
       {/* Search */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">

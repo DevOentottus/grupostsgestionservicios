@@ -215,8 +215,8 @@ export function ServicioDetailPage() {
   const servicioId = parseInt(id!);
 
   const esAdmin = user?.rol === "admin";
-  const esEncargado = user?.rol === "encargado";
-  const esGestion = esAdmin || esEncargado; // admin/encargado pueden gestionar
+  const esAsignado = !esAdmin && user?.id === servicio?.colaborador_id;
+  const puedeModificar = esAdmin || esAsignado;
 
   const { data: servicio, isLoading: svcLoading } = useServicio(servicioId);
   const { data: tareas, isLoading: tareasLoading } = useTareas(servicioId);
@@ -359,7 +359,7 @@ export function ServicioDetailPage() {
   }
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Back button */}
       <button onClick={() => navigate("/servicios")} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition">
         <ArrowLeft className="w-4 h-4" />
@@ -374,17 +374,19 @@ export function ServicioDetailPage() {
             <p className="text-sm font-medium text-red-800">Servicio Bloqueado</p>
             <p className="text-sm text-red-600 mt-0.5">{servicio.bloqueado_motivo}</p>
           </div>
-          <button
-            onClick={irAEnProgreso}
-            className="text-sm px-3 py-1.5 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors flex-shrink-0"
-          >
-            Reabrir
-          </button>
+          {puedeModificar && (
+            <button
+              onClick={irAEnProgreso}
+              className="text-sm px-3 py-1.5 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors flex-shrink-0"
+            >
+              Reabrir
+            </button>
+          )}
         </div>
       )}
 
       {/* Header Card */}
-      <div className={cn("rounded-2xl shadow-sm border border-gray-100 p-6 transition-colors", HEADER_BG[servicio.estado] || "bg-white")}>
+      <div className={cn("rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 transition-colors", HEADER_BG[servicio.estado] || "bg-white")}>
         <div className="flex flex-col md:flex-row justify-between items-start gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -448,8 +450,8 @@ export function ServicioDetailPage() {
                 <FileText className="w-3.5 h-3.5" />
                 PDF
               </button>
-              {/* Gestion action buttons: estilo tipo PDF */}
-              {esGestion && (servicio.estado === "bloqueado" ? (
+              {/* Gestion action buttons: solo admin o asignado */}
+              {puedeModificar && (servicio.estado === "bloqueado" ? (
                 <button onClick={irAEnProgreso} className="text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5" title="Desbloquear">
                   <Lock className="w-3.5 h-3.5" />
                 </button>
@@ -558,7 +560,7 @@ export function ServicioDetailPage() {
 
         {/* Action buttons */}
         <div className="flex gap-2 mt-4">
-          {isPendiente && completadasCount === 0 && (
+          {isPendiente && completadasCount === 0 && puedeModificar && (
             <button
               onClick={irAEnProgreso}
               disabled={cambiarEstado.isPending}
@@ -576,9 +578,9 @@ export function ServicioDetailPage() {
         </div>
       </div>
 
-      {/* Tabs - shadcn/ui style */}
-      <div className="border-b border-gray-200">
-        <nav className="flex gap-0 -mb-px">
+      {/* Tabs - responsive scroll en mobile */}
+      <div className="overflow-x-auto -mx-4 md:mx-0">
+        <nav className="flex gap-0 border-b border-gray-200 px-4 md:px-0 min-w-max md:min-w-0 -mb-px">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -632,26 +634,28 @@ export function ServicioDetailPage() {
               )}
             </div>
 
-            {/* Add task input */}
-            <div className="px-5 pb-4">
-              <div className="flex gap-2">
-                <input
-                  value={nuevaTarea}
-                  onChange={(e) => setNuevaTarea(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddTarea()}
-                  placeholder="Nueva tarea..."
-                  className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:border-blue-500 outline-none"
-                />
-                <button
-                  onClick={handleAddTarea}
-                  disabled={crearTarea.isPending || !nuevaTarea.trim()}
-                  className="bg-blue-600 text-white px-3 py-2 rounded-xl text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-1"
-                >
-                  <Plus className="w-4 h-4" />
-                  Agregar
-                </button>
+            {/* Add task input — solo admin o asignado */}
+            {puedeModificar && (
+              <div className="px-5 pb-4">
+                <div className="flex gap-2">
+                  <input
+                    value={nuevaTarea}
+                    onChange={(e) => setNuevaTarea(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddTarea()}
+                    placeholder="Nueva tarea..."
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm bg-gray-50 focus:border-blue-500 outline-none"
+                  />
+                  <button
+                    onClick={handleAddTarea}
+                    disabled={crearTarea.isPending || !nuevaTarea.trim()}
+                    className="bg-blue-600 text-white px-3 py-2 rounded-xl text-sm hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Agregar
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Flujo de Proceso — arriba de la lista de tareas */}
             <div className="px-5 pb-4">
@@ -676,12 +680,12 @@ export function ServicioDetailPage() {
                     <div
                       key={tarea.id}
                       className={cn(
-                        "flex items-center gap-1 px-5 py-3.5 transition group",
+                        "flex items-start md:items-center gap-1.5 px-3 md:px-5 py-3 transition group",
                         tarea.completada ? "bg-green-50/30" : "hover:bg-gray-50",
                       )}
                     >
-                      {/* Reorder arrows — solo entre incompletas */}
-                      {!tarea.completada && (
+                      {/* Reorder arrows — solo entre incompletas y solo admin/asignado */}
+                      {!tarea.completada && puedeModificar && (
                         <div className="flex flex-col items-center gap-0.5 mr-1 flex-shrink-0">
                           {idx > 0 && !tareasSorted[idx - 1].completada && (
                             <button
@@ -716,10 +720,10 @@ export function ServicioDetailPage() {
                         </div>
                       )}
 
-                      {/* Checkbox */}
+                      {/* Checkbox — solo admin o asignado */}
                       <button
                         onClick={async () => {
-                          if (tarea.completada) return; // no permitir desmarcar
+                          if (tarea.completada || !puedeModificar) return;
                           if (!prevIncompleta) {
                             const isFirst = completadasCount === 0;
                             try {
@@ -736,16 +740,17 @@ export function ServicioDetailPage() {
                             }
                           }
                         }}
-                        disabled={tarea.completada || prevIncompleta}
+                        disabled={tarea.completada || prevIncompleta || !puedeModificar}
                         title={
                           tarea.completada ? "Tarea completada" :
-                          prevIncompleta ? "Completá la tarea anterior primero" : undefined
+                          prevIncompleta ? "Completá la tarea anterior primero" :
+                          !puedeModificar ? "Solo el técnico asignado puede completar tareas" : undefined
                         }
                         className={cn(
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition",
                           tarea.completada
                             ? "bg-green-500 border-green-500 cursor-not-allowed"
-                            : prevIncompleta
+                            : prevIncompleta || !puedeModificar
                             ? "border-gray-200 bg-gray-50 cursor-not-allowed"
                             : "border-gray-300 hover:border-blue-500",
                         )}
@@ -778,7 +783,7 @@ export function ServicioDetailPage() {
                                 tarea.completada ? "line-through text-gray-500" : "text-gray-800",
                                 tarea.completada || prevIncompleta ? "cursor-not-allowed" : "cursor-pointer",
                               )}
-                              onClick={tarea.completada || prevIncompleta ? undefined : () => handleStartTitleEdit(tarea)}
+                              onClick={tarea.completada || prevIncompleta || !puedeModificar ? undefined : () => handleStartTitleEdit(tarea)}
                               style={{ fontWeight: tarea.completada ? 400 : 500 }}
                             >
                               {tarea.titulo}
@@ -797,27 +802,29 @@ export function ServicioDetailPage() {
                         </div>
                       )}
 
-                      {/* Edit + Delete */}
-                      <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {!isEditing && !tarea.completada && (
-                          <button
-                            onClick={() => handleStartTitleEdit(tarea)}
-                            className="p-1.5 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-300 transition"
-                            title="Editar título"
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
-                        )}
-                        {!tarea.completada && (
-                          <button
-                            onClick={() => handleDeleteClick(tarea)}
-                            className="p-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-300 transition"
-                            title="Eliminar tarea"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
+                      {/* Edit + Delete — solo admin o asignado */}
+                      {puedeModificar && (
+                        <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 max-md:opacity-100 transition-opacity">
+                          {!isEditing && !tarea.completada && (
+                            <button
+                              onClick={() => handleStartTitleEdit(tarea)}
+                              className="p-1.5 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-300 transition"
+                              title="Editar título"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          )}
+                          {!tarea.completada && (
+                            <button
+                              onClick={() => handleDeleteClick(tarea)}
+                              className="p-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-300 transition"
+                              title="Eliminar tarea"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
