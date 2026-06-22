@@ -1202,7 +1202,7 @@ function mapServicio(s: any) {
     area_id: s.area_id,
     colaborador_id: s.tecnico_principal_id,
     colaborador_nombre: colaboradorNombre,
-    cliente_nombre: s.cliente_id ? `Cliente #${s.cliente_id}` : null,
+    cliente_nombre: [s.cliente_nombres, s.cliente_apellido_paterno, s.cliente_apellido_materno].filter(Boolean).join(" ") || null,
     cliente_email: null, // no disponible en servicios
     cliente_dni: s.cliente_dni || null,
     cliente_apellido_paterno: s.cliente_apellido_paterno || null,

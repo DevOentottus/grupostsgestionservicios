@@ -412,7 +412,7 @@ export async function areasController(app: FastifyInstance) {
         fecha_fin: s.servicio_fecha_fin,
         tiempo_estimado: s.servicio_tiempo_estimado,
         prioridad: "media", // no disponible en Supabase
-        cliente_nombre: s.cliente_id ? `Cliente #${s.cliente_id}` : null,
+        cliente_nombre: [s.cliente_nombres, s.cliente_apellido_paterno, s.cliente_apellido_materno].filter(Boolean).join(" ") || null,
       }));
 
       const estadoCounts = {
