@@ -77,6 +77,7 @@ export function DisplayTVPage() {
             {currentTime.toLocaleTimeString("es-PE", {
               hour: "2-digit",
               minute: "2-digit",
+              hour12: false,
             })}
           </p>
           <p className="text-blue-300 text-xs">{activos.length} servicios activos</p>

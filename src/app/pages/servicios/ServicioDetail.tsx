@@ -81,8 +81,8 @@ function formatElapsed(fromDate: string, fromTime?: string | null, now?: number)
 function formatDateTime(fecha: string, hora?: string | null): string {
   try {
     const d = new Date(`${fecha}T${hora || "00:00:00"}`);
-    return d.toLocaleDateString("es-PE", {
-      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+    return d.toLocaleString("es-PE", {
+      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false,
     });
   } catch {
     return fecha;

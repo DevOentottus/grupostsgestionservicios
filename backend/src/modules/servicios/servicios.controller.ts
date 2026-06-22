@@ -982,7 +982,7 @@ async function reporteTecnicoPDF(request: any, reply: any) {
   addPageIfNeeded(60);
   page.drawText("Hoja de Reporte Técnico", { x: mg, y: y - 16, size: 16, font: boldFont, color: black });
   y -= 24;
-  const fechaGen = `${new Date().toLocaleDateString("es-PE")} ${new Date().toLocaleTimeString("es-PE")}`;
+  const fechaGen = `${new Date().toLocaleDateString("es-PE")} ${new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false })}`;
   page.drawText(`Generado: ${fechaGen}`, { x: pageW - mg - font.widthOfTextAtSize(`Generado: ${fechaGen}`, 8), y: y - 8, size: 8, font, color: gray });
   y -= 18;
 
@@ -1126,7 +1126,7 @@ async function reporteTecnicoPDF(request: any, reply: any) {
         const evFecha = ev.submitted_at || ev.created_at;
         if (evFecha) {
           const f = new Date(evFecha);
-          const fStr = `${f.toLocaleDateString("es-PE")} ${f.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}`;
+          const fStr = `${f.toLocaleDateString("es-PE")} ${f.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false })}`;
           addPageIfNeeded(14);
           page.drawText(fStr, { x: mg + 20, y: y - 7, size: 7, font, color: gray });
           y -= 10;

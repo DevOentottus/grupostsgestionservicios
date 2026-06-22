@@ -156,7 +156,7 @@ export function DashboardPage() {
             <h1 className="text-white text-xl font-bold">Bienvenido, {user?.nombres || "Usuario"}</h1>
             <span className="text-blue-200 text-sm">·</span>
             <span className="text-blue-200 text-sm">
-              {currentTime.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" })} -- {currentTime.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              {currentTime.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" })} -- {currentTime.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })}
             </span>
           </div>
           <div className="flex items-center gap-4">
