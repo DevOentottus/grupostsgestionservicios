@@ -481,10 +481,12 @@ export function ServicioDetailPage() {
             return (
               <>
                 <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Bloquear"} className={cn(puedeModificar ? btnEnabled : btnDisabled)}>
-                  <Lock className={cn("w-3.5 h-3.5", !puedeModificar && "text-white/30")} />
+                  <Lock className={cn("w-3.5 h-3.5 shrink-0", !puedeModificar && "text-white/30")} />
+                  <span>Bloquear</span>
                 </button>
                 <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Cancelar"} className={cn(puedeModificar ? btnEnabled : btnDisabled)}>
-                  <X className={cn("w-3.5 h-3.5", !puedeModificar && "text-white/30")} />
+                  <X className={cn("w-3.5 h-3.5 shrink-0", !puedeModificar && "text-white/30")} />
+                  <span>Cancelar</span>
                 </button>
               </>
             );
