@@ -132,56 +132,39 @@ export function AreaServiciosPage() {
         </select>
       </div>
 
-      {/* Servicios Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-600">
-              <tr>
-                <th className="text-left p-3 font-medium">Código</th>
-                <th className="text-left p-3 font-medium">Título</th>
-                <th className="text-left p-3 font-medium">Cliente</th>
-                <th className="text-center p-3 font-medium">Prioridad</th>
-                <th className="text-center p-3 font-medium">Estado</th>
-                <th className="text-center p-3 font-medium">Creado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredServicios.map((s: Servicio) => (
-                <tr
-                  key={s.id}
-                  onClick={() => navigate(`/servicios/${s.id}`)}
-                  className="hover:bg-blue-50 cursor-pointer transition-colors"
-                >
-                  <td className="p-3 font-mono text-xs text-slate-400">{s.codigo}</td>
-                  <td className="p-3 font-medium text-slate-800">{s.titulo}</td>
-                  <td className="p-3 text-slate-600">{s.cliente_nombre}</td>
-                  <td className="p-3 text-center">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getPrioridadClass(s.prioridad)}`}>
-                      {s.prioridad}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getEstadoClass(s.estado)}`}>
-                      {s.estado.replace("_", " ")}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center text-xs text-slate-400">
-                    {new Date(s.created_at).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-              {filteredServicios.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-6 text-center text-slate-400">
-                    No hay servicios para mostrar
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {/* Servicios Grid */}
+      {filteredServicios.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-400">
+          No hay servicios para mostrar
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredServicios.map((s: Servicio) => (
+            <div
+              key={s.id}
+              onClick={() => navigate(`/servicios/${s.id}`)}
+              className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md hover:border-blue-300 cursor-pointer transition-all space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs text-slate-400">{s.codigo}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getPrioridadClass(s.prioridad)}`}>
+                  {s.prioridad}
+                </span>
+              </div>
+              <p className="text-sm font-semibold text-slate-800 line-clamp-2">{s.titulo}</p>
+              <p className="text-xs text-slate-500 truncate">{s.cliente_nombre || "Sin cliente"}</p>
+              <div className="flex items-center justify-between pt-1">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getEstadoClass(s.estado)}`}>
+                  {s.estado.replace("_", " ")}
+                </span>
+                <span className="text-xs text-slate-400">
+                  {new Date(s.created_at).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
