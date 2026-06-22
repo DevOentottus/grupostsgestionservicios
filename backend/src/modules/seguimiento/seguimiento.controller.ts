@@ -148,6 +148,19 @@ export async function seguimientoController(app: FastifyInstance) {
       areaNombre = areas?.[0]?.area_nombre || null;
     }
 
+    // Colaborador (técnico asignado)
+    let colaboradorNombre = null;
+    if (servicio.tecnico_principal_id) {
+      const { data: colab } = await supabase
+        .from("usuarios")
+        .select("usuario_nombres, usuario_apellido_paterno")
+        .eq("usuario_id", servicio.tecnico_principal_id)
+        .limit(1);
+      if (colab?.[0]) {
+        colaboradorNombre = `${colab[0].usuario_nombres || ""} ${colab[0].usuario_apellido_paterno || ""}`.trim();
+      }
+    }
+
     // Cliente
     const clienteData = servicio?.clientes || {};
     const clienteNombre = clienteData.cliente_nombres || null;
@@ -184,6 +197,8 @@ export async function seguimientoController(app: FastifyInstance) {
           cliente_email: clienteEmail,
           area_id: servicio.area_id,
           area_nombre: areaNombre,
+          colaborador_id: servicio.tecnico_principal_id,
+          colaborador_nombre: colaboradorNombre,
           tiempo_estimado: servicio.servicio_tiempo_estimado,
           fecha_inicio: servicio.servicio_fecha_inicio,
           created_at: servicio.servicio_fecha_creacion,

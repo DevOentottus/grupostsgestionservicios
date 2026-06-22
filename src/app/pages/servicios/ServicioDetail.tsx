@@ -137,6 +137,14 @@ const HEADER_BAR_COLOR: Record<string, string> = {
   cancelado: "bg-gray-400",
 };
 
+const ESTADO_BAR_STYLE: Record<string, string> = {
+  pendiente: "bg-yellow-400/25 text-yellow-100",
+  en_progreso: "bg-white/20 text-white",
+  completado: "bg-green-400/25 text-green-100",
+  bloqueado: "bg-red-400/25 text-red-100",
+  cancelado: "bg-white/10 text-gray-200",
+};
+
 // -- Evidencias Tab Component --
 function EvidenciasTabContent({ servicioId, tareas, userRol }: { servicioId: number; tareas: Tarea[]; userRol?: string }) {
   const { data: evidencias, isLoading } = useEvidencias(servicioId);
@@ -491,25 +499,29 @@ export function ServicioDetailPage() {
               <span className="font-mono text-white/80">{formatElapsed(servicio.created_at, servicio.hora_creacion, now)}</span>
             </span>
           )}
+          {/* Estado badge */}
+          <span className={cn("ml-auto text-xs px-2.5 py-1 rounded-full font-medium", ESTADO_BAR_STYLE[servicio.estado] || "bg-white/10 text-white")}>
+            {ESTADO_LABEL[servicio.estado] || servicio.estado}
+          </span>
+          {/* Tags colaborador / cliente */}
+          {servicio.colaborador_nombre && (
+            <span className="text-[10px] bg-white/15 text-white/90 px-2 py-0.5 rounded-full font-medium">
+              Colaborador: {servicio.colaborador_nombre}
+            </span>
+          )}
+          {servicio.cliente_nombre && (
+            <span className="text-[10px] bg-white/15 text-white/90 px-2 py-0.5 rounded-full font-medium">
+              Cliente: {servicio.cliente_nombre}
+            </span>
+          )}
         </div>
 
         {/* Card body */}
         <div className={cn("p-4 md:p-6 transition-colors", HEADER_BG[servicio.estado] || "bg-white")}>
-          <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+          <div className="flex flex-col md:flex-row items-start gap-4">
             <div className="flex-1">
               <p className="text-sm text-gray-500">{servicio.cliente_nombre}</p>
-              {servicio.colaborador_nombre && (
-                <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  Técnico: {servicio.colaborador_nombre}
-                </p>
-              )}
             </div>
-
-            {/* Estado badge */}
-            <span className={cn("text-xs px-3 py-1.5 rounded-full font-medium", ESTADO_ESTILO[servicio.estado] || "bg-gray-100 text-gray-600")}>
-              {ESTADO_LABEL[servicio.estado] || servicio.estado}
-            </span>
           </div>
 
           <h2 className="text-xl text-gray-900 mt-4" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
@@ -517,20 +529,6 @@ export function ServicioDetailPage() {
           {servicio.descripcion && (
             <p className="text-sm text-gray-600 mt-2 bg-gray-50 rounded-xl p-3 border border-gray-100">{servicio.descripcion}</p>
           )}
-
-          {/* Tags: Colaborador y Cliente */}
-          <div className="flex flex-wrap gap-1.5 text-[10px] mt-3">
-            {servicio.colaborador_nombre && (
-              <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-                Colaborador: {servicio.colaborador_nombre}
-              </span>
-            )}
-            {servicio.cliente_nombre && (
-              <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                Cliente: {servicio.cliente_nombre}
-              </span>
-            )}
-          </div>
 
           {/* Reporte del Cliente y Diagnóstico */}
           {(servicio.cliente_reporte || servicio.diagnostico_inicial || servicio.servicio_audio_cliente || servicio.servicio_audio_diagnostico) && (
