@@ -20,7 +20,7 @@ import { cn } from "@/app/lib/utils";
 import QRCode from "qrcode";
 import {
   ArrowLeft, CheckCircle2, Clock, MessageSquare,
-  Send, AlertTriangle, Plus, X, ChevronRight,
+  Send, AlertTriangle, Plus, X,
   Pencil, MessageCircle, Mic,
   Save, Camera, Share2, Play, Lock, RotateCcw, ChevronUp, ChevronDown, FileText,
 } from "lucide-react";
@@ -56,13 +56,6 @@ const TABS = [
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
-// -- Efficiency config (replaces old priority config) --
-const EFICIENCIA_CONFIG: Record<string, { label: string; class: string; icon: string }> = {
-  baja: { label: "Baja", class: "bg-gray-50 text-gray-700 border-gray-200", icon: "chevron" },
-  media: { label: "Media", class: "bg-blue-50 text-blue-700 border-blue-200", icon: "clock" },
-  alta: { label: "Alta", class: "bg-orange-50 text-orange-700 border-orange-200", icon: "chevron" },
-  urgente: { label: "Urgente", class: "bg-red-50 text-red-700 border-red-200", icon: "alert" },
-};
 
 /** Combinar fecha + hora del backend a locale legible */
 function formatElapsed(fromDate: string, fromTime?: string | null, now?: number): string {
@@ -269,8 +262,6 @@ export function ServicioDetailPage() {
   const isPendiente = servicio?.estado === "pendiente";
   const isBloqueado = servicio?.estado === "bloqueado";
   const isEnProgreso = servicio?.estado === "en_progreso";
-  const eficienciaConf = EFICIENCIA_CONFIG[servicio?.prioridad || "media"];
-
   const handleAddTarea = async () => {
     if (!nuevaTarea.trim()) return;
     await crearTarea.mutateAsync({
@@ -480,14 +471,6 @@ export function ServicioDetailPage() {
                   </>
                 );
               })({ bloqueado: servicio.estado === "bloqueado", cancelado: servicio.estado === "cancelado" })}
-              {servicio.prioridad && (
-                <span className={cn("text-xs font-semibold px-3 py-1 rounded-lg border shadow-sm flex items-center gap-1.5 select-none", eficienciaConf.class)}>
-                  {eficienciaConf.icon === "alert" ? <AlertTriangle className="w-3 h-3" /> :
-                   eficienciaConf.icon === "clock" ? <Clock className="w-3 h-3" /> :
-                   <ChevronRight className="w-3 h-3" />}
-                  {eficienciaConf.label}
-                </span>
-              )}
               {/* FI: fecha de inicio + contador de tiempo transcurrido */}
               {servicio.created_at && (
                 <span className="text-xs text-gray-500 flex items-center gap-1 ml-1" title={`Creado: ${servicio.created_at} ${servicio.hora_creacion || ""}`}>
@@ -495,6 +478,7 @@ export function ServicioDetailPage() {
                   <span className="font-medium text-gray-600">FI:</span>
                   <span>{formatDateTime(servicio.created_at, servicio.hora_creacion)}</span>
                   <span className="text-gray-300 mx-0.5">·</span>
+                  <span className="font-medium text-gray-600">Tiempo:</span>
                   <span className="font-mono text-gray-600">{formatElapsed(servicio.created_at, servicio.hora_creacion, now)}</span>
                 </span>
               )}
