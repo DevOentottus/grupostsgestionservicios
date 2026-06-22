@@ -139,6 +139,7 @@ export function AreasPage() {
           <h1 className="text-gray-900 font-bold">Áreas de Servicio</h1>
           <p className="text-gray-500 text-sm">{visibleAreas.length} áreas registradas</p>
         </div>
+
         {user?.rol !== "encargado" && (
           <button
             onClick={() => { resetForm(); setShowModal(true); }}
@@ -156,17 +157,28 @@ export function AreasPage() {
           {visibleAreas.map((area: AreaWithEncargado) => {
             const stats = getAreaServiceStats(area.id);
             const isSelected = selectedId === area.id;
-            return (
+  // Área → tono de gris para la barra superior
+  const AREA_THEME: Record<number, string> = {
+    90: "bg-gray-300",
+    92: "bg-gray-500",
+    93: "bg-gray-700",
+  };
+  const DEFAULT_BAR = "bg-gray-200";
+  const areaBarClass = (areaId: number) => AREA_THEME[areaId] || DEFAULT_BAR;
+
+  return (
               <button
                 key={area.id}
                 onClick={() => selectArea(area.id)}
                 className={cn(
-                  "w-full text-left rounded-2xl p-5 shadow-sm border transition",
+                  "w-full text-left rounded-2xl shadow-sm border transition overflow-hidden",
                   isSelected
                     ? "bg-blue-900 border-blue-800 text-white"
                     : "bg-white border-gray-100 hover:border-blue-200",
                 )}
               >
+                <div className={`h-1.5 ${areaBarClass(area.id)}`} />
+                <div className="p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className={cn(
@@ -202,6 +214,7 @@ export function AreasPage() {
                       </p>
                     </div>
                   ))}
+                  </div>
                 </div>
               </button>
             );

@@ -500,8 +500,8 @@ export function PlantillasPage() {
   // Área → tono de gris para la barra superior (fondo blanco)
   const AREA_THEME: Record<number, string> = {
     90:  "bg-gray-300",   // Computadoras → gris claro
-    92:  "bg-gray-400",   // Televisores → gris medio
-    93:  "bg-gray-500",   // Redes → gris oscuro
+    92:  "bg-gray-500",   // Televisores → gris medio
+    93:  "bg-gray-700",   // Redes → gris oscuro
   };
   const DEFAULT_BAR = "bg-gray-200";
 
