@@ -403,7 +403,17 @@ export function ServicioDetailPage() {
       <div className="rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         {/* Blue header bar — código, botones, tiempo */}
         <div className={cn("px-4 md:px-6 py-2 flex items-center gap-2 flex-wrap", HEADER_BAR_COLOR[servicio.estado] || "bg-blue-600")}>
-          <span className="text-xs font-semibold text-white bg-black px-2 py-0.5 rounded-lg font-mono shadow-sm">{servicio.codigo}</span>
+          <span className="flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-white bg-black px-2 py-0.5 rounded-lg font-mono shadow-sm">{servicio.codigo}</span>
+            {servicio.colaborador_nombre && (
+              <span className="text-[10px] font-medium text-white/90 bg-black/50 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {servicio.colaborador_nombre}
+              </span>
+            )}
+          </span>
           {/* Botón Compartir */}
           <div className="relative">
             <button
@@ -502,13 +512,8 @@ export function ServicioDetailPage() {
               <span className="font-mono text-white/80">{formatElapsed(servicio.created_at, servicio.hora_creacion, now)}</span>
             </span>
           )}
-          {/* Right section: tags + estado badge */}
+          {/* Right section: estado badge */}
           <span className="ml-auto flex items-center gap-2 flex-wrap">
-            {servicio.colaborador_nombre && (
-              <span className="text-[10px] bg-white/15 text-white/90 px-2 py-0.5 rounded-full font-medium">
-                Colaborador: {servicio.colaborador_nombre}
-              </span>
-            )}
             <span className={cn("text-xs px-2.5 py-1 rounded-full font-medium", ESTADO_BAR_STYLE[servicio.estado] || "bg-white/10 text-white")}>
               {ESTADO_LABEL[servicio.estado] || servicio.estado}
             </span>
