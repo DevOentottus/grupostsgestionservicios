@@ -509,11 +509,6 @@ export function ServicioDetailPage() {
                 Colaborador: {servicio.colaborador_nombre}
               </span>
             )}
-            {servicio.cliente_nombre && (
-              <span className="text-[10px] bg-white/15 text-white/90 px-2 py-0.5 rounded-full font-medium">
-                Cliente: {servicio.cliente_nombre}
-              </span>
-            )}
             <span className={cn("text-xs px-2.5 py-1 rounded-full font-medium", ESTADO_BAR_STYLE[servicio.estado] || "bg-white/10 text-white")}>
               {ESTADO_LABEL[servicio.estado] || servicio.estado}
             </span>
@@ -522,13 +517,17 @@ export function ServicioDetailPage() {
 
         {/* Card body */}
         <div className={cn("p-4 md:p-6 transition-colors", HEADER_BG[servicio.estado] || "bg-white")}>
-          <div className="flex flex-col md:flex-row items-start gap-4">
-            <div className="flex-1">
-              <p className="text-sm text-gray-500">{servicio.cliente_nombre}</p>
-            </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h2 className="text-xl text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
+            {servicio.cliente_nombre && (
+              <span className="flex items-center gap-1 text-xs text-gray-500">
+                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {servicio.cliente_nombre}
+              </span>
+            )}
           </div>
-
-          <h2 className="text-xl text-gray-900 mt-4" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
 
           {servicio.descripcion && (
             <p className="text-sm text-gray-600 mt-2 bg-gray-50 rounded-xl p-3 border border-gray-100">{servicio.descripcion}</p>

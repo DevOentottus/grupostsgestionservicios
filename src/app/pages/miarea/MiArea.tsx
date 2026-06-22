@@ -124,7 +124,7 @@ export function MiAreaPage() {
           <Building2 className="w-5 h-5 text-blue-600" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">{area.nombre}</h2>
+          <h2 className="text-xl font-bold text-slate-800">{area.nombre}</h2>
           <p className="text-sm text-slate-500">
             {servicios.length} servicios · {colaboradores.length} colaboradores
           </p>

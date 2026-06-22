@@ -83,7 +83,7 @@ export function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm text-gray-700 font-semibold mb-1">Usuario</label>
+              <label className="block text-xs text-gray-600 font-semibold mb-1">Usuario</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -98,7 +98,7 @@ export function LoginPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm text-gray-700 font-semibold mb-1">Contraseña</label>
+              <label className="block text-xs text-gray-600 font-semibold mb-1">Contraseña</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input

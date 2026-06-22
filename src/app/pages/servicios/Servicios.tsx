@@ -123,7 +123,7 @@ export function ServiciosPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-gray-900 font-bold">Gestión de Servicios</h1>
+          <h1 className="text-gray-900 font-bold text-xl">Gestión de Servicios</h1>
           <p className="text-gray-500 text-sm">
             {servicios?.length || 0} servicios
           </p>
