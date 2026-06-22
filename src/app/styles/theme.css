@@ -3,6 +3,7 @@
 :root {
   --font-size: 16px;
   --background: #9a9c9e;
+  --section: #e4e4e4;
   --foreground: oklch(0.145 0 0);
   --card: #ffffff;
   --card-foreground: oklch(0.145 0 0);
@@ -80,6 +81,7 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-section: var(--section);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -125,7 +127,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-section text-foreground;
   }
 
   html {
