@@ -187,12 +187,28 @@ export async function managerController(app: FastifyInstance) {
         })
       );
 
+      // Obtener nombre del encargado
+      let encargadoNombre: string | null = null;
+      if (area.area_encargado_id) {
+        const { data: enc } = await supabase
+          .from("usuarios")
+          .select("usuario_nombres, usuario_apellido_paterno, usuario_apellido_materno")
+          .eq("usuario_id", area.area_encargado_id)
+          .limit(1);
+        if (enc?.length) {
+          const e = enc[0];
+          encargadoNombre = [e.usuario_nombres, e.usuario_apellido_paterno, e.usuario_apellido_materno]
+            .filter(Boolean).join(" ");
+        }
+      }
+
       return {
         data: {
           area: {
             id: area.area_id,
             nombre: area.area_nombre,
             encargado_id: area.area_encargado_id,
+            encargado_nombre: encargadoNombre,
           },
           servicios,
           estado_counts: estadoCounts,

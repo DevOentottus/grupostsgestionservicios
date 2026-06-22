@@ -77,6 +77,21 @@ function RolBadge({ rol }: { rol: string }) {
 function getPageTitle(pathname: string): string {
   const segments = pathname.split("/").filter(Boolean);
   const mainSegment = segments[0] || "dashboard";
+
+  // Sub-rutas específicas
+  if (segments[0] === "servicios" && segments[1] === "nuevo") return "Nuevo Servicio";
+  if (segments[0] === "servicios" && segments[1]) return "Servicio";
+  if (segments[0] === "areas" && segments[1]) return "Área — Servicios";
+  if (segments[0] === "admin" && segments[1] === "rendimiento") return "Rendimiento del Sistema";
+  if (segments[0] === "manager" && segments[1] === "clientes") return "Gestión de Clientes";
+  if (segments[0] === "manager" && segments[1] === "desempeno") return "Desempeño";
+  if (segments[0] === "manager" && segments[1] === "distribucion") return "Distribución";
+  if (segments[0] === "display" && segments[1] === "tv") return "TV General";
+  if (segments[0] === "display" && segments[1]) return "Pantalla";
+  if (segments[0] === "public") return "Consulta Pública";
+  if (segments[0] === "seguimiento-cliente") return "Seguimiento Cliente";
+  if (segments[0] === "login") return "Iniciar Sesión";
+
   const titles: Record<string, string> = {
     dashboard: "Dashboard",
     miarea: "Mi Área",
@@ -88,6 +103,8 @@ function getPageTitle(pathname: string): string {
     reportes: "Reportes",
     auditoria: "Auditoría",
     comunicaciones: "Comunicaciones",
+    anuncios: "Anuncios",
+    solicitudes: "Solicitudes Internas",
     manager: "Gestión",
     display: "Pantallas",
   };
@@ -135,6 +152,11 @@ export default function Layout() {
   };
 
   const pageTitle = getPageTitle(location.pathname);
+
+  // Actualizar título de la pestaña del navegador
+  useEffect(() => {
+    document.title = pageTitle ? `${pageTitle} | ServicioLocalSTS` : "ServicioLocalSTS";
+  }, [pageTitle]);
 
   // Close user menu on outside click
   useEffect(() => {

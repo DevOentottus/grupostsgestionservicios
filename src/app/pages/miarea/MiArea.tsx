@@ -105,6 +105,16 @@ export function MiAreaPage() {
 
   const { area, servicios, estado_counts, colaboradores } = data;
   const total = estado_counts.total || 1;
+  const activos = colaboradores.filter((c) => c.activo !== false).length;
+  const encargadoNombre = area.encargado_nombre || null;
+
+  // Área → tono de gris para la barra superior
+  const AREA_THEME: Record<number, string> = {
+    90: "bg-gray-300",
+    92: "bg-gray-500",
+    93: "bg-gray-700",
+  };
+  const DEFAULT_BAR = "bg-gray-200";
 
   const pct = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0;
 
@@ -118,16 +128,21 @@ export function MiAreaPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-          <Building2 className="w-5 h-5 text-blue-600" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-800">{area.nombre}</h2>
-          <p className="text-sm text-slate-500">
-            {servicios.length} servicios · {colaboradores.length} colaboradores
-          </p>
+      {/* Header — card con barra de área */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className={`h-1.5 ${AREA_THEME[area.id] || DEFAULT_BAR}`} />
+        <div className="p-4 flex items-center gap-2 text-sm text-slate-600 flex-wrap">
+          <span className="font-bold text-slate-800">{area.nombre}</span>
+          <span className="text-slate-300">·</span>
+          <span>{servicios.length} servicios</span>
+          <span className="text-slate-300">·</span>
+          <span>{activos} colaboradores</span>
+          {encargadoNombre && (
+            <>
+              <span className="text-slate-300">·</span>
+              <span className="text-slate-500">Encargado: {encargadoNombre}</span>
+            </>
+          )}
         </div>
       </div>
 
