@@ -832,52 +832,23 @@ export async function serviciosController(app: FastifyInstance) {
   );
 }
 
-// -- Helper: remueve perfil ICC de un JPEG sin dependencias --
-function stripICCProfile(buf: Buffer): Buffer {
-  // Busca el marcador APP2 (0xFF 0xE2) donde va el perfil ICC en JPEG
-  let i = 0;
-  while (i < buf.length - 1) {
-    if (buf[i] === 0xFF && buf[i + 1] === 0xE2) {
-      const len = (buf[i + 2] << 8) + buf[i + 3] + 2; // incluye los 2 bytes de longitud
-      return Buffer.concat([buf.subarray(0, i), buf.subarray(i + len)]);
-    }
-    // Saltar otros marcadores APPn (0xFFE0–0xFFEF)
-    if (buf[i] === 0xFF && buf[i + 1] >= 0xE0 && buf[i + 1] <= 0xEF) {
-      const len = (buf[i + 2] << 8) + buf[i + 3] + 2;
-      i += len;
-    } else {
-      i++;
-    }
-  }
-  return buf; // sin ICC que remover
+// -- Helper: detecta formato de imagen por magic bytes --
+function detectImageFormat(buf: Uint8Array): "jpg" | "png" | null {
+  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return "jpg";
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return "png";
+  return null;
 }
 
-// -- Helper: normaliza imagen para PDF (intenta sharp, fallback a strip ICC) --
-async function normalizeImageForPDF(raw: Buffer): Promise<Buffer> {
-  // Estrategia 1: Sharp → JPEG sRGB sin ICC
-  try {
-    const sharpMod = await import("sharp");
-    try {
-      return await sharpMod.default(raw)
-        .toColorspace("srgb")
-        .jpeg({ force: true })
-        .toBuffer();
-    } catch {
-      // Estrategia 2: Sharp → PNG (pdfkit lo maneja bien)
-      try {
-        return await sharpMod.default(raw)
-          .toColorspace("srgb")
-          .png({ force: true })
-          .toBuffer();
-      } catch {
-        // sharp no pudo procesar esta imagen → continuar con raw
-      }
-    }
-  } catch {
-    // Sharp no disponible en este entorno
+// -- Helper: trunca texto al ancho disponible --
+function truncate(text: string, font: any, size: number, maxW: number): string {
+  if (font.widthOfTextAtSize(text, size) <= maxW) return text;
+  let lo = 0, hi = text.length;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (font.widthOfTextAtSize(text.slice(0, mid) + "…", size) <= maxW) lo = mid;
+    else hi = mid - 1;
   }
-  // Estrategia 3: remover ICC manualmente del JPEG (sin dependencias)
-  return stripICCProfile(raw);
+  return text.slice(0, Math.max(lo, 1)) + "…";
 }
 
 // -- Helper: genera PDF de reporte técnico --
@@ -927,228 +898,257 @@ async function reporteTecnicoPDF(request: any, reply: any) {
     eviPorTarea[tid].push(ev);
   }
 
-  // 5. Pre-fetchear imágenes y normalizarlas (sharp → strip ICC → raw)
-  const imgBuffers = new Map<string, Buffer | null>();
+  // 5. Pre-fetchear imágenes (bytes raw, pdf-lib incrusta sin decodificar)
+  interface ImagenCargada {
+    buffer: Uint8Array;
+    tipo: "jpg" | "png";
+  }
+  const imgCache = new Map<string, ImagenCargada>();
   const todasEvis = evidencias || [];
   if (todasEvis.length > 0) {
     await Promise.all(
       todasEvis.map(async (ev) => {
         const url = ev.archivo_url;
-        if (!url) return;
+        if (!url || imgCache.has(url)) return;
         try {
           const res = await fetch(url);
-          if (res.ok) {
-            const ab = await res.arrayBuffer();
-            const raw = Buffer.from(ab);
-            const normalized = await normalizeImageForPDF(raw);
-            imgBuffers.set(url, normalized);
+          if (!res.ok) return;
+          const raw = new Uint8Array(await res.arrayBuffer());
+          const tipo = detectImageFormat(raw);
+          if (tipo === "jpg" || tipo === "png") {
+            imgCache.set(url, { buffer: raw, tipo });
           }
-        } catch {
-          // error de fetch, ignorar
-        }
+        } catch { /* ignorar */ }
       })
     );
   }
 
-  // 6. Generar PDF con pdfkit — envuelto en Promise para que Fastify espere
-  return new Promise<void>(async (resolve, reject) => {
-    try {
-      const PDFDocument = (await import("pdfkit")).default;
-      const doc = new PDFDocument({ margin: 40, size: "A4" });
+  // 6. Generar PDF con pdf-lib (incrusta JPEG/PNG sin decodificar)
+  const { PDFDocument, rgb, StandardFonts } = await import("pdf-lib");
+  const pdfDoc = await PDFDocument.create();
+  const pageW = 595, pageH = 842, mg = 40;
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const gray = rgb(0.4, 0.4, 0.4);
+  const darkGray = rgb(0.33, 0.33, 0.33);
+  const lightGray = rgb(0.6, 0.6, 0.6);
+  const white = rgb(1, 1, 1);
+  const black = rgb(0, 0, 0);
 
-      const buffers: Buffer[] = [];
-      doc.on("data", (chunk: Buffer) => buffers.push(chunk));
-      doc.on("end", () => {
-        const pdfBuffer = Buffer.concat(buffers);
-        reply.header("Content-Type", "application/pdf");
-        const q = request.query as { download?: string };
-        const disposition = q.download === "true" ? "attachment" : "inline";
-        const codigo = s.servicio_codigo || `SRV${s.servicio_id}`;
-        reply.header("Content-Disposition", `${disposition}; filename="reporte-tecnico-${codigo}.pdf"`);
-        reply.send(pdfBuffer);
-        resolve();
-      });
+  const colab = s.usuario_colaborador;
+  const tecnicoNombre = colab
+    ? `${colab.usuario_nombres || ""} ${colab.usuario_apellido_paterno || ""}`.trim()
+    : "—";
 
-      const colab = s.usuario_colaborador;
-      const tecnicoNombre = colab
-        ? `${colab.usuario_nombres || ""} ${colab.usuario_apellido_paterno || ""}`.trim()
-        : "—";
+  let page = pdfDoc.addPage([pageW, pageH]);
+  let y = pageH - mg;
 
-      // ─── HEADER ───
-      doc.fontSize(16).font("Helvetica-Bold").text("Hoja de Reporte Técnico", { align: "center" });
-      doc.moveDown(0.5);
-      doc.fontSize(8).font("Helvetica").fillColor("#666")
-        .text(`Generado: ${new Date().toLocaleDateString("es-PE")} ${new Date().toLocaleTimeString("es-PE")}`, { align: "right" });
-      doc.moveDown(0.8);
-
-      // ─── DATOS DEL SERVICIO ───
-      doc.fillColor("#000").fontSize(10).font("Helvetica-Bold").text("Datos del Servicio");
-      doc.moveDown(0.3);
-      doc.fontSize(9).font("Helvetica");
-
-      const svcInfo = [
-        [`Código:`, s.servicio_codigo || `SRV${s.servicio_id}`],
-        [`Nombre:`, s.servicio_nombre || "—"],
-        [`Cliente:`, [s.cliente_nombres, s.cliente_apellido_paterno, s.cliente_apellido_materno].filter(Boolean).join(" ") || "—"],
-        [`DNI:`, s.cliente_dni || "—"],
-        [`Teléfono:`, s.cliente_telefono || "—"],
-        [`Área:`, s.areas?.area_nombre || "—"],
-        [`Técnico:`, tecnicoNombre],
-        [`Estado:`, s.servicio_estado || "—"],
-        [`Creado:`, [s.servicio_fecha_creacion, s.servicio_hora_creacion].filter(Boolean).join(" ")],
-      ];
-
-      let yPos = doc.y;
-      for (const [label, value] of svcInfo) {
-        doc.text(label, 40, yPos, { width: 70, continued: true });
-        doc.text(` ${value}`, { width: 200 });
-        yPos = doc.y + 2;
-      }
-
-      doc.moveDown(1);
-
-      // ─── TAREAS ───
-      const tareasList = tareas || [];
-      doc.fillColor("#000").fontSize(10).font("Helvetica-Bold").text("Tareas", { underline: true });
-      doc.moveDown(0.5);
-
-      if (tareasList.length === 0) {
-        doc.fontSize(9).font("Helvetica").fillColor("#999").text("Sin tareas registradas.");
-        doc.moveDown(0.5);
-      } else {
-        // Tabla
-        const tableTop = doc.y;
-        const colX = [40, 220, 300, 380, 470];
-        const colW = [180, 80, 80, 90, 100];
-
-        doc.fontSize(8).font("Helvetica-Bold").fillColor("#fff");
-        doc.roundedRect(40, tableTop - 4, 510, 16, 3).fill("#1e3a5f");
-        doc.fillColor("#fff");
-        doc.text("Nombre", colX[0] + 4, tableTop, { width: colW[0] });
-        doc.text("Estado", colX[1] + 4, tableTop, { width: colW[1] });
-        doc.text("Completado por", colX[2] + 4, tableTop, { width: colW[2] });
-        doc.text("Fecha", colX[3] + 4, tableTop, { width: colW[3] });
-        doc.text("Hora", colX[4] + 4, tableTop, { width: colW[4] });
-
-        doc.moveDown(1.8);
-        let rowY = doc.y;
-
-        for (let i = 0; i < tareasList.length; i++) {
-          const t = tareasList[i];
-          const completador = t.usuario_completador
-            ? `${t.usuario_completador.usuario_nombres || ""} ${t.usuario_completador.usuario_apellido_paterno || ""}`.trim()
-            : "—";
-
-          // Alternar color de fila
-          if (i % 2 === 0) {
-            doc.rect(40, rowY - 2, 510, 16).fill("#f8f9fa");
-          }
-
-          doc.fillColor("#000").fontSize(8).font("Helvetica");
-          doc.text(t.tarea_titulo || "—", colX[0] + 4, rowY, { width: colW[0] });
-          doc.text(t.tarea_estado || "—", colX[1] + 4, rowY, { width: colW[1] });
-          doc.text(completador, colX[2] + 4, rowY, { width: colW[2] });
-          doc.text(t.tarea_fecha_completado || "—", colX[3] + 4, rowY, { width: colW[3] });
-          doc.text(t.tarea_hora_completado || "—", colX[4] + 4, rowY, { width: colW[4] });
-
-          rowY += 16;
-        }
-        doc.y = rowY + 8;
-      }
-
-      // ─── EVIDENCIAS ───
-      const eviList = evidencias || [];
-      if (eviList.length > 0) {
-        doc.addPage();
-        doc.fontSize(10).font("Helvetica-Bold").fillColor("#000").text("Evidencias", { underline: true });
-        doc.moveDown(0.5);
-
-        for (const t of tareasList) {
-          const evis = eviPorTarea[t.tarea_id] || [];
-          if (evis.length === 0) continue;
-
-          doc.fontSize(9).font("Helvetica-Bold").text(`Tarea: ${t.tarea_titulo}`);
-          doc.moveDown(0.3);
-
-          for (const ev of evis) {
-            const imgUrl = ev.archivo_url;
-            if (imgUrl) {
-              const buf = imgBuffers.get(imgUrl);
-              if (buf) {
-                try {
-                  // Mostrar la imagen a lo ancho (pdfkit respeta aspect ratio)
-                  doc.image(buf, {
-                    width: doc.page.width - 80,
-                    align: "center",
-                  });
-                  doc.moveDown(0.3);
-                } catch {
-                  doc.fontSize(8).font("Helvetica").fillColor("#999")
-                    .text(`[Imagen no disponible]`, { align: "center" });
-                  doc.moveDown(0.3);
-                }
-              } else {
-                doc.fontSize(8).font("Helvetica").fillColor("#999")
-                  .text(`[Imagen no disponible]`, { align: "center" });
-                doc.moveDown(0.3);
-              }
-            }
-
-            // Fecha/hora de la evidencia
-            const evFecha = ev.submitted_at || ev.created_at;
-            if (evFecha) {
-              const fecha = new Date(evFecha);
-              doc.fontSize(7).font("Helvetica").fillColor("#888")
-                .text(
-                  `${fecha.toLocaleDateString("es-PE")} ${fecha.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}`,
-                  { indent: 20 }
-                );
-              doc.moveDown(0.1);
-            }
-
-            const desc = ev.comentario_cliente || ev.comentario_colaborador;
-            if (desc) {
-              doc.fontSize(8).font("Helvetica").fillColor("#555")
-                .text(desc, { indent: 20 });
-              doc.moveDown(0.2);
-            }
-          }
-          doc.moveDown(0.5);
-        }
-      }
-
-      // ─── COMENTARIOS ───
-      const cmtList = comentarios || [];
-      if (cmtList.length > 0) {
-        doc.moveDown(0.5);
-        doc.fontSize(10).font("Helvetica-Bold").fillColor("#000").text("Comentarios", { underline: true });
-        doc.moveDown(0.3);
-
-        for (const c of cmtList) {
-          const autor = c.usuarios
-            ? `${c.usuarios.usuario_nombres || ""} ${c.usuarios.usuario_apellido_paterno || ""}`.trim()
-            : "—";
-          doc.fontSize(9).font("Helvetica-Bold").fillColor("#333").text(`${autor}:`);
-          doc.fontSize(8).font("Helvetica").fillColor("#555")
-            .text(c.serviciocomentario_contenido || "—", { indent: 15 });
-          if (c.serviciocomentario_fecha) {
-            doc.fontSize(7).font("Helvetica").fillColor("#999")
-              .text(`${c.serviciocomentario_fecha} ${c.serviciocomentario_hora || ""}`.trim(), { indent: 15 });
-          }
-          doc.moveDown(0.3);
-        }
-      }
-
-      // ─── FOOTER ───
-      doc.moveDown(1);
-      doc.fontSize(7).font("Helvetica").fillColor("#aaa")
-        .text(`— Este documento fue generado automáticamente por ServicioLocalSTS —`, { align: "center" });
-
-      doc.end();
-    } catch (err) {
-      reject(err);
+  function addPageIfNeeded(needed: number) {
+    if (y - needed < mg) {
+      page = pdfDoc.addPage([pageW, pageH]);
+      y = pageH - mg;
     }
-  });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function drawText(text: string, opts: { x?: number; size?: number; color?: any; bold?: boolean } = {}) {
+    const f = opts.bold ? boldFont : font;
+    const s = opts.size || 10;
+    page.drawText(text, { x: opts.x ?? mg, y: y - s, size: s, font: f, color: opts.color ?? black });
+    y -= s * 1.5;
+  }
+
+  function drawLabelValue(label: string, value: string) {
+    const s = 9;
+    page.drawText(label, { x: mg, y: y - s, size: s, font: boldFont, color: black });
+    const labelW = boldFont.widthOfTextAtSize(label, s);
+    page.drawText(value, { x: mg + labelW + 4, y: y - s, size: s, font, color: black });
+    y -= s * 1.6;
+  }
+
+  // ─── HEADER ───
+  addPageIfNeeded(60);
+  page.drawText("Hoja de Reporte Técnico", { x: mg, y: y - 16, size: 16, font: boldFont, color: black });
+  y -= 24;
+  const fechaGen = `${new Date().toLocaleDateString("es-PE")} ${new Date().toLocaleTimeString("es-PE")}`;
+  page.drawText(`Generado: ${fechaGen}`, { x: pageW - mg - font.widthOfTextAtSize(`Generado: ${fechaGen}`, 8), y: y - 8, size: 8, font, color: gray });
+  y -= 18;
+
+  // ─── DATOS DEL SERVICIO ───
+  addPageIfNeeded(120);
+  page.drawText("Datos del Servicio", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
+  y -= 16;
+
+  const svcInfo: [string, string][] = [
+    ["Código:", s.servicio_codigo || `SRV${s.servicio_id}`],
+    ["Nombre:", s.servicio_nombre || "—"],
+    ["Cliente:", [s.cliente_nombres, s.cliente_apellido_paterno, s.cliente_apellido_materno].filter(Boolean).join(" ") || "—"],
+    ["DNI:", s.cliente_dni || "—"],
+    ["Teléfono:", s.cliente_telefono || "—"],
+    ["Área:", s.areas?.area_nombre || "—"],
+    ["Técnico:", tecnicoNombre],
+    ["Estado:", s.servicio_estado || "—"],
+    ["Creado:", [s.servicio_fecha_creacion, s.servicio_hora_creacion].filter(Boolean).join(" ")],
+  ];
+
+  for (const [lbl, val] of svcInfo) {
+    addPageIfNeeded(16);
+    drawLabelValue(lbl, val);
+  }
+
+  y -= 8;
+
+  // ─── TAREAS ───
+  const tareasList = tareas || [];
+  addPageIfNeeded(30);
+  page.drawText("Tareas", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
+  y -= 16;
+
+  if (tareasList.length === 0) {
+    page.drawText("Sin tareas registradas.", { x: mg, y: y - 9, size: 9, font, color: lightGray });
+    y -= 16;
+  } else {
+    // Tabla
+    const colX = [mg, 220, 300, 380, 470];
+    const rowH = 16;
+    const headerH = 18;
+
+    addPageIfNeeded(headerH + tareasList.length * rowH + 10);
+
+    // Header de tabla
+    page.drawRectangle({ x: mg, y: y - headerH, width: 510, height: headerH, color: rgb(0.12, 0.24, 0.37) });
+    const headers = ["Nombre", "Estado", "Completado por", "Fecha", "Hora"];
+    for (let i = 0; i < headers.length; i++) {
+      page.drawText(headers[i], { x: colX[i] + 4, y: y - headerH + 3, size: 8, font: boldFont, color: white });
+    }
+    y -= headerH + 2;
+
+    for (let i = 0; i < tareasList.length; i++) {
+      const t = tareasList[i];
+      if (i % 2 === 0) {
+        page.drawRectangle({ x: mg, y: y - rowH, width: 510, height: rowH, color: rgb(0.97, 0.97, 0.98) });
+      }
+      const c = t.usuario_completador
+        ? `${t.usuario_completador.usuario_nombres || ""} ${t.usuario_completador.usuario_apellido_paterno || ""}`.trim()
+        : "—";
+      const vals = [t.tarea_titulo || "—", t.tarea_estado || "—", c, t.tarea_fecha_completado || "—", t.tarea_hora_completado || "—"];
+      page.drawText(truncate(vals[0], boldFont, 8, 170), { x: colX[0] + 4, y: y - rowH + 3, size: 8, font, color: black });
+      for (let j = 1; j < vals.length; j++) {
+        page.drawText(vals[j], { x: colX[j] + 4, y: y - rowH + 3, size: 8, font, color: black });
+      }
+      y -= rowH;
+    }
+    y -= 8;
+  }
+
+  // ─── EVIDENCIAS ───
+  const eviList = evidencias || [];
+  if (eviList.length > 0) {
+    addPageIfNeeded(30);
+    page.drawText("Evidencias", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
+    y -= 16;
+
+    for (const t of tareasList) {
+      const evis = eviPorTarea[t.tarea_id] || [];
+      if (evis.length === 0) continue;
+
+      addPageIfNeeded(20);
+      page.drawText(`Tarea: ${t.tarea_titulo}`, { x: mg, y: y - 9, size: 9, font: boldFont, color: black });
+      y -= 14;
+
+      for (const ev of evis) {
+        const img = imgCache.get(ev.archivo_url);
+        if (img) {
+          addPageIfNeeded(320);
+          try {
+            let pdfImg;
+            if (img.tipo === "jpg") {
+              pdfImg = await pdfDoc.embedJpg(img.buffer);
+            } else {
+              pdfImg = await pdfDoc.embedPng(img.buffer);
+            }
+            const maxW = pageW - 2 * mg;
+            const maxH = 280;
+            const scale = Math.min(maxW / pdfImg.width, maxH / pdfImg.height, 1);
+            const dw = pdfImg.width * scale;
+            const dh = pdfImg.height * scale;
+            page.drawImage(pdfImg, {
+              x: (pageW - dw) / 2,
+              y: y - dh,
+              width: dw,
+              height: dh,
+            });
+            y -= dh + 4;
+          } catch {
+            page.drawText("[Imagen no disponible]", { x: mg + 20, y: y - 8, size: 8, font, color: lightGray });
+            y -= 14;
+          }
+        } else {
+          page.drawText("[Imagen no disponible]", { x: mg + 20, y: y - 8, size: 8, font, color: lightGray });
+          y -= 14;
+        }
+
+        // Fecha/hora
+        const evFecha = ev.submitted_at || ev.created_at;
+        if (evFecha) {
+          const f = new Date(evFecha);
+          const fStr = `${f.toLocaleDateString("es-PE")} ${f.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" })}`;
+          addPageIfNeeded(14);
+          page.drawText(fStr, { x: mg + 20, y: y - 7, size: 7, font, color: gray });
+          y -= 10;
+        }
+
+        // Descripción
+        const desc = ev.comentario_cliente || ev.comentario_colaborador;
+        if (desc) {
+          addPageIfNeeded(16);
+          page.drawText(truncate(desc, font, 8, pageW - 2 * mg - 20), { x: mg + 20, y: y - 8, size: 8, font, color: darkGray });
+          y -= 12;
+        }
+      }
+      y -= 6;
+    }
+  }
+
+  // ─── COMENTARIOS ───
+  const cmtList = comentarios || [];
+  if (cmtList.length > 0) {
+    addPageIfNeeded(30);
+    page.drawText("Comentarios", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
+    y -= 16;
+
+    for (const c of cmtList) {
+      const autor = c.usuarios
+        ? `${c.usuarios.usuario_nombres || ""} ${c.usuarios.usuario_apellido_paterno || ""}`.trim()
+        : "—";
+      addPageIfNeeded(30);
+      page.drawText(`${autor}:`, { x: mg, y: y - 9, size: 9, font: boldFont, color: rgb(0.2, 0.2, 0.2) });
+      y -= 14;
+      const txt = c.serviciocomentario_contenido || "—";
+      page.drawText(truncate(txt, font, 8, pageW - 2 * mg - 15), { x: mg + 15, y: y - 8, size: 8, font, color: darkGray });
+      y -= 12;
+      if (c.serviciocomentario_fecha) {
+        page.drawText(`${c.serviciocomentario_fecha} ${c.serviciocomentario_hora || ""}`.trim(), { x: mg + 15, y: y - 7, size: 7, font, color: lightGray });
+        y -= 10;
+      }
+      y -= 4;
+    }
+  }
+
+  // ─── FOOTER ───
+  addPageIfNeeded(20);
+  const footer = "— Este documento fue generado automáticamente por ServicioLocalSTS —";
+  page.drawText(footer, { x: (pageW - font.widthOfTextAtSize(footer, 7)) / 2, y: y - 7, size: 7, font, color: lightGray });
+  y -= 14;
+
+  // ─── FINALIZAR ───
+  const pdfBytes = await pdfDoc.save();
+  const q = request.query as { download?: string };
+  const disposition = q.download === "true" ? "attachment" : "inline";
+  const codigo = s.servicio_codigo || `SRV${s.servicio_id}`;
+  reply.header("Content-Type", "application/pdf");
+  reply.header("Content-Disposition", `${disposition}; filename="reporte-tecnico-${codigo}.pdf"`);
+  reply.send(Buffer.from(pdfBytes));
 }
 
 // -- Helper: mapea servicio de Supabase al formato ServicioLocalSTS --

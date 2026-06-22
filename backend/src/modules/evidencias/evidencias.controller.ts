@@ -250,7 +250,7 @@ export async function evidenciasController(app: FastifyInstance) {
 
       const { error } = await supabase
         .from("evidencias")
-        .update({ mostrar_cliente: input.mostrar_cliente })
+        .update({ mostrar_cliente: input.mostrar_cliente } as any)
         .eq("evidencia_id", evidenciaId);
 
       if (error) throw new ValidationError("Error al actualizar mostrar_cliente: " + error.message);
@@ -347,7 +347,7 @@ export async function evidenciasController(app: FastifyInstance) {
       .from("evidencias")
       .select("*, comentariosevidencias(*)")
       .eq("servicio_id", s.servicio_id)
-      .eq("mostrar_cliente", true)
+      .eq("mostrar_cliente" as any, true)
       .neq("estado", "rechazado")
       .order("created_at", { ascending: false });
 
