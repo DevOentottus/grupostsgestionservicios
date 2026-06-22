@@ -383,200 +383,207 @@ export function ServicioDetailPage() {
       )}
 
       {/* Header Card */}
-      <div className={cn("rounded-2xl shadow-sm border border-gray-100 p-4 md:p-6 transition-colors", HEADER_BG[servicio.estado] || "bg-white")}>
-        <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="text-xs font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded-lg font-medium shadow-sm">{servicio.codigo}</span>
-              {/* Botón Compartir */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowCompartir(!showCompartir)}
-                  className="text-xs font-medium text-gray-600 hover:text-blue-700 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  Compartir
-                </button>
-                {showCompartir && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowCompartir(false)} />
-                    <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-[220px]">
-                      <button
-                        onClick={() => {
-                          setShowCompartir(false);
-                          setQrModalOpen(true);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-800 hover:bg-blue-100 hover:text-blue-800 transition font-medium rounded-none"
-                      >
-                        <span className="w-7 h-7 flex items-center justify-center bg-blue-100 rounded-lg text-blue-700 flex-shrink-0">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                          </svg>
-                        </span>
-                        <div className="flex items-baseline gap-1.5 min-w-0">
-                          <span className="font-medium whitespace-nowrap">Código QR</span>
-                          <span className="text-xs text-gray-400 truncate">· Escaneá para ver el estado</span>
-                        </div>
-                      </button>
-                      <div className="border-t border-gray-100 mx-3" />
-                      <button
-                        onClick={() => {
-                          setShowCompartir(false);
-                          compartirWhatsApp(servicio.codigo, servicio.titulo);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-800 hover:bg-green-100 hover:text-green-800 transition font-medium rounded-none"
-                      >
-                        <span className="w-7 h-7 flex items-center justify-center bg-green-100 rounded-lg text-green-700 flex-shrink-0">
-                          <MessageCircle className="w-4 h-4" />
-                        </span>
-                        <div className="flex items-baseline gap-1.5 min-w-0">
-                          <span className="font-medium whitespace-nowrap">WhatsApp</span>
-                          <span className="text-xs text-gray-400 truncate">· Link precargado para el cliente</span>
-                        </div>
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-              {/* Botón Reporte Técnico PDF */}
-              <button
-                onClick={() => servicio && descargarReportePDF(servicio.id)}
-                className="text-xs font-medium text-gray-600 hover:text-blue-700 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5"
-                title="Descargar reporte técnico en PDF"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                PDF
-              </button>
-              {/* Gestion action buttons: solo admin o asignado — siempre visibles, deshabilitados con candado */}
-              {(({ bloqueado, cancelado }: { bloqueado: boolean; cancelado: boolean }) => {
-                const btnBase = "text-xs font-medium px-2.5 py-1 rounded-lg border border-gray-200 shadow-sm transition flex items-center gap-1.5";
-                if (bloqueado) return (
-                  <button onClick={irAEnProgreso} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Desbloquear"} className={cn(btnBase, puedeModificar ? "text-red-500 hover:text-red-700 hover:bg-red-50" : "text-gray-300 cursor-not-allowed")}>
-                    <Lock className={cn("w-3.5 h-3.5", !puedeModificar && "text-gray-300")} />
-                  </button>
-                );
-                if (cancelado) return (
-                  <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "pendiente" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Reactivar"} className={cn(btnBase, puedeModificar ? "text-green-600 hover:text-green-700 hover:bg-green-50" : "text-gray-300 cursor-not-allowed")}>
-                    <RotateCcw className={cn("w-3.5 h-3.5", !puedeModificar && "text-gray-300")} />
-                  </button>
-                );
-                return (
-                  <>
-                    <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Bloquear"} className={cn(btnBase, puedeModificar ? "text-gray-500 hover:text-red-600 hover:bg-red-50" : "text-gray-300 cursor-not-allowed")}>
-                      <Lock className={cn("w-3.5 h-3.5", !puedeModificar && "text-gray-300")} />
-                    </button>
-                    <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Cancelar"} className={cn(btnBase, puedeModificar ? "text-gray-500 hover:text-gray-700 hover:bg-gray-100" : "text-gray-300 cursor-not-allowed")}>
-                      <X className={cn("w-3.5 h-3.5", !puedeModificar && "text-gray-300")} />
-                    </button>
-                  </>
-                );
-              })({ bloqueado: servicio.estado === "bloqueado", cancelado: servicio.estado === "cancelado" })}
-              {/* FI: fecha de inicio + contador de tiempo transcurrido */}
-              {servicio.created_at && (
-                <span className="text-xs text-gray-500 flex items-center gap-1 ml-1" title={`Creado: ${servicio.created_at} ${servicio.hora_creacion || ""}`}>
-                  <Clock className="w-3 h-3 shrink-0" />
-                  <span className="font-medium text-gray-600">FI:</span>
-                  <span>{formatDateTime(servicio.created_at, servicio.hora_creacion)}</span>
-                  <span className="text-gray-300 mx-0.5">·</span>
-                  <span className="font-medium text-gray-600">Tiempo:</span>
-                  <span className="font-mono text-gray-600">{formatElapsed(servicio.created_at, servicio.hora_creacion, now)}</span>
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h2 className="text-xl text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
-            </div>
-            <p className="text-sm text-gray-500 mt-0.5">{servicio.cliente_nombre}</p>
-          </div>
-
-          {/* Estado badge */}
-          <span className={cn("text-xs px-3 py-1.5 rounded-full font-medium", ESTADO_ESTILO[servicio.estado] || "bg-gray-100 text-gray-600")}>
-            {ESTADO_LABEL[servicio.estado] || servicio.estado}
-          </span>
-        </div>
-
-        {servicio.descripcion && (
-          <p className="text-sm text-gray-600 mt-3 bg-gray-50 rounded-xl p-3 border border-gray-100">{servicio.descripcion}</p>
-        )}
-
-        {/* Reporte del Cliente y Diagnóstico */}
-        {(servicio.cliente_reporte || servicio.diagnostico_inicial || servicio.servicio_audio_cliente || servicio.servicio_audio_diagnostico) && (
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {(servicio.cliente_reporte || servicio.servicio_audio_cliente) && (
-              <div>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                  <Mic className="w-3.5 h-3.5" />
-                  Reporte del Cliente
-                </h4>
-                {servicio.cliente_reporte && (
-                  <p className="text-sm text-gray-700 bg-slate-50 rounded-xl p-3 border border-slate-100">{servicio.cliente_reporte}</p>
-                )}
-                {servicio.servicio_audio_cliente && (
-                  <audio src={servicio.servicio_audio_cliente} controls className="w-full h-10 mt-2" preload="metadata" />
-                )}
-              </div>
-            )}
-            {(servicio.diagnostico_inicial || servicio.servicio_audio_diagnostico) && (
-              <div>
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                  <Mic className="w-3.5 h-3.5" />
-                  Diagnóstico Inicial
-                </h4>
-                {servicio.diagnostico_inicial && (
-                  <p className="text-sm text-gray-700 bg-slate-50 rounded-xl p-3 border border-slate-100">{servicio.diagnostico_inicial}</p>
-                )}
-                {servicio.servicio_audio_diagnostico && (
-                  <audio src={servicio.servicio_audio_diagnostico} controls className="w-full h-10 mt-2" preload="metadata" />
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Progress Bar - Figma gradient style */}
-        <div className="mt-4">
-          <div className="flex justify-between text-sm mb-1.5">
-            <span className="text-gray-600 font-medium">Progreso</span>
-            <span className="font-semibold text-gray-800">{progresoPct}%</span>
-          </div>
-          <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-            <div
-              className={cn(
-                "h-3 rounded-full transition-all duration-700",
-                progresoPct === 100 ? "bg-gradient-to-r from-green-400 to-green-600" : "bg-gradient-to-r from-blue-500 to-blue-700",
-              )}
-              style={{ width: `${progresoPct}%` }}
-            />
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            {completadasCount} de {totalTareas} tareas completadas
-          </p>
-        </div>
-
-        {/* Action buttons */}
-        <div className="flex gap-2 mt-4">
-          {isPendiente && completadasCount === 0 && (
+      <div className="rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* Blue header bar — código, botones, tiempo */}
+        <div className="bg-blue-600 px-4 md:px-6 py-2 flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-semibold text-white/90 bg-blue-500 px-2 py-0.5 rounded-lg font-mono shadow-sm">{servicio.codigo}</span>
+          {/* Botón Compartir */}
+          <div className="relative">
             <button
-              onClick={irAEnProgreso}
-              disabled={cambiarEstado.isPending || !puedeModificar}
-              title={!puedeModificar ? "Solo el técnico asignado puede modificar" : undefined}
-              className={cn(
-                "px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5",
-                puedeModificar
-                  ? "bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
-                  : "bg-gray-100 text-gray-300 cursor-not-allowed",
-              )}
+              onClick={() => setShowCompartir(!showCompartir)}
+              className="text-xs font-medium text-white/80 hover:text-white hover:bg-white/20 px-2.5 py-1 rounded-lg border border-white/30 shadow-sm transition flex items-center gap-1.5"
             >
-              {!puedeModificar ? <Lock className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              Iniciar Servicio
+              <Share2 className="w-3.5 h-3.5" />
+              Compartir
             </button>
-          )}
-          {isEnProgreso && (
-            <span className="inline-flex items-center gap-1.5 text-sm text-blue-700 bg-blue-50 px-3 py-2 rounded-xl">
-              <span className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
-              En Progreso
+            {showCompartir && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowCompartir(false)} />
+                <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-[220px]">
+                  <button
+                    onClick={() => {
+                      setShowCompartir(false);
+                      setQrModalOpen(true);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-800 hover:bg-blue-100 hover:text-blue-800 transition font-medium rounded-none"
+                  >
+                    <span className="w-7 h-7 flex items-center justify-center bg-blue-100 rounded-lg text-blue-700 flex-shrink-0">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                      </svg>
+                    </span>
+                    <div className="flex items-baseline gap-1.5 min-w-0">
+                      <span className="font-medium whitespace-nowrap">Código QR</span>
+                      <span className="text-xs text-gray-400 truncate">· Escaneá para ver el estado</span>
+                    </div>
+                  </button>
+                  <div className="border-t border-gray-100 mx-3" />
+                  <button
+                    onClick={() => {
+                      setShowCompartir(false);
+                      compartirWhatsApp(servicio.codigo, servicio.titulo);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-800 hover:bg-green-100 hover:text-green-800 transition font-medium rounded-none"
+                  >
+                    <span className="w-7 h-7 flex items-center justify-center bg-green-100 rounded-lg text-green-700 flex-shrink-0">
+                      <MessageCircle className="w-4 h-4" />
+                    </span>
+                    <div className="flex items-baseline gap-1.5 min-w-0">
+                      <span className="font-medium whitespace-nowrap">WhatsApp</span>
+                      <span className="text-xs text-gray-400 truncate">· Link precargado para el cliente</span>
+                    </div>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+          {/* Botón Reporte Técnico PDF */}
+          <button
+            onClick={() => servicio && descargarReportePDF(servicio.id)}
+            className="text-xs font-medium text-white/80 hover:text-white hover:bg-white/20 px-2.5 py-1 rounded-lg border border-white/30 shadow-sm transition flex items-center gap-1.5"
+            title="Descargar reporte técnico en PDF"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            PDF
+          </button>
+          {/* Gestion action buttons: solo admin o asignado — siempre visibles, deshabilitados con candado */}
+          {(({ bloqueado, cancelado }: { bloqueado: boolean; cancelado: boolean }) => {
+            const btnBase = "text-xs font-medium px-2.5 py-1 rounded-lg border shadow-sm transition flex items-center gap-1.5";
+            const btnEnabled = btnBase + " border-white/30 text-white/80 hover:text-white hover:bg-white/20";
+            const btnDisabled = btnBase + " border-white/10 text-white/30 cursor-not-allowed";
+            if (bloqueado) return (
+              <button onClick={irAEnProgreso} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Desbloquear"} className={cn(puedeModificar ? btnEnabled : btnDisabled)}>
+                <Lock className={cn("w-3.5 h-3.5", !puedeModificar && "text-white/30")} />
+              </button>
+            );
+            if (cancelado) return (
+              <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "pendiente" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Reactivar"} className={cn(puedeModificar ? btnEnabled : btnDisabled)}>
+                <RotateCcw className={cn("w-3.5 h-3.5", !puedeModificar && "text-white/30")} />
+              </button>
+            );
+            return (
+              <>
+                <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Bloquear"} className={cn(puedeModificar ? btnEnabled : btnDisabled)}>
+                  <Lock className={cn("w-3.5 h-3.5", !puedeModificar && "text-white/30")} />
+                </button>
+                <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Cancelar"} className={cn(puedeModificar ? btnEnabled : btnDisabled)}>
+                  <X className={cn("w-3.5 h-3.5", !puedeModificar && "text-white/30")} />
+                </button>
+              </>
+            );
+          })({ bloqueado: servicio.estado === "bloqueado", cancelado: servicio.estado === "cancelado" })}
+          {/* FI: fecha de inicio + contador de tiempo transcurrido */}
+          {servicio.created_at && (
+            <span className="text-xs text-white/70 flex items-center gap-1" title={`Creado: ${servicio.created_at} ${servicio.hora_creacion || ""}`}>
+              <Clock className="w-3 h-3 shrink-0" />
+              <span className="font-medium text-white/90">FI:</span>
+              <span className="text-white/80">{formatDateTime(servicio.created_at, servicio.hora_creacion)}</span>
+              <span className="text-white/40 mx-0.5">·</span>
+              <span className="font-medium text-white/90">Tiempo:</span>
+              <span className="font-mono text-white/80">{formatElapsed(servicio.created_at, servicio.hora_creacion, now)}</span>
             </span>
           )}
+        </div>
+
+        {/* Card body */}
+        <div className={cn("p-4 md:p-6 transition-colors", HEADER_BG[servicio.estado] || "bg-white")}>
+          <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h2 className="text-xl text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
+              </div>
+              <p className="text-sm text-gray-500 mt-0.5">{servicio.cliente_nombre}</p>
+            </div>
+
+            {/* Estado badge */}
+            <span className={cn("text-xs px-3 py-1.5 rounded-full font-medium", ESTADO_ESTILO[servicio.estado] || "bg-gray-100 text-gray-600")}>
+              {ESTADO_LABEL[servicio.estado] || servicio.estado}
+            </span>
+          </div>
+
+          {servicio.descripcion && (
+            <p className="text-sm text-gray-600 mt-3 bg-gray-50 rounded-xl p-3 border border-gray-100">{servicio.descripcion}</p>
+          )}
+
+          {/* Reporte del Cliente y Diagnóstico */}
+          {(servicio.cliente_reporte || servicio.diagnostico_inicial || servicio.servicio_audio_cliente || servicio.servicio_audio_diagnostico) && (
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {(servicio.cliente_reporte || servicio.servicio_audio_cliente) && (
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                    <Mic className="w-3.5 h-3.5" />
+                    Reporte del Cliente
+                  </h4>
+                  {servicio.cliente_reporte && (
+                    <p className="text-sm text-gray-700 bg-slate-50 rounded-xl p-3 border border-slate-100">{servicio.cliente_reporte}</p>
+                  )}
+                  {servicio.servicio_audio_cliente && (
+                    <audio src={servicio.servicio_audio_cliente} controls className="w-full h-10 mt-2" preload="metadata" />
+                  )}
+                </div>
+              )}
+              {(servicio.diagnostico_inicial || servicio.servicio_audio_diagnostico) && (
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                    <Mic className="w-3.5 h-3.5" />
+                    Diagnóstico Inicial
+                  </h4>
+                  {servicio.diagnostico_inicial && (
+                    <p className="text-sm text-gray-700 bg-slate-50 rounded-xl p-3 border border-slate-100">{servicio.diagnostico_inicial}</p>
+                  )}
+                  {servicio.servicio_audio_diagnostico && (
+                    <audio src={servicio.servicio_audio_diagnostico} controls className="w-full h-10 mt-2" preload="metadata" />
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Progress Bar - Figma gradient style */}
+          <div className="mt-4">
+            <div className="flex justify-between text-sm mb-1.5">
+              <span className="text-gray-600 font-medium">Progreso</span>
+              <span className="font-semibold text-gray-800">{progresoPct}%</span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+              <div
+                className={cn(
+                  "h-3 rounded-full transition-all duration-700",
+                  progresoPct === 100 ? "bg-gradient-to-r from-green-400 to-green-600" : "bg-gradient-to-r from-blue-500 to-blue-700",
+                )}
+                style={{ width: `${progresoPct}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {completadasCount} de {totalTareas} tareas completadas
+            </p>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-2 mt-4">
+            {isPendiente && completadasCount === 0 && (
+              <button
+                onClick={irAEnProgreso}
+                disabled={cambiarEstado.isPending || !puedeModificar}
+                title={!puedeModificar ? "Solo el técnico asignado puede modificar" : undefined}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5",
+                  puedeModificar
+                    ? "bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                    : "bg-gray-100 text-gray-300 cursor-not-allowed",
+                )}
+              >
+                {!puedeModificar ? <Lock className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                Iniciar Servicio
+              </button>
+            )}
+            {isEnProgreso && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-blue-700 bg-blue-50 px-3 py-2 rounded-xl">
+                <span className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+                En Progreso
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
