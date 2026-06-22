@@ -62,7 +62,7 @@ async function verificarPermisoModificar(
 async function verificarOrdenTarea(tareaId: number) {
   const { data: tareas } = await supabase
     .from("tareas")
-    .select("tarea_id, tarea_orden, servicio_id, tarea_estado")
+    .select("tarea_id, tarea_orden, servicio_id, tarea_estado, tarea_requiere_evidencia")
     .eq("tarea_id", tareaId)
     .limit(1);
   if (!tareas?.length) throw new NotFoundError("Tarea no encontrada");
@@ -492,6 +492,18 @@ export async function serviciosController(app: FastifyInstance) {
 
     const tarea = await verificarOrdenTarea(tareaId);
     await verificarPermisoModificar(tarea.servicio_id, user);
+
+    // RF-05: si la tarea requiere evidencia, verificar que exista al menos una
+    if (tarea.tarea_requiere_evidencia) {
+      const { count } = await supabase
+        .from("evidencias")
+        .select("*", { count: "exact", head: true })
+        .eq("tarea_id", tareaId);
+
+      if (!count || count === 0) {
+        throw new ValidationError("Esta tarea requiere al menos una evidencia antes de completarse");
+      }
+    }
 
     // Finalizar tracking activo si existe
     await supabase
@@ -997,6 +1009,28 @@ async function reporteTecnicoPDF(request: any, reply: any) {
   }
 
   y -= 8;
+
+  // ─── SITUACIÓN INICIAL DEL CLIENTE ───
+  if (s.servicio_cliente_reporte) {
+    addPageIfNeeded(40);
+    page.drawText("Situación Inicial del Cliente", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
+    y -= 16;
+    const txt = s.servicio_cliente_reporte;
+    page.drawText(truncate(txt, font, 9, pageW - 2 * mg), { x: mg, y: y - 9, size: 9, font, color: black });
+    y -= 14;
+    y -= 8;
+  }
+
+  // ─── DIAGNÓSTICO TÉCNICO ───
+  if (s.servicio_diagnostico_inicial) {
+    addPageIfNeeded(40);
+    page.drawText("Diagnóstico Técnico", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
+    y -= 16;
+    const txt = s.servicio_diagnostico_inicial;
+    page.drawText(truncate(txt, font, 9, pageW - 2 * mg), { x: mg, y: y - 9, size: 9, font, color: black });
+    y -= 14;
+    y -= 8;
+  }
 
   // ─── TAREAS ───
   const tareasList = tareas || [];

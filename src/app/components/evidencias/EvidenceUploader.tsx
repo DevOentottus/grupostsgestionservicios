@@ -2,7 +2,9 @@ import { useState, useRef } from "react";
 import { useUploadEvidencia } from "@/api/queries/useEvidencias.js";
 import { cn } from "@/app/lib/utils";
 import { Camera, Image, Upload, X, FileVideo, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { CameraCapture } from "./CameraCapture.js";
+import heic2any from "heic2any";
 
 interface EvidenceUploaderProps {
   servicioId: number;
@@ -16,18 +18,59 @@ export function EvidenceUploader({ servicioId, tareaId, onUploaded, className }:
   const [preview, setPreview] = useState<string | null>(null);
   const [comentario, setComentario] = useState("");
   const [fileType, setFileType] = useState<string>("");
+  const [isConverting, setIsConverting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const uploadMutation = useUploadEvidencia();
 
-  const handleFileSelected = (file: File, tipo: "photo" | "video") => {
+  const handleFileSelected = async (file: File, tipo: "photo" | "video") => {
     if (!file) return;
+    setIsConverting(false);
     setFileType(file.type);
     setMode(tipo);
 
+    // Detectar HEIC/HEIF por MIME type o extensión
+    const esHeic =
+      file.type === "image/heic" ||
+      file.type === "image/heif" ||
+      file.name.toLowerCase().endsWith(".heic") ||
+      file.name.toLowerCase().endsWith(".heif");
+
+    let processedFile = file;
+
+    if (esHeic) {
+      if (tipo !== "photo") {
+        toast.error("Los archivos HEIC/HEIF solo se pueden subir como foto");
+        handleCancel();
+        return;
+      }
+      setIsConverting(true);
+      try {
+        const blob = await heic2any({
+          blob: file,
+          toType: "image/jpeg",
+          quality: 0.8,
+        });
+        const jpegBlob = blob instanceof Array ? blob[0] : blob;
+        processedFile = new File(
+          [jpegBlob],
+          file.name.replace(/\.heic$/i, ".jpg").replace(/\.heif$/i, ".jpg"),
+          { type: "image/jpeg" },
+        );
+        setFileType("image/jpeg");
+      } catch {
+        toast.error("No se pudo convertir la imagen HEIC. Probá con otro formato.");
+        setIsConverting(false);
+        handleCancel();
+        return;
+      } finally {
+        setIsConverting(false);
+      }
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target?.result as string);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(processedFile);
   };
 
   const handleCameraCapture = (dataUrl: string, mimeType: string) => {
@@ -80,6 +123,15 @@ export function EvidenceUploader({ servicioId, tareaId, onUploaded, className }:
           <X className="w-4 h-4" />
           Cancelar
         </button>
+      </div>
+    );
+  }
+
+  if (isConverting) {
+    return (
+      <div className={cn("flex items-center justify-center gap-2 py-6 text-sm text-slate-500", className)}>
+        <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+        Convirtiendo imagen HEIC a JPEG...
       </div>
     );
   }

@@ -1,11 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { cn } from "@/app/lib/utils";
 import {
   Image, FileVideo, MessageCircle, Send, CheckCircle2,
   XCircle, Clock, ThumbsUp, ThumbsDown, ChevronRight, Eye,
+  Loader2, Upload,
 } from "lucide-react";
 import type { Evidencia, EvidenciaComentario } from "@shared/index.js";
-import { useAgregarComentarioEvidencia, useCambiarEstadoEvidencia, useCambiarMostrarCliente } from "@/api/queries/useEvidencias.js";
+import { useAgregarComentarioEvidencia, useCambiarEstadoEvidencia, useCambiarMostrarCliente, useUploadEvidencia } from "@/api/queries/useEvidencias.js";
 import { evidenciasPublicApi } from "@/api/client.js";
 
 interface EvidenceViewerProps {
@@ -35,9 +36,15 @@ export function EvidenceViewer({
 }: EvidenceViewerProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [comentarios, setComentarios] = useState<Record<number, string>>({});
+  const [rechazandoId, setRechazandoId] = useState<number | null>(null);
+  const [motivoRechazo, setMotivoRechazo] = useState("");
+  const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const [replacingId, setReplacingId] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const addComentario = useAgregarComentarioEvidencia();
   const cambiarEstado = useCambiarEstadoEvidencia();
   const cambiarMostrarCliente = useCambiarMostrarCliente();
+  const uploadMutation = useUploadEvidencia();
 
   // Agrupar evidencias por tarea_id
   const grouped = useMemo(() => {
@@ -78,6 +85,33 @@ export function EvidenceViewer({
     onComentarioAdded?.();
   };
 
+  const handleRejectedUpload = async (file: File, ev: Evidencia) => {
+    if (!file) return;
+    setUploadingId(ev.id);
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64 = e.target?.result as string;
+      try {
+        await uploadMutation.mutateAsync({
+          servicio_id: ev.servicio_id,
+          tarea_id: ev.tarea_id,
+          tipo: "photo",
+          archivo_base64: base64,
+          content_type: file.type,
+        });
+        // Marcar la evidencia anterior como reemplazada
+        await cambiarEstado.mutateAsync({ evidenciaId: ev.id, estado: "reemplazado" });
+      } catch {
+        // Error manejado por la mutación
+      } finally {
+        setUploadingId(null);
+      }
+    };
+    reader.onerror = () => setUploadingId(null);
+    reader.readAsDataURL(file);
+  };
+
   const statusIcon = (estado: string) => {
     switch (estado) {
       case "aprobado": return <CheckCircle2 className="w-4 h-4 text-green-500" />;
@@ -88,6 +122,10 @@ export function EvidenceViewer({
 
   function renderEvidenceCard(ev: Evidencia & { comentarios?: EvidenciaComentario[] }) {
     const isExpanded = expandedId === ev.id;
+    const rejectionComment = ev.comentarios?.find(
+      (c) => c.contenido.startsWith("Motivo de rechazo:")
+    );
+    const rejectionReason = rejectionComment?.contenido.replace("Motivo de rechazo: ", "");
     return (
       <div key={ev.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         {/* Media */}
@@ -132,21 +170,94 @@ export function EvidenceViewer({
 
         {/* Status actions (solo encargado/admin) */}
         {!readOnly && showStatus && ev.estado === "pendiente" && (userRol === "admin" || userRol === "encargado") && (
-          <div className="flex gap-2 px-4 py-2 bg-slate-50 border-t border-slate-100">
-            <button
-              onClick={() => cambiarEstado.mutate({ evidenciaId: ev.id, estado: "aprobado" })}
-              className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 transition"
-            >
-              <ThumbsUp className="w-3 h-3" />
-              Aprobar
-            </button>
-            <button
-              onClick={() => cambiarEstado.mutate({ evidenciaId: ev.id, estado: "rechazado" })}
-              className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200 transition"
-            >
-              <ThumbsDown className="w-3 h-3" />
-              Rechazar
-            </button>
+          rechazandoId === ev.id ? (
+            <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 space-y-2">
+              <textarea
+                value={motivoRechazo}
+                onChange={(e) => setMotivoRechazo(e.target.value)}
+                placeholder="Motivo de rechazo (obligatorio)"
+                rows={2}
+                className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 resize-none"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setRechazandoId(null);
+                    setMotivoRechazo("");
+                  }}
+                  className="flex-1 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    cambiarEstado.mutate({ evidenciaId: ev.id, estado: "rechazado", motivo: motivoRechazo.trim() });
+                    setRechazandoId(null);
+                    setMotivoRechazo("");
+                  }}
+                  disabled={!motivoRechazo.trim()}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ThumbsDown className="w-3 h-3" />
+                  Confirmar rechazo
+                </button>
+              </div>
+              {!motivoRechazo.trim() && (
+                <p className="text-[11px] text-red-500">Debe ingresar un motivo de rechazo</p>
+              )}
+            </div>
+          ) : (
+            <div className="flex gap-2 px-4 py-2 bg-slate-50 border-t border-slate-100">
+              <button
+                onClick={() => cambiarEstado.mutate({ evidenciaId: ev.id, estado: "aprobado" })}
+                className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 transition"
+              >
+                <ThumbsUp className="w-3 h-3" />
+                Aprobar
+              </button>
+              <button
+                onClick={() => {
+                  setRechazandoId(ev.id);
+                  setMotivoRechazo("");
+                }}
+                className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200 transition"
+              >
+                <ThumbsDown className="w-3 h-3" />
+                Rechazar
+              </button>
+            </div>
+          )
+        )}
+
+        {/* Evidencia rechazada — mostrar motivo y botón de re-subida */}
+        {!readOnly && ev.estado === "rechazado" && (
+          <div className="px-4 py-3 bg-red-50 border-t border-red-100 space-y-3">
+            {rejectionReason && (
+              <div className="flex items-start gap-2">
+                <XCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                <p className="text-sm text-red-700">
+                  <span className="font-medium">Esta evidencia fue rechazada:</span> {rejectionReason}
+                </p>
+              </div>
+            )}
+
+            {uploadingId === ev.id ? (
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Subiendo nueva evidencia...
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setReplacingId(ev.id);
+                  fileInputRef.current?.click();
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-900 text-white rounded-lg text-sm font-medium hover:bg-blue-800 transition"
+              >
+                <Upload className="w-4 h-4" />
+                Subir nueva evidencia
+              </button>
+            )}
           </div>
         )}
 
@@ -254,6 +365,21 @@ export function EvidenceViewer({
           </div>
         );
       })}
+      {/* Hidden file input for re-uploading rejected evidence */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/heic"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && replacingId) {
+            const ev = evidencias.find((x) => x.id === replacingId);
+            if (ev) handleRejectedUpload(file, ev);
+          }
+          if (e.target) e.target.value = "";
+        }}
+      />
     </div>
   );
 }

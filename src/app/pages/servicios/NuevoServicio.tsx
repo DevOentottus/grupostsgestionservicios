@@ -58,7 +58,7 @@ const InputField = memo(function InputField({
 });
 
 const SelectField = memo(function SelectField({
-  label, value, onChange, options, placeholder, required,
+  label, value, onChange, options, placeholder, required, error,
 }: {
   label: string;
   value: string;
@@ -66,6 +66,7 @@ const SelectField = memo(function SelectField({
   options: { value: string; label: string }[];
   placeholder?: string;
   required?: boolean;
+  error?: string;
 }) {
   return (
     <div>
@@ -82,6 +83,7 @@ const SelectField = memo(function SelectField({
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
   );
 });
@@ -241,6 +243,7 @@ export function NuevoServicioPage() {
     const errs: Record<string, string> = {};
     if (step === 1 && !guiarEntrada) {
       if (!form.cliente_dni.trim()) errs.cliente_dni = "Requerido";
+      if (!form.cliente_apellido_paterno.trim()) errs.cliente_apellido_paterno = "Requerido";
       if (!form.cliente_nombres.trim()) errs.cliente_nombres = "Requerido";
       if (!form.cliente_telefono.trim()) errs.cliente_telefono = "Requerido";
     }
@@ -253,6 +256,10 @@ export function NuevoServicioPage() {
       if (!form.titulo.trim()) errs.titulo = "Requerido";
       if (!isColaborador && !form.colaborador_id) errs.colaborador_id = "Requerido";
       if (guiarEntrada && !form.cliente_dni.trim()) errs.cliente_dni = "Requerido";
+      if (guiarEntrada && !form.codigo_servicio.trim()) errs.codigo_servicio = "Requerido";
+      if (!form.area_id) errs.area_id = "Requerido";
+      if (!form.cliente_reporte.trim()) errs.cliente_reporte = "Requerido";
+      if (!form.diagnostico_inicial.trim()) errs.diagnostico_inicial = "Requerido";
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -446,6 +453,8 @@ export function NuevoServicioPage() {
                 label="Apellido Paterno"
                 value={form.cliente_apellido_paterno}
                 onChange={(v) => set("cliente_apellido_paterno", v)}
+                required
+                error={errors.cliente_apellido_paterno}
               />
               <InputField
                 label="Apellido Materno"
@@ -556,6 +565,8 @@ export function NuevoServicioPage() {
                     value={form.codigo_servicio}
                     onChange={(v) => set("codigo_servicio", v.toUpperCase())}
                     placeholder="SRV20260617120000"
+                    required
+                    error={errors.codigo_servicio}
                   />
                   <InputField
                     label="DNI Cliente"
@@ -578,6 +589,8 @@ export function NuevoServicioPage() {
                     label: a.nombre,
                   }))}
                   placeholder="Sin área"
+                  required
+                  error={errors.area_id}
                 />
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -590,6 +603,8 @@ export function NuevoServicioPage() {
                       label: a.nombre,
                     }))}
                     placeholder="Sin área"
+                    required
+                    error={errors.area_id}
                   />
                   <SelectField
                     label="Técnico"
@@ -616,6 +631,8 @@ export function NuevoServicioPage() {
                     onChange={(v) => set("cliente_reporte", v)}
                     rows={2}
                     placeholder="¿Qué reportó el cliente?"
+                    required
+                    error={errors.cliente_reporte}
                   />
                   <AudioRecorder
                     label="Audio del reporte"
@@ -631,6 +648,8 @@ export function NuevoServicioPage() {
                     onChange={(v) => set("diagnostico_inicial", v)}
                     rows={2}
                     placeholder="Primera impresión técnica"
+                    required
+                    error={errors.diagnostico_inicial}
                   />
                   <AudioRecorder
                     label="Audio del diagnóstico"

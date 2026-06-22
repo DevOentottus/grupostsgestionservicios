@@ -38,8 +38,8 @@ export function useAgregarComentarioEvidencia() {
 export function useCambiarEstadoEvidencia() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ evidenciaId, estado }: { evidenciaId: number; estado: string }) =>
-      evidenciasApi.cambiarEstado(evidenciaId, estado),
+    mutationFn: ({ evidenciaId, estado, motivo }: { evidenciaId: number; estado: string; motivo?: string }) =>
+      evidenciasApi.cambiarEstado(evidenciaId, estado, motivo),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["evidencias"] });
     },

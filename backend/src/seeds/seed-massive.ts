@@ -13,6 +13,11 @@ function daysAgo(n: number): string {
   d.setDate(d.getDate() - n);
   return d.toISOString().split("T")[0];
 }
+function hoursAgo(n: number): string {
+  const d = new Date();
+  d.setHours(d.getHours() - n);
+  return d.toISOString().replace("T", " ").split(".")[0];
+}
 
 function randomTime(): string {
   const h = String(6 + Math.floor(Math.random() * 12)).padStart(2, "0");
@@ -22,6 +27,10 @@ function randomTime(): string {
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomInt(min: number, max: number): number {
+  return min + Math.floor(Math.random() * (max - min + 1));
 }
 
 async function insertSafe(
@@ -124,18 +133,24 @@ async function seedMassive() {
   const areaMap = new Map<string, any>();
 
   await Promise.all(
-    areasData.map((a) => {
+    areasData.map(async (a) => {
       const encargadoId = a.encargadoKey ? userMap.get(a.encargadoKey)?.usuario_id ?? null : null;
-      return insertSafe("areas", {
+      const row = await insertSafe("areas", {
         area_nombre: a.nombre,
         area_encargado_id: encargadoId,
         area_fecha_creacion: td,
-      }, `área ${a.nombre}`).then((row) => {
-        if (row) {
-          areaMap.set(a.nombre, row);
-          console.log(`  ✅ Área creada: ${a.nombre}`);
+      }, `área ${a.nombre}`);
+      if (row) {
+        areaMap.set(a.nombre, row);
+        console.log(`  ✅ Área creada: ${a.nombre}`);
+      } else {
+        // Recuperar si ya existe
+        const { data } = await supabase.from("areas").select().eq("area_nombre", a.nombre).single();
+        if (data) {
+          areaMap.set(a.nombre, data);
+          console.log(`  🔄 Área existente: ${a.nombre}`);
         }
-      });
+      }
     })
   );
   console.log(`  📊 Total áreas: ${areaMap.size}\n`);
@@ -278,15 +293,20 @@ async function seedMassive() {
       cliente_id: cliente.cliente_id,
       tecnico_principal_id: null,
       plantilla_id: null,
-      servicio_cliente_reporte: null,
-      servicio_diagnostico_inicial: null,
-      servicio_descripcion_equipo: null,
-      servicio_serie_equipo: null,
+      servicio_cliente_reporte: `Reporte inicial: ${s.nombre} — ${cliente.cliente_nombres} ${cliente.cliente_apellido_paterno} reportó el problema.`,
+      servicio_diagnostico_inicial: `Diagnóstico: Se identificó que el equipo requiere intervención técnica especializada. Tiempo estimado: ${s.tiempo} min.`,
+      servicio_descripcion_equipo: "Equipo de cómputo estándar",
+      servicio_serie_equipo: `SN-${String(randomInt(10000, 99999))}`,
       servicio_detalles_equipo: null,
       servicio_descripcion_accesorio: null,
       servicio_detalles_accesorio: null,
-      servicio_fecha_creacion: td,
-      servicio_hora_creacion: tt,
+      cliente_nombres: cliente.cliente_nombres,
+      cliente_apellido_paterno: cliente.cliente_apellido_paterno,
+      cliente_apellido_materno: cliente.cliente_apellido_materno,
+      cliente_dni: cliente.cliente_dni,
+      cliente_telefono: cliente.cliente_telefono,
+      servicio_fecha_creacion: daysAgo(randomInt(1, 60)),
+      servicio_hora_creacion: randomTime(),
     };
     if ((s as any).fechaInicio) base.servicio_fecha_inicio = (s as any).fechaInicio;
     if ((s as any).fechaFin) base.servicio_fecha_fin = (s as any).fechaFin;
@@ -340,22 +360,17 @@ async function seedMassive() {
   console.log(`  📊 Tareas insertadas\n`);
 
   // --- 7. ASIGNAR COLABORADOR A SERVICIOS ------------------------
-  console.log("👥 Asignando colaborador a cada servicio…");
+  console.log("👥 Asignando colaborador a cada servicio (serviciocolaboradores)…");
 
   for (const codigo of allServicioCodes) {
     const svc = servicioMap.get(codigo);
     if (!svc) continue;
-    // Asignar un colaborador aleatorio
     const colab = allColabUsers[Math.floor(Math.random() * allColabUsers.length)];
-    const { error } = await supabase
-      .from("servicios")
-      .update({ colaborador_id: colab.usuario_id })
-      .eq("servicio_id", svc.servicio_id);
-    if (error) {
-      console.log(`  ❌ Error asignando ${colab.usuario_username} → ${codigo}: ${error.message}`);
-    } else {
-      console.log(`  ✅ ${colab.usuario_username} → ${codigo}`);
-    }
+    const ok = await insertSafe("serviciocolaboradores", {
+      servicio_id: svc.servicio_id,
+      colaborador_id: colab.usuario_id,
+    }, `${colab.usuario_username} → ${codigo}`);
+    if (ok) console.log(`  ✅ ${colab.usuario_username} → ${codigo}`);
   }
   console.log(`  📊 Asignaciones servicio-colaborador completadas\n`);
 
@@ -383,13 +398,20 @@ async function seedMassive() {
 
     if (pRow) {
       console.log(`  ✅ Plantilla: ${nombrePlantilla}`);
-      for (let i = 0; i < tareasPlantilla.length; i++) {
-        await insertSafe("plantillatareas", {
-          plantilla_id: pRow.plantilla_id,
-          plantillatarea_titulo: tareasPlantilla[i],
-          plantillatarea_orden: i + 1,
-        }, `tarea plantilla: ${tareasPlantilla[i]}`);
+    } else {
+      // Recuperar plantilla existente
+      const { data } = await supabase.from("plantillas").select().eq("plantilla_nombre", nombrePlantilla).single();
+      if (data) {
+        console.log(`  🔄 Plantilla existente: ${nombrePlantilla}`);
       }
+      continue; // tareas ya existen
+    }
+    for (let i = 0; i < tareasPlantilla.length; i++) {
+      await insertSafe("plantillatareas", {
+        plantilla_id: pRow.plantilla_id,
+        plantillatarea_titulo: tareasPlantilla[i],
+        plantillatarea_orden: i + 1,
+      }, `tarea plantilla: ${tareasPlantilla[i]}`);
     }
   }
   console.log(`  📊 Plantillas insertadas\n`);
@@ -432,7 +454,7 @@ async function seedMassive() {
   try {
     console.log("📝 Insertando solicitudes internas…");
     const tiposSolicitud = ["apoyo", "herramienta", "equipo"];
-    const estadosSolicitud = ["pendiente", "en_proceso", "completado", "rechazado"];
+    const estadosSolicitud = ["pendiente", "en_proceso", "resuelto", "rechazado"];
     const solicitudesMotivos = [
       "Necesito acceso al servidor de base de datos.",
       "Solicito nuevo monitor para mi estación.",
@@ -447,7 +469,7 @@ async function seedMassive() {
     ];
     for (let i = 0; i < 10; i++) {
       const autor = pick(allUsuarios);
-      await insertSafe("solicitudesinternas", {
+      await insertSafe("solicitudes", {
         usuario_id: autor.usuario_id,
         solicitud_tipo: pick(tiposSolicitud),
         solicitud_descripcion: pick(solicitudesMotivos),
@@ -471,15 +493,25 @@ async function seedMassive() {
       { titulo: "Actualización importante", contenido: "Se implementó la versión 2.1 del sistema. Revisar cambios en el manual.", tipo: "actualizacion" },
       { titulo: "Feriado pendiente", contenido: "Se recuerda que el lunes próximo es feriado. Coordinar guardias.", tipo: "info" },
     ];
+    let adminId = userMap.get("admin")?.usuario_id;
+    if (!adminId) {
+      const { data } = await supabase.from("usuarios").select("usuario_id").eq("usuario_username", "admin").single();
+      adminId = data?.usuario_id ?? null;
+    }
     for (const a of anuncios) {
-        await insertSafe("anuncios", {
-          usuario_id: userMap.get("admin")?.usuario_id ?? null,
-          anuncio_titulo: a.titulo,
-          anuncio_contenido: a.contenido,
-          anuncio_activo: true,
-          anuncio_fecha_publicacion: daysAgo(Math.floor(Math.random() * 7)),
-          anuncio_hora_publicacion: randomTime(),
-        }, `anuncio: ${a.titulo}`);
+      if (!adminId) {
+        console.log(`  ⚠️  Saltando anuncio (admin no encontrado): ${a.titulo}`);
+        continue;
+      }
+      await insertSafe("anuncios", {
+        usuario_id: adminId,
+        anuncio_titulo: a.titulo,
+        anuncio_contenido: a.contenido,
+        anuncio_activo: true,
+        anuncio_fecha_publicacion: daysAgo(Math.floor(Math.random() * 7)),
+        anuncio_hora_publicacion: randomTime(),
+        area_id: null,
+      }, `anuncio: ${a.titulo}`);
     }
     console.log(`  📊 Anuncios insertados\n`);
   } catch {
@@ -507,14 +539,97 @@ async function seedMassive() {
     console.log(`  ⚠️  Calificaciones omitidas\n`);
   }
 
+  // --- 13. EVIDENCIAS (para tareas completadas) -------------------
+  console.log("📸 Insertando evidencias…");
+  let evCount = 0;
+  for (const codigo of allServicioCodes) {
+    const svc = servicioMap.get(codigo);
+    if (!svc || svc.servicio_estado !== "completado") continue;
+    const { data: tareasCompletadas } = await supabase
+      .from("tareas")
+      .select()
+      .eq("servicio_id", svc.servicio_id)
+      .eq("tarea_estado", "completado");
+    if (!tareasCompletadas) continue;
+    for (const tarea of tareasCompletadas) {
+      // 1-2 evidencias por tarea completada
+      const numEvs = 1 + Math.floor(Math.random() * 2);
+      for (let e = 0; e < numEvs; e++) {
+        const colab = pick(allColabUsers);
+        const estado = Math.random() < 0.7 ? "aprobado" : (Math.random() < 0.5 ? "rechazado" : "pendiente");
+        await insertSafe("evidencias", {
+          servicio_id: svc.servicio_id,
+          tarea_id: tarea.tarea_id,
+          tipo: "photo",
+          archivo_url: `https://placehold.co/800x600?text=Evidencia+${codigo}+T${tarea.tarea_orden}`,
+          estado,
+          submitted_by: colab.usuario_id,
+          submitted_at: hoursAgo(randomInt(24, 168)),
+          mostrar_cliente: Math.random() < 0.5,
+        }, `evidencia ${codigo}#T${tarea.tarea_orden}#${e + 1}`);
+        evCount++;
+      }
+    }
+  }
+  console.log(`  📊 Evidencias insertadas: ${evCount}\n`);
+
+  // --- 14. TIEMPO_TRACKING (para tareas completadas y en_progreso) --
+  console.log("⏱️ Insertando registros de tiempo_tracking…");
+  let ttCount = 0;
+  for (const codigo of allServicioCodes) {
+    const svc = servicioMap.get(codigo);
+    if (!svc) continue;
+    const { data: tareasTrack } = await supabase
+      .from("tareas")
+      .select()
+      .eq("servicio_id", svc.servicio_id);
+    if (!tareasTrack) continue;
+    for (const tarea of tareasTrack) {
+      const colab = pick(allColabUsers);
+      const inicio = hoursAgo(randomInt(48, 720));
+      const fin = tarea.tarea_estado === "completado" ? hoursAgo(randomInt(1, 47)) : null;
+      await insertSafe("tiempo_tracking", {
+        tarea_id: tarea.tarea_id,
+        usuario_id: colab.usuario_id,
+        tracking_inicio: inicio,
+        tracking_fin: fin,
+      }, `tracking ${codigo}#T${tarea.tarea_orden}`);
+      ttCount++;
+    }
+  }
+  console.log(`  📊 Registros tiempo_tracking: ${ttCount}\n`);
+
+  // --- 15. SERVICIOVISITAS (consultas de clientes al portal) -----
+  console.log("👁️ Insertando visitas de clientes…");
+  let svCount = 0;
+  for (const codigo of allServicioCodes.slice(0, 20)) {
+    const svc = servicioMap.get(codigo);
+    if (!svc) continue;
+    const numVisitas = 1 + Math.floor(Math.random() * 5);
+    for (let v = 0; v < numVisitas; v++) {
+      await insertSafe("serviciovisitas", {
+        servicio_id: svc.servicio_id,
+        serviciovisita_fecha: daysAgo(Math.floor(Math.random() * 30)),
+        serviciovisita_hora: randomTime(),
+      }, `visita ${codigo}#${v + 1}`);
+      svCount++;
+    }
+  }
+  console.log(`  📊 Visitas insertadas: ${svCount}\n`);
+
   // --- RESUMEN ---------------------------------------------------
   console.log("═══════════════════════════════════");
   console.log("🎉 Seed masivo completado exitosamente");
   console.log("═══════════════════════════════════");
-  console.log(`  👤 Usuarios:     ${userMap.size}`);
-  console.log(`  🏢 Áreas:        ${areaMap.size}`);
-  console.log(`  👥 Clientes:     ${clienteMap.size}`);
-  console.log(`  📋 Servicios:    ${servicioMap.size}`);
+  console.log(`  👤 Usuarios:              ${userMap.size}`);
+  console.log(`  🏢 Áreas:                 ${areaMap.size}`);
+  console.log(`  👥 Clientes:              ${clienteMap.size}`);
+  console.log(`  📋 Servicios:             ${servicioMap.size}`);
+  console.log(`  ✅ Tareas:                generadas`);
+  console.log(`  📸 Evidencias:            ${evCount}`);
+  console.log(`  ⏱️  Tiempo tracking:       ${ttCount}`);
+  console.log(`  👁️  Visitas cliente:       ${svCount}`);
+  console.log(`  ⭐ Calificaciones:        generadas`);
   console.log("═══════════════════════════════════\n");
 }
 

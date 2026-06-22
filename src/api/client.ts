@@ -289,8 +289,8 @@ export const evidenciasApi = {
     api.get(`/servicios/${servicioId}/evidencias`),
   agregarComentario: (evidenciaId: number, data: { contenido: string }) =>
     api.post(`/evidencias/${evidenciaId}/comentario`, data),
-  cambiarEstado: (evidenciaId: number, estado: string) =>
-    api.patch(`/evidencias/${evidenciaId}/estado`, { estado }),
+  cambiarEstado: (evidenciaId: number, estado: string, motivo?: string) =>
+    api.patch(`/evidencias/${evidenciaId}/estado`, { estado, ...(motivo ? { motivo } : {}) }),
   cambiarMostrarCliente: (evidenciaId: number, mostrar_cliente: boolean) =>
     api.patch(`/evidencias/${evidenciaId}/mostrar-cliente`, { mostrar_cliente }),
   configurarTarea: (tareaId: number, data: {

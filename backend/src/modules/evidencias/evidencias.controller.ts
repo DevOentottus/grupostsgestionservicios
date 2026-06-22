@@ -222,10 +222,63 @@ export async function evidenciasController(app: FastifyInstance) {
     { preHandler: [requireRoles("admin", "encargado")] },
     async (request) => {
       const { id } = request.params as { id: string };
-      const input = z.object({ estado: z.enum(["pendiente", "aprobado", "rechazado", "reemplazado"]) }).parse(request.body);
+      const input = z.object({
+        estado: z.enum(["pendiente", "aprobado", "rechazado", "reemplazado"]),
+        motivo: z.string().optional(),
+      }).parse(request.body);
       const user = request.user as { user_id: number; rol: string; };
       const evidenciaId = parseInt(id);
 
+      // Si se rechaza: guardar motivo, actualizar evidencia y volver tarea a pendiente
+      if (input.estado === "rechazado") {
+        const { data: evidencia } = await supabase
+          .from("evidencias")
+          .select("tarea_id, servicio_id")
+          .eq("evidencia_id", evidenciaId)
+          .single();
+
+        if (!evidencia) throw new NotFoundError("Evidencia no encontrada");
+
+        // Guardar motivo como comentario si se proporcionó
+        if (input.motivo) {
+          const { error: commentError } = await supabase
+            .from("comentariosevidencias")
+            .insert({
+              evidencia_id: evidenciaId,
+              usuario_id: user.user_id,
+              es_cliente: false,
+              contenido: `Motivo de rechazo: ${input.motivo}`,
+            });
+
+          if (commentError) throw new ValidationError("Error al guardar motivo: " + commentError.message);
+        }
+
+        // Actualizar estado de la evidencia
+        const { error: updateError } = await supabase
+          .from("evidencias")
+          .update({ estado: input.estado })
+          .eq("evidencia_id", evidenciaId);
+
+        if (updateError) throw new ValidationError("Error al actualizar estado: " + updateError.message);
+
+        // Volver la tarea asociada a pendiente
+        const { error: tareaError } = await supabase
+          .from("tareas")
+          .update({
+            tarea_estado: "pendiente",
+            tarea_completado_por: null,
+            tarea_fecha_completado: null,
+            tarea_hora_completado: null,
+          })
+          .eq("tarea_id", evidencia.tarea_id);
+
+        if (tareaError) throw new ValidationError("Error al actualizar tarea: " + tareaError.message);
+
+        await auditLog(null, user.user_id, "UPDATE", "evidencias", evidenciaId, { estado: input.estado, tarea_reabierta: true });
+        return { data: { id: evidenciaId, estado: input.estado } };
+      }
+
+      // Para otros estados (aprobado, pendiente, reemplazado) — comportamiento actual
       const { error } = await supabase
         .from("evidencias")
         .update({ estado: input.estado })

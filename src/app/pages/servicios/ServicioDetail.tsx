@@ -722,10 +722,17 @@ export function ServicioDetailPage() {
                           if (tarea.completada) return; // no permitir desmarcar
                           if (!prevIncompleta) {
                             const isFirst = completadasCount === 0;
-                            await completarTarea.mutateAsync(tarea.id);
-                            // Auto-advance: si era la primera tarea, pasar a en_progreso
-                            if (isFirst && servicio?.estado === "pendiente") {
-                              cambiarEstado.mutate({ id: servicioId, estado: "en_progreso" });
+                            try {
+                              await completarTarea.mutateAsync(tarea.id);
+                              // Auto-advance: si era la primera tarea, pasar a en_progreso
+                              if (isFirst && servicio?.estado === "pendiente") {
+                                cambiarEstado.mutate({ id: servicioId, estado: "en_progreso" });
+                              }
+                            } catch (err: any) {
+                              const detail = err?.response?.data?.detail || "";
+                              if (detail.toLowerCase().includes("evidencia")) {
+                                toast.error("Debe subir al menos una evidencia antes de completar esta tarea");
+                              }
                             }
                           }
                         }}
