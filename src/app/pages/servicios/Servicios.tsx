@@ -160,7 +160,7 @@ export function ServiciosPage() {
         </div>
       </div>
 
-      {/* Status filter buttons — scroll horizontal en mobile */}
+      {/* Status filter buttons + area filter — scroll horizontal en mobile */}
       <div className="overflow-x-auto -mx-4 md:mx-0">
         <div className="flex gap-2 px-4 md:px-0 min-w-max md:min-w-0">
           {statusFilters.map((status) => (
@@ -191,22 +191,19 @@ export function ServiciosPage() {
             </span>
           </button>
         ))}
-      </div>
-    </div>
-
-      {/* Area filter */}
-      <div className="flex items-center gap-2">
-        <label className="text-sm text-gray-500 font-medium whitespace-nowrap">Área:</label>
-        <select
-          value={filterArea}
-          onChange={(e) => setFilterArea(e.target.value ? Number(e.target.value) : "")}
-          className="border border-gray-200 bg-white rounded-xl px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-        >
-          <option value="">Todas las áreas</option>
-          {(areas || []).map((a: any) => (
-            <option key={a.id} value={a.id}>{a.nombre}</option>
-          ))}
-        </select>
+          {esAdminSistema && (
+            <select
+              value={filterArea}
+              onChange={(e) => setFilterArea(e.target.value ? Number(e.target.value) : "")}
+              className="px-3 py-2 rounded-xl text-sm font-semibold border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            >
+              <option value="">Todas las áreas</option>
+              {(areas || []).map((a: any) => (
+                <option key={a.id} value={a.id}>{a.nombre}</option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
 
       {/* Search */}
@@ -429,6 +426,11 @@ export function ServiciosPage() {
                       <option value="">Sin plantilla</option>
                       {(plantillas || [])
                         .filter((p: any) => !form.area_id || !p.area_id || p.area_id === Number(form.area_id))
+                        .sort((a: any, b: any) => {
+                          if (a.es_favorito && !b.es_favorito) return -1;
+                          if (!a.es_favorito && b.es_favorito) return 1;
+                          return (a.nombre || "").localeCompare(b.nombre || "");
+                        })
                         .map((p: any) => (
                         <option key={p.id} value={p.id}>
                           {p.nombre} ({p.tareas_count} tareas)

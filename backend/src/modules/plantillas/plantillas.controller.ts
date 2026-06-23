@@ -43,11 +43,20 @@ export async function plantillasController(app: FastifyInstance) {
   app.get(
     "/api/plantillas",
     { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
-    async () => {
+    async (request) => {
+      const authUser = request.user as { user_id: number; rol: string };
       const { data: plantillas } = await supabase
         .from("plantillas")
         .select("*, areas!plantillas_area_id_fkey(area_id, area_nombre)")
         .order("plantilla_nombre", { ascending: true });
+
+      // Obtener IDs de plantillas favoritas del usuario actual
+      const { data: favs } = await (supabase as any)
+        .from("plantillas_favoritas")
+        .select("plantilla_id")
+        .eq("usuario_id", authUser.user_id);
+
+      const favIds = new Set((favs || []).map((f: any) => f.plantilla_id));
 
       const rows = await Promise.all(
         (plantillas || []).map(async (p: any) => {
@@ -66,6 +75,7 @@ export async function plantillasController(app: FastifyInstance) {
             updated_at: null,
             activa: p.plantilla_activa,
             tareas_count: count || 0,
+            es_favorito: favIds.has(p.plantilla_id),
           };
         })
       );
@@ -119,10 +129,44 @@ export async function plantillasController(app: FastifyInstance) {
     }
   );
 
+  // -- POST /api/plantillas/favoritos/:id --
+  app.post(
+    "/api/plantillas/favoritos/:id",
+    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const authUser = request.user as { user_id: number };
+      const plantillaId = parseInt(id);
+
+      const { data: existing } = await (supabase as any)
+        .from("plantillas_favoritas")
+        .select("plantillafavorita_id")
+        .eq("usuario_id", authUser.user_id)
+        .eq("plantilla_id", plantillaId)
+        .limit(1);
+
+      if (existing?.length) {
+        // Ya es favorito → quitar
+        await (supabase as any)
+          .from("plantillas_favoritas")
+          .delete()
+          .eq("usuario_id", authUser.user_id)
+          .eq("plantilla_id", plantillaId);
+        return reply.send({ data: { es_favorito: false } });
+      }
+
+      // No es favorito → agregar
+      await (supabase as any)
+        .from("plantillas_favoritas")
+        .insert({ usuario_id: authUser.user_id, plantilla_id: plantillaId });
+      return reply.send({ data: { es_favorito: true } });
+    }
+  );
+
   // -- POST /api/plantillas --
   app.post(
     "/api/plantillas",
-    { preHandler: [requireRoles("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async (request, reply) => {
       const input = crearPlantillaSchema.parse(request.body);
       const authUser = request.user as { user_id: number };
@@ -187,7 +231,7 @@ export async function plantillasController(app: FastifyInstance) {
   // -- PUT /api/plantillas/:id --
   app.put(
     "/api/plantillas/:id",
-    { preHandler: [requireRoles("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const input = actualizarPlantillaSchema.parse(request.body);
@@ -274,7 +318,7 @@ export async function plantillasController(app: FastifyInstance) {
   // -- DELETE /api/plantillas/:id --
   app.delete(
     "/api/plantillas/:id",
-    { preHandler: [requireRoles("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const authUser = request.user as { user_id: number };

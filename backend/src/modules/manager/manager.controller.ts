@@ -187,6 +187,23 @@ export async function managerController(app: FastifyInstance) {
         })
       );
 
+      // Calificación promedio del área
+      const servicioIds = (serviciosData || []).map((s: any) => s.servicio_id);
+      let areaSatisfaccion = { promedio: 0, cantidad: 0 };
+      if (servicioIds.length > 0) {
+        const { data: califs } = await supabase
+          .from("calificaciones")
+          .select("calificacion_puntaje")
+          .in("servicio_id", servicioIds);
+        if (califs && califs.length > 0) {
+          const suma = califs.reduce((acc: number, c: any) => acc + c.calificacion_puntaje, 0);
+          areaSatisfaccion = {
+            promedio: Math.round((suma / califs.length) * 10) / 10,
+            cantidad: califs.length,
+          };
+        }
+      }
+
       // Obtener nombre del encargado
       let encargadoNombre: string | null = null;
       if (area.area_encargado_id) {
@@ -210,6 +227,7 @@ export async function managerController(app: FastifyInstance) {
             encargado_id: area.area_encargado_id,
             encargado_nombre: encargadoNombre,
           },
+          satisfaccion: areaSatisfaccion,
           servicios,
           estado_counts: estadoCounts,
           colaboradores,

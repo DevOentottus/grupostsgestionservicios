@@ -14,7 +14,6 @@ import { AreaServiciosPage } from "@/app/pages/areas/AreaServicios.js";
 import { PlantillasPage } from "@/app/pages/plantillas/Plantillas.js";
 import { AuditoriaPage } from "@/app/pages/auditoria/Auditoria.js";
 import { ReportesPage } from "@/app/pages/reportes/Reportes.js";
-import { ComunicacionesPage } from "@/app/pages/comunicaciones/Comunicaciones.js";
 import { RendimientoSistemaPage } from "@/app/pages/admin/RendimientoSistema.js";
 import { DisplayTVPage } from "@/app/pages/display/DisplayTV.js";
 import { ServicioPublicoPage } from "@/app/pages/servicios/ServicioPublico.js";
@@ -77,7 +76,6 @@ export default function App() {
               <ReportesPage />
             </RequireRole>
           } />
-          <Route path="comunicaciones" element={<ComunicacionesPage />} />
           {/* Admin only */}
           <Route path="admin/rendimiento" element={
             <RequireRole roles={["admin", "sistema"]}>

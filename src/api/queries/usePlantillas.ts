@@ -9,6 +9,7 @@ export interface PlantillaWithTareas extends PlantillaProceso {
 
 export interface PlantillaListItem extends PlantillaProceso {
   tareas_count: number;
+  es_favorito?: boolean;
 }
 
 export function usePlantillas() {
@@ -109,5 +110,15 @@ export function useAplicarPlantilla() {
     },
     onError: (err: any) =>
       toast.error(err.response?.data?.detail || "Error al aplicar plantilla"),
+  });
+}
+
+export function useToggleFavorito() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (plantillaId: number) => plantillasApi.toggleFavorito(plantillaId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["plantillas"] });
+    },
   });
 }

@@ -477,6 +477,10 @@ export interface RendimientoResponse {
 // -- Manager --
 export interface ManagerMiAreaResponse {
   area: Area & { encargado_nombre: string | null };
+  satisfaccion: {
+    promedio: number;
+    cantidad: number;
+  };
   servicios: (Servicio & {
     descripcion: string | null;
     prioridad: string;

@@ -13,7 +13,6 @@ import {
   BarChart3,
   ScrollText,
   TrendingUp,
-  MessageSquare,
   LogOut,
   Tv,
   Menu,
@@ -39,7 +38,6 @@ const nav: NavItem[] = [
   { to: "/reportes", label: "Reportes", icon: <BarChart3 className="w-4 h-4" />, roles: ["admin", "encargado"] },
   { to: "/auditoria", label: "Auditoría", icon: <ScrollText className="w-4 h-4" />, roles: ["admin"] },
   { to: "/admin/rendimiento", label: "Rendimiento", icon: <TrendingUp className="w-4 h-4" />, roles: ["admin", "sistema"] },
-  { to: "/comunicaciones", label: "Comunicaciones", icon: <MessageSquare className="w-4 h-4" /> },
 ];
 
 const managerNav: NavItem[] = [
@@ -102,9 +100,6 @@ function getPageTitle(pathname: string): string {
     usuarios: "Usuarios",
     reportes: "Reportes",
     auditoria: "Auditoría",
-    comunicaciones: "Comunicaciones",
-    anuncios: "Anuncios",
-    solicitudes: "Solicitudes Internas",
     manager: "Gestión",
     display: "Pantallas",
   };
@@ -374,8 +369,8 @@ export default function Layout() {
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                   <div className="p-3 border-b border-gray-100">
                     <p className="text-sm font-medium text-gray-900 truncate">{user?.nombres}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-xs text-gray-500">{user?.email}</p>
+                    <p className="text-xs text-gray-500 mt-1">{user?.email}</p>
+                    <div className="mt-1">
                       <RolBadge rol={user?.rol ?? ""} />
                     </div>
                   </div>

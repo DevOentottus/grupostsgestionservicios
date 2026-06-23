@@ -30,7 +30,6 @@ function getPageTitle(pathname: string): string {
     usuarios: "Usuarios",
     reportes: "Reportes",
     auditoria: "Auditoría",
-    comunicaciones: "Comunicaciones",
     manager: "Gestión",
     display: "Pantallas",
   };
