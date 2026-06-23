@@ -60,9 +60,11 @@ function ConfirmDialog({
 function PlantillaCreateModal({
   open,
   onClose,
+  user,
 }: {
   open: boolean;
   onClose: () => void;
+  user: { rol: string; area_id: number | null } | null;
 }) {
   const crearPlantilla = useCrearPlantilla();
   const { data: areas } = useAreasTodas();
@@ -72,6 +74,18 @@ function PlantillaCreateModal({
   const [areaId, setAreaId] = useState<number | "">("");
   const [tareas, setTareas] = useState<TareaFormItem[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const esEncargadoColaborador = user?.rol === "encargado" || user?.rol === "colaborador";
+
+  useEffect(() => {
+    if (!open) return;
+    // Auto-asignar área para encargado/colaborador
+    if (esEncargadoColaborador && user?.area_id) {
+      setAreaId(user.area_id);
+    } else {
+      setAreaId("");
+    }
+  }, [open]);
 
   // Importar tareas desde un servicio existente
   const [servicios, setServicios] = useState<any[]>([]);
@@ -196,7 +210,8 @@ function PlantillaCreateModal({
             />
           </div>
 
-          {/* Área */}
+          {/* Área — solo admin/sistema pueden elegir */}
+          {!esEncargadoColaborador && (
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
               Área <span className="text-slate-400 font-normal">(opcional)</span>
@@ -212,6 +227,7 @@ function PlantillaCreateModal({
               ))}
             </select>
           </div>
+          )}
 
           {/* Importar tareas desde servicio */}
           <div>
@@ -581,6 +597,8 @@ export function PlantillasPage() {
                     rows={2}
                     placeholder="Descripción opcional"
                   />
+                  {/* Área — solo admin/sistema pueden editar */}
+                  {esAdminSistema && (
                   <select
                     value={editAreaId ?? ""}
                     onChange={(e) => setEditAreaId(e.target.value ? Number(e.target.value) : null)}
@@ -591,6 +609,7 @@ export function PlantillasPage() {
                       <option key={a.id} value={a.id}>{a.nombre}</option>
                     ))}
                   </select>
+                  )}
                   {/* Tareas inline */}
                   <div>
                     <div className="flex justify-between items-center mb-2">
@@ -688,15 +707,6 @@ export function PlantillasPage() {
                   <div className="flex justify-between items-start">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleFavorito.mutate(p.id); }}
-                          className="shrink-0 p-0.5 rounded hover:bg-slate-100 transition-colors"
-                          title={p.es_favorito ? "Quitar de favoritos" : "Agregar a favoritos"}
-                        >
-                          <Star
-                            className={`w-4 h-4 ${p.es_favorito ? "fill-yellow-400 text-yellow-400" : "text-slate-300 hover:text-yellow-400"}`}
-                          />
-                        </button>
                         <h3 className="font-semibold text-slate-800 truncate">
                           {p.nombre}
                         </h3>
@@ -719,7 +729,16 @@ export function PlantillasPage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-1 ml-4 shrink-0">
+                    <div className="flex gap-1 ml-4 shrink-0 items-center">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleFavorito.mutate(p.id); }}
+                        className="shrink-0 p-1 rounded hover:bg-slate-100 transition-colors"
+                        title={p.es_favorito ? "Quitar de favoritos" : "Agregar a favoritos"}
+                      >
+                        <Star
+                          className={`w-4 h-4 ${p.es_favorito ? "fill-slate-900 text-slate-900" : "text-slate-300 hover:text-slate-900"}`}
+                        />
+                      </button>
                       <button
                         onClick={() => startInlineEdit(p.id)}
                         className="text-xs px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200"
@@ -787,6 +806,7 @@ export function PlantillasPage() {
       <PlantillaCreateModal
         open={showCreate}
         onClose={() => setShowCreate(false)}
+        user={user}
       />
 
       <ConfirmDialog

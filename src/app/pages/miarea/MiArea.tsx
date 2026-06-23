@@ -2,13 +2,12 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
-import type { ManagerMiAreaResponse } from "@shared/index.js";
 import {
-  Building2, Users, Wrench, Clock, CheckCircle2,
-  AlertTriangle, AlertCircle, X, Trophy, Star,
-  ArrowUpDown, ArrowUp, ArrowDown,
+  Building2, Users, Wrench, Trophy, Star,
+  ArrowUpDown,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
+import { PieChartCard } from "@/app/components/charts/PieChart.js";
 
 const statusConfig: Record<string, { bg: string; text: string; dot: string; bar: string }> = {
   pendiente:   { bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500", bar: "bg-yellow-400" },
@@ -80,10 +79,10 @@ export function MiAreaPage() {
     return (
       <div className="space-y-4 animate-pulse">
         <div className="h-6 bg-slate-200 rounded w-48" />
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-20 bg-slate-200 rounded-xl" />
-          ))}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-2 h-64 bg-slate-200 rounded-xl" />
+          <div className="lg:col-span-2 h-64 bg-slate-200 rounded-xl" />
+          <div className="lg:col-span-1 h-64 bg-slate-200 rounded-xl" />
         </div>
         <div className="h-8 bg-slate-200 rounded-lg w-48" />
         <div className="h-64 bg-slate-200 rounded-xl" />
@@ -104,7 +103,6 @@ export function MiAreaPage() {
   }
 
   const { area, servicios, estado_counts, colaboradores } = data;
-  const total = estado_counts.total || 1;
   const activos = colaboradores.filter((c) => c.activo !== false).length;
   const encargadoNombre = area.encargado_nombre || null;
 
@@ -117,14 +115,12 @@ export function MiAreaPage() {
   const DEFAULT_THEME = { bar: "bg-gray-200", text: "text-gray-900" };
   const theme = AREA_THEME[area.id] || DEFAULT_THEME;
 
-  const pct = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0;
-
-  const estadoCards = [
-    { key: "total",       label: "Servicios",           count: estado_counts.total,                              color: "text-slate-700",  bg: "bg-slate-100" },
-    { key: "pendiente",   label: "Pendientes",           count: estado_counts.pendiente,                          color: "text-yellow-600", bg: "bg-yellow-100" },
-    { key: "en_progreso", label: "En Progreso",          count: estado_counts.en_progreso,                        color: "text-blue-600",   bg: "bg-blue-100" },
-    { key: "completado",  label: "Completados",          count: estado_counts.completado,                         color: "text-green-600",  bg: "bg-green-100" },
-    { key: "bloqueados",  label: "Bloqueados/Cancelados", count: estado_counts.bloqueado + estado_counts.cancelado, color: "text-red-600",    bg: "bg-red-100" },
+  const estadoPieData = [
+    { name: "Pendiente",    value: estado_counts.pendiente,   color: "#f59e0b" },
+    { name: "En Progreso",  value: estado_counts.en_progreso, color: "#3b82f6" },
+    { name: "Completado",   value: estado_counts.completado,  color: "#22c55e" },
+    { name: "Bloqueado",    value: estado_counts.bloqueado,   color: "#ef4444" },
+    { name: "Cancelado",    value: estado_counts.cancelado,   color: "#8b5cf6" },
   ];
 
   return (
@@ -146,45 +142,51 @@ export function MiAreaPage() {
         </div>
       </div>
 
-      {/* Satisfaction summary bar */}
-      <div className="bg-white rounded-xl border border-slate-200 px-4 py-2 flex items-center gap-3 text-sm flex-wrap">
-        <span className="text-slate-500">Satisfacción</span>
-        <span className="flex items-center gap-1 font-semibold text-amber-600">
-          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-          {data.satisfaccion.promedio.toFixed(1)}
-        </span>
-        <span className="text-slate-400">/ 5</span>
-        <span className="text-slate-300">·</span>
-        <span className="text-slate-500">{data.satisfaccion.cantidad} evaluaciones</span>
-      </div>
-
-      {/* Indicadores del área + Ranking */}
+      {/* Indicadores del área: pie chart, satisfacción, ranking */}
       <div>
         <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
           <Building2 className="w-4 h-4 text-slate-400" />
           Indicadores del área
         </h3>
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left: Indicator cards — 3 columnas */}
-          <div className="lg:col-span-3">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {estadoCards.map((card) => (
-                <div key={card.key} className="bg-white rounded-xl border border-slate-200 p-4">
-                  <p className={cn("text-2xl font-bold", card.color)}>
-                    {card.count}
-                    {card.key !== "total" && (
-                      <span className="text-base font-normal text-slate-400 ml-1">
-                        | {pct(card.count)}%
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-slate-500">{card.label}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Left: Pie chart (2 cols) */}
+          <div className="lg:col-span-2">
+            <PieChartCard title="Servicios por Estado" data={estadoPieData} />
+          </div>
+
+          {/* Center: Satisfacción del área (2 cols) */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl border border-slate-200 p-5 h-full flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-4">
+                <Star className="w-5 h-5 text-yellow-500 fill-yellow-400" />
+                <h4 className="text-sm font-semibold text-slate-700">Satisfacción del área</h4>
+              </div>
+              <div className="flex items-end gap-4 mb-4">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-bold text-slate-900">
+                    {data.satisfaccion.promedio.toFixed(1)}
+                  </span>
+                  <span className="text-lg text-slate-400">/ 5</span>
                 </div>
-              ))}
+                <StarRating rating={data.satisfaccion.promedio} />
+              </div>
+
+              {/* Barra de progreso visual */}
+              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-1">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 transition-all"
+                  style={{ width: `${(data.satisfaccion.promedio / 5) * 100}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>0</span>
+                <span>{data.satisfaccion.cantidad} evaluaciones</span>
+                <span>5</span>
+              </div>
             </div>
           </div>
 
-          {/* Right: Ranking */}
+          {/* Right: Ranking (1 col) */}
           {colaboradores.length > 0 && (
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl border border-slate-200 p-4 sticky top-4">
