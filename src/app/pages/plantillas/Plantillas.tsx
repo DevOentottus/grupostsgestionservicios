@@ -753,14 +753,14 @@ export function PlantillasPage() {
                         {p.area_nombre}
                       </span>
                     )}
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-slate-400 ml-auto">
                       {Number(p.tareas_count) || 0} tarea
                       {Number(p.tareas_count) !== 1 ? "s" : ""}
                     </p>
                     {Number(p.tareas_count) > 0 && (
                       <button
                         onClick={() => toggleExpand(p.id)}
-                        className="ml-auto flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg px-3 py-1.5 transition-colors"
+                        className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-lg px-3 py-1.5 transition-colors"
                       >
                         <span className="font-medium">
                           {expandedId === p.id ? "Ocultar tareas" : "Ver tareas"}

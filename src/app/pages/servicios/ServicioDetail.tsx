@@ -290,6 +290,7 @@ export function ServicioDetailPage() {
   const progresoPct = totalTareas > 0 ? Math.round((completadasCount / totalTareas) * 100) : 0;
   const isPendiente = servicio?.estado === "pendiente";
   const isBloqueado = servicio?.estado === "bloqueado";
+  const isCancelado = servicio?.estado === "cancelado";
   const isEnProgreso = servicio?.estado === "en_progreso";
   const isCompletado = servicio?.estado === "completado";
   const puedeEditarMetadata = puedeModificar && !isCompletado;
@@ -646,12 +647,12 @@ export function ServicioDetailPage() {
               </div>
             </div>
           ) : servicio.descripcion ? (
-            <div className="relative group mt-2">
-              <p className="text-sm text-gray-600 mt-2">{servicio.descripcion}</p>
+            <div className="flex items-start gap-2 mt-2">
+              <p className="text-sm text-gray-600 flex-1">{servicio.descripcion}</p>
               {puedeEditarMetadata && (
                 <button
                   onClick={() => { setEditValor(servicio.descripcion || ""); setEditando("descripcion"); }}
-                  className="absolute top-2 right-2 text-gray-300 hover:text-blue-500 transition-colors p-1 bg-white/80 rounded-lg opacity-0 group-hover:opacity-100"
+                  className="text-gray-300 hover:text-blue-500 transition-colors shrink-0 mt-0.5"
                   title="Editar descripción"
                 >
                   <Pencil className="w-4 h-4" />
@@ -914,6 +915,10 @@ export function ServicioDetailPage() {
                             toast.error("No se pueden completar tareas mientras el servicio esté bloqueado");
                             return;
                           }
+                          if (isCancelado) {
+                            toast.error("No se puede registrar progreso en un servicio cancelado");
+                            return;
+                          }
                           if (!prevIncompleta) {
                             const isFirst = completadasCount === 0;
                             try {
@@ -930,18 +935,19 @@ export function ServicioDetailPage() {
                             }
                           }
                         }}
-                        disabled={tarea.completada || prevIncompleta || !puedeModificar || isBloqueado}
+                        disabled={tarea.completada || prevIncompleta || !puedeModificar || isBloqueado || isCancelado}
                         title={
                           tarea.completada ? "Tarea completada" :
                           prevIncompleta ? "Completá la tarea anterior primero" :
                           !puedeModificar ? "Solo el técnico asignado puede completar tareas" :
-                          isBloqueado ? "Servicio bloqueado" : undefined
+                          isBloqueado ? "Servicio bloqueado" :
+                          isCancelado ? "Servicio cancelado" : undefined
                         }
                         className={cn(
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition",
                           tarea.completada
                             ? "bg-green-500 border-green-500 cursor-not-allowed"
-                            : prevIncompleta || !puedeModificar || isBloqueado
+                            : prevIncompleta || !puedeModificar || isBloqueado || isCancelado
                             ? "border-gray-200 bg-gray-50 cursor-not-allowed"
                             : "border-gray-300 hover:border-blue-500",
                         )}
@@ -949,6 +955,7 @@ export function ServicioDetailPage() {
                         {tarea.completada && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                         {!tarea.completada && !puedeModificar && <Lock className="w-2.5 h-2.5 text-gray-300" />}
                         {!tarea.completada && isBloqueado && <Lock className="w-2.5 h-2.5 text-red-300" />}
+                        {!tarea.completada && isCancelado && <X className="w-2.5 h-2.5 text-gray-400" />}
                       </button>
 
                       {/* Title (editable) */}

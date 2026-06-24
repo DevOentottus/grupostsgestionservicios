@@ -257,12 +257,14 @@ export function NuevoServicioPage() {
       if (!isColaborador && !form.colaborador_id) errs.colaborador_id = "Requerido";
       if (guiarEntrada && !form.cliente_dni.trim()) errs.cliente_dni = "Requerido";
       if (guiarEntrada && !form.codigo_servicio.trim()) errs.codigo_servicio = "Requerido";
-      if (!form.area_id) errs.area_id = "Requerido";
+      if (!isColaborador && !form.area_id) errs.area_id = "Requerido";
       if (!form.cliente_reporte.trim()) errs.cliente_reporte = "Requerido";
       if (!form.diagnostico_inicial.trim()) errs.diagnostico_inicial = "Requerido";
     }
     setErrors(errs);
-    return Object.keys(errs).length === 0;
+    const ok = Object.keys(errs).length === 0;
+    if (!ok) toast.error("Completá todos los campos requeridos");
+    return ok;
   };
 
   const irAlSiguiente = () => {
@@ -425,6 +427,14 @@ export function NuevoServicioPage() {
           else irAlSiguiente();
         }}
       >
+        {/* ═══ ERROR BANNER ═══ */}
+        {Object.keys(errors).length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
+            <p className="text-sm font-medium text-red-700">
+              Completá todos los campos requeridos ({Object.keys(errors).length} pendiente{Object.keys(errors).length !== 1 ? "s" : ""})
+            </p>
+          </div>
+        )}
         {/* ─── PASO 1: CLIENTE (solo si guía INACTIVA) ─── */}
         {paso === 1 && !guiarEntrada && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-5 space-y-3 md:space-y-4">
@@ -579,20 +589,7 @@ export function NuevoServicioPage() {
                 </div>
               )}
 
-              {isColaborador ? (
-                <SelectField
-                  label="Área"
-                  value={form.area_id}
-                  onChange={(v) => set("area_id", v)}
-                  options={(areas || []).map((a: any) => ({
-                    value: String(a.id),
-                    label: a.nombre,
-                  }))}
-                  placeholder="Sin área"
-                  required
-                  error={errors.area_id}
-                />
-              ) : (
+              {!isColaborador && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <SelectField
                     label="Área"
