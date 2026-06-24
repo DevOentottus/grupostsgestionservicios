@@ -32,6 +32,12 @@ const servicioSchema = z.object({
   codigo: z.string().nullable().optional(),
 });
 
+// Schema para actualización parcial — todos los campos son opcionales
+const servicioUpdateSchema = z.object({
+  titulo: z.string().min(1).optional(),
+  descripcion: z.string().nullable().optional(),
+});
+
 const tareaSchema = z.object({
   titulo: z.string().min(1),
   descripcion: z.string().optional(),
@@ -188,16 +194,17 @@ export async function serviciosController(app: FastifyInstance) {
   app.put("/api/servicios/:id", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const user = request.user as { user_id: number; rol: string; area_id: number | null };
-    const input = servicioSchema.parse(request.body);
+    const input = servicioUpdateSchema.parse(request.body);
 
     await verificarPermisoModificar(parseInt(id), user);
 
+    const updateData: Record<string, any> = {};
+    if (input.titulo !== undefined) updateData.servicio_nombre = input.titulo;
+    if (input.descripcion !== undefined) updateData.servicio_descripcion = input.descripcion;
+
     const { data: updatedServicios, error } = await supabase
       .from("servicios")
-      .update({
-        servicio_nombre: input.titulo,
-        servicio_descripcion: input.descripcion || null,
-      })
+      .update(updateData)
       .eq("servicio_id", parseInt(id))
       .select();
 
@@ -639,6 +646,17 @@ export async function serviciosController(app: FastifyInstance) {
     }
 
     for (const item of items) {
+      // Validar que no se reordene una tarea completada
+      const { data: taskData } = await supabase
+        .from("tareas")
+        .select("tarea_estado")
+        .eq("tarea_id", item.id)
+        .limit(1);
+
+      if (taskData?.length && taskData[0].tarea_estado === "completado") {
+        throw new ValidationError(`No se puede reordenar la tarea ${item.id}: ya está completada`);
+      }
+
       await supabase
         .from("tareas")
         .update({ tarea_orden: item.orden })
