@@ -213,12 +213,15 @@ export async function serviciosController(app: FastifyInstance) {
   });
 
   // -- PATCH /api/servicios/:id/estado --
-  app.patch("/api/servicios/:id/estado", { preHandler: [requireRoles("admin", "encargado")] }, async (request, reply) => {
+  app.patch("/api/servicios/:id/estado", { preHandler: [requireRoles()] }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const { estado, motivo } = request.body as { estado: string; motivo?: string };
+    const user = request.user as { user_id: number; rol: string; area_id: number | null };
     const validos = ["pendiente", "en_progreso", "completado", "cancelado", "bloqueado"];
     if (!validos.includes(estado)) throw new ValidationError("Estado inválido");
     if (estado === "bloqueado" && !motivo) throw new ValidationError("Se requiere motivo para bloquear");
+
+    await verificarPermisoModificar(parseInt(id), user);
 
     const { data: servicios } = await supabase
       .from("servicios")
