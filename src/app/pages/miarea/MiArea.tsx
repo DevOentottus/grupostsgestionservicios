@@ -163,7 +163,7 @@ export function MiAreaPage() {
                   <Star className="w-4 h-4 text-yellow-500 fill-yellow-400" />
                   <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Satisfacción</h4>
                 </div>
-                <div className="flex items-baseline gap-1.5">
+                <div className="flex items-center justify-center gap-1.5">
                   <span className="text-2xl font-bold text-slate-900">
                     {data.satisfaccion.promedio.toFixed(1)}
                   </span>
@@ -177,7 +177,7 @@ export function MiAreaPage() {
                       style={{ width: `${(data.satisfaccion.promedio / 5) * 100}%` }}
                     />
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-1">{data.satisfaccion.cantidad} evaluaciones</p>
+                  <p className="text-[11px] text-slate-400 mt-1 text-center">{data.satisfaccion.cantidad} evaluaciones</p>
                 </div>
               </div>
 
@@ -185,12 +185,12 @@ export function MiAreaPage() {
 
               {/* NPS */}
               <div>
-                <div className="flex items-center gap-1.5 mb-2">
+                <div className="flex items-center gap-1.5 mb-2 justify-center">
                   <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">NPS</h4>
                 </div>
                 {data.satisfaccion.cantidad > 0 ? (
                   <>
-                    <div className="flex items-baseline gap-1">
+                    <div className="flex items-center justify-center gap-1">
                       <span className={cn(
                         "text-2xl font-bold",
                         data.satisfaccion.nps > 0 ? "text-green-600" : data.satisfaccion.nps < 0 ? "text-red-600" : "text-slate-500"
@@ -214,7 +214,7 @@ export function MiAreaPage() {
                         style={{ width: `${(data.satisfaccion.detractores / data.satisfaccion.cantidad) * 100}%` }}
                       />
                     </div>
-                    <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                    <div className="flex justify-center gap-4 text-[10px] text-slate-400 mt-1">
                       <span>{data.satisfaccion.promotores} prom.</span>
                       <span>{data.satisfaccion.pasivos} pas.</span>
                       <span>{data.satisfaccion.detractores} det.</span>
@@ -258,7 +258,7 @@ export function MiAreaPage() {
                     </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                <div className="space-y-1">
                   {colaboradoresOrdenados.map((col, idx) => {
                     const pos = idx + 1;
                     const medal = pos === 1 ? "text-yellow-500" : pos === 2 ? "text-gray-400" : pos === 3 ? "text-amber-700" : "text-slate-300";
