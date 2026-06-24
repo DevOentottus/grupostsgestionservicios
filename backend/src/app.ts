@@ -22,6 +22,8 @@ import { rendimientoController } from "@/modules/rendimiento/rendimiento.control
 import { evidenciasController } from "@/modules/evidencias/evidencias.controller.js";
 import { audioController } from "@/modules/audio/audio.controller.js";
 
+import { pushController } from "@/modules/push/push.controller.js";
+
 export async function buildApp() {
   const app = Fastify({ logger: config.isDev });
 
@@ -55,6 +57,7 @@ export async function buildApp() {
   await app.register(rendimientoController);
   await app.register(evidenciasController);
   await app.register(audioController);
+  await app.register(pushController);
 
   return app;
 }

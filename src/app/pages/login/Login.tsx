@@ -1,7 +1,7 @@
 import { useState, type FormEvent, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
-import { Wrench, Eye, EyeOff, AlertCircle, User, Lock, LogIn } from "lucide-react";
+import { Wrench, Eye, EyeOff, AlertCircle, User, Lock, LogIn, FileText } from "lucide-react";
 
 export function LoginPage() {
   const { login, isAuthenticated, user } = useAuth();
@@ -136,6 +136,20 @@ export function LoginPage() {
             </button>
           </form>
 
+          <div className="flex items-center gap-3 my-6">
+            <span className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400">o</span>
+            <span className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate("/seguimiento-cliente")}
+            className="w-full border border-gray-200 hover:border-blue-300 text-gray-600 hover:text-blue-700 rounded-xl py-3 text-sm font-semibold transition flex items-center justify-center gap-2 hover:bg-blue-50"
+          >
+            <FileText className="w-4 h-4" />
+            Seguimiento de servicio
+          </button>
 
         </div>
       </div>

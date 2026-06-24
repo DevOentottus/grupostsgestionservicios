@@ -555,6 +555,25 @@ export async function serviciosController(app: FastifyInstance) {
       servicio_id: t.servicio_id,
     });
 
+    // Enviar notificación push al cliente si hay suscripción
+    try {
+      const { data: svcData } = await supabase
+        .from("servicios")
+        .select("cliente_dni, servicio_nombre, servicio_codigo")
+        .eq("servicio_id", t.servicio_id)
+        .limit(1);
+      const clienteDni = svcData?.[0]?.cliente_dni;
+      if (clienteDni) {
+        const { sendPushToDNI } = await import("@/modules/push/push.controller.js");
+        const codigo = svcData[0].servicio_codigo || t.servicio_id;
+        await sendPushToDNI(clienteDni, {
+          title: "Tarea completada",
+          body: `${svcData[0].servicio_nombre || "Servicio"}: "${t.tarea_titulo}" fue completada`,
+          url: `/public/servicio/${codigo}`,
+        });
+      }
+    } catch { /* push no crítico */ }
+
     // Si todas las tareas del servicio están completadas, cerrar el servicio
     const { data: pendingTasks } = await supabase
       .from("tareas")

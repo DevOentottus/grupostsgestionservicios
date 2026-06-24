@@ -15,4 +15,9 @@ export const config = {
   cors: {
     origin: process.env.CORS_ORIGIN || "https://serviciolocalsts.vercel.app",
   },
+
+  vapid: {
+    publicKey: process.env.VAPID_PUBLIC_KEY || "",
+    privateKey: process.env.VAPID_PRIVATE_KEY || "",
+  },
 } as const;
