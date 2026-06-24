@@ -4,12 +4,21 @@ import { config } from "@/core/config/index.js";
 import { z } from "zod";
 import webPush from "web-push";
 
-// Configurar VAPID
-webPush.setVapidDetails(
-  "mailto:soporte@serviciolocalsts.com",
-  config.vapid.publicKey,
-  config.vapid.privateKey,
-);
+let vapidConfigured = false;
+
+function ensureVapidConfigured() {
+  if (vapidConfigured) return true;
+  if (!config.vapid.publicKey || !config.vapid.privateKey) {
+    return false;
+  }
+  webPush.setVapidDetails(
+    "mailto:soporte@serviciolocalsts.com",
+    config.vapid.publicKey,
+    config.vapid.privateKey,
+  );
+  vapidConfigured = true;
+  return true;
+}
 
 const subscribeSchema = z.object({
   dni: z.string().min(1),
@@ -26,6 +35,8 @@ export async function sendPushToDNI(
   dni: string,
   payload: { title: string; body: string; icon?: string; url?: string },
 ) {
+  if (!ensureVapidConfigured()) return;
+
   const { data: subscriptions } = await supabase
     .from("push_subscriptions")
     .select("*")
