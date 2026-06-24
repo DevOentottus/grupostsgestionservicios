@@ -559,114 +559,131 @@ export function ServicioDetailPage() {
 
         {/* Card body */}
         <div className={cn("p-4 md:p-6 transition-colors", HEADER_BG[servicio.estado] || "bg-white")}>
-          <div className="flex items-center gap-3 flex-wrap">
-            {editando === "titulo" ? (
-              <div className="flex items-center gap-2 w-full">
-                <input
-                  type="text"
-                  className="flex-1 text-xl border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ fontWeight: 700 }}
-                  value={editValor}
-                  onChange={(e) => setEditValor(e.target.value)}
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      editarServicio.mutateAsync({ id: servicioId, data: { titulo: editValor } });
-                      setEditando(null);
-                    }
-                    if (e.key === "Escape") setEditando(null);
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    editarServicio.mutateAsync({ id: servicioId, data: { titulo: editValor } });
-                    setEditando(null);
-                  }}
-                  className="text-green-600 hover:text-green-700 p-1"
-                >
-                  <Save className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setEditando(null)}
-                  className="text-gray-400 hover:text-gray-600 p-1"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <>
-                <h2 className="text-xl text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
-                {puedeModificar && (
-                  <button
-                    onClick={() => { setEditValor(servicio.titulo); setEditando("titulo"); }}
-                    className="text-gray-300 hover:text-blue-500 transition-colors"
-                    title="Editar título"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+          <div className="flex justify-between gap-6">
+            {/* Left: title + description */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 flex-wrap">
+                {editando === "titulo" ? (
+                  <div className="flex items-center gap-2 w-full">
+                    <input
+                      type="text"
+                      className="flex-1 text-xl border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      style={{ fontWeight: 700 }}
+                      value={editValor}
+                      onChange={(e) => setEditValor(e.target.value)}
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          editarServicio.mutateAsync({ id: servicioId, data: { titulo: editValor } });
+                          setEditando(null);
+                        }
+                        if (e.key === "Escape") setEditando(null);
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        editarServicio.mutateAsync({ id: servicioId, data: { titulo: editValor } });
+                        setEditando(null);
+                      }}
+                      className="text-green-600 hover:text-green-700 p-1"
+                    >
+                      <Save className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setEditando(null)}
+                      className="text-gray-400 hover:text-gray-600 p-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h2 className="text-xl text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
+                    {puedeModificar && (
+                      <button
+                        onClick={() => { setEditValor(servicio.titulo); setEditando("titulo"); }}
+                        className="text-gray-300 hover:text-blue-500 transition-colors"
+                        title="Editar título"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-            {servicio.cliente_nombre && (
-              <span className="flex items-center gap-1 text-xs text-gray-500">
-                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                {servicio.cliente_nombre}
-              </span>
-            )}
-          </div>
+                {(servicio.cliente_nombre || servicio.cliente_dni) && (
+                  <span className="flex items-center gap-1 text-xs text-gray-500">
+                    <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    {servicio.cliente_nombre || (servicio.cliente_dni ? `${servicio.cliente_dni.slice(0, 3)}*****` : "")}
+                  </span>
+                )}
+              </div>
 
-          {editando === "descripcion" ? (
-            <div className="mt-2">
-              <textarea
-                className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y min-h-[80px]"
-                value={editValor}
-                onChange={(e) => setEditValor(e.target.value)}
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") setEditando(null);
-                }}
-              />
-              <div className="flex items-center gap-3 mt-1.5">
+              {editando === "descripcion" ? (
+                <div className="mt-2">
+                  <textarea
+                    className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y min-h-[80px]"
+                    value={editValor}
+                    onChange={(e) => setEditValor(e.target.value)}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setEditando(null);
+                    }}
+                  />
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <button
+                      onClick={() => {
+                        editarServicio.mutateAsync({ id: servicioId, data: { descripcion: editValor } });
+                        setEditando(null);
+                      }}
+                      className="text-xs font-medium text-green-600 hover:text-green-700 flex items-center gap-1"
+                    >
+                      <Save className="w-3.5 h-3.5" /> Guardar
+                    </button>
+                    <button
+                      onClick={() => setEditando(null)}
+                      className="text-xs font-medium text-gray-400 hover:text-gray-600 flex items-center gap-1"
+                    >
+                      <X className="w-3.5 h-3.5" /> Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : servicio.descripcion ? (
+                <div className="flex items-start gap-2 mt-2">
+                  <p className="text-sm text-gray-600 flex-1">{servicio.descripcion}</p>
+                  {puedeEditarMetadata && (
+                    <button
+                      onClick={() => { setEditValor(servicio.descripcion || ""); setEditando("descripcion"); }}
+                      className="text-gray-300 hover:text-blue-500 transition-colors shrink-0 mt-0.5"
+                      title="Editar descripción"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ) : puedeEditarMetadata ? (
                 <button
-                  onClick={() => {
-                    editarServicio.mutateAsync({ id: servicioId, data: { descripcion: editValor } });
-                    setEditando(null);
-                  }}
-                  className="text-xs font-medium text-green-600 hover:text-green-700 flex items-center gap-1"
+                  onClick={() => { setEditValor(""); setEditando("descripcion"); }}
+                  className="mt-2 text-sm text-gray-400 hover:text-blue-500 transition-colors flex items-center gap-1"
                 >
-                  <Save className="w-3.5 h-3.5" /> Guardar
+                  <Plus className="w-3.5 h-3.5" /> Agregar descripción
                 </button>
-                <button
-                  onClick={() => setEditando(null)}
-                  className="text-xs font-medium text-gray-400 hover:text-gray-600 flex items-center gap-1"
-                >
-                  <X className="w-3.5 h-3.5" /> Cancelar
-                </button>
+              ) : null}
+            </div>
+
+            {/* Right: time indicators */}
+            <div className="shrink-0 text-right hidden sm:block">
+              <div className="bg-white/60 backdrop-blur rounded-xl border border-gray-200/60 px-4 py-3 min-w-[130px]">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Transcurrido</p>
+                <p className="text-lg font-bold text-gray-900 tabular-nums leading-tight mt-0.5">
+                  {servicio.created_at ? formatElapsed(servicio.created_at, servicio.hora_creacion, now, servicio.fecha_fin, servicio.hora_fin) : "—"}
+                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mt-3">Restante estimado</p>
+                <p className="text-lg font-bold text-gray-900 tabular-nums leading-tight mt-0.5">—</p>
               </div>
             </div>
-          ) : servicio.descripcion ? (
-            <div className="flex items-start gap-2 mt-2">
-              <p className="text-sm text-gray-600 flex-1">{servicio.descripcion}</p>
-              {puedeEditarMetadata && (
-                <button
-                  onClick={() => { setEditValor(servicio.descripcion || ""); setEditando("descripcion"); }}
-                  className="text-gray-300 hover:text-blue-500 transition-colors shrink-0 mt-0.5"
-                  title="Editar descripción"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          ) : puedeEditarMetadata ? (
-            <button
-              onClick={() => { setEditValor(""); setEditando("descripcion"); }}
-              className="mt-2 text-sm text-gray-400 hover:text-blue-500 transition-colors flex items-center gap-1"
-            >
-              <Plus className="w-3.5 h-3.5" /> Agregar descripción
-            </button>
-          ) : null}
+          </div>
 
           {/* Situación Inicial del Cliente y Diagnóstico */}
           {(servicio.cliente_reporte || servicio.diagnostico_inicial || servicio.servicio_audio_cliente || servicio.servicio_audio_diagnostico) && (

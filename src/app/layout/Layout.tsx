@@ -66,7 +66,7 @@ function RolBadge({ rol }: { rol: string }) {
     colaborador: "Colaborador",
   };
   return (
-    <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wider", styles[rol] || styles.colaborador)}>
+    <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wider inline-flex items-center justify-center text-center leading-none", styles[rol] || styles.colaborador)}>
       {labels[rol] || rol}
     </span>
   );
