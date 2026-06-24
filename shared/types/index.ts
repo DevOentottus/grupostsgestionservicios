@@ -64,6 +64,7 @@ export interface Servicio {
   hora_fin: string | null;
   hora_creacion: string | null;
   bloqueado_motivo: string | null;
+  desbloqueo_motivo: string | null;
   created_at: string;
   updated_at: string;
 }

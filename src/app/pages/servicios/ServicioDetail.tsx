@@ -4,6 +4,7 @@ import {
   useServicio, useTareas,
   useCrearTarea, useCompletarTarea, useReabrirTarea, useEliminarTarea,
   useCambiarEstado, useEditarTareaInline, useReordenarTareas,
+  useEditarServicio,
 } from "@/api/queries/useServicios.js";
 
 import { useCrearPlantilla } from "@/api/queries/usePlantillas.js";
@@ -21,10 +22,13 @@ import QRCode from "qrcode";
 import {
   ArrowLeft, CheckCircle2, Clock, MessageSquare,
   Send, AlertTriangle, Plus, X,
-  Pencil, MessageCircle, Mic,
-  Save, Camera, Share2, Play, Lock, RotateCcw, ChevronUp, ChevronDown, FileText,
+  Pencil, MessageCircle, Mic, Info,
+  Save, Camera, Share2, Play, Lock, LockOpen, RotateCcw, ChevronUp, ChevronDown, FileText,
 } from "lucide-react";
 import type { Tarea } from "@shared/index.js";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/app/components/ui/dialog.js";
 
 // -- Public URL (configurable via env) --
 const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL || "https://serviciolocalsts.vercel.app";
@@ -231,6 +235,10 @@ export function ServicioDetailPage() {
   const esAsignado = user?.id === servicio?.colaborador_id;
   const puedeModificar = esAdmin || esAsignado;
 
+  const editarServicio = useEditarServicio();
+  const [editando, setEditando] = useState<"titulo" | "descripcion" | null>(null);
+  const [editValor, setEditValor] = useState("");
+
   const activeTab = (searchParams.get("tab") as TabId) || "tareas";
   const setActiveTab = (tab: TabId) => {
     setSearchParams(tab === "tareas" ? {} : { tab });
@@ -254,6 +262,10 @@ export function ServicioDetailPage() {
   const [showCompartir, setShowCompartir] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState("");
+  const [bloqueoDialogOpen, setBloqueoDialogOpen] = useState(false);
+  const [bloqueoMotivo, setBloqueoMotivo] = useState("");
+  const [desbloqueoDialogOpen, setDesbloqueoDialogOpen] = useState(false);
+  const [desbloqueoMotivo, setDesbloqueoMotivo] = useState("");
 
   // Ticker para contador de tiempo transcurrido
   const [now, setNow] = useState(Date.now());
@@ -374,27 +386,27 @@ export function ServicioDetailPage() {
         Volver a Servicios
       </button>
 
-      {/* Bloqueado Banner */}
-      {isBloqueado && servicio.bloqueado_motivo && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
-          <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-red-800">Servicio Bloqueado</p>
-            <p className="text-sm text-red-600 mt-0.5">{servicio.bloqueado_motivo}</p>
-          </div>
-          <button
-            onClick={irAEnProgreso}
-            disabled={!puedeModificar}
-            title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Reabrir servicio"}
-            className={cn(
-              "text-sm px-3 py-1.5 rounded-xl transition-colors flex-shrink-0 flex items-center gap-1.5",
-              puedeModificar
-                ? "bg-red-600 text-white hover:bg-red-700"
-                : "bg-gray-100 text-gray-300 cursor-not-allowed",
-            )}
-          >
-            {!puedeModificar && <Lock className="w-3.5 h-3.5" />}
-            Reabrir
+          {/* Bloqueado Banner */}
+          {isBloqueado && servicio.bloqueado_motivo && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
+              <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-800">Servicio Bloqueado</p>
+                <p className="text-sm text-red-600 mt-0.5">{servicio.bloqueado_motivo}</p>
+              </div>
+              <button
+                onClick={() => { setDesbloqueoMotivo(""); setDesbloqueoDialogOpen(true); }}
+                disabled={!puedeModificar}
+                title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Reabrir servicio"}
+                className={cn(
+                  "text-sm px-3 py-1.5 rounded-xl transition-colors flex-shrink-0 flex items-center gap-1.5",
+                  puedeModificar
+                    ? "bg-red-600 text-white hover:bg-red-700"
+                    : "bg-gray-100 text-gray-300 cursor-not-allowed",
+                )}
+              >
+                {!puedeModificar && <Lock className="w-3.5 h-3.5" />}
+                Reabrir
           </button>
         </div>
       )}
@@ -479,8 +491,8 @@ export function ServicioDetailPage() {
             const btnEnabled = btnBase + " border-white/30 text-white/80 hover:text-white hover:bg-white/20";
             const btnDisabled = btnBase + " border-white/10 text-white/30 cursor-not-allowed";
             if (bloqueado) return (
-              <button onClick={irAEnProgreso} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Desbloquear"} className={cn(puedeModificar ? btnEnabled : btnDisabled)}>
-                <Lock className={cn("w-3.5 h-3.5", !puedeModificar && "text-white/30")} />
+              <button onClick={() => { setDesbloqueoMotivo(""); setDesbloqueoDialogOpen(true); }} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Desbloquear"} className={cn(puedeModificar ? btnEnabled : btnDisabled)}>
+                <LockOpen className={cn("w-3.5 h-3.5", !puedeModificar && "text-white/30")} />
               </button>
             );
             if (cancelado) return (
@@ -490,7 +502,7 @@ export function ServicioDetailPage() {
             );
             return (
               <>
-                <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "bloqueado" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Bloquear"} className={cn(puedeModificar ? btnEnabled : btnDisabled)}>
+                <button onClick={() => { setBloqueoMotivo(""); setBloqueoDialogOpen(true); }} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Bloquear"} className={cn(puedeModificar ? btnEnabled : btnDisabled)}>
                   <Lock className={cn("w-3.5 h-3.5 shrink-0", !puedeModificar && "text-white/30")} />
                   <span className="hidden md:inline">Bloquear</span>
                 </button>
@@ -524,13 +536,74 @@ export function ServicioDetailPage() {
             <span className={cn("text-xs px-2.5 py-1 rounded-full font-medium", ESTADO_BAR_STYLE[servicio.estado] || "bg-white/10 text-white")}>
               {ESTADO_LABEL[servicio.estado] || servicio.estado}
             </span>
+            {isBloqueado && servicio.bloqueado_motivo && (
+              <span className="group relative">
+                <Info className="w-4 h-4 text-red-300 cursor-help" />
+                <div className="absolute right-0 top-6 z-50 bg-gray-900 text-white text-xs rounded-xl px-3 py-2 shadow-lg w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none">
+                  <p className="font-medium mb-1">Motivo de bloqueo:</p>
+                  <p className="text-gray-300 mb-2">{servicio.bloqueado_motivo}</p>
+                  {servicio.desbloqueo_motivo && (
+                    <>
+                      <p className="font-medium mb-1 border-t border-gray-700 pt-2">Último desbloqueo:</p>
+                      <p className="text-gray-300">{servicio.desbloqueo_motivo}</p>
+                    </>
+                  )}
+                </div>
+              </span>
+            )}
           </span>
         </div>
 
         {/* Card body */}
         <div className={cn("p-4 md:p-6 transition-colors", HEADER_BG[servicio.estado] || "bg-white")}>
           <div className="flex items-center gap-3 flex-wrap">
-            <h2 className="text-xl text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
+            {editando === "titulo" ? (
+              <div className="flex items-center gap-2 w-full">
+                <input
+                  type="text"
+                  className="flex-1 text-xl border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ fontWeight: 700 }}
+                  value={editValor}
+                  onChange={(e) => setEditValor(e.target.value)}
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      editarServicio.mutateAsync({ id: servicioId, data: { titulo: editValor } });
+                      setEditando(null);
+                    }
+                    if (e.key === "Escape") setEditando(null);
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    editarServicio.mutateAsync({ id: servicioId, data: { titulo: editValor } });
+                    setEditando(null);
+                  }}
+                  className="text-green-600 hover:text-green-700 p-1"
+                >
+                  <Save className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setEditando(null)}
+                  className="text-gray-400 hover:text-gray-600 p-1"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-xl text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
+                {puedeModificar && (
+                  <button
+                    onClick={() => { setEditValor(servicio.titulo); setEditando("titulo"); }}
+                    className="text-gray-300 hover:text-blue-500 transition-colors"
+                    title="Editar título"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                )}
+              </>
+            )}
             {servicio.cliente_nombre && (
               <span className="flex items-center gap-1 text-xs text-gray-500">
                 <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -541,18 +614,65 @@ export function ServicioDetailPage() {
             )}
           </div>
 
-          {servicio.descripcion && (
-            <p className="text-sm text-gray-600 mt-2 bg-gray-50 rounded-xl p-3 border border-gray-100">{servicio.descripcion}</p>
-          )}
+          {editando === "descripcion" ? (
+            <div className="mt-2">
+              <textarea
+                className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y min-h-[80px]"
+                value={editValor}
+                onChange={(e) => setEditValor(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setEditando(null);
+                }}
+              />
+              <div className="flex items-center gap-3 mt-1.5">
+                <button
+                  onClick={() => {
+                    editarServicio.mutateAsync({ id: servicioId, data: { descripcion: editValor } });
+                    setEditando(null);
+                  }}
+                  className="text-xs font-medium text-green-600 hover:text-green-700 flex items-center gap-1"
+                >
+                  <Save className="w-3.5 h-3.5" /> Guardar
+                </button>
+                <button
+                  onClick={() => setEditando(null)}
+                  className="text-xs font-medium text-gray-400 hover:text-gray-600 flex items-center gap-1"
+                >
+                  <X className="w-3.5 h-3.5" /> Cancelar
+                </button>
+              </div>
+            </div>
+          ) : servicio.descripcion ? (
+            <div className="relative group mt-2">
+              <p className="text-sm text-gray-600 bg-gray-50 rounded-xl p-3 border border-gray-100">{servicio.descripcion}</p>
+              {puedeModificar && (
+                <button
+                  onClick={() => { setEditValor(servicio.descripcion || ""); setEditando("descripcion"); }}
+                  className="absolute top-2 right-2 text-gray-300 hover:text-blue-500 transition-colors p-1 bg-white/80 rounded-lg opacity-0 group-hover:opacity-100"
+                  title="Editar descripción"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          ) : puedeModificar ? (
+            <button
+              onClick={() => { setEditValor(""); setEditando("descripcion"); }}
+              className="mt-2 text-sm text-gray-400 hover:text-blue-500 transition-colors flex items-center gap-1"
+            >
+              <Plus className="w-3.5 h-3.5" /> Agregar descripción
+            </button>
+          ) : null}
 
-          {/* Reporte del Cliente y Diagnóstico */}
+          {/* Situación Inicial del Cliente y Diagnóstico */}
           {(servicio.cliente_reporte || servicio.diagnostico_inicial || servicio.servicio_audio_cliente || servicio.servicio_audio_diagnostico) && (
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {(servicio.cliente_reporte || servicio.servicio_audio_cliente) && (
                 <div>
                   <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
                     <Mic className="w-3.5 h-3.5" />
-                    Reporte del Cliente
+                    Situación Inicial del Cliente
                   </h4>
                   {servicio.cliente_reporte && (
                     <p className="text-sm text-gray-700 bg-slate-50 rounded-xl p-3 border border-slate-100">{servicio.cliente_reporte}</p>
@@ -788,6 +908,10 @@ export function ServicioDetailPage() {
                       <button
                         onClick={async () => {
                           if (tarea.completada || !puedeModificar) return;
+                          if (isBloqueado) {
+                            toast.error("No se pueden completar tareas mientras el servicio esté bloqueado");
+                            return;
+                          }
                           if (!prevIncompleta) {
                             const isFirst = completadasCount === 0;
                             try {
@@ -804,23 +928,25 @@ export function ServicioDetailPage() {
                             }
                           }
                         }}
-                        disabled={tarea.completada || prevIncompleta || !puedeModificar}
+                        disabled={tarea.completada || prevIncompleta || !puedeModificar || isBloqueado}
                         title={
                           tarea.completada ? "Tarea completada" :
                           prevIncompleta ? "Completá la tarea anterior primero" :
-                          !puedeModificar ? "Solo el técnico asignado puede completar tareas" : undefined
+                          !puedeModificar ? "Solo el técnico asignado puede completar tareas" :
+                          isBloqueado ? "Servicio bloqueado" : undefined
                         }
                         className={cn(
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition",
                           tarea.completada
                             ? "bg-green-500 border-green-500 cursor-not-allowed"
-                            : prevIncompleta || !puedeModificar
+                            : prevIncompleta || !puedeModificar || isBloqueado
                             ? "border-gray-200 bg-gray-50 cursor-not-allowed"
                             : "border-gray-300 hover:border-blue-500",
                         )}
                       >
                         {tarea.completada && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
                         {!tarea.completada && !puedeModificar && <Lock className="w-2.5 h-2.5 text-gray-300" />}
+                        {!tarea.completada && isBloqueado && <Lock className="w-2.5 h-2.5 text-red-300" />}
                       </button>
 
                       {/* Title (editable) */}
@@ -1010,6 +1136,98 @@ export function ServicioDetailPage() {
         onCancel={() => setDeleteTarget(null)}
         isLoading={eliminarTarea.isPending}
       />
+
+      {/* Bloqueo Dialog */}
+      <Dialog open={bloqueoDialogOpen} onOpenChange={setBloqueoDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Bloquear Servicio</DialogTitle>
+            <DialogDescription>
+              Ingresá el motivo por el cual estás bloqueando el servicio.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-3">
+            <textarea
+              className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y min-h-[80px]"
+              placeholder="Ej: Falta repuesto, requiere aprobación del cliente, etc."
+              value={bloqueoMotivo}
+              onChange={(e) => setBloqueoMotivo(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setBloqueoDialogOpen(false);
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setBloqueoDialogOpen(false)}
+              className="text-xs font-medium text-gray-500 hover:text-gray-700 px-4 py-2 rounded-lg border border-gray-300 transition"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => {
+                if (!bloqueoMotivo.trim()) {
+                  toast.error("Debés ingresar un motivo para bloquear el servicio");
+                  return;
+                }
+                cambiarEstado.mutate({ id: servicioId, estado: "bloqueado", motivo: bloqueoMotivo.trim() });
+                setBloqueoDialogOpen(false);
+              }}
+              disabled={cambiarEstado.isPending}
+              className="text-xs font-medium text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition disabled:opacity-50"
+            >
+              {cambiarEstado.isPending ? "Bloqueando..." : "Bloquear Servicio"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Desbloqueo Dialog */}
+      <Dialog open={desbloqueoDialogOpen} onOpenChange={setDesbloqueoDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Desbloquear Servicio</DialogTitle>
+            <DialogDescription>
+              Ingresá el motivo por el cual estás desbloqueando el servicio.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-3">
+            <textarea
+              className="w-full text-sm border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y min-h-[80px]"
+              placeholder="Ej: Se consiguió el repuesto, el cliente aprobó la cotización, etc."
+              value={desbloqueoMotivo}
+              onChange={(e) => setDesbloqueoMotivo(e.target.value)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setDesbloqueoDialogOpen(false);
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setDesbloqueoDialogOpen(false)}
+              className="text-xs font-medium text-gray-500 hover:text-gray-700 px-4 py-2 rounded-lg border border-gray-300 transition"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => {
+                if (!desbloqueoMotivo.trim()) {
+                  toast.error("Debés ingresar un motivo para desbloquear el servicio");
+                  return;
+                }
+                cambiarEstado.mutate({ id: servicioId, estado: "en_progreso", motivo: desbloqueoMotivo.trim() });
+                setDesbloqueoDialogOpen(false);
+              }}
+              disabled={cambiarEstado.isPending}
+              className="text-xs font-medium text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg transition disabled:opacity-50"
+            >
+              {cambiarEstado.isPending ? "Desbloqueando..." : "Desbloquear Servicio"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -11,7 +11,8 @@ export function SeguimientoClientePage() {
     const trimmed = codigo.trim();
     const dniTrimmed = dni.trim();
     if (!trimmed || !dniTrimmed) return;
-    navigate(`/public/servicio/${trimmed}?dni=${encodeURIComponent(dniTrimmed)}`);
+    sessionStorage.setItem("public_dni", dniTrimmed);
+    navigate(`/public/servicio/${trimmed}`);
   };
 
   return (

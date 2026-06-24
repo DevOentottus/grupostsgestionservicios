@@ -97,7 +97,7 @@ function LoadingSkeleton() {
 export function ServicioPublicoPage() {
   const { codigo } = useParams<{ codigo: string }>();
   const [searchParams] = useSearchParams();
-  const dni = searchParams.get("dni") || undefined;
+  const dni = searchParams.get("dni") || sessionStorage.getItem("public_dni") || undefined;
   const [rating, setRating] = useState(0);
   const [comentario, setComentario] = useState("");
   const [sugerencia, setSugerencia] = useState("");

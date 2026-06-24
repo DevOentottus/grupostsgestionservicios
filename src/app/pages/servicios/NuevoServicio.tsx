@@ -626,7 +626,7 @@ export function NuevoServicioPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <InputField
-                    label="Reporte del Cliente"
+                    label="Situación Inicial del Cliente"
                     value={form.cliente_reporte}
                     onChange={(v) => set("cliente_reporte", v)}
                     rows={2}

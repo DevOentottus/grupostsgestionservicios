@@ -278,7 +278,21 @@ export async function evidenciasController(app: FastifyInstance) {
         return { data: { id: evidenciaId, estado: input.estado } };
       }
 
-      // Para otros estados (aprobado, pendiente, reemplazado) — comportamiento actual
+      // Para aprobado: guardar motivo como comentario
+      if (input.estado === "aprobado" && input.motivo) {
+        const { error: commentError } = await supabase
+          .from("comentariosevidencias")
+          .insert({
+            evidencia_id: evidenciaId,
+            usuario_id: user.user_id,
+            es_cliente: false,
+            contenido: `Motivo de aprobación: ${input.motivo}`,
+          });
+
+        if (commentError) throw new ValidationError("Error al guardar motivo: " + commentError.message);
+      }
+
+      // Para otros estados (pendiente, reemplazado) — comportamiento actual
       const { error } = await supabase
         .from("evidencias")
         .update({ estado: input.estado })

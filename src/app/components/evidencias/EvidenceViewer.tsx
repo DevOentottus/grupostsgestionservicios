@@ -38,6 +38,8 @@ export function EvidenceViewer({
   const [comentarios, setComentarios] = useState<Record<number, string>>({});
   const [rechazandoId, setRechazandoId] = useState<number | null>(null);
   const [motivoRechazo, setMotivoRechazo] = useState("");
+  const [aprobandoId, setAprobandoId] = useState<number | null>(null);
+  const [motivoAprobacion, setMotivoAprobacion] = useState("");
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [replacingId, setReplacingId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -126,6 +128,10 @@ export function EvidenceViewer({
       (c) => c.contenido.startsWith("Motivo de rechazo:")
     );
     const rejectionReason = rejectionComment?.contenido.replace("Motivo de rechazo: ", "");
+    const approvalComment = ev.comentarios?.find(
+      (c) => c.contenido.startsWith("Motivo de aprobación:")
+    );
+    const approvalReason = approvalComment?.contenido.replace("Motivo de aprobación: ", "");
     return (
       <div key={ev.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         {/* Media */}
@@ -206,10 +212,46 @@ export function EvidenceViewer({
                 <p className="text-[11px] text-red-500">Debe ingresar un motivo de rechazo</p>
               )}
             </div>
+          ) : aprobandoId === ev.id ? (
+            <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 space-y-2">
+              <textarea
+                value={motivoAprobacion}
+                onChange={(e) => setMotivoAprobacion(e.target.value)}
+                placeholder="Argumento de aprobación (obligatorio)"
+                rows={2}
+                className="w-full px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 resize-none"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setAprobandoId(null);
+                    setMotivoAprobacion("");
+                  }}
+                  className="flex-1 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    cambiarEstado.mutate({ evidenciaId: ev.id, estado: "aprobado", motivo: motivoAprobacion.trim() });
+                    setAprobandoId(null);
+                    setMotivoAprobacion("");
+                  }}
+                  disabled={!motivoAprobacion.trim()}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ThumbsUp className="w-3 h-3" />
+                  Confirmar aprobación
+                </button>
+              </div>
+              {!motivoAprobacion.trim() && (
+                <p className="text-[11px] text-red-500">Debe ingresar un argumento de aprobación</p>
+              )}
+            </div>
           ) : (
             <div className="flex gap-2 px-4 py-2 bg-slate-50 border-t border-slate-100">
               <button
-                onClick={() => cambiarEstado.mutate({ evidenciaId: ev.id, estado: "aprobado" })}
+                onClick={() => { setAprobandoId(ev.id); setMotivoAprobacion(""); }}
                 className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 transition"
               >
                 <ThumbsUp className="w-3 h-3" />
@@ -258,6 +300,18 @@ export function EvidenceViewer({
                 Subir nueva evidencia
               </button>
             )}
+          </div>
+        )}
+
+        {/* Evidencia aprobada — mostrar argumento */}
+        {ev.estado === "aprobado" && approvalReason && (
+          <div className="px-4 py-3 bg-green-50 border-t border-green-100">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+              <p className="text-sm text-green-700">
+                <span className="font-medium">Argumento de aprobación:</span> {approvalReason}
+              </p>
+            </div>
           </div>
         )}
 

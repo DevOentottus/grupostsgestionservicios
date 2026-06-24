@@ -245,6 +245,16 @@ export async function serviciosController(app: FastifyInstance) {
       updateData.servicio_hora_fin = now.toTimeString().split(" ")[0];
     }
 
+    // Almacenar motivo de bloqueo
+    if (estado === "bloqueado" && motivo) {
+      (updateData as any).servicio_bloqueado_motivo = motivo;
+    }
+
+    // Almacenar motivo de desbloqueo (vuelve a en_progreso desde bloqueado)
+    if (estado === "en_progreso" && servicioActual.servicio_estado === "bloqueado" && motivo) {
+      (updateData as any).servicio_desbloqueo_motivo = motivo;
+    }
+
     const { data: updatedServicios } = await supabase
       .from("servicios")
       .update(updateData)
@@ -1227,7 +1237,8 @@ function mapServicio(s: any) {
     fecha_fin: s.servicio_fecha_fin,
     hora_fin: s.servicio_hora_fin,
     hora_creacion: s.servicio_hora_creacion,
-    bloqueado_motivo: null, // no disponible en Supabase
+    bloqueado_motivo: s.servicio_bloqueado_motivo || null,
+    desbloqueo_motivo: s.servicio_desbloqueo_motivo || null,
     created_at: s.servicio_fecha_creacion,
     updated_at: null,
   };
