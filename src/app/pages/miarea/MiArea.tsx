@@ -81,8 +81,8 @@ export function MiAreaPage() {
         <div className="h-6 bg-slate-200 rounded w-48" />
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <div className="lg:col-span-2 h-64 bg-slate-200 rounded-xl" />
-          <div className="lg:col-span-2 h-64 bg-slate-200 rounded-xl" />
           <div className="lg:col-span-1 h-64 bg-slate-200 rounded-xl" />
+          <div className="lg:col-span-2 h-64 bg-slate-200 rounded-xl" />
         </div>
         <div className="h-8 bg-slate-200 rounded-lg w-48" />
         <div className="h-64 bg-slate-200 rounded-xl" />
@@ -154,41 +154,82 @@ export function MiAreaPage() {
             <PieChartCard title="Servicios por Estado" data={estadoPieData} />
           </div>
 
-          {/* Center: Satisfacción del área (2 cols) */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl border border-slate-200 p-5 h-full flex flex-col justify-center">
-              <div className="flex items-center gap-2 mb-4">
-                <Star className="w-5 h-5 text-yellow-500 fill-yellow-400" />
-                <h4 className="text-sm font-semibold text-slate-700">Satisfacción del área</h4>
-              </div>
-              <div className="flex items-end gap-4 mb-4">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-slate-900">
+          {/* Center: Satisfacción + NPS (1 col) */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 h-full flex flex-col gap-3">
+              {/* Satisfacción */}
+              <div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-400" />
+                  <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Satisfacción</h4>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-2xl font-bold text-slate-900">
                     {data.satisfaccion.promedio.toFixed(1)}
                   </span>
-                  <span className="text-lg text-slate-400">/ 5</span>
+                  <span className="text-xs text-slate-400">/ 5</span>
+                  <StarRating rating={data.satisfaccion.promedio} />
                 </div>
-                <StarRating rating={data.satisfaccion.promedio} />
+                <div className="mt-2">
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500"
+                      style={{ width: `${(data.satisfaccion.promedio / 5) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">{data.satisfaccion.cantidad} evaluaciones</p>
+                </div>
               </div>
 
-              {/* Barra de progreso visual */}
-              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-1">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 transition-all"
-                  style={{ width: `${(data.satisfaccion.promedio / 5) * 100}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-slate-400">
-                <span>0</span>
-                <span>{data.satisfaccion.cantidad} evaluaciones</span>
-                <span>5</span>
+              <div className="border-t border-slate-100" />
+
+              {/* NPS */}
+              <div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">NPS</h4>
+                </div>
+                {data.satisfaccion.cantidad > 0 ? (
+                  <>
+                    <div className="flex items-baseline gap-1">
+                      <span className={cn(
+                        "text-2xl font-bold",
+                        data.satisfaccion.nps > 0 ? "text-green-600" : data.satisfaccion.nps < 0 ? "text-red-600" : "text-slate-500"
+                      )}>
+                        {data.satisfaccion.nps > 0 ? "+" : ""}{data.satisfaccion.nps}
+                      </span>
+                      <span className="text-[11px] text-slate-400">/ 100</span>
+                    </div>
+                    {/* Barra de distribución apilada */}
+                    <div className="w-full h-2 rounded-full overflow-hidden flex mt-2">
+                      <div
+                        className="h-full bg-green-500 transition-all"
+                        style={{ width: `${(data.satisfaccion.promotores / data.satisfaccion.cantidad) * 100}%` }}
+                      />
+                      <div
+                        className="h-full bg-yellow-400 transition-all"
+                        style={{ width: `${(data.satisfaccion.pasivos / data.satisfaccion.cantidad) * 100}%` }}
+                      />
+                      <div
+                        className="h-full bg-red-500 transition-all"
+                        style={{ width: `${(data.satisfaccion.detractores / data.satisfaccion.cantidad) * 100}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                      <span>{data.satisfaccion.promotores} prom.</span>
+                      <span>{data.satisfaccion.pasivos} pas.</span>
+                      <span>{data.satisfaccion.detractores} det.</span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-400">Sin datos</p>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Right: Ranking (1 col) */}
+          {/* Right: Ranking (2 cols) */}
           {colaboradores.length > 0 && (
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-2">
               <div className="bg-white rounded-xl border border-slate-200 p-4 sticky top-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -217,7 +258,7 @@ export function MiAreaPage() {
                     </button>
                   </div>
                 </div>
-                <div className="space-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
                   {colaboradoresOrdenados.map((col, idx) => {
                     const pos = idx + 1;
                     const medal = pos === 1 ? "text-yellow-500" : pos === 2 ? "text-gray-400" : pos === 3 ? "text-amber-700" : "text-slate-300";
@@ -229,8 +270,8 @@ export function MiAreaPage() {
                         <span className={`w-5 text-center text-sm font-bold ${medal}`}>
                           {pos <= 3 ? ["1°","2°","3°"][pos-1] : `#${pos}`}
                         </span>
-                        <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                          <span className="text-[9px] font-semibold text-slate-600">
+                        <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                          <span className="text-[10px] font-semibold text-slate-600">
                             {`${col.nombres || ""} ${col.apellidos || ""}`.split(" ").filter(Boolean).map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "?"}
                           </span>
                         </div>

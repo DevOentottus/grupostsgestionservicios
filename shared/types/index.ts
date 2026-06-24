@@ -480,6 +480,10 @@ export interface ManagerMiAreaResponse {
   satisfaccion: {
     promedio: number;
     cantidad: number;
+    promotores: number;
+    pasivos: number;
+    detractores: number;
+    nps: number;
   };
   servicios: (Servicio & {
     descripcion: string | null;

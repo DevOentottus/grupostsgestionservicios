@@ -189,17 +189,25 @@ export async function managerController(app: FastifyInstance) {
 
       // Calificación promedio del área
       const servicioIds = (serviciosData || []).map((s: any) => s.servicio_id);
-      let areaSatisfaccion = { promedio: 0, cantidad: 0 };
+      let areaSatisfaccion = { promedio: 0, cantidad: 0, promotores: 0, pasivos: 0, detractores: 0, nps: 0 };
       if (servicioIds.length > 0) {
         const { data: califs } = await supabase
           .from("calificaciones")
           .select("calificacion_puntaje")
           .in("servicio_id", servicioIds);
         if (califs && califs.length > 0) {
+          const total = califs.length;
           const suma = califs.reduce((acc: number, c: any) => acc + c.calificacion_puntaje, 0);
+          const promotores = califs.filter((c: any) => c.calificacion_puntaje >= 4).length;
+          const pasivos = califs.filter((c: any) => c.calificacion_puntaje === 3).length;
+          const detractores = califs.filter((c: any) => c.calificacion_puntaje <= 2).length;
           areaSatisfaccion = {
-            promedio: Math.round((suma / califs.length) * 10) / 10,
-            cantidad: califs.length,
+            promedio: Math.round((suma / total) * 10) / 10,
+            cantidad: total,
+            promotores,
+            pasivos,
+            detractores,
+            nps: Math.round(((promotores - detractores) / total) * 100),
           };
         }
       }
