@@ -736,7 +736,7 @@ export function PlantillasPage() {
                         title={p.es_favorito ? "Quitar de favoritos" : "Agregar a favoritos"}
                       >
                         <Star
-                          className={`w-4 h-4 ${p.es_favorito ? "fill-slate-900 text-slate-900" : "text-slate-300 hover:text-slate-900"}`}
+                          className={`w-4 h-4 ${p.es_favorito ? "fill-yellow-400 text-yellow-400" : "text-gray-900 hover:text-yellow-400"}`}
                         />
                       </button>
                       <button

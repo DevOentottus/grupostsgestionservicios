@@ -291,6 +291,8 @@ export function ServicioDetailPage() {
   const isPendiente = servicio?.estado === "pendiente";
   const isBloqueado = servicio?.estado === "bloqueado";
   const isEnProgreso = servicio?.estado === "en_progreso";
+  const isCompletado = servicio?.estado === "completado";
+  const puedeEditarMetadata = puedeModificar && !isCompletado;
   const handleAddTarea = async () => {
     if (!nuevaTarea.trim()) return;
     await crearTarea.mutateAsync({
@@ -646,7 +648,7 @@ export function ServicioDetailPage() {
           ) : servicio.descripcion ? (
             <div className="relative group mt-2">
               <p className="text-sm text-gray-600 mt-2">{servicio.descripcion}</p>
-              {puedeModificar && (
+              {puedeEditarMetadata && (
                 <button
                   onClick={() => { setEditValor(servicio.descripcion || ""); setEditando("descripcion"); }}
                   className="absolute top-2 right-2 text-gray-300 hover:text-blue-500 transition-colors p-1 bg-white/80 rounded-lg opacity-0 group-hover:opacity-100"
@@ -656,7 +658,7 @@ export function ServicioDetailPage() {
                 </button>
               )}
             </div>
-          ) : puedeModificar ? (
+          ) : puedeEditarMetadata ? (
             <button
               onClick={() => { setEditValor(""); setEditando("descripcion"); }}
               className="mt-2 text-sm text-gray-400 hover:text-blue-500 transition-colors flex items-center gap-1"
@@ -994,7 +996,7 @@ export function ServicioDetailPage() {
                       )}
 
                       {/* Edit + Delete — solo admin o asignado */}
-                      {puedeModificar && (
+                {puedeEditarMetadata && (
                         <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 max-md:opacity-100 transition-opacity">
                           {!isEditing && !tarea.completada && (
                             <button

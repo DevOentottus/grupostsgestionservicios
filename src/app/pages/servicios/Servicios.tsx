@@ -120,14 +120,14 @@ export function ServiciosPage() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-gray-900 font-bold text-xl">Gestión de Servicios</h1>
           <p className="text-gray-500 text-sm">
             {servicios?.length || 0} servicios
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {esAdminSistema && (
             <button
               onClick={() => {
@@ -135,7 +135,7 @@ export function ServiciosPage() {
                 setDefaultEvidencia(newVal);
                 localStorage.setItem("default_permite_evidencia", String(newVal));
               }}
-              className={`flex items-center gap-2 border px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+              className={`hidden sm:flex items-center gap-2 border px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
                 defaultEvidencia
                   ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
                   : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
@@ -150,10 +150,10 @@ export function ServiciosPage() {
           {canCreate && (
             <button
               onClick={() => navigate("/servicios/nuevo")}
-              className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-4 py-2.5 rounded-xl text-sm font-bold transition"
+              className="flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-bold transition"
             >
               <Plus className="w-4 h-4" />
-              Nuevo Servicio
+              <span className="hidden sm:inline">Nuevo Servicio</span>
             </button>
           )}
         </div>
