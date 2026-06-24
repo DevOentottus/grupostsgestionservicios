@@ -645,7 +645,7 @@ export function ServicioDetailPage() {
             </div>
           ) : servicio.descripcion ? (
             <div className="relative group mt-2">
-              <p className="text-sm text-gray-600 bg-gray-50 rounded-xl p-3 border border-gray-100">{servicio.descripcion}</p>
+              <p className="text-sm text-gray-600 mt-2">{servicio.descripcion}</p>
               {puedeModificar && (
                 <button
                   onClick={() => { setEditValor(servicio.descripcion || ""); setEditando("descripcion"); }}
