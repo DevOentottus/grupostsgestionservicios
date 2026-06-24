@@ -179,6 +179,46 @@ export function MiAreaPage() {
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1 text-center">{data.satisfaccion.cantidad} evaluaciones</p>
                 </div>
+
+                {/* Métricas de calificación */}
+                <div className="space-y-2 mt-3">
+                  <div>
+                    <div className="flex justify-between text-[11px] mb-0.5">
+                      <span className="text-slate-600">Clientes que califican</span>
+                      <span className="font-semibold text-slate-800">{data.satisfaccion.servicios_evaluados_pct}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-blue-500"
+                        style={{ width: `${Math.min(data.satisfaccion.servicios_evaluados_pct, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[11px] mb-0.5">
+                      <span className="text-slate-600">Calificaciones positivas (≥3)</span>
+                      <span className="font-semibold text-green-600">{data.satisfaccion.calificaciones_positivas_pct}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-green-500"
+                        style={{ width: `${Math.min(data.satisfaccion.calificaciones_positivas_pct, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-[11px] mb-0.5">
+                      <span className="text-slate-600">Calificaciones negativas (&lt;3)</span>
+                      <span className="font-semibold text-red-500">{data.satisfaccion.calificaciones_negativas_pct}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-red-400"
+                        style={{ width: `${Math.min(data.satisfaccion.calificaciones_negativas_pct, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="border-t border-slate-100" />

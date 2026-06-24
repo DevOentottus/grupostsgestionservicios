@@ -26,7 +26,7 @@ export function PieChartCard({ title, data }: PieChartProps) {
   if (!hasData) {
     return (
       <div className="bg-white rounded-xl shadow-sm border p-6">
-        <h3 className="font-semibold text-slate-800 mb-4">{title}</h3>
+      <h3 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-4">{title}</h3>
         <div className="flex items-center justify-center h-64 text-slate-400 text-sm">
           No hay datos disponibles
         </div>

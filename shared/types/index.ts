@@ -484,6 +484,10 @@ export interface ManagerMiAreaResponse {
     pasivos: number;
     detractores: number;
     nps: number;
+    servicios_evaluados: number;
+    servicios_evaluados_pct: number;
+    calificaciones_positivas_pct: number;
+    calificaciones_negativas_pct: number;
   };
   servicios: (Servicio & {
     descripcion: string | null;

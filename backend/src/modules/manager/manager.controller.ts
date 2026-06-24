@@ -189,18 +189,28 @@ export async function managerController(app: FastifyInstance) {
 
       // Calificación promedio del área
       const servicioIds = (serviciosData || []).map((s: any) => s.servicio_id);
-      let areaSatisfaccion = { promedio: 0, cantidad: 0, promotores: 0, pasivos: 0, detractores: 0, nps: 0 };
+      let areaSatisfaccion = { 
+        promedio: 0, cantidad: 0, promotores: 0, pasivos: 0, detractores: 0, nps: 0,
+        servicios_evaluados: 0, servicios_evaluados_pct: 0,
+        calificaciones_positivas_pct: 0, calificaciones_negativas_pct: 0,
+      };
       if (servicioIds.length > 0) {
         const { data: califs } = await supabase
           .from("calificaciones")
           .select("calificacion_puntaje")
           .in("servicio_id", servicioIds);
+        const totalServicios = servicioIds.length;
+        const totalEval = califs?.length || 0;
+        areaSatisfaccion.servicios_evaluados = totalEval;
+        areaSatisfaccion.servicios_evaluados_pct = Math.round((totalEval / totalServicios) * 100);
         if (califs && califs.length > 0) {
           const total = califs.length;
           const suma = califs.reduce((acc: number, c: any) => acc + c.calificacion_puntaje, 0);
           const promotores = califs.filter((c: any) => c.calificacion_puntaje >= 4).length;
           const pasivos = califs.filter((c: any) => c.calificacion_puntaje === 3).length;
           const detractores = califs.filter((c: any) => c.calificacion_puntaje <= 2).length;
+          const positivas = califs.filter((c: any) => c.calificacion_puntaje >= 3).length;
+          const negativas = califs.filter((c: any) => c.calificacion_puntaje < 3).length;
           areaSatisfaccion = {
             promedio: Math.round((suma / total) * 10) / 10,
             cantidad: total,
@@ -208,6 +218,10 @@ export async function managerController(app: FastifyInstance) {
             pasivos,
             detractores,
             nps: Math.round(((promotores - detractores) / total) * 100),
+            servicios_evaluados: totalEval,
+            servicios_evaluados_pct: Math.round((totalEval / totalServicios) * 100),
+            calificaciones_positivas_pct: Math.round((positivas / total) * 100),
+            calificaciones_negativas_pct: Math.round((negativas / total) * 100),
           };
         }
       }

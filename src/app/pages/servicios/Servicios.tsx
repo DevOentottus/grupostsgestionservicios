@@ -39,9 +39,7 @@ export function ServiciosPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterArea, setFilterArea] = useState<number | "">("");
-  const { data: servicios, isLoading } = useServicios(
-    filterStatus === "todos" ? undefined : filterStatus
-  );
+  const { data: servicios, isLoading } = useServicios(undefined);
   const { data: areas } = useAreas();
   const areaMap = new Map((areas || []).map((a: any) => [a.id, a.nombre]));
   const { data: plantillas } = usePlantillas();
@@ -68,7 +66,8 @@ export function ServiciosPage() {
       .toLowerCase()
       .includes(search.toLowerCase());
     const matchArea = !filterArea || s.area_id === filterArea;
-    return matchSearch && matchArea;
+    const matchStatus = filterStatus === "todos" || s.estado === filterStatus;
+    return matchSearch && matchArea && matchStatus;
   });
 
   const esAdminSistema = currentUser?.rol === "admin" || currentUser?.rol === "sistema";
