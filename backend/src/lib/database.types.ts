@@ -1009,6 +1009,33 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          id: number
+          dni: string
+          endpoint: string
+          p256dh_key: string
+          auth_key: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: number
+          dni: string
+          endpoint: string
+          p256dh_key: string
+          auth_key: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: number
+          dni?: string
+          endpoint?: string
+          p256dh_key?: string
+          auth_key?: string
+          created_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

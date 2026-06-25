@@ -16,9 +16,9 @@ export async function ofertasController(app: FastifyInstance) {
   app.get(
     "/api/ofertas",
     async () => {
-      if (!existsSync(Ofertas_DIR)) return { data: [] };
+      if (!existsSync(OFERTAS_DIR)) return { data: [] };
 
-      const files = readdirSync(Ofertas_DIR)
+      const files = readdirSync(OFERTAS_DIR)
         .filter((f: string) => isImage(f))
         .sort((a: string, b: string) => a.localeCompare(b));
 
@@ -41,7 +41,7 @@ export async function ofertasController(app: FastifyInstance) {
         return reply.status(400).send({ error: "Tipo de archivo no permitido" });
       }
 
-      const filePath = join(Ofertas_DIR, filename);
+      const filePath = join(OFERTAS_DIR, filename);
 
       if (!existsSync(filePath)) {
         return reply.status(404).send({ error: "Imagen no encontrada" });
