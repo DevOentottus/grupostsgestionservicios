@@ -289,9 +289,9 @@ export function ServicioPublicoPage() {
                 )}
               </div>
 
-              {/* Right: time indicators */}
-              <div className="shrink-0 text-right hidden sm:block">
-                <div className="bg-white/60 backdrop-blur rounded-xl border border-gray-200/60 px-4 py-3 min-w-[130px]">
+              {/* Right: time indicators section */}
+              <div className="shrink-0">
+                <div className="bg-gray-50 rounded-xl border border-gray-200 px-4 py-3 min-w-[130px]">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Transcurrido</p>
                   <p className="text-lg font-bold text-gray-900 tabular-nums leading-tight mt-0.5">
                     {formatETA(tiempo_transcurrido_minutos)}
@@ -385,6 +385,8 @@ export function ServicioPublicoPage() {
 
           {/* Right column (1/4): Carrusel de ofertas */}
           <div className="space-y-4">
+
+            {/* Ofertas */}
             <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-5 text-white shadow-sm sticky top-4">
               <h3 className="text-sm font-bold mb-1">Ofertas y Promociones</h3>
               <p className="text-[10px] text-blue-200 mb-2">Aprovechá estos beneficios exclusivos</p>
