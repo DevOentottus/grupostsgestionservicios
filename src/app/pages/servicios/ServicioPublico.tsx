@@ -95,47 +95,25 @@ function LoadingSkeleton() {
   );
 }
 
-function OfertasCarousel() {
+function OfertasCarousel({ imagenes }: { imagenes: string[] }) {
   const [current, setCurrent] = useState(0);
-  const { data, isLoading } = useQuery({
-    queryKey: ["ofertas-imagenes"],
-    queryFn: async () => {
-      const r = await ofertasApi.listar();
-      return r.data.data as string[];
-    },
-    refetchInterval: 60_000,
-  });
-
-  const imagenes = data || [];
   const total = imagenes.length;
 
   useEffect(() => {
     if (current >= total) setCurrent(0);
-  }, [total, current]);
-
-  if (isLoading) {
-    return (
-      <div className="border-t border-gray-200 w-full animate-pulse py-6 px-4">
-        <div className="h-4 w-40 bg-gray-200 rounded mb-4" />
-        <div className="h-48 bg-gray-100 rounded-xl" />
-      </div>
-    );
-  }
+  }, [current, total]);
 
   if (total === 0) return null;
 
   const ir = (idx: number) => setCurrent((idx + total) % total);
 
   return (
-    <section className="border-t border-gray-200 w-full">
-      <div className="px-4 pt-4 pb-3">
-        <h3 className="text-sm font-semibold text-gray-900">Ofertas y Promociones</h3>
-      </div>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="relative overflow-hidden w-full">
         <img
           src={ofertasApi.imagenUrl(imagenes[current])}
           alt={`Oferta ${current + 1}`}
-          className="w-full h-56 md:h-72 object-cover"
+          className="w-full h-48 md:h-56 object-cover"
         />
         {total > 1 && (
           <>
@@ -165,7 +143,7 @@ function OfertasCarousel() {
           </>
         )}
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -205,6 +183,18 @@ export function ServicioPublicoPage() {
       setEvidencias(evidenciasQuery.data);
     }
   }, [evidenciasQuery.data]);
+
+  // -- Ofertas query (compartido entre barra y carrusel) --
+  const ofertasQuery = useQuery({
+    queryKey: ["ofertas-imagenes"],
+    queryFn: async () => {
+      const r = await ofertasApi.listar();
+      return r.data.data as string[];
+    },
+    refetchInterval: 60_000,
+  });
+  const ofertasImagenes = ofertasQuery.data || [];
+  const hayOfertas = ofertasImagenes.length > 0;
 
   useEffect(() => {
     if (data?.encuesta) {
@@ -332,11 +322,16 @@ export function ServicioPublicoPage() {
               <span className="hidden md:inline">Compartir</span>
             </button>
 
-            {/* Right section: estado */}
+            {/* Right section: estado + ofertas */}
             <span className="ml-auto flex items-center gap-2 flex-wrap">
               <span className={cn("text-xs px-2.5 py-1 rounded-full font-medium", ESTADO_BAR_STYLE[servicio.estado] || "bg-white/10 text-white")}>
                 {estadoLabel(servicio.estado)}
               </span>
+              {hayOfertas && (
+                <span className="text-[10px] font-medium text-white/90 bg-white/15 px-2 py-0.5 rounded-full whitespace-nowrap">
+                  Ofertas y Promociones
+                </span>
+              )}
             </span>
           </div>
 
@@ -560,9 +555,20 @@ export function ServicioPublicoPage() {
           ServicioLocalSTS © {new Date().getFullYear()}
         </div>
         </div>
-      </div>
 
-      <OfertasCarousel />
+        {/* Right column (1/4): Ofertas y Promociones */}
+        {ofertasQuery.isLoading ? (
+          <div className="md:col-span-1">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
+              <div className="h-48 bg-gray-100" />
+            </div>
+          </div>
+        ) : hayOfertas ? (
+          <div className="md:col-span-1">
+            <OfertasCarousel imagenes={ofertasImagenes} />
+          </div>
+        ) : null}
+      </div>
 
     </div>
   );
