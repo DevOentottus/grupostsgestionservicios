@@ -14,7 +14,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://serviciolocalsts.vercel.app",
+        target: "https://grupostsgestionservicios.vercel.app",
         changeOrigin: true,
       },
     },
