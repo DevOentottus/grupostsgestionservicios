@@ -57,7 +57,12 @@ export async function buildApp() {
   await app.register(rendimientoController);
   await app.register(evidenciasController);
   await app.register(audioController);
+import { ofertasController } from "@/modules/ofertas/ofertas.controller.js";
+
+// (existing imports above)
+
   await app.register(pushController);
+  await app.register(ofertasController);
 
   return app;
 }

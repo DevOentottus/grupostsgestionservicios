@@ -319,3 +319,9 @@ export const managerApi = {
   ) => api.get(`/manager/desempeno/${usuarioId}`, { params }),
   clientes: () => api.get("/manager/clientes"),
 };
+
+// -- Ofertas API --
+export const ofertasApi = {
+  listar: () => api.get("/ofertas"),
+  imagenUrl: (filename: string) => `/api/ofertas/imagen/${encodeURIComponent(filename)}`,
+};

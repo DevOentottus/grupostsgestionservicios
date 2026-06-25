@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { serviciosApi, seguimientoApi, evidenciasPublicApi } from "@/api/client.js";
+import { serviciosApi, seguimientoApi, evidenciasPublicApi, ofertasApi } from "@/api/client.js";
 import { toast } from "sonner";
 import { cn } from "@/app/lib/utils";
 import {
   Clock, CheckCircle2, AlertTriangle, Star, Send, ArrowLeft, Camera, X, Loader2,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import type { PublicServicioResponse, Encuesta, Evidencia, EvidenciaComentario } from "@shared/index.js";
 import { EvidenceViewer } from "@/app/components/evidencias/EvidenceViewer.js";
@@ -90,6 +91,76 @@ function LoadingSkeleton() {
       <div className="h-4 bg-slate-200 rounded w-2/3 mx-auto" />
       <div className="h-32 bg-slate-200 rounded-2xl" />
       <div className="h-20 bg-slate-200 rounded-2xl" />
+    </div>
+  );
+}
+
+function OfertasCarousel() {
+  const [current, setCurrent] = useState(0);
+  const { data, isLoading } = useQuery({
+    queryKey: ["ofertas-imagenes"],
+    queryFn: async () => {
+      const r = await ofertasApi.listar();
+      return r.data.data as string[];
+    },
+    refetchInterval: 60_000,
+  });
+
+  const imagenes = data || [];
+  const total = imagenes.length;
+
+  useEffect(() => {
+    if (current >= total) setCurrent(0);
+  }, [total, current]);
+
+  if (isLoading) {
+    return (
+      <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl shadow-sm animate-pulse" style={{ aspectRatio: "3/4" }} />
+    );
+  }
+
+  if (total === 0) return null;
+
+  const ir = (idx: number) => setCurrent((idx + total) % total);
+
+  return (
+    <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-4 shadow-sm sticky top-4">
+      <h3 className="text-sm font-bold text-white mb-3">Ofertas y Promociones</h3>
+      <div className="relative overflow-hidden rounded-xl">
+        <img
+          src={ofertasApi.imagenUrl(imagenes[current])}
+          alt={`Oferta ${current + 1}`}
+          className="w-full h-auto object-cover rounded-xl"
+          style={{ aspectRatio: "3/4" }}
+        />
+        {total > 1 && (
+          <>
+            <button
+              onClick={() => ir(current - 1)}
+              className="absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => ir(current + 1)}
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {imagenes.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${
+                    i === current ? "bg-white w-3" : "bg-white/40"
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -385,62 +456,9 @@ export function ServicioPublicoPage() {
 
           {/* Right column (1/4): Carrusel de ofertas */}
           <div className="space-y-4">
-
-            {/* Ofertas */}
-            <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-5 text-white shadow-sm sticky top-4">
-              <h3 className="text-sm font-bold mb-1">Ofertas y Promociones</h3>
-              <p className="text-[10px] text-blue-200 mb-2">Aprovechá estos beneficios exclusivos</p>
-              <div className="flex items-center gap-1.5 bg-yellow-400/20 text-yellow-200 text-[9px] px-2 py-1 rounded-lg mb-3 font-medium">
-                <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                Ofertas inválidas — solo prueba de sistema
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {/* Card 1 */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center mb-3">
-                    <span className="text-blue-900 text-lg font-bold">%</span>
-                  </div>
-                  <h4 className="text-sm font-semibold mb-1">Mantenimiento Preventivo</h4>
-                  <p className="text-[10px] text-blue-200 leading-relaxed mb-3">20% de descuento en contratación de plan anual. Revisión completa incluida.</p>
-                  <span className="inline-block text-[10px] font-bold text-yellow-300 bg-yellow-400/20 px-2 py-0.5 rounded-full">Válido hasta 30/06</span>
-                </div>
-
-                {/* Card 2 */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <div className="w-10 h-10 bg-green-400 rounded-xl flex items-center justify-center mb-3">
-                    <span className="text-white text-lg font-bold">⚡</span>
-                  </div>
-                  <h4 className="text-sm font-semibold mb-1">Servicio Express 24h</h4>
-                  <p className="text-[10px] text-blue-200 leading-relaxed mb-3">Respuesta en menos de 24 horas. Sin recargo por urgencia en tu primer servicio.</p>
-                  <span className="inline-block text-[10px] font-bold text-green-300 bg-green-400/20 px-2 py-0.5 rounded-full">Nuevo cliente</span>
-                </div>
-
-                {/* Card 3 */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <div className="w-10 h-10 bg-purple-400 rounded-xl flex items-center justify-center mb-3">
-                    <span className="text-white text-lg font-bold">★</span>
-                  </div>
-                  <h4 className="text-sm font-semibold mb-1">Garantía Extendida</h4>
-                  <p className="text-[10px] text-blue-200 leading-relaxed mb-3">Extendé tu garantía a 12 meses por solo S/49. Reparaciones cubiertas sin costo.</p>
-                  <span className="inline-block text-[10px] font-bold text-purple-300 bg-purple-400/20 px-2 py-0.5 rounded-full">Solo hoy</span>
-                </div>
-
-                {/* Card 4 */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                  <div className="w-10 h-10 bg-pink-400 rounded-xl flex items-center justify-center mb-3">
-                    <span className="text-white text-lg font-bold">⊕</span>
-                  </div>
-                  <h4 className="text-sm font-semibold mb-1">Plan Familia</h4>
-                  <p className="text-[10px] text-blue-200 leading-relaxed mb-3">3 servicios técnicos al mes por S/79. Ideal para hogares con múltiples equipos.</p>
-                  <span className="inline-block text-[10px] font-bold text-pink-300 bg-pink-400/20 px-2 py-0.5 rounded-full">Más vendido</span>
-                </div>
-              </div>
-            </div>
+            {/* Carrusel de imágenes */}
+            <OfertasCarousel />
           </div>
-        </div>
 
         {/* Botón flotante de calificación */}
         {servicioCompletado && (
