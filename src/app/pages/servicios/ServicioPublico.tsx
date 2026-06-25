@@ -277,11 +277,6 @@ export function ServicioPublicoPage() {
     tiempo_estimado: t.tiempo_estimado,
   }));
 
-  // Build timeline from completed tasks
-  const timelineItems = tareas
-    .filter((t: any) => t.completada && t.completada_at)
-    .sort((a: any, b: any) => new Date(a.completada_at).getTime() - new Date(b.completada_at).getTime());
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Top bar */}
@@ -383,26 +378,28 @@ export function ServicioPublicoPage() {
             {/* Seguimiento card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {/* Header */}
-              <div className="flex items-center gap-2 px-5 pt-5 pb-3">
-                <div className={cn(
-                  "w-8 h-8 rounded-xl flex items-center justify-center",
-                  servicio.estado === "completado" ? "bg-green-100" : "bg-blue-100",
-                )}>
-                  {servicio.estado === "completado" ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <Clock className="w-4 h-4 text-blue-600" />
-                  )}
+              <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "w-8 h-8 rounded-xl flex items-center justify-center",
+                    servicio.estado === "completado" ? "bg-green-100" : "bg-blue-100",
+                  )}>
+                    {servicio.estado === "completado" ? (
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-blue-600" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm text-gray-900 font-semibold">
+                      Seguimiento del servicio
+                    </h3>
+                    <p className="text-[10px] text-gray-400">
+                      {servicio.estado === "completado" ? "Servicio finalizado" : "Estado actual del servicio"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm text-gray-900 font-semibold flex items-center gap-2">
-                    Seguimiento del servicio
-                    <CircularProgress value={pctProgreso} size={28} strokeWidth={3} />
-                  </h3>
-                  <p className="text-[10px] text-gray-400">
-                    {servicio.estado === "completado" ? "Servicio finalizado" : "Estado actual del servicio"}
-                  </p>
-                </div>
+                <CircularProgress value={pctProgreso} size={36} strokeWidth={3.5} />
               </div>
 
               {/* Process Flow */}
@@ -410,31 +407,7 @@ export function ServicioPublicoPage() {
                 <ProcessFlow steps={flowSteps} />
               </div>
 
-              {/* Timeline */}
-              {timelineItems.length > 0 && (
-                <div className="border-t border-gray-100 px-5 py-4">
-                  <h4 className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-3">Línea de tiempo</h4>
-                  <div className="relative pl-5 space-y-3">
-                    <div className="absolute left-[7px] top-1 bottom-0 w-0.5 bg-gray-100" />
-                    {timelineItems.map((item: any) => (
-                      <div key={item.id} className="relative">
-                        <div className="absolute -left-[18px] top-0.5 w-3.5 h-3.5 rounded-full bg-green-100 flex items-center justify-center">
-                          <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                        </div>
-                        <p className="text-xs text-gray-700 leading-snug">{item.titulo}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5">
-                          {new Date(item.completada_at).toLocaleString("es-PE", {
-                            day: "numeric",
-                            month: "short",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+
             </div>
 
             {/* Evidencias section */}

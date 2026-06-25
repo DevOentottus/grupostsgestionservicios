@@ -113,7 +113,7 @@ export const usuariosApi = {
   listar: () => api.get("/usuarios"),
   crear: (data: any) => api.post("/usuarios", data),
   editar: (id: number, data: any) => api.put(`/usuarios/${id}`, data),
-  toggleEstado: (id: number) => api.patch(`/usuarios/${id}/estado`),
+  toggleEstado: (id: number) => api.patch(`/usuarios/${id}/estado`, {}),
   cambiarPassword: (id: number, password: string) =>
     api.put(`/usuarios/${id}/password`, { password }),
 };
@@ -145,7 +145,7 @@ export const serviciosApi = {
     api.patch(`/servicios/${id}/estado`, { estado, motivo }),
   cambiarEstadoMotivo: (id: number, estado: string, motivo: string) =>
     api.patch(`/servicios/${id}/estado`, { estado, motivo }),
-  iniciar: (id: number) => api.post(`/servicios/${id}/iniciar`),
+  iniciar: (id: number) => api.post(`/servicios/${id}/iniciar`, {}),
   // Tareas
   listarTareas: (servicioId: number) => api.get(`/servicios/${servicioId}/tareas`),
   crearTarea: (servicioId: number, data: any) =>
@@ -154,8 +154,8 @@ export const serviciosApi = {
   eliminarTarea: (id: number) => api.delete(`/tareas/${id}`),
   editarTareaInline: (servicioId: number, tareaId: number, data: { titulo?: string }) =>
     api.patch(`/servicios/${servicioId}/tareas/${tareaId}`, data),
-  completarTarea: (id: number) => api.patch(`/tareas/${id}/completar`),
-  reabrirTarea: (id: number) => api.patch(`/tareas/${id}/reabrir`),
+  completarTarea: (id: number) => api.patch(`/tareas/${id}/completar`, {}),
+  reabrirTarea: (id: number) => api.patch(`/tareas/${id}/reabrir`, {}),
   reordenarTareas: (tareas: { id: number; orden: number }[]) =>
     api.put("/tareas/reordenar", { tareas }),
 };
@@ -197,9 +197,9 @@ export const auditoriaApi = {
 export const seguimientoApi = {
   // Time tracking
   iniciarTiempo: (tareaId: number) => api.post(`/tareas/${tareaId}/tiempo/iniciar`),
-  pausarTiempo: (id: number) => api.patch(`/tiempo/${id}/pausar`),
-  reanudarTiempo: (id: number) => api.patch(`/tiempo/${id}/reanudar`),
-  finalizarTiempo: (id: number) => api.patch(`/tiempo/${id}/finalizar`),
+  pausarTiempo: (id: number) => api.patch(`/tiempo/${id}/pausar`, {}),
+  reanudarTiempo: (id: number) => api.patch(`/tiempo/${id}/reanudar`, {}),
+  finalizarTiempo: (id: number) => api.patch(`/tiempo/${id}/finalizar`, {}),
   listarTiempo: (tareaId: number) => api.get(`/tareas/${tareaId}/tiempo`),
   tiemposServicio: (servicioId: number) => api.get(`/servicios/${servicioId}/tiempos`),
   // Encuestas

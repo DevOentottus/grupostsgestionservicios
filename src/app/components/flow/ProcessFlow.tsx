@@ -67,6 +67,15 @@ function FlowError({ message }: { message: string }) {
   );
 }
 
+function formatFechaHora(dateStr: string): string {
+  return new Date(dateStr).toLocaleString("es-PE", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function ProcessFlow({ steps }: ProcessFlowProps) {
   const sortedSteps = useMemo(
     () => [...steps].sort((a, b) => a.orden - b.orden),
@@ -77,12 +86,12 @@ export function ProcessFlow({ steps }: ProcessFlowProps) {
   if (steps.length === 0) return <FlowEmpty />;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <h3 className="font-semibold text-slate-800 mb-6">Flujo de Proceso</h3>
+    <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-5">
+      <h3 className="font-semibold text-slate-800 mb-4">Flujo de Proceso</h3>
 
       {/* Timeline Steps */}
-      <div className="overflow-x-auto pb-2">
-        <div className="flex items-start gap-0 min-w-max">
+      <div className="overflow-x-auto pb-1">
+        <div className="flex items-start gap-0">
           {sortedSteps.map((step, index) => {
             const isCompleted = step.completada;
             const isLast = index === sortedSteps.length - 1;
@@ -92,54 +101,62 @@ export function ProcessFlow({ steps }: ProcessFlowProps) {
 
             return (
               <div key={step.id} className="flex items-start">
-                <div className="flex flex-col items-center" style={{ minWidth: 120, maxWidth: 140 }}>
-                  {/* Step Circle */}
-                  <div
-                    className={`relative w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 flex-shrink-0 ${
-                      isCompleted
-                        ? "bg-green-500 border-green-500 text-white"
-                        : "bg-white border-slate-300 text-slate-400"
-                    }`}
-                  >
-                    {isCompleted ? (
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : (
-                      <span>{index + 1}</span>
+                <div className="flex flex-col items-center" style={{ minWidth: 90, maxWidth: 110 }}>
+                  {/* Step Circle + Connector row */}
+                  <div className="flex items-center">
+                    {/* Step Circle */}
+                    <div
+                      className={`relative w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 flex-shrink-0 ${
+                        isCompleted
+                          ? "bg-green-500 border-green-500 text-white"
+                          : "bg-white border-slate-300 text-slate-400"
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <span className="text-xs">{index + 1}</span>
+                      )}
+                    </div>
+
+                    {/* Connector Line */}
+                    {!isLast && (
+                      <div
+                        className={`h-0.5 ${
+                          isCompleted && sortedSteps[index + 1]?.completada
+                            ? "bg-green-400"
+                            : isCompleted
+                            ? "bg-gradient-to-r from-green-400 to-slate-200"
+                            : "bg-slate-200"
+                        }`}
+                        style={{ width: 24, marginLeft: 0 }}
+                      />
                     )}
                   </div>
 
-                  {/* Connector Line */}
-                  {!isLast && (
-                    <div
-                      className={`h-1 w-full mt-5 ${
-                        isCompleted && sortedSteps[index + 1]?.completada
-                          ? "bg-green-400"
-                          : isCompleted
-                          ? "bg-gradient-to-r from-green-400 to-slate-200"
-                          : "bg-slate-200"
-                      }`}
-                      style={{ marginTop: -20, marginLeft: 40, width: "calc(100% - 40px)" }}
-                    />
-                  )}
-
                   {/* Step Info */}
-                  <div className="text-center mt-3 px-2">
+                  <div className="text-center mt-2 px-1 w-full">
                     <p
-                      className={`text-xs font-medium leading-tight ${
+                      className={`text-[11px] font-medium leading-tight ${
                         isCompleted ? "text-green-700" : "text-slate-600"
                       }`}
                     >
                       {step.titulo}
                     </p>
+                    {isCompleted && step.completada_at && (
+                      <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                        {formatFechaHora(step.completada_at)}
+                      </p>
+                    )}
                     {isCompleted && elapsedTime > 0 && (
-                      <p className="text-xs text-slate-400 mt-1">
+                      <p className="text-[10px] text-slate-400">
                         {formatDuration(elapsedTime)}
                       </p>
                     )}
                     {!isCompleted && step.tiempo_estimado && (
-                      <p className="text-xs text-amber-500 mt-1">
+                      <p className="text-[10px] text-amber-500 mt-0.5">
                         Est: {formatDuration(step.tiempo_estimado)}
                       </p>
                     )}
@@ -152,18 +169,14 @@ export function ProcessFlow({ steps }: ProcessFlowProps) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500">
+      <div className="flex items-center gap-3 mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-500">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-green-500" />
+          <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
           <span>Completado</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-white border-2 border-slate-300" />
+          <div className="w-2.5 h-2.5 rounded-full bg-white border-2 border-slate-300" />
           <span>Pendiente</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-slate-400">•</span>
-          <span>Circulo # = Orden</span>
         </div>
       </div>
     </div>

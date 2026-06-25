@@ -34,6 +34,16 @@ export async function buildApp() {
   // -- Decorators --
   app.decorate("authenticate", authenticate);
 
+  // -- Permite body vacío con Content-Type: application/json (PATCH sin body) --
+  app.addContentTypeParser("application/json", { parseAs: "string" }, (_req, body: string, done) => {
+    if (body === "") return done(null, {});
+    try {
+      done(null, JSON.parse(body));
+    } catch (err) {
+      done(err as Error);
+    }
+  });
+
   // -- Error handler --
   app.setErrorHandler(errorHandler);
 
