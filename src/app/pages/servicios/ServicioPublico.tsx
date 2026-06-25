@@ -582,6 +582,7 @@ export function ServicioPublicoPage() {
         <div className="text-center text-xs text-gray-400 py-4">
           ServicioLocalSTS © {new Date().getFullYear()}
         </div>
+        </div>
       </div>
     </div>
   );
