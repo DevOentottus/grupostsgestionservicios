@@ -287,10 +287,10 @@ export function ServicioPublicoPage() {
       </div>
 
       <div className="w-full px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+        <div className="flex flex-col lg:flex-row gap-5">
 
-          {/* Left column (3/4): Vista de seguimiento */}
-          <div className="md:col-span-3 space-y-5">
+          {/* Left column: Vista de seguimiento */}
+          <div className="flex-1 min-w-0 space-y-5">
 
         {/* Service Card -- compacto */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -556,15 +556,15 @@ export function ServicioPublicoPage() {
         </div>
         </div>
 
-        {/* Right column (1/4): Ofertas y Promociones */}
+        {/* Right column: Ofertas y Promociones */}
         {ofertasQuery.isLoading ? (
-          <div className="md:col-span-1">
+          <div className="w-full lg:w-80 shrink-0">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
               <div className="h-48 bg-gray-100" />
             </div>
           </div>
         ) : hayOfertas ? (
-          <div className="md:col-span-1">
+          <div className="w-full lg:w-80 shrink-0">
             <OfertasCarousel imagenes={ofertasImagenes} />
           </div>
         ) : null}
