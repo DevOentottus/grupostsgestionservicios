@@ -255,6 +255,9 @@ export function ServicioPublicoPage() {
   }
 
   const { servicio, tareas, progreso, tiempo_transcurrido_minutos, encuesta } = data;
+  const tareasCompletadas = tareas.filter((t: any) => t.completada).length;
+  const totalTareas = tareas.length;
+  const pctProgreso = totalTareas > 0 ? Math.round((tareasCompletadas / totalTareas) * 100) : 0;
   const tareasPendientes = tareas.filter((t: any) => !t.completada);
   const etaMinutos = tareasPendientes.reduce(
     (sum: number, t: any) => sum + (t.tiempo_estimado || 15),
@@ -392,7 +395,12 @@ export function ServicioPublicoPage() {
                   )}
                 </div>
                 <div>
-                  <h3 className="text-sm text-gray-900 font-semibold">Seguimiento del servicio</h3>
+                  <h3 className="text-sm text-gray-900 font-semibold flex items-center gap-2">
+                    Seguimiento del servicio
+                    <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-md tabular-nums">
+                      {pctProgreso}%
+                    </span>
+                  </h3>
                   <p className="text-[10px] text-gray-400">
                     {servicio.estado === "completado" ? "Servicio finalizado" : "Estado actual del servicio"}
                   </p>

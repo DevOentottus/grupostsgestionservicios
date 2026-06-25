@@ -2,7 +2,17 @@ import { FastifyInstance } from "fastify";
 import { join } from "node:path";
 import { readdirSync, existsSync, createReadStream } from "node:fs";
 
-const OFERTAS_DIR = join(process.cwd(), "Ofertas");
+function findOfertasDir(): string {
+  const candidates = [
+    join(process.cwd(), "Ofertas"),
+    join(process.cwd(), "backend", "Ofertas"),
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  return candidates[0];
+}
+const OFERTAS_DIR = findOfertasDir();
 
 const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 

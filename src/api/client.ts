@@ -323,5 +323,5 @@ export const managerApi = {
 // -- Ofertas API --
 export const ofertasApi = {
   listar: () => api.get("/ofertas"),
-  imagenUrl: (filename: string) => `/api/ofertas/imagen/${encodeURIComponent(filename)}`,
+  imagenUrl: (filename: string) => `${API_BASE_URL}/api/ofertas/imagen/${encodeURIComponent(filename)}`,
 };
