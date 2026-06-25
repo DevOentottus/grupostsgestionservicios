@@ -268,23 +268,41 @@ export function ServicioPublicoPage() {
           </div>
 
           {/* Card body */}
-          <div className="p-5 space-y-3">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h2 className="text-lg text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
-              {servicio.cliente_nombre && (
-                <span className="flex items-center gap-1 text-xs text-gray-500">
-                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  {servicio.cliente_nombre}
-                </span>
-              )}
+          <div className="p-5">
+            <div className="flex items-start gap-6">
+              {/* Left: title + description */}
+              <div className="flex-1 min-w-0 space-y-3">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h2 className="text-lg text-gray-900" style={{ fontWeight: 700 }}>{servicio.titulo}</h2>
+                  {servicio.cliente_nombre && (
+                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                      <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      {servicio.cliente_nombre}
+                    </span>
+                  )}
+                </div>
+
+                {servicio.descripcion && (
+                  <p className="text-sm text-gray-500 bg-gray-50 rounded-lg p-2.5 leading-relaxed">{servicio.descripcion}</p>
+                )}
+              </div>
+
+              {/* Right: time indicators */}
+              <div className="shrink-0 text-right hidden sm:block">
+                <div className="bg-white/60 backdrop-blur rounded-xl border border-gray-200/60 px-4 py-3 min-w-[130px]">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Transcurrido</p>
+                  <p className="text-lg font-bold text-gray-900 tabular-nums leading-tight mt-0.5">
+                    {formatETA(tiempo_transcurrido_minutos)}
+                  </p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mt-3">Restante estimado</p>
+                  <p className="text-lg font-bold text-gray-900 tabular-nums leading-tight mt-0.5">
+                    {progreso.porcentaje === 100 ? "--" : formatETA(etaMinutos)}
+                  </p>
+                </div>
+              </div>
             </div>
-
-            {servicio.descripcion && (
-              <p className="text-sm text-gray-500 bg-gray-50 rounded-lg p-2.5 leading-relaxed">{servicio.descripcion}</p>
-            )}
-
           </div>
         </div>
 
@@ -313,22 +331,6 @@ export function ServicioPublicoPage() {
               {/* Process Flow */}
               <div className="px-5 pb-4">
                 <ProcessFlow steps={flowSteps} />
-              </div>
-
-              {/* Time metrics row */}
-              <div className="grid grid-cols-2 gap-px bg-gray-100 mx-5 mb-4 rounded-xl overflow-hidden">
-                <div className="bg-white p-3 text-center">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">Transcurrido</p>
-                  <p className="text-base text-gray-900 font-bold mt-0.5">
-                    {formatETA(tiempo_transcurrido_minutos)}
-                  </p>
-                </div>
-                <div className="bg-white p-3 text-center">
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">Restante estimado</p>
-                  <p className="text-base text-blue-700 font-bold mt-0.5">
-                    {progreso.porcentaje === 100 ? "--" : formatETA(etaMinutos)}
-                  </p>
-                </div>
               </div>
 
               {/* Timeline */}
