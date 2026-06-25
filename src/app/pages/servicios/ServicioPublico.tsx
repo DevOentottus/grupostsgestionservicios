@@ -115,7 +115,10 @@ function OfertasCarousel() {
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl shadow-sm animate-pulse" style={{ aspectRatio: "3/4" }} />
+      <div className="border-t border-gray-200 w-full animate-pulse py-6 px-4">
+        <div className="h-4 w-40 bg-gray-200 rounded mb-4" />
+        <div className="h-48 bg-gray-100 rounded-xl" />
+      </div>
     );
   }
 
@@ -124,36 +127,37 @@ function OfertasCarousel() {
   const ir = (idx: number) => setCurrent((idx + total) % total);
 
   return (
-    <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-4 shadow-sm sticky top-4">
-      <h3 className="text-sm font-bold text-white mb-3">Ofertas y Promociones</h3>
-      <div className="relative overflow-hidden rounded-xl">
+    <section className="border-t border-gray-200 w-full">
+      <div className="px-4 pt-4 pb-3">
+        <h3 className="text-sm font-semibold text-gray-900">Ofertas y Promociones</h3>
+      </div>
+      <div className="relative overflow-hidden w-full">
         <img
           src={ofertasApi.imagenUrl(imagenes[current])}
           alt={`Oferta ${current + 1}`}
-          className="w-full h-auto object-cover rounded-xl"
-          style={{ aspectRatio: "3/4" }}
+          className="w-full h-56 md:h-72 object-cover"
         />
         {total > 1 && (
           <>
             <button
               onClick={() => ir(current - 1)}
-              className="absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50 transition"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => ir(current + 1)}
-              className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50 transition"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
               {imagenes.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrent(i)}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    i === current ? "bg-white w-3" : "bg-white/40"
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    i === current ? "bg-white w-4" : "bg-white/50"
                   }`}
                 />
               ))}
@@ -161,7 +165,7 @@ function OfertasCarousel() {
           </>
         )}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -391,7 +395,7 @@ export function ServicioPublicoPage() {
                     )}
                   </div>
                   <div>
-                    <h3 className="text-sm text-gray-900 font-semibold">
+                    <h3 className="text-base text-gray-900 font-semibold">
                       Seguimiento del servicio
                     </h3>
                     <p className="text-[10px] text-gray-400">
@@ -399,7 +403,7 @@ export function ServicioPublicoPage() {
                     </p>
                   </div>
                 </div>
-                <CircularProgress value={pctProgreso} size={36} strokeWidth={3.5} />
+                <CircularProgress value={pctProgreso} size={32} strokeWidth={3} />
               </div>
 
               {/* Process Flow */}
@@ -431,12 +435,6 @@ export function ServicioPublicoPage() {
                 />
               </div>
             )}
-          </div>
-
-          {/* Right column (1/4): Carrusel de ofertas */}
-          <div className="space-y-4">
-            {/* Carrusel de imágenes */}
-            <OfertasCarousel />
           </div>
 
         {/* Botón flotante de calificación */}
@@ -563,6 +561,9 @@ export function ServicioPublicoPage() {
         </div>
         </div>
       </div>
+
+      <OfertasCarousel />
+
     </div>
   );
 }
@@ -605,10 +606,10 @@ function CircularProgress({ value, size = 28, strokeWidth = 3 }: { value: number
         textAnchor="middle"
         dominantBaseline="central"
         fill="currentColor"
-        fontSize={size * 0.35}
+        fontSize={size * 0.3}
         className="font-semibold text-gray-600"
       >
-        {value}
+        {value}%
       </text>
     </svg>
   );
