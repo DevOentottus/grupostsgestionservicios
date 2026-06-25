@@ -397,9 +397,7 @@ export function ServicioPublicoPage() {
                 <div>
                   <h3 className="text-sm text-gray-900 font-semibold flex items-center gap-2">
                     Seguimiento del servicio
-                    <span className="text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-md tabular-nums">
-                      {pctProgreso}%
-                    </span>
+                    <CircularProgress value={pctProgreso} size={28} strokeWidth={3} />
                   </h3>
                   <p className="text-[10px] text-gray-400">
                     {servicio.estado === "completado" ? "Servicio finalizado" : "Estado actual del servicio"}
@@ -593,5 +591,52 @@ export function ServicioPublicoPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Círculo de progreso con borde que se completa. */
+function CircularProgress({ value, size = 28, strokeWidth = 3 }: { value: number; size?: number; strokeWidth?: number }) {
+  const r = (size - strokeWidth) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - Math.min(value, 100) / 100);
+  const center = size / 2;
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      className="shrink-0"
+      aria-label={`${value}% completado`}
+    >
+      {/* anillo de fondo */}
+      <circle cx={center} cy={center} r={r} fill="none" stroke="#e5e7eb" strokeWidth={strokeWidth} />
+      {/* anillo de progreso */}
+      <circle
+        cx={center}
+        cy={center}
+        r={r}
+        fill="none"
+        stroke={value === 100 ? "#22c55e" : value > 50 ? "#2563eb" : "#6b7280"}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={offset}
+        style={{ transform: "rotate(-90deg)", transformOrigin: `${center}px ${center}px` }}
+        className="transition-all duration-500 ease-out"
+      />
+      {/* texto del porcentaje */}
+      <text
+        x={center}
+        y={center}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fill="currentColor"
+        fontSize={size * 0.35}
+        className="font-semibold text-gray-600"
+      >
+        {value}
+      </text>
+    </svg>
   );
 }

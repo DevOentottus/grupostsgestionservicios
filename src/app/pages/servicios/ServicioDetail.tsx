@@ -233,7 +233,8 @@ export function ServicioDetailPage() {
 
   const esAdmin = user?.rol === "admin" || user?.rol === "sistema";
   const esAsignado = user?.id === servicio?.colaborador_id;
-  const puedeModificar = esAdmin || esAsignado;
+  const esEncargado = user?.rol === "encargado";
+  const puedeModificar = esAdmin || esAsignado || esEncargado;
 
   const editarServicio = useEditarServicio();
   const [editando, setEditando] = useState<"titulo" | "descripcion" | null>(null);
@@ -945,9 +946,13 @@ export function ServicioDetailPage() {
                                 cambiarEstado.mutate({ id: servicioId, estado: "en_progreso" });
                               }
                             } catch (err: any) {
-                              const detail = err?.response?.data?.detail || "";
+                              const detail = err?.response?.data?.detail || err?.message || "";
                               if (detail.toLowerCase().includes("evidencia")) {
                                 toast.error("Debe subir al menos una evidencia antes de completar esta tarea");
+                              } else if (detail) {
+                                toast.error(detail);
+                              } else {
+                                toast.error("Error al completar la tarea");
                               }
                             }
                           }
