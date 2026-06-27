@@ -133,26 +133,32 @@ export function EvidenceViewer({
     );
     const approvalReason = approvalComment?.contenido.replace("Motivo de aprobación: ", "");
     return (
-      <div key={ev.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div key={ev.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden h-full flex flex-col">
         {/* Media */}
         <div
-          className="relative cursor-pointer"
+          className="relative flex-1 min-h-0 cursor-pointer"
           onClick={() => setExpandedId(isExpanded ? null : ev.id)}
         >
           {ev.tipo === "photo" ? (
             <img
               src={ev.archivo_url}
               alt="Evidencia"
-              className="w-full max-h-80 object-contain bg-slate-50"
+              className="w-full h-full object-contain bg-slate-50"
             />
           ) : (
             <video
               src={ev.archivo_url}
-              className="w-full max-h-80 bg-slate-50"
+              className="w-full h-full bg-slate-50"
               controls
             />
           )}
           <div className="absolute top-2 right-2 flex gap-1">
+            {ev.mostrar_cliente && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1 bg-sky-100 text-sky-700">
+                <Eye className="w-3 h-3" />
+                Cliente
+              </span>
+            )}
             <span className={cn(
               "px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1",
               ev.tipo === "photo" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
@@ -390,7 +396,7 @@ export function EvidenceViewer({
         {/* Toggle comments footer */}
         <button
           onClick={() => setExpandedId(isExpanded ? null : ev.id)}
-          className="w-full flex items-center justify-center gap-1 px-4 py-1.5 text-xs text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition border-t border-slate-100"
+          className="w-full flex items-center justify-center gap-1 px-4 py-1.5 text-xs text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition border-t border-slate-100 shrink-0"
         >
           <MessageCircle className="w-3 h-3" />
           {isExpanded ? "Ocultar comentarios" : `${ev.comentarios?.length || 0} comentarios`}

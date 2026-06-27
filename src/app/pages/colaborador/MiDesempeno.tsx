@@ -1,50 +1,45 @@
 import { useMemo } from "react";
-import { useDesempeno } from "@/api/queries/useManager.js";
 import { useAuth } from "@/lib/auth.js";
+import { useMiArea } from "@/api/queries/useManager.js";
 import {
-  TrendingUp, Clock, Target, CheckCircle2, Calendar, User,
+  TrendingUp, CheckCircle2, User, Star,
 } from "lucide-react";
 
-function formatMinutos(m: number): string {
-  if (m < 1) return "< 1 min";
-  if (m < 60) return `${Math.round(m)} min`;
-  const h = Math.floor(m / 60);
-  const min = Math.round(m % 60);
-  return min > 0 ? `${h}h ${min}m` : `${h}h`;
-}
-
-function EficienciaGauge({ valor }: { valor: number }) {
-  const color =
-    valor >= 80 ? "text-green-600" :
-    valor >= 50 ? "text-amber-600" :
-    "text-red-600";
-  const barColor =
-    valor >= 80 ? "bg-green-500" :
-    valor >= 50 ? "bg-amber-500" :
-    "bg-red-500";
+function StarRating({ rating }: { rating: number }) {
+  const full = Math.floor(rating);
+  const half = rating - full >= 0.5;
   return (
-    <div>
-      <p className={`text-3xl font-bold ${color}`}>{valor}%</p>
-      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-2">
-        <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${Math.min(valor, 100)}%` }} />
-      </div>
-    </div>
+    <span className="inline-flex items-center gap-0.5" title={`${rating.toFixed(1)} / 5`}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className={`w-3 h-3 ${
+            i <= full
+              ? "fill-yellow-400 text-yellow-400"
+              : i === full + 1 && half
+                ? "fill-yellow-400/50 text-yellow-400"
+                : "fill-slate-200 text-slate-200"
+          }`}
+        />
+      ))}
+    </span>
   );
 }
 
 export function MiDesempenoPage() {
   const { user } = useAuth();
+  const { data: miArea, isLoading: areaLoading, isError: areaError } = useMiArea();
 
-  const today = new Date();
-  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  // Datos del colaborador logueado desde MiArea
+  const misDatos = useMemo(() => {
+    if (!miArea?.colaboradores) return null;
+    return miArea.colaboradores.find(
+      (c: any) => c.usuario_id === user?.id
+    ) || null;
+  }, [miArea, user?.id]);
 
-  const fechaInicio = firstDay.toISOString().split("T")[0];
-  const fechaFin = today.toISOString().split("T")[0];
-
-  const { data, isLoading, isError } = useDesempeno(
-    user?.id ?? 0,
-    user?.id ? { fecha_inicio: fechaInicio, fecha_fin: fechaFin } : undefined
-  );
+  const isLoading = areaLoading;
+  const isError = areaError;
 
   return (
     <div className="space-y-6">
@@ -58,15 +53,9 @@ export function MiDesempenoPage() {
             Mi Desempeño
           </h2>
           <p className="text-sm text-slate-500">
-            Tu rendimiento en {today.toLocaleString("es-AR", { month: "long", year: "numeric" })}
+            {user?.nombres || "Colaborador"}
           </p>
         </div>
-      </div>
-
-      {/* Periodo indicator */}
-      <div className="flex items-center gap-2 text-xs text-slate-400 bg-white rounded-xl border border-gray-100 px-4 py-2 shadow-sm">
-        <Calendar className="w-3.5 h-3.5" />
-        Periodo evaluado: {fechaInicio} — {fechaFin}
       </div>
 
       {isLoading && (
@@ -83,10 +72,10 @@ export function MiDesempenoPage() {
         </div>
       )}
 
-      {data && (
+      {!isLoading && !isError && (
         <>
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -94,27 +83,7 @@ export function MiDesempenoPage() {
                 </div>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tareas completadas</p>
               </div>
-              <p className="text-3xl font-bold text-slate-800">{data.total_tareas}</p>
-            </div>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-amber-600" />
-                </div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tiempo promedio</p>
-              </div>
-              <p className="text-3xl font-bold text-amber-600">
-                {formatMinutos(data.tiempo_promedio_por_tarea)}
-              </p>
-            </div>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-                  <Target className="w-4 h-4 text-green-600" />
-                </div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Eficiencia</p>
-              </div>
-              <EficienciaGauge valor={data.eficiencia} />
+              <p className="text-3xl font-bold text-slate-800">{misDatos?.tareas_completadas ?? 0}</p>
             </div>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-3">
@@ -123,32 +92,78 @@ export function MiDesempenoPage() {
                 </div>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Servicios completados</p>
               </div>
-              <p className="text-3xl font-bold text-indigo-600">{data.servicios_completados}</p>
+              <p className="text-3xl font-bold text-indigo-600">{misDatos?.servicios_completados ?? 0}</p>
+            </div>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
+                  <Star className="w-4 h-4 text-yellow-600" />
+                </div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Calificación</p>
+              </div>
+              {misDatos?.calificacion_promedio != null ? (
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl font-bold text-yellow-600">
+                      {misDatos.calificacion_promedio.toFixed(1)}
+                    </span>
+                    <span className="text-xs text-slate-400">/ 5</span>
+                  </div>
+                  <div className="mt-2">
+                    <StarRating rating={misDatos.calificacion_promedio} />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 mt-2">Sin evaluaciones</p>
+              )}
             </div>
           </div>
 
-          {/* Time Detail + Info */}
+          {/* Área info + Mi Perfil */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Área info */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:col-span-2">
               <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-slate-400" />
-                Resumen de Tiempo
+                <TrendingUp className="w-4 h-4 text-slate-400" />
+                Mi Área
               </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-xs text-slate-500 mb-1">Tiempo total invertido</p>
-                  <p className="text-2xl font-bold text-slate-800">
-                    {formatMinutos(data.tiempo_total_minutos)}
-                  </p>
+              {miArea?.area ? (
+                <div className="space-y-3">
+                  <div className="bg-slate-50 rounded-xl p-4">
+                    <p className="text-xs text-slate-500 mb-1">Área</p>
+                    <p className="text-lg font-bold text-slate-800">{miArea.area.nombre}</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-slate-50 rounded-xl p-3 text-center">
+                      <p className="text-lg font-bold text-blue-600">{miArea.estado_counts?.total ?? 0}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Servicios totales</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-xl p-3 text-center">
+                      <p className="text-lg font-bold text-green-600">{miArea.estado_counts?.completado ?? 0}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">Completados</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-xl p-3 text-center">
+                      <p className="text-lg font-bold text-amber-600">{miArea.estado_counts?.en_progreso ?? 0}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">En progreso</p>
+                    </div>
+                  </div>
+                  {miArea.satisfaccion && (
+                    <div className="bg-slate-50 rounded-xl p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-slate-500">Satisfacción del área</span>
+                        <span className="text-sm font-bold text-slate-700">
+                          {miArea.satisfaccion.promedio.toFixed(1)} / 5
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-xs text-slate-500 mb-1">Periodo</p>
-                  <p className="text-sm font-medium text-slate-700">
-                    {new Date(data.periodo.desde).toLocaleDateString()} — {new Date(data.periodo.hasta).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
+              ) : (
+                <p className="text-sm text-slate-400">No hay datos del área</p>
+              )}
             </div>
+
+            {/* Mi Perfil */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
                 <User className="w-4 h-4 text-slate-400" />
@@ -157,80 +172,70 @@ export function MiDesempenoPage() {
               <div className="space-y-3">
                 <div>
                   <p className="text-xs text-slate-500">Nombre</p>
-                  <p className="text-sm font-medium text-slate-800">{data.colaborador.nombres}</p>
+                  <p className="text-sm font-medium text-slate-800">{user?.nombres || "—"}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Email</p>
-                  <p className="text-sm text-slate-600 truncate">{data.colaborador.email}</p>
+                  <p className="text-sm text-slate-600 truncate">{user?.email || "—"}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Usuario</p>
-                  <p className="text-sm text-slate-600">@{data.colaborador.username}</p>
+                  <p className="text-sm text-slate-600">@{user?.username || "—"}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-500">Rol</p>
                   <span className="inline-block text-[11px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-100 text-green-700 mt-0.5">
-                    {data.colaborador.rol}
+                    {user?.rol || "—"}
                   </span>
                 </div>
+                {misDatos?.tareas_activas != null && (
+                  <div className="pt-2 border-t border-slate-100">
+                    <p className="text-xs text-slate-500 mb-1">Tareas activas</p>
+                    <p className="text-lg font-bold text-slate-800">{misDatos.tareas_activas}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Tareas completadas list */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                Mis Tareas Completadas
-              </h3>
-              <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                {data.total_tareas} tareas
-              </span>
+          {/* Servicios activos del colaborador */}
+          {misDatos?.servicios_asignados && misDatos.servicios_asignados.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100">
+                <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-slate-400" />
+                  Mis servicios asignados
+                </h3>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {misDatos.servicios_asignados.map((s: any) => (
+                  <div key={s.id} className="px-5 py-3 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div>
+                      <span className="text-xs font-mono text-slate-400">{s.codigo}</span>
+                      <p className="text-sm font-medium text-slate-800">{s.titulo}</p>
+                    </div>
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
+                      s.estado === "completado" ? "bg-green-100 text-green-700" :
+                      s.estado === "en_progreso" ? "bg-blue-100 text-blue-700" :
+                      s.estado === "pendiente" ? "bg-yellow-100 text-yellow-700" :
+                      "bg-slate-100 text-slate-600"
+                    }`}>
+                      {s.estado || "—"}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-500">
-                  <tr>
-                    <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wider">Tarea</th>
-                    <th className="text-left px-5 py-3 font-medium text-xs uppercase tracking-wider">Servicio</th>
-                    <th className="text-center px-5 py-3 font-medium text-xs uppercase tracking-wider">Tiempo Est.</th>
-                    <th className="text-center px-5 py-3 font-medium text-xs uppercase tracking-wider">Completada</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {data.tareas_completadas.map((t) => (
-                    <tr key={t.id} className="hover:bg-green-50/40 transition-colors">
-                      <td className="px-5 py-3 font-medium text-slate-800">{t.titulo}</td>
-                      <td className="px-5 py-3">
-                        <span className="text-xs font-mono text-slate-400">
-                          {t.servicio_codigo}
-                        </span>
-                        <p className="text-xs text-slate-600 mt-0.5">
-                          {t.servicio_titulo}
-                        </p>
-                      </td>
-                      <td className="px-5 py-3 text-center text-xs text-slate-500">
-                        {t.tiempo_estimado ? `${t.tiempo_estimado} min` : "—"}
-                      </td>
-                      <td className="px-5 py-3 text-center text-xs text-slate-400">
-                        {t.completada_at
-                          ? new Date(t.completada_at).toLocaleDateString()
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                  {data.tareas_completadas.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="px-5 py-12 text-center text-slate-400">
-                        No completaste tareas en este período
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          )}
+
+          {/* Empty state si no hay datos del colaborador */}
+          {!misDatos && (
+            <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
+              <TrendingUp className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 font-medium">No se encontraron datos de desempeño</p>
+              <p className="text-sm text-slate-400 mt-1">Puede que no tengas un área asignada</p>
             </div>
-          </div>
+          )}
         </>
       )}
     </div>
