@@ -118,11 +118,6 @@ function OfertasCarousel({ imagenes }: { imagenes: string[] }) {
           </svg>
           <span className="text-sm font-semibold text-white">Ofertas y Promociones</span>
         </span>
-        <span className="ml-auto flex items-center gap-2">
-          <span className="text-[10px] font-medium text-white/80 bg-white/15 px-2 py-0.5 rounded-full">
-            Promociones
-          </span>
-        </span>
       </div>
       <div className="relative overflow-hidden w-full flex-1 min-h-0">
         <img
