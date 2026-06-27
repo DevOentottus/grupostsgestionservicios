@@ -345,16 +345,11 @@ export function ServicioPublicoPage() {
               <span className="hidden md:inline">Compartir</span>
             </button>
 
-            {/* Right section: estado + ofertas */}
+            {/* Right section: estado */}
             <span className="ml-auto flex items-center gap-2 flex-wrap">
               <span className={cn("text-xs px-2.5 py-1 rounded-full font-medium", ESTADO_BAR_STYLE[servicio.estado] || "bg-white/10 text-white")}>
                 {estadoLabel(servicio.estado)}
               </span>
-              {hayOfertas && (
-                <span className="text-[10px] font-medium text-white/90 bg-white/15 px-2 py-0.5 rounded-full whitespace-nowrap">
-                  Ofertas y Promociones
-                </span>
-              )}
             </span>
           </div>
 
@@ -582,7 +577,11 @@ export function ServicioPublicoPage() {
             </div>
           ) : hayOfertas ? (
             <div className="md:col-span-1">
-              <OfertasCarousel imagenes={ofertasImagenes} />
+              <div className="h-full">
+                <div className="h-[80%] min-h-0">
+                  <OfertasCarousel imagenes={ofertasImagenes} />
+                </div>
+              </div>
             </div>
           ) : null}
         </div>
