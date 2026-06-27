@@ -10,7 +10,6 @@ import {
   ChevronLeft, ChevronRight,
 } from "lucide-react";
 import type { PublicServicioResponse, Encuesta, Evidencia, EvidenciaComentario } from "@shared/index.js";
-import { EvidenceViewer } from "@/app/components/evidencias/EvidenceViewer.js";
 import { ProcessFlow } from "@/app/components/flow/ProcessFlow.js";
 
 function formatETA(minutes: number): string {
@@ -447,14 +446,28 @@ export function ServicioPublicoPage() {
                     Evidencias del servicio
                   </h3>
                 </div>
-                <EvidenceViewer
-                  evidencias={evidencias}
-                  readOnly
-                  showStatus={false}
-                  codigo={codigo}
-                  dni={dni}
-                  onComentarioAdded={() => evidenciasQuery.refetch()}
-                />
+                {/* EVIDENCIAS DIRECTAS — sin EvidenceViewer */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                  {evidencias.map((ev) => (
+                    <div key={ev.id} style={{ width: 'calc(50% - 6px)', minWidth: 0, background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                      <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', background: '#f8fafc' }}>
+                        <img
+                          src={ev.archivo_url}
+                          alt="Evidencia"
+                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
+                        />
+                        <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
+                          {ev.mostrar_cliente && (
+                            <span style={{ padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 500, background: '#e0f2fe', color: '#0369a1' }}>Cliente</span>
+                          )}
+                          <span style={{ padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 500, background: '#dbeafe', color: '#1d4ed8' }}>
+                            {ev.tipo === 'photo' ? 'Foto' : 'Video'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
