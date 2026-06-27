@@ -111,12 +111,17 @@ function OfertasCarousel({ imagenes }: { imagenes: string[] }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full flex flex-col">
       {/* Header bar — matching service card style */}
-      <div className="px-4 md:px-6 py-2 flex items-center gap-2 flex-wrap bg-blue-600 shrink-0">
-        <span className="flex items-center gap-1.5">
-          <svg className="w-4 h-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <div className="px-4 md:px-6 py-3 flex items-center gap-2 flex-wrap bg-blue-600 shrink-0">
+        <span className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
           </svg>
-          <span className="text-xs font-semibold text-white">Ofertas y Promociones</span>
+          <span className="text-sm font-semibold text-white">Ofertas y Promociones</span>
+        </span>
+        <span className="ml-auto flex items-center gap-2">
+          <span className="text-[10px] font-medium text-white/80 bg-white/15 px-2 py-0.5 rounded-full">
+            Promociones
+          </span>
         </span>
       </div>
       <div className="relative overflow-hidden w-full flex-1 min-h-0">
