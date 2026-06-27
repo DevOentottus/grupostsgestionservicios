@@ -7,7 +7,7 @@ import { cn } from "@/app/lib/utils";
 import { subscribeToPush } from "@/lib/push.js";
 import {
   Clock, CheckCircle2, AlertTriangle, Star, Send, ArrowLeft, Camera, X, Loader2,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, MessageCircle, Eye,
 } from "lucide-react";
 import type { PublicServicioResponse, Encuesta, Evidencia, EvidenciaComentario } from "@shared/index.js";
 import { ProcessFlow } from "@/app/components/flow/ProcessFlow.js";
@@ -173,6 +173,17 @@ export function ServicioPublicoPage() {
   const [sugerencia, setSugerencia] = useState("");
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
   const [evidencias, setEvidencias] = useState<(Evidencia & { comentarios?: EvidenciaComentario[] })[]>([]);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [commentText, setCommentText] = useState("");
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    setIsDesktop(mq.matches);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["servicio-publico", codigo],
@@ -435,38 +446,161 @@ export function ServicioPublicoPage() {
 
             </div>
 
-            {/* Evidencias section */}
+            {/* Evidencias section — inline styles (Tailwind no compila) */}
             {evidencias.length > 0 && dni && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Camera className="w-4 h-4 text-blue-600" />
+              <div style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb', padding: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <div style={{ width: '32px', height: '32px', background: '#dbeafe', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Camera size={16} color="#2563eb" />
                   </div>
-                  <h3 className="text-gray-900" style={{ fontWeight: 600 }}>
+                  <h3 style={{ color: '#111827', fontWeight: 600, fontSize: '15px' }}>
                     Evidencias del servicio
                   </h3>
                 </div>
-                {/* EVIDENCIAS DIRECTAS — sin EvidenceViewer */}
+
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                  {evidencias.map((ev) => (
-                    <div key={ev.id} style={{ width: 'calc(50% - 6px)', minWidth: 0, background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                      <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', background: '#f8fafc' }}>
-                        <img
-                          src={ev.archivo_url}
-                          alt="Evidencia"
-                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
-                        />
-                        <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
-                          {ev.mostrar_cliente && (
-                            <span style={{ padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 500, background: '#e0f2fe', color: '#0369a1' }}>Cliente</span>
+                  {evidencias.map((ev) => {
+                    const isExpanded = expandedId === ev.id;
+                    const rejectionComment = ev.comentarios?.find((c) => c.contenido.startsWith("Motivo de rechazo:"));
+                    const rejectionReason = rejectionComment?.contenido.replace("Motivo de rechazo: ", "");
+                    const approvalComment = ev.comentarios?.find((c) => c.contenido.startsWith("Motivo de aprobación:"));
+                    const approvalReason = approvalComment?.contenido.replace("Motivo de aprobación: ", "");
+
+                    return (
+                      <div key={ev.id} style={{ width: isDesktop ? 'calc(25% - 9px)' : 'calc(50% - 6px)', minWidth: 0, background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        {/* Image */}
+                        <div
+                          style={{ position: 'relative', width: '100%', aspectRatio: '4/3', background: '#f8fafc', cursor: 'pointer' }}
+                          onClick={() => setExpandedId(isExpanded ? null : ev.id)}
+                        >
+                          {ev.tipo === "photo" ? (
+                            <img src={ev.archivo_url} alt="Evidencia" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+                          ) : (
+                            <video src={ev.archivo_url} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} controls />
                           )}
-                          <span style={{ padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 500, background: '#dbeafe', color: '#1d4ed8' }}>
-                            {ev.tipo === 'photo' ? 'Foto' : 'Video'}
+                          <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                            {ev.mostrar_cliente && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 500, background: '#e0f2fe', color: '#0369a1' }}>
+                                <Eye size={10} /> Cliente
+                              </span>
+                            )}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 500, background: ev.tipo === 'photo' ? '#dbeafe' : '#f3e8ff', color: ev.tipo === 'photo' ? '#1d4ed8' : '#7c3aed' }}>
+                              {ev.tipo === 'photo' ? 'Foto' : 'Video'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Estado badge */}
+                        <div style={{ display: 'flex', gap: '6px', padding: '8px 12px 0', flexWrap: 'wrap' }}>
+                          <span style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '3px',
+                            padding: '2px 8px', borderRadius: '999px', fontSize: '10px', fontWeight: 500,
+                            background: ev.estado === 'aprobado' ? '#dcfce7' : ev.estado === 'rechazado' ? '#fee2e2' : '#fef9c3',
+                            color: ev.estado === 'aprobado' ? '#15803d' : ev.estado === 'rechazado' ? '#b91c1c' : '#a16207',
+                          }}>
+                            {ev.estado === 'aprobado' ? <CheckCircle2 size={10} /> : ev.estado === 'rechazado' ? '✕' : '⏳'}
+                            {ev.estado === 'aprobado' ? 'Aprobado' : ev.estado === 'rechazado' ? 'Rechazado' : 'Pendiente'}
                           </span>
                         </div>
+
+                        {/* Approval reason */}
+                        {ev.estado === 'aprobado' && approvalReason && (
+                          <div style={{ padding: '8px 12px 0' }}>
+                            <p style={{ fontSize: '12px', color: '#166534', lineHeight: '1.4' }}>
+                              <span style={{ fontWeight: 500 }}>✓</span> {approvalReason}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Rejection reason */}
+                        {ev.estado === 'rechazado' && rejectionReason && (
+                          <div style={{ padding: '8px 12px 0' }}>
+                            <p style={{ fontSize: '12px', color: '#991b1b', lineHeight: '1.4' }}>
+                              <span style={{ fontWeight: 500 }}>✕</span> {rejectionReason}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Colaborador comment */}
+                        {ev.comentario_colaborador && (
+                          <div style={{ padding: '8px 12px 0' }}>
+                            <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '2px' }}>Comentario del técnico:</p>
+                            <p style={{ fontSize: '12px', color: '#334155' }}>{ev.comentario_colaborador}</p>
+                          </div>
+                        )}
+
+                        {/* Toggle comments button */}
+                        <button
+                          onClick={() => setExpandedId(isExpanded ? null : ev.id)}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                            padding: '6px 12px', marginTop: '8px', fontSize: '11px', color: '#94a3b8',
+                            border: 'none', borderTop: '1px solid #f1f5f9', background: 'none', cursor: 'pointer',
+                          }}
+                        >
+                          <MessageCircle size={12} />
+                          {isExpanded ? 'Ocultar comentarios' : `${ev.comentarios?.length || 0} comentarios`}
+                        </button>
+
+                        {/* Expanded: comment thread */}
+                        {isExpanded && (
+                          <div style={{ borderTop: '1px solid #f1f5f9', padding: '12px' }}>
+                            {(ev.comentarios || []).length > 0 && (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px' }}>
+                                {(ev.comentarios || []).map((c: EvidenciaComentario) => (
+                                  <div key={c.id} style={{
+                                    padding: '8px 10px', borderRadius: '8px', fontSize: '12px',
+                                    background: c.es_cliente ? '#fefce8' : '#eff6ff',
+                                  }}>
+                                    <p style={{ fontSize: '10px', color: '#94a3b8', marginBottom: '2px' }}>
+                                      {c.es_cliente ? 'Cliente' : 'Técnico'}
+                                      {c.created_at && ` · ${new Date(c.created_at).toLocaleString('es-AR')}`}
+                                    </p>
+                                    <p style={{ color: '#334155' }}>{c.contenido}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Add comment */}
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <input
+                                value={commentText}
+                                onChange={(e) => setCommentText(e.target.value)}
+                                placeholder="Escribí un comentario..."
+                                style={{
+                                  flex: 1, padding: '6px 10px', fontSize: '12px', border: '1px solid #e2e8f0',
+                                  borderRadius: '8px', outline: 'none', background: '#fff',
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && commentText.trim()) {
+                                    evidenciasPublicApi.agregarComentario(ev.id, { contenido: commentText.trim(), codigo: codigo || "", dni: dni || "" })
+                                      .then(() => { setCommentText(""); evidenciasQuery.refetch(); });
+                                  }
+                                }}
+                              />
+                              <button
+                                onClick={() => {
+                                  if (commentText.trim()) {
+                                    evidenciasPublicApi.agregarComentario(ev.id, { contenido: commentText.trim(), codigo: codigo || "", dni: dni || "" })
+                                      .then(() => { setCommentText(""); evidenciasQuery.refetch(); });
+                                  }
+                                }}
+                                disabled={!commentText.trim()}
+                                style={{
+                                  padding: '6px 10px', background: '#1e3a5f', color: '#fff',
+                                  border: 'none', borderRadius: '8px', cursor: commentText.trim() ? 'pointer' : 'not-allowed',
+                                  opacity: commentText.trim() ? 1 : 0.5,
+                                }}
+                              >
+                                <Send size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
