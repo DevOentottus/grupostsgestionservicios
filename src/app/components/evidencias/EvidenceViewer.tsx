@@ -133,22 +133,22 @@ export function EvidenceViewer({
     );
     const approvalReason = approvalComment?.contenido.replace("Motivo de aprobación: ", "");
     return (
-      <div key={ev.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden h-full flex flex-col">
+      <div key={ev.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col">
         {/* Media */}
         <div
-          className="relative flex-1 min-h-0 cursor-pointer"
+          className="relative w-full aspect-[4/3] cursor-pointer bg-slate-50"
           onClick={() => setExpandedId(isExpanded ? null : ev.id)}
         >
           {ev.tipo === "photo" ? (
             <img
               src={ev.archivo_url}
               alt="Evidencia"
-              className="w-full h-full object-contain bg-slate-50"
+              className="absolute inset-0 w-full h-full object-contain"
             />
           ) : (
             <video
               src={ev.archivo_url}
-              className="w-full h-full bg-slate-50"
+              className="absolute inset-0 w-full h-full object-contain"
               controls
             />
           )}
