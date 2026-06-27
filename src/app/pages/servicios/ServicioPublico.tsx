@@ -123,7 +123,7 @@ function OfertasCarousel({ imagenes }: { imagenes: string[] }) {
         <img
           src={ofertasApi.imagenUrl(imagenes[current])}
           alt={`Oferta ${current + 1}`}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain bg-white"
         />
         {total > 1 && (
           <>
@@ -309,7 +309,7 @@ export function ServicioPublicoPage() {
         </div>
       </div>
 
-      <div className="w-full px-4 py-6">
+      <div className="w-full px-4 py-0">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
           {/* Col 1: Servicio (2/3) */}
