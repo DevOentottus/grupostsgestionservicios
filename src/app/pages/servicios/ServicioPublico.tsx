@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { serviciosApi, seguimientoApi, evidenciasPublicApi, ofertasApi } from "@/api/client.js";
 import { toast } from "sonner";
@@ -158,9 +158,17 @@ function OfertasCarousel({ imagenes }: { imagenes: string[] }) {
 }
 
 export function ServicioPublicoPage() {
+  const navigate = useNavigate();
   const { codigo } = useParams<{ codigo: string }>();
   const [searchParams] = useSearchParams();
   const dni = searchParams.get("dni") || sessionStorage.getItem("public_dni") || undefined;
+
+  // Si no hay DNI, redirigir al formulario de seguimiento con el código pre-cargado
+  useEffect(() => {
+    if (!dni) {
+      navigate(`/seguimiento-cliente${codigo ? `?codigo=${encodeURIComponent(codigo)}` : ""}`, { replace: true });
+    }
+  }, []);
   const [rating, setRating] = useState(0);
   const [comentario, setComentario] = useState("");
   const [sugerencia, setSugerencia] = useState("");
@@ -214,14 +222,15 @@ export function ServicioPublicoPage() {
     }
   }, [data]);
 
-  // Suscribir a notificaciones push cuando hay DNI
+  // Suscribir a notificaciones push si ya hay permiso concedido
   useEffect(() => {
     if (!dni) return;
+    if (Notification.permission !== "granted") return;
     let cancelled = false;
     subscribeToPush(dni).then((ok) => {
       if (cancelled) return;
       if (ok) {
-        toast.success("Notificaciones activadas — te avisaremos cuando haya cambios");
+        sessionStorage.setItem("push_subscribed", "true");
       }
     });
     return () => { cancelled = true; };

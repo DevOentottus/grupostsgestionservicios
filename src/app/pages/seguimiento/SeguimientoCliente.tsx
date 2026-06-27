@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Bell, BellOff } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Bell, BellOff, Loader2 } from "lucide-react";
 import { subscribeToPush, unsubscribeFromPush } from "@/lib/push.js";
+import { toast } from "sonner";
 
 export function SeguimientoClientePage() {
   const navigate = useNavigate();
-  const [codigo, setCodigo] = useState("");
+  const [searchParams] = useSearchParams();
+  const [codigo, setCodigo] = useState(searchParams.get("codigo") || "");
   const [dni, setDni] = useState("");
   const [pushOk, setPushOk] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
@@ -35,9 +37,11 @@ export function SeguimientoClientePage() {
         await unsubscribeFromPush();
         sessionStorage.setItem("push_subscribed", "false");
         setPushOk(false);
+        toast.success("Notificaciones desactivadas");
       } else {
         const perm = await Notification.requestPermission();
         if (perm !== "granted") {
+          toast.error("Permiso de notificaciones denegado — activalo desde la configuración del navegador");
           setPushLoading(false);
           return;
         }
@@ -45,10 +49,13 @@ export function SeguimientoClientePage() {
         if (ok) {
           sessionStorage.setItem("push_subscribed", "true");
           setPushOk(true);
+          toast.success("Notificaciones activadas — te avisaremos cuando haya cambios");
+        } else {
+          toast.error("No se pudo activar las notificaciones. Verificá que el servicio esté disponible.");
         }
       }
-    } catch {
-      // Silencioso
+    } catch (err) {
+      toast.error("Error al configurar notificaciones");
     }
     setPushLoading(false);
   };
