@@ -109,12 +109,21 @@ function OfertasCarousel({ imagenes }: { imagenes: string[] }) {
   const ir = (idx: number) => setCurrent((idx + total) % total);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="relative overflow-hidden w-full">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-full flex flex-col">
+      {/* Header bar — matching service card style */}
+      <div className="px-4 md:px-6 py-2 flex items-center gap-2 flex-wrap bg-blue-600 shrink-0">
+        <span className="flex items-center gap-1.5">
+          <svg className="w-4 h-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+          </svg>
+          <span className="text-xs font-semibold text-white">Ofertas y Promociones</span>
+        </span>
+      </div>
+      <div className="relative overflow-hidden w-full flex-1 min-h-0">
         <img
           src={ofertasApi.imagenUrl(imagenes[current])}
           alt={`Oferta ${current + 1}`}
-          className="w-full h-48 md:h-56 object-cover"
+          className="w-full h-full object-cover"
         />
         {total > 1 && (
           <>
@@ -303,8 +312,8 @@ export function ServicioPublicoPage() {
       <div className="w-full px-4 py-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-          {/* Col 1: Service Card */}
-          <div className="space-y-5">
+          {/* Col 1: Servicio (2/3) */}
+          <div className="md:col-span-2 space-y-5">
 
         {/* Service Card -- compacto */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -387,10 +396,6 @@ export function ServicioPublicoPage() {
             </div>
           </div>
         </div>
-        </div>
-
-          {/* Col 2: Seguimiento + Evidencias */}
-          <div className="space-y-5">
 
             {/* Seguimiento card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -568,15 +573,15 @@ export function ServicioPublicoPage() {
           </div>
         )}
 
-          {/* Col 3: Ofertas y Promociones */}
+          {/* Col 2: Ofertas y Promociones (1/3) */}
           {ofertasQuery.isLoading ? (
-            <div className="space-y-5">
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
-                <div className="h-48 bg-gray-100" />
+            <div className="md:col-span-1">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse h-full">
+                <div className="h-full bg-gray-100" />
               </div>
             </div>
           ) : hayOfertas ? (
-            <div className="space-y-5">
+            <div className="md:col-span-1">
               <OfertasCarousel imagenes={ofertasImagenes} />
             </div>
           ) : null}
