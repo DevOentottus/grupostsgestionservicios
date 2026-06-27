@@ -301,10 +301,10 @@ export function ServicioPublicoPage() {
       </div>
 
       <div className="w-full px-4 py-6">
-        <div className="flex flex-col md:flex-row gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-          {/* Left column: Vista de seguimiento */}
-          <div className="flex-1 min-w-0 space-y-5">
+          {/* Col 1: Service Card */}
+          <div className="space-y-5">
 
         {/* Service Card -- compacto */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -387,6 +387,10 @@ export function ServicioPublicoPage() {
             </div>
           </div>
         </div>
+        </div>
+
+          {/* Col 2: Seguimiento + Evidencias */}
+          <div className="space-y-5">
 
             {/* Seguimiento card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -564,25 +568,24 @@ export function ServicioPublicoPage() {
           </div>
         )}
 
-        </div>
-
-        {/* Right column: Ofertas y Promociones */}
-        {ofertasQuery.isLoading ? (
-          <div className="w-full md:w-80 shrink-0">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
-              <div className="h-48 bg-gray-100" />
+          {/* Col 3: Ofertas y Promociones */}
+          {ofertasQuery.isLoading ? (
+            <div className="space-y-5">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
+                <div className="h-48 bg-gray-100" />
+              </div>
             </div>
-          </div>
-        ) : hayOfertas ? (
-          <div className="w-full md:w-80 shrink-0">
-            <OfertasCarousel imagenes={ofertasImagenes} />
-          </div>
-        ) : null}
-      </div>
+          ) : hayOfertas ? (
+            <div className="space-y-5">
+              <OfertasCarousel imagenes={ofertasImagenes} />
+            </div>
+          ) : null}
+        </div>
 
       {/* Footer — full-width abajo de todo */}
       <div className="text-center text-xs text-gray-400 py-4">
         ServicioLocalSTS © {new Date().getFullYear()}
+      </div>
       </div>
 
     </div>
