@@ -419,8 +419,8 @@ export function EvidenceViewer({
               </span>
               <span className="text-xs text-slate-400">({evs.length})</span>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pl-2 border-l-2 border-slate-100">
-              {evs.map(renderEvidenceCard)}
+            <div className="grid !grid-cols-2 lg:!grid-cols-4 gap-3 pl-2 border-l-2 border-slate-100">
+              {evs.map((ev) => <div key={ev.id} className="min-w-0">{renderEvidenceCard(ev)}</div>)}
             </div>
           </div>
         );
