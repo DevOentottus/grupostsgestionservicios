@@ -1,11 +1,8 @@
-import { useState, useMemo } from "react";
-import { useDesempeno, useMiArea } from "@/api/queries/useManager.js";
-import { useUsuarios } from "@/api/queries/useUsuarios.js";
+import { useMemo } from "react";
+import { useDesempeno } from "@/api/queries/useManager.js";
 import { useAuth } from "@/lib/auth.js";
-import { cn } from "@/app/lib/utils";
 import {
-  TrendingUp, Clock, Target, CheckCircle2, Search, Calendar,
-  ChevronRight,
+  TrendingUp, Clock, Target, CheckCircle2, Calendar, User,
 } from "lucide-react";
 
 function formatMinutos(m: number): string {
@@ -35,125 +32,53 @@ function EficienciaGauge({ valor }: { valor: number }) {
   );
 }
 
-export function ManagerDesempenoPage() {
+export function MiDesempenoPage() {
   const { user } = useAuth();
-  const esSupervisor = user?.rol === "sistema" || user?.rol === "admin";
-  const { data: miArea } = useMiArea();
-  const { data: todosUsuarios } = useUsuarios();
 
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
 
-  const [colaboradorId, setColaboradorId] = useState<string>("");
-  const [fechaInicio, setFechaInicio] = useState(
-    firstDay.toISOString().split("T")[0]
-  );
-  const [fechaFin, setFechaFin] = useState(
-    today.toISOString().split("T")[0]
-  );
-
-  // Colaboradores del área (encargado) o todos los colaboradores (sistema/admin)
-  const colaboradores = useMemo(() => {
-    if (esSupervisor) {
-      return (todosUsuarios || [])
-        .filter((u) => u.rol === "colaborador" || u.rol === "encargado")
-        .map((u) => ({
-          usuario_id: u.id,
-          nombres: [u.nombres, u.apellidos].filter(Boolean).join(" "),
-        }));
-    }
-    return miArea?.colaboradores || [];
-  }, [esSupervisor, todosUsuarios, miArea]);
+  const fechaInicio = firstDay.toISOString().split("T")[0];
+  const fechaFin = today.toISOString().split("T")[0];
 
   const { data, isLoading, isError } = useDesempeno(
-    parseInt(colaboradorId),
-    colaboradorId ? { fecha_inicio: fechaInicio, fecha_fin: fechaFin } : undefined
+    user?.id ?? 0,
+    user?.id ? { fecha_inicio: fechaInicio, fecha_fin: fechaFin } : undefined
   );
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-          <TrendingUp className="w-5 h-5 text-blue-600" />
+        <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
+          <TrendingUp className="w-5 h-5 text-green-600" />
         </div>
         <div>
           <h2 className="text-xl font-bold text-slate-800">
-            Desempeño de Colaborador
+            Mi Desempeño
           </h2>
           <p className="text-sm text-slate-500">
-            Evaluá el rendimiento de los colaboradores de tu área
+            Tu rendimiento en {today.toLocaleString("es-AR", { month: "long", year: "numeric" })}
           </p>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="min-w-[220px]">
-            <label className="text-xs font-medium text-slate-500 block mb-1.5 flex items-center gap-1">
-              <Search className="w-3 h-3" />
-              Colaborador
-            </label>
-            <select
-              value={colaboradorId}
-              onChange={(e) => setColaboradorId(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            >
-              <option value="">Seleccionar colaborador...</option>
-              {colaboradores.map((u) => (
-                <option key={u.usuario_id} value={u.usuario_id}>
-                  {u.nombres}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-xs font-medium text-slate-500 block mb-1.5 flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              Desde
-            </label>
-            <input
-              type="date"
-              value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
-              className="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-slate-500 block mb-1.5 flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              Hasta
-            </label>
-            <input
-              type="date"
-              value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
-              className="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            />
-          </div>
-        </div>
+      {/* Periodo indicator */}
+      <div className="flex items-center gap-2 text-xs text-slate-400 bg-white rounded-xl border border-gray-100 px-4 py-2 shadow-sm">
+        <Calendar className="w-3.5 h-3.5" />
+        Periodo evaluado: {fechaInicio} — {fechaFin}
       </div>
 
-      {/* Results */}
-      {!colaboradorId && (
-        <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <Search className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500 font-medium">Seleccioná un colaborador para ver su desempeño</p>
-          <p className="text-sm text-slate-400 mt-1">Usá el filtro de arriba para empezar</p>
-        </div>
-      )}
-
       {isLoading && (
-        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-500 mt-3 text-sm">Cargando datos de desempeño...</p>
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
+          <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-500 mt-3 text-sm">Cargando tu desempeño...</p>
         </div>
       )}
 
       {isError && (
-        <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <p className="text-red-500 font-medium">Error al cargar datos de desempeño</p>
+        <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
+          <p className="text-red-500 font-medium">Error al cargar tu desempeño</p>
           <p className="text-sm text-slate-400 mt-1">Intentalo de nuevo más tarde</p>
         </div>
       )}
@@ -217,7 +142,7 @@ export function ManagerDesempenoPage() {
                   </p>
                 </div>
                 <div className="bg-slate-50 rounded-xl p-4">
-                  <p className="text-xs text-slate-500 mb-1">Periodo evaluado</p>
+                  <p className="text-xs text-slate-500 mb-1">Periodo</p>
                   <p className="text-sm font-medium text-slate-700">
                     {new Date(data.periodo.desde).toLocaleDateString()} — {new Date(data.periodo.hasta).toLocaleDateString()}
                   </p>
@@ -226,8 +151,8 @@ export function ManagerDesempenoPage() {
             </div>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-slate-400" />
-                Colaborador
+                <User className="w-4 h-4 text-slate-400" />
+                Mi Perfil
               </h3>
               <div className="space-y-3">
                 <div>
@@ -239,8 +164,12 @@ export function ManagerDesempenoPage() {
                   <p className="text-sm text-slate-600 truncate">{data.colaborador.email}</p>
                 </div>
                 <div>
+                  <p className="text-xs text-slate-500">Usuario</p>
+                  <p className="text-sm text-slate-600">@{data.colaborador.username}</p>
+                </div>
+                <div>
                   <p className="text-xs text-slate-500">Rol</p>
-                  <span className="inline-block text-[11px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 mt-0.5">
+                  <span className="inline-block text-[11px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-100 text-green-700 mt-0.5">
                     {data.colaborador.rol}
                   </span>
                 </div>
@@ -253,7 +182,7 @@ export function ManagerDesempenoPage() {
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
               <h3 className="font-semibold text-slate-800 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-green-500" />
-                Tareas Completadas
+                Mis Tareas Completadas
               </h3>
               <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
                 {data.total_tareas} tareas
@@ -271,7 +200,7 @@ export function ManagerDesempenoPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {data.tareas_completadas.map((t) => (
-                    <tr key={t.id} className="hover:bg-blue-50/40 transition-colors">
+                    <tr key={t.id} className="hover:bg-green-50/40 transition-colors">
                       <td className="px-5 py-3 font-medium text-slate-800">{t.titulo}</td>
                       <td className="px-5 py-3">
                         <span className="text-xs font-mono text-slate-400">
@@ -282,9 +211,7 @@ export function ManagerDesempenoPage() {
                         </p>
                       </td>
                       <td className="px-5 py-3 text-center text-xs text-slate-500">
-                        {t.tiempo_estimado
-                          ? `${t.tiempo_estimado} min`
-                          : "—"}
+                        {t.tiempo_estimado ? `${t.tiempo_estimado} min` : "—"}
                       </td>
                       <td className="px-5 py-3 text-center text-xs text-slate-400">
                         {t.completada_at
@@ -296,7 +223,7 @@ export function ManagerDesempenoPage() {
                   {data.tareas_completadas.length === 0 && (
                     <tr>
                       <td colSpan={4} className="px-5 py-12 text-center text-slate-400">
-                        No hay tareas completadas en este período
+                        No completaste tareas en este período
                       </td>
                     </tr>
                   )}

@@ -32,6 +32,7 @@ interface NavItem {
 const nav: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, roles: ["admin"] },
   { to: "/miarea", label: "Mi Área", icon: <Home className="w-4 h-4" />, roles: ["colaborador", "encargado"] },
+  { to: "/midesempeno", label: "Mi Desempeño", icon: <TrendingUp className="w-4 h-4" />, roles: ["colaborador", "encargado"] },
   { to: "/servicios", label: "Servicios", icon: <Wrench className="w-4 h-4" /> },
   { to: "/plantillas", label: "Plantillas", icon: <FileText className="w-4 h-4" /> },
 
@@ -93,6 +94,7 @@ function getPageTitle(pathname: string): string {
   const titles: Record<string, string> = {
     dashboard: "Dashboard",
     miarea: "Mi Área",
+    midesempeno: "Mi Desempeño",
     misservicios: "Mis Servicios",
     servicios: "Servicios",
     plantillas: "Plantillas",

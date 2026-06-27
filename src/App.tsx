@@ -21,12 +21,13 @@ import { SeguimientoClientePage } from "@/app/pages/seguimiento/SeguimientoClien
 import { ManagerClientesPage } from "@/app/pages/manager/ManagerClientes.js";
 import { ManagerDesempenoPage } from "@/app/pages/manager/ManagerDesempeno.js";
 import { MiAreaPage } from "@/app/pages/miarea/MiArea.js";
+import { MiDesempenoPage } from "@/app/pages/colaborador/MiDesempeno.js";
 import Layout from "@/app/layout/Layout.js";
 
 /** Redirige según el rol del usuario autenticado */
 function IndexRedirect() {
   const { user } = useAuth();
-  const destino = user?.rol === "colaborador" || user?.rol === "encargado" ? "/miarea" : "/dashboard";
+  const destino = user?.rol === "colaborador" ? "/midesempeno" : user?.rol === "encargado" ? "/miarea" : "/dashboard";
   return <Navigate to={destino} replace />;
 }
 
@@ -57,6 +58,11 @@ export default function App() {
             </RequireRole>
           } />
           <Route path="miarea" element={<MiAreaPage />} />
+          <Route path="midesempeno" element={
+            <RequireRole roles={["colaborador", "encargado"]}>
+              <MiDesempenoPage />
+            </RequireRole>
+          } />
           <Route path="servicios" element={<ServiciosPage />} />
           <Route path="servicios/nuevo" element={<NuevoServicioPage />} />
           <Route path="servicios/:id" element={<ServicioDetailPage />} />
