@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { serviciosApi, seguimientoApi, evidenciasPublicApi, ofertasApi } from "@/api/client.js";
 import { toast } from "sonner";
 import { cn } from "@/app/lib/utils";
+import { subscribeToPush } from "@/lib/push.js";
 import {
   Clock, CheckCircle2, AlertTriangle, Star, Send, ArrowLeft, Camera, X, Loader2,
   ChevronLeft, ChevronRight,
@@ -204,6 +205,19 @@ export function ServicioPublicoPage() {
     }
   }, [data]);
 
+  // Suscribir a notificaciones push cuando hay DNI
+  useEffect(() => {
+    if (!dni) return;
+    let cancelled = false;
+    subscribeToPush(dni).then((ok) => {
+      if (cancelled) return;
+      if (ok) {
+        toast.success("Notificaciones activadas — te avisaremos cuando haya cambios");
+      }
+    });
+    return () => { cancelled = true; };
+  }, [dni]);
+
   const servicioCompletado = data?.servicio?.estado === "completado";
 
   const enviarEncuesta = useMutation({
@@ -287,7 +301,7 @@ export function ServicioPublicoPage() {
       </div>
 
       <div className="w-full px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-5">
+        <div className="flex flex-col md:flex-row gap-5">
 
           {/* Left column: Vista de seguimiento */}
           <div className="flex-1 min-w-0 space-y-5">
@@ -558,13 +572,13 @@ export function ServicioPublicoPage() {
 
         {/* Right column: Ofertas y Promociones */}
         {ofertasQuery.isLoading ? (
-          <div className="w-full lg:w-80 shrink-0">
+          <div className="w-full md:w-80 shrink-0">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
               <div className="h-48 bg-gray-100" />
             </div>
           </div>
         ) : hayOfertas ? (
-          <div className="w-full lg:w-80 shrink-0">
+          <div className="w-full md:w-80 shrink-0">
             <OfertasCarousel imagenes={ofertasImagenes} />
           </div>
         ) : null}
