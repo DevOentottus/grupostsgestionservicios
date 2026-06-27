@@ -564,10 +564,6 @@ export function ServicioPublicoPage() {
           </div>
         )}
 
-        {/* Footer */}
-        <div className="text-center text-xs text-gray-400 py-4">
-          ServicioLocalSTS © {new Date().getFullYear()}
-        </div>
         </div>
 
         {/* Right column: Ofertas y Promociones */}
@@ -582,6 +578,11 @@ export function ServicioPublicoPage() {
             <OfertasCarousel imagenes={ofertasImagenes} />
           </div>
         ) : null}
+      </div>
+
+      {/* Footer — full-width abajo de todo */}
+      <div className="text-center text-xs text-gray-400 py-4">
+        ServicioLocalSTS © {new Date().getFullYear()}
       </div>
 
     </div>
