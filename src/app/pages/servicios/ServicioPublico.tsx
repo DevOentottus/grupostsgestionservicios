@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { serviciosApi, seguimientoApi, evidenciasPublicApi, ofertasApi } from "@/api/client.js";
@@ -211,6 +211,15 @@ export function ServicioPublicoPage() {
       setEvidencias(evidenciasQuery.data);
     }
   }, [evidenciasQuery.data]);
+
+  // Lookup tarea_id → titulo para mostrar en cada evidencia
+  const tareasMap = useMemo(() => {
+    const map = new Map<number, string>();
+    if (data?.tareas) {
+      data.tareas.forEach((t) => map.set(t.id, t.titulo));
+    }
+    return map;
+  }, [data?.tareas]);
 
   // -- Ofertas query (compartido entre barra y carrusel) --
   const ofertasQuery = useQuery({
@@ -502,6 +511,15 @@ export function ServicioPublicoPage() {
                             {ev.estado === 'aprobado' ? 'Aprobado' : ev.estado === 'rechazado' ? 'Rechazado' : 'Pendiente'}
                           </span>
                         </div>
+
+                        {/* Tarea name */}
+                        {tareasMap.get(ev.tarea_id) && (
+                          <div style={{ padding: '6px 12px 0' }}>
+                            <p style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>
+                              <span style={{ fontWeight: 500 }}>Tarea:</span> {tareasMap.get(ev.tarea_id)}
+                            </p>
+                          </div>
+                        )}
 
                         {/* Approval reason */}
                         {ev.estado === 'aprobado' && approvalReason && (
