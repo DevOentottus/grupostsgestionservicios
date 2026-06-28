@@ -134,7 +134,10 @@ export function ManagerDesempenoPage() {
           nombres: [u.nombres, u.apellidos].filter(Boolean).join(" "),
         }));
     }
-    return miArea?.colaboradores || [];
+    return (miArea?.colaboradores || []).map((c) => ({
+      usuario_id: c.usuario_id,
+      nombres: [c.nombres, c.apellidos].filter(Boolean).join(" "),
+    }));
   }, [esSupervisor, todosUsuarios, miArea]);
 
   const { data, isLoading, isError } = useDesempeno(
