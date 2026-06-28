@@ -507,7 +507,7 @@ export function ServicioPublicoPage() {
                         {ev.estado === 'aprobado' && approvalReason && (
                           <div style={{ padding: '8px 12px 0' }}>
                             <p style={{ fontSize: '12px', color: '#166534', lineHeight: '1.4' }}>
-                              <span style={{ fontWeight: 500 }}>✓</span> {approvalReason}
+                              <span style={{ fontWeight: 500 }}>✓ Aprobado por encargado:</span> {approvalReason}
                             </p>
                           </div>
                         )}
