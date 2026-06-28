@@ -108,13 +108,13 @@ export function MiDesempenoPage() {
 
   // Indicadores desde dashboard
   const kpi = dashboard?.kpi;
-  const tieneDashboard = !dashError && !!kpi;
+  const tieneDashboard = !!kpi;
 
-  // Calcular productividad personal
+  // Productividad personal (servicios completados en el período)
   const productividadPersonal = useMemo(() => {
-    if (!misDatos?.servicios_completados || !miArea?.colaboradores?.length) return null;
+    if (misDatos?.servicios_completados == null) return null;
     return misDatos.servicios_completados;
-  }, [misDatos, miArea]);
+  }, [misDatos]);
 
   return (
     <div className="space-y-6">
@@ -264,7 +264,7 @@ export function MiDesempenoPage() {
               <IndicadorCard
                 numero="2.1"
                 titulo="Tiempo promedio de resolución"
-                valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min ?? (tieneDashboard ? "—" : "—")}
+                valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min ?? "—"}
                 unidad="min"
                 descripcion="Promedio del área en el período actual"
                 color="bg-orange-600"
