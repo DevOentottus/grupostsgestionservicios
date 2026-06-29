@@ -722,7 +722,7 @@ export function ServicioDetailPage() {
             </div>
           )}
 
-          {/* Progress Bar - Figma gradient style */}
+          {/* Progress Bar - color from HEADER_BAR_COLOR (matches top border) */}
           <div className="mt-4">
             <div className="flex justify-between text-sm mb-1.5">
               <span className="text-gray-600 font-medium">Progreso</span>
@@ -732,7 +732,7 @@ export function ServicioDetailPage() {
               <div
                 className={cn(
                   "h-3 rounded-full transition-all duration-700",
-                  progresoPct === 100 ? "bg-gradient-to-r from-green-400 to-green-600" : "bg-gradient-to-r from-blue-500 to-blue-700",
+                  HEADER_BAR_COLOR[servicio.estado],
                 )}
                 style={{ width: `${progresoPct}%` }}
               />
