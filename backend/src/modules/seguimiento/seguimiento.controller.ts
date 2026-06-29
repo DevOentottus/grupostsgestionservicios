@@ -646,5 +646,304 @@ export async function seguimientoController(app: FastifyInstance) {
       },
     };
   });
+
+  // ----------------------------------
+  // REPORTE CLIENTE PDF
+  // ----------------------------------
+
+  // GET /api/public/servicios/:codigo/reporte
+  app.get("/api/public/servicios/:codigo/reporte", async (request, reply) => {
+    const { codigo } = request.params as { codigo: string };
+
+    const { data: servicios } = await supabase
+      .from("servicios")
+      .select("*, clientes!servicios_cliente_id_fkey(cliente_nombres, cliente_correo)")
+      .eq("servicio_codigo", codigo)
+      .limit(1);
+
+    const servicio = servicios?.[0];
+    if (!servicio) throw new NotFoundError("Servicio no encontrado");
+
+    const { data: tareasList } = await supabase
+      .from("tareas")
+      .select("*")
+      .eq("servicio_id", servicio.servicio_id)
+      .order("tarea_orden", { ascending: true });
+
+    const totalTareas = tareasList?.length || 0;
+    const completadasCount = tareasList?.filter((t: any) => t.tarea_estado === "completado").length || 0;
+    const progresoPorcentaje = totalTareas > 0 ? Math.round((completadasCount / totalTareas) * 100) : 0;
+
+    // Colaborador
+    let colaboradorNombre = "—";
+    if (servicio.tecnico_principal_id) {
+      const { data: colab } = await supabase
+        .from("usuarios")
+        .select("usuario_nombres, usuario_apellido_paterno")
+        .eq("usuario_id", servicio.tecnico_principal_id)
+        .limit(1);
+      if (colab?.[0]) {
+        colaboradorNombre = `${colab[0].usuario_nombres || ""} ${colab[0].usuario_apellido_paterno || ""}`.trim();
+      }
+    }
+
+    // Cliente
+    const clienteNombre = [servicio.cliente_nombres, servicio.cliente_apellido_paterno, servicio.cliente_apellido_materno].filter(Boolean).join(" ")
+      || servicio.clientes?.cliente_nombres
+      || "—";
+
+    // Área
+    let areaNombre = "—";
+    if (servicio.area_id) {
+      const { data: areas } = await supabase
+        .from("areas")
+        .select("area_nombre")
+        .eq("area_id", servicio.area_id)
+        .limit(1);
+      areaNombre = areas?.[0]?.area_nombre || "—";
+    }
+
+    // Traducir estado
+    const estadoLabel: Record<string, string> = {
+      pendiente: "Pendiente",
+      en_progreso: "En Progreso",
+      completado: "Completado",
+      bloqueado: "Bloqueado",
+      cancelado: "Cancelado",
+    };
+
+    // ---- GENERAR PDF ----
+    const { PDFDocument, rgb, StandardFonts } = await import("pdf-lib");
+    const pdfDoc = await PDFDocument.create();
+    const pageW = 595, pageH = 842, mg = 45;
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const gray = rgb(0.45, 0.45, 0.45);
+    const lightGray = rgb(0.65, 0.65, 0.65);
+    const darkGray = rgb(0.3, 0.3, 0.3);
+    const white = rgb(1, 1, 1);
+    const black = rgb(0, 0, 0);
+    const blue = rgb(0.12, 0.24, 0.6);
+    const green = rgb(0.15, 0.6, 0.25);
+    const orange = rgb(0.9, 0.6, 0.1);
+    const red = rgb(0.8, 0.2, 0.15);
+
+    let page = pdfDoc.addPage([pageW, pageH]);
+    let y = pageH - mg;
+
+    function addPageIfNeeded(needed: number) {
+      if (y - needed < mg + 30) {
+        page = pdfDoc.addPage([pageW, pageH]);
+        y = pageH - mg;
+      }
+    }
+
+    function drawText(text: string, opts: { x?: number; size?: number; color?: any; bold?: boolean } = {}) {
+      const f = opts.bold ? boldFont : font;
+      const s = opts.size || 10;
+      page.drawText(text, { x: opts.x ?? mg, y: y - s, size: s, font: f, color: opts.color ?? black });
+      y -= s * 1.5;
+    }
+
+    // ─── HEADER ───
+    addPageIfNeeded(80);
+
+    // Logo / Title bar
+    page.drawRectangle({ x: 0, y: y - 40, width: pageW, height: 40, color: blue });
+    page.drawText("ServicioLocal STS", { x: mg, y: y - 28, size: 14, font: boldFont, color: white });
+    page.drawText("Reporte de Seguimiento", { x: mg, y: y - 28, size: 10, font: font, color: rgb(0.8, 0.85, 1) });
+    const fechaGen = new Date().toLocaleDateString("es-PE") + " " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false });
+    page.drawText(fechaGen, {
+      x: pageW - mg - font.widthOfTextAtSize(fechaGen, 8),
+      y: y - 16,
+      size: 8,
+      font,
+      color: rgb(0.8, 0.85, 1),
+    });
+    y -= 50;
+
+    // ─── ESTADO BADGE ───
+    addPageIfNeeded(40);
+    const estadoStr = estadoLabel[servicio.servicio_estado] || servicio.servicio_estado;
+    const estadoColor = servicio.servicio_estado === "completado" ? green
+      : servicio.servicio_estado === "en_progreso" ? blue
+      : servicio.servicio_estado === "pendiente" ? orange
+      : servicio.servicio_estado === "bloqueado" ? red
+      : gray;
+    const badgeW = boldFont.widthOfTextAtSize(estadoStr.toUpperCase(), 10) + 20;
+    page.drawRectangle({ x: (pageW - badgeW) / 2, y: y - 22, width: badgeW, height: 22, color: estadoColor });
+    page.drawText(estadoStr.toUpperCase(), {
+      x: (pageW - boldFont.widthOfTextAtSize(estadoStr.toUpperCase(), 10)) / 2,
+      y: y - 17,
+      size: 10,
+      font: boldFont,
+      color: white,
+    });
+    y -= 36;
+
+    // ─── DATOS DEL SERVICIO ───
+    addPageIfNeeded(140);
+    page.drawText("Datos del Servicio", { x: mg, y: y - 11, size: 11, font: boldFont, color: blue });
+    y -= 18;
+
+    // Código
+    page.drawText("Código:", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
+    const codigoStr = servicio.servicio_codigo || `SRV${servicio.servicio_id}`;
+    page.drawText(codigoStr, { x: mg + 58, y: y - 10, size: 10, font: font, color: darkGray });
+    y -= 16;
+
+    // Título
+    page.drawText("Servicio:", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
+    page.drawText(servicio.servicio_nombre || "—", { x: mg + 58, y: y - 10, size: 10, font: font, color: darkGray });
+    y -= 16;
+
+    // Cliente
+    page.drawText("Cliente:", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
+    page.drawText(clienteNombre, { x: mg + 58, y: y - 10, size: 10, font: font, color: darkGray });
+    y -= 16;
+
+    // Área
+    page.drawText("Área:", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
+    page.drawText(areaNombre, { x: mg + 58, y: y - 10, size: 10, font: font, color: darkGray });
+    y -= 16;
+
+    // Técnico
+    page.drawText("Técnico:", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
+    page.drawText(colaboradorNombre, { x: mg + 58, y: y - 10, size: 10, font: font, color: darkGray });
+    y -= 16;
+
+    // Descripción
+    if (servicio.servicio_descripcion) {
+      addPageIfNeeded(30);
+      page.drawText("Descripción:", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
+      y -= 14;
+      // Truncar si es muy larga
+      const maxW = pageW - 2 * mg;
+      const descLines = Math.min(3, Math.ceil(servicio.servicio_descripcion.length / 80));
+      const descH = descLines * 14;
+      addPageIfNeeded(descH);
+      page.drawText(servicio.servicio_descripcion.substring(0, 240), {
+        x: mg + 5, y: y - 8, size: 9, font: font, color: darkGray,
+      });
+      y -= descH + 6;
+    }
+
+    y -= 6;
+
+    // ─── PROGRESO ───
+    addPageIfNeeded(60);
+    page.drawText("Progreso", { x: mg, y: y - 11, size: 11, font: boldFont, color: blue });
+    y -= 18;
+
+    // Barra de progreso visual
+    const barW = pageW - 2 * mg;
+    const barH = 18;
+    addPageIfNeeded(barH + 10);
+    // Fondo
+    page.drawRectangle({ x: mg, y: y - barH, width: barW, height: barH, color: rgb(0.92, 0.92, 0.94) });
+    // Relleno
+    const pctW = Math.max(barW * (progresoPorcentaje / 100), progresoPorcentaje > 0 ? 3 : 0);
+    const barColor = progresoPorcentaje === 100 ? green : blue;
+    page.drawRectangle({ x: mg, y: y - barH, width: pctW, height: barH, color: barColor });
+    // Texto
+    const pctText = `${progresoPorcentaje}%`;
+    page.drawText(pctText, {
+      x: (pageW - boldFont.widthOfTextAtSize(pctText, 10)) / 2,
+      y: y - barH + 4,
+      size: 10,
+      font: boldFont,
+      color: progresoPorcentaje > 50 ? white : black,
+    });
+    y -= barH + 4;
+
+    // Contador
+    const countText = `${completadasCount} de ${totalTareas} tareas completadas`;
+    page.drawText(countText, { x: mg, y: y - 7, size: 8, font: font, color: gray });
+    y -= 14;
+
+    // ─── TAREAS ───
+    const tareas = tareasList || [];
+    addPageIfNeeded(30);
+    page.drawText("Tareas", { x: mg, y: y - 11, size: 11, font: boldFont, color: blue });
+    y -= 18;
+
+    if (tareas.length === 0) {
+      drawText("Sin tareas registradas.", { size: 9, color: lightGray });
+    } else {
+      const colX = [mg, 360, 500];
+      const rowH = 18;
+      const headerH = 20;
+
+      addPageIfNeeded(headerH + tareas.length * rowH + 20);
+
+      // Header
+      page.drawRectangle({ x: mg, y: y - headerH, width: pageW - 2 * mg, height: headerH, color: blue });
+      page.drawText("Tarea", { x: colX[0] + 6, y: y - headerH + 5, size: 9, font: boldFont, color: white });
+      page.drawText("Estado", { x: colX[1] + 6, y: y - headerH + 5, size: 9, font: boldFont, color: white });
+      page.drawText("Tiempo", { x: colX[2] + 6, y: y - headerH + 5, size: 9, font: boldFont, color: white });
+      y -= headerH + 4;
+
+      for (let i = 0; i < tareas.length; i++) {
+        const t = tareas[i];
+        addPageIfNeeded(rowH + 4);
+        if (i % 2 === 0) {
+          page.drawRectangle({ x: mg, y: y - rowH, width: pageW - 2 * mg, height: rowH, color: rgb(0.97, 0.97, 0.98) });
+        }
+
+        // Nombre de tarea (truncado)
+        const nombre = t.tarea_titulo || "—";
+        const maxNombreW = colX[1] - colX[0] - 16;
+        const truncated = font.widthOfTextAtSize(nombre, 9) > maxNombreW
+          ? nombre.substring(0, 35) + "..."
+          : nombre;
+        page.drawText(truncated, { x: colX[0] + 6, y: y - rowH + 4, size: 9, font: font, color: black });
+
+        // Estado
+        const tEstado = t.tarea_estado || "pendiente";
+        const tEstadoColor = tEstado === "completado" ? green
+          : tEstado === "en_progreso" ? blue
+          : rgb(0.7, 0.7, 0.7);
+        const estadoTxt = tEstado === "completado" ? "✓ Completado"
+          : tEstado === "en_progreso" ? "En Progreso"
+          : "Pendiente";
+        page.drawText(estadoTxt, { x: colX[1] + 6, y: y - rowH + 4, size: 9, font: boldFont, color: tEstadoColor });
+
+        // Tiempo
+        const tiempo = t.tarea_tiempo_real
+          ? `${Math.floor(t.tarea_tiempo_real / 60)}h ${t.tarea_tiempo_real % 60}m`
+          : "—";
+        page.drawText(tiempo, { x: colX[2] + 6, y: y - rowH + 4, size: 9, font: font, color: darkGray });
+
+        y -= rowH;
+      }
+      y -= 10;
+    }
+
+    // ─── FOOTER ───
+    addPageIfNeeded(40);
+    page.drawRectangle({ x: 0, y: y - 30, width: pageW, height: 30, color: rgb(0.95, 0.95, 0.97) });
+    const footer = "ServicioLocal STS — Reporte generado para el cliente";
+    page.drawText(footer, {
+      x: (pageW - font.widthOfTextAtSize(footer, 7)) / 2,
+      y: y - 12,
+      size: 7,
+      font,
+      color: lightGray,
+    });
+    const footer2 = "Si tenés dudas, contactanos a través de nuestro portal de servicio.";
+    page.drawText(footer2, {
+      x: (pageW - font.widthOfTextAtSize(footer2, 7)) / 2,
+      y: y - 21,
+      size: 7,
+      font,
+      color: lightGray,
+    });
+
+    // ─── FINALIZAR ───
+    const pdfBytes = await pdfDoc.save();
+    reply.header("Content-Type", "application/pdf");
+    reply.header("Content-Disposition", `attachment; filename="seguimiento-${codigoStr}.pdf"`);
+    reply.send(Buffer.from(pdfBytes));
+  });
 }
 
