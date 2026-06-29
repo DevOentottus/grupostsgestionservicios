@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth.js";
 import { cn } from "@/app/lib/utils";
 import { HelpDrawer } from "@/app/help/HelpDrawer";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
+import { useNotificaciones, useNotificacionesNoLeidas, useMarcarTodasLeidas } from "@/api/queries/useNotificaciones.js";
 import {
   LayoutDashboard,
   Wrench,
@@ -20,6 +21,7 @@ import {
   HelpCircle,
   ChevronRight,
   Home,
+  Bell,
 } from "lucide-react";
 
 interface NavItem {
@@ -116,7 +118,13 @@ export default function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  const { data: notificaciones } = useNotificaciones();
+  const { data: noLeidas } = useNotificacionesNoLeidas();
+  const marcarTodas = useMarcarTodasLeidas();
 
   const handleLogout = () => {
     setUserMenuOpen(false);
@@ -160,6 +168,9 @@ export default function Layout() {
     function handleClickOutside(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -352,6 +363,61 @@ export default function Layout() {
 
           {/* Right actions */}
           <div className="ml-auto flex items-center gap-1">
+            {/* Notificaciones bell */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setNotifOpen(!notifOpen)}
+                className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Notificaciones"
+              >
+                <Bell className="w-5 h-5 text-gray-500" />
+                {(noLeidas ?? 0) > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {noLeidas! > 9 ? "9+" : noLeidas}
+                  </span>
+                )}
+              </button>
+
+              {/* Notificaciones dropdown */}
+              {notifOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 flex flex-col">
+                  <div className="p-3 border-b border-gray-100 flex items-center justify-between shrink-0">
+                    <p className="text-sm font-semibold text-gray-900">Notificaciones</p>
+                    {(noLeidas ?? 0) > 0 && (
+                      <button
+                        onClick={() => marcarTodas.mutate()}
+                        className="text-xs text-blue-600 hover:text-blue-800 transition"
+                      >
+                        Marcar todas leídas
+                      </button>
+                    )}
+                  </div>
+                  <div className="overflow-y-auto flex-1">
+                    {!notificaciones || notificaciones.length === 0 ? (
+                      <div className="py-8 text-center text-xs text-gray-400">
+                        Sin notificaciones
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-50">
+                        {notificaciones.slice(0, 20).map((n) => (
+                          <div
+                            key={n.id}
+                            className={`px-3 py-2.5 hover:bg-gray-50 transition cursor-pointer ${!n.leida ? "bg-blue-50/40" : ""}`}
+                          >
+                            <p className="text-xs font-medium text-gray-800">{n.titulo}</p>
+                            <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2">{n.mensaje}</p>
+                            <p className="text-[10px] text-gray-400 mt-1">
+                              {new Date(n.created_at).toLocaleString("es-AR")}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* User avatar with dropdown */}
             <div className="relative" ref={userMenuRef}>
               <button

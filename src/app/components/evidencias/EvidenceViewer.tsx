@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { cn } from "@/app/lib/utils";
 import {
   Image, FileVideo, MessageCircle, Send, CheckCircle2,
@@ -21,6 +21,8 @@ interface EvidenceViewerProps {
   tareaNombres?: Record<number, string>;
   /** Rol del usuario autenticado (admin/encargado/colaborador). Solo admin/encargado ven botones aprobar/rechazar */
   userRol?: string;
+  /** ID del técnico asignado al servicio, para notificarle cuando su evidencia es aprobada/rechazada */
+  tecnicoId?: number;
 }
 
 export function EvidenceViewer({
@@ -33,6 +35,7 @@ export function EvidenceViewer({
   onComentarioAdded,
   tareaNombres,
   userRol,
+  tecnicoId,
 }: EvidenceViewerProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [comentarios, setComentarios] = useState<Record<number, string>>({});
@@ -47,6 +50,15 @@ export function EvidenceViewer({
   const cambiarEstado = useCambiarEstadoEvidencia();
   const cambiarMostrarCliente = useCambiarMostrarCliente();
   const uploadMutation = useUploadEvidencia();
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    setIsDesktop(mq.matches);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   // Agrupar evidencias por tarea_id
   const grouped = useMemo(() => {
@@ -203,7 +215,7 @@ export function EvidenceViewer({
                 </button>
                 <button
                   onClick={() => {
-                    cambiarEstado.mutate({ evidenciaId: ev.id, estado: "rechazado", motivo: motivoRechazo.trim() });
+                    cambiarEstado.mutate({ evidenciaId: ev.id, estado: "rechazado", motivo: motivoRechazo.trim(), servicio_id: ev.servicio_id, tarea_id: ev.tarea_id, tarea_nombre: tareaNombres?.[ev.tarea_id] || `Tarea #${ev.tarea_id}`, tecnico_id: tecnicoId });
                     setRechazandoId(null);
                     setMotivoRechazo("");
                   }}
@@ -239,7 +251,7 @@ export function EvidenceViewer({
                 </button>
                 <button
                   onClick={() => {
-                    cambiarEstado.mutate({ evidenciaId: ev.id, estado: "aprobado", motivo: motivoAprobacion.trim() });
+                    cambiarEstado.mutate({ evidenciaId: ev.id, estado: "aprobado", motivo: motivoAprobacion.trim(), servicio_id: ev.servicio_id, tarea_id: ev.tarea_id, tarea_nombre: tareaNombres?.[ev.tarea_id] || `Tarea #${ev.tarea_id}`, tecnico_id: tecnicoId });
                     setAprobandoId(null);
                     setMotivoAprobacion("");
                   }}
@@ -421,7 +433,7 @@ export function EvidenceViewer({
             </div>
             <div className="flex flex-wrap gap-3 pl-2 border-l-2 border-slate-100">
               {evs.map((ev) => (
-                <div key={ev.id} className="w-[calc(50%-6px)] lg:w-[calc(25%-9px)] min-w-0">
+                <div key={ev.id} style={{ width: isDesktop ? 'calc(25% - 9px)' : 'calc(50% - 6px)', minWidth: 0 }}>
                   {renderEvidenceCard(ev)}
                 </div>
               ))}

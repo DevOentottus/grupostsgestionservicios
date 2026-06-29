@@ -320,6 +320,20 @@ export const managerApi = {
   clientes: () => api.get("/manager/clientes"),
 };
 
+// -- Notificaciones API --
+export const notificacionesApi = {
+  enviar: (data: { usuario_id: number; titulo: string; mensaje: string; tipo?: string; referencia_id?: number }) =>
+    api.post("/notificaciones/enviar", data),
+  listar: (params?: { page?: number; limit?: number }) =>
+    api.get("/notificaciones", { params }),
+  marcarLeida: (id: number) =>
+    api.patch(`/notificaciones/${id}/leer`, {}),
+  marcarTodasLeidas: () =>
+    api.patch("/notificaciones/leer-todas", {}),
+  noLeidas: () =>
+    api.get("/notificaciones/no-leidas"),
+};
+
 // -- Ofertas API --
 export const ofertasApi = {
   listar: () => api.get("/ofertas"),

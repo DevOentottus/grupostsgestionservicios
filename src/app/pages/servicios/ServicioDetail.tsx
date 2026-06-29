@@ -151,7 +151,7 @@ const ESTADO_BAR_STYLE: Record<string, string> = {
 };
 
 // -- Evidencias Tab Component --
-function EvidenciasTabContent({ servicioId, tareas, userRol }: { servicioId: number; tareas: Tarea[]; userRol?: string }) {
+function EvidenciasTabContent({ servicioId, tareas, userRol, tecnicoId }: { servicioId: number; tareas: Tarea[]; userRol?: string; tecnicoId?: number }) {
   const { data: evidencias, isLoading } = useEvidencias(servicioId);
   const [tareaSeleccionada, setTareaSeleccionada] = useState<number | null>(null);
 
@@ -214,6 +214,7 @@ function EvidenciasTabContent({ servicioId, tareas, userRol }: { servicioId: num
             showStatus
             tareaNombres={tareaNombres}
             userRol={userRol}
+            tecnicoId={tecnicoId}
           />
         )}
       </div>
@@ -235,6 +236,7 @@ export function ServicioDetailPage() {
   const esAsignado = user?.id === servicio?.colaborador_id;
   const esEncargado = user?.rol === "encargado";
   const puedeModificar = esAdmin || esAsignado || esEncargado;
+  const soloAsignado = esAdmin || esAsignado;
 
   const editarServicio = useEditarServicio();
   const [editando, setEditando] = useState<"titulo" | "descripcion" | null>(null);
@@ -506,12 +508,12 @@ export function ServicioDetailPage() {
             );
             return (
               <>
-                <button onClick={() => { setBloqueoMotivo(""); setBloqueoDialogOpen(true); }} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Bloquear"} className={cn(puedeModificar ? btnEnabled : btnDisabled)}>
-                  <Lock className={cn("w-3.5 h-3.5 shrink-0", !puedeModificar && "text-white/30")} />
+                <button onClick={() => { setBloqueoMotivo(""); setBloqueoDialogOpen(true); }} disabled={!soloAsignado} title={!soloAsignado ? "Solo el técnico asignado puede bloquear" : "Bloquear"} className={cn(soloAsignado ? btnEnabled : btnDisabled)}>
+                  <Lock className={cn("w-3.5 h-3.5 shrink-0", !soloAsignado && "text-white/30")} />
                   <span className="hidden md:inline">Bloquear</span>
                 </button>
-                <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })} disabled={!puedeModificar} title={!puedeModificar ? "Solo el técnico asignado puede modificar" : "Cancelar"} className={cn(puedeModificar ? btnEnabled : btnDisabled)}>
-                  <X className={cn("w-3.5 h-3.5 shrink-0", !puedeModificar && "text-white/30")} />
+                <button onClick={() => cambiarEstado.mutate({ id: servicioId, estado: "cancelado" })} disabled={!soloAsignado} title={!soloAsignado ? "Solo el técnico asignado puede cancelar" : "Cancelar"} className={cn(soloAsignado ? btnEnabled : btnDisabled)}>
+                  <X className={cn("w-3.5 h-3.5 shrink-0", !soloAsignado && "text-white/30")} />
                   <span className="hidden md:inline">Cancelar</span>
                 </button>
               </>
@@ -957,11 +959,11 @@ export function ServicioDetailPage() {
                             }
                           }
                         }}
-                        disabled={tarea.completada || prevIncompleta || !puedeModificar || isBloqueado || isCancelado}
+                        disabled={tarea.completada || prevIncompleta || !soloAsignado || isBloqueado || isCancelado}
                         title={
                           tarea.completada ? "Tarea completada" :
                           prevIncompleta ? "Completá la tarea anterior primero" :
-                          !puedeModificar ? "Solo el técnico asignado puede completar tareas" :
+                          !soloAsignado ? "Solo el técnico asignado puede completar tareas" :
                           isBloqueado ? "Servicio bloqueado" :
                           isCancelado ? "Servicio cancelado" : undefined
                         }
@@ -969,13 +971,13 @@ export function ServicioDetailPage() {
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition",
                           tarea.completada
                             ? "bg-green-500 border-green-500 cursor-not-allowed"
-                            : prevIncompleta || !puedeModificar || isBloqueado || isCancelado
+                            : prevIncompleta || !soloAsignado || isBloqueado || isCancelado
                             ? "border-gray-200 bg-gray-50 cursor-not-allowed"
                             : "border-gray-300 hover:border-blue-500",
                         )}
                       >
                         {tarea.completada && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
-                        {!tarea.completada && !puedeModificar && <Lock className="w-2.5 h-2.5 text-gray-300" />}
+                        {!tarea.completada && !soloAsignado && <Lock className="w-2.5 h-2.5 text-gray-300" />}
                         {!tarea.completada && isBloqueado && <Lock className="w-2.5 h-2.5 text-red-300" />}
                         {!tarea.completada && isCancelado && <X className="w-2.5 h-2.5 text-gray-400" />}
                       </button>
@@ -1065,7 +1067,7 @@ export function ServicioDetailPage() {
 
         {/* EVIDENCIAS TAB */}
         {activeTab === "evidencias" && (
-          <EvidenciasTabContent servicioId={servicioId} tareas={tareas || []} userRol={user?.rol} />
+          <EvidenciasTabContent servicioId={servicioId} tareas={tareas || []} userRol={user?.rol} tecnicoId={servicio?.colaborador_id ?? undefined} />
         )}
       </div>
 

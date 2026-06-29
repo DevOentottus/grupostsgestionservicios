@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { evidenciasApi } from "@/api/client.js";
+import { evidenciasApi, notificacionesApi } from "@/api/client.js";
 import type { Evidencia, EvidenciaComentario } from "@shared/index.js";
 
 export function useEvidencias(servicioId: number) {
@@ -38,10 +38,24 @@ export function useAgregarComentarioEvidencia() {
 export function useCambiarEstadoEvidencia() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ evidenciaId, estado, motivo }: { evidenciaId: number; estado: string; motivo?: string }) =>
+    mutationFn: ({ evidenciaId, estado, motivo }: { evidenciaId: number; estado: string; motivo?: string; servicio_id?: number; tarea_id?: number; tarea_nombre?: string; tecnico_id?: number }) =>
       evidenciasApi.cambiarEstado(evidenciaId, estado, motivo),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: ["evidencias"] });
+
+      // Notificar al técnico asignado si se aprobó o rechazó
+      if ((variables.estado === "aprobado" || variables.estado === "rechazado") && variables.tecnico_id && variables.tarea_nombre) {
+        const accion = variables.estado === "aprobado" ? "aprobada" : "rechazada";
+        notificacionesApi.enviar({
+          usuario_id: variables.tecnico_id,
+          titulo: `Evidencia ${accion}`,
+          mensaje: `Tu evidencia de "${variables.tarea_nombre}" fue ${accion}${variables.motivo ? `: ${variables.motivo}` : ""}`,
+          tipo: "evidencia",
+          referencia_id: variables.evidenciaId,
+        }).catch(() => {
+          // Error silencioso — la notificación no debe bloquear el flujo
+        });
+      }
     },
   });
 }
