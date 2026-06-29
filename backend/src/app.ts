@@ -23,6 +23,7 @@ import { evidenciasController } from "@/modules/evidencias/evidencias.controller
 import { audioController } from "@/modules/audio/audio.controller.js";
 import { pushController } from "@/modules/push/push.controller.js";
 import { ofertasController } from "@/modules/ofertas/ofertas.controller.js";
+import { notificacionesController } from "@/modules/notificaciones/notificaciones.controller.js";
 
 export async function buildApp() {
   const app = Fastify({ logger: config.isDev });
@@ -69,6 +70,7 @@ export async function buildApp() {
   await app.register(audioController);
   await app.register(pushController);
   await app.register(ofertasController);
+  await app.register(notificacionesController);
 
   return app;
 }

@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 import {
   Building2, Users, Wrench, Trophy, Star,
-  ArrowUpDown,
+  ArrowUpDown, ArrowRight,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { PieChartCard } from "@/app/components/charts/PieChart.js";
@@ -394,6 +394,11 @@ export function MiAreaPage() {
                     <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
                       <Users className="w-3 h-3" />
                       {s.tecnico?.nombres || <span className="italic">Sin técnico</span>}
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                      <span className="flex items-center gap-1 text-xs text-blue-700 font-semibold">
+                        Ver detalle <ArrowRight className="w-3 h-3" />
+                      </span>
                     </div>
                   </div>
                 </div>

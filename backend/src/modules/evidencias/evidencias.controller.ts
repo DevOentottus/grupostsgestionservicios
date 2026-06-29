@@ -130,6 +130,59 @@ export async function evidenciasController(app: FastifyInstance) {
         tipo: input.tipo,
       });
 
+      // ─── Notificación: nueva evidencia ───
+      try {
+        const { data: svc } = await supabase
+          .from("servicios")
+          .select("servicio_nombre, area_id")
+          .eq("servicio_id", input.servicio_id)
+          .limit(1);
+
+        const servicio = svc?.[0];
+        if (servicio?.area_id) {
+          // Get area encargado
+          const { data: areaRows } = await supabase
+            .from("areas")
+            .select("area_encargado_id")
+            .eq("area_id", servicio.area_id)
+            .limit(1);
+          const encargadoId = areaRows?.[0]?.area_encargado_id;
+
+          // Get area collaborators
+          const { data: colabRows } = await supabase
+            .from("areacolaboradores")
+            .select("colaborador_id")
+            .eq("area_id", servicio.area_id);
+
+          // Combine user IDs (add assigned technician too via tecnico_principal_id)
+          // Note: tecnico_principal_id is already in servicios if assigned
+          const userIds = new Set<number>();
+          if (encargadoId) userIds.add(encargadoId);
+          for (const c of colabRows || []) userIds.add(c.colaborador_id);
+
+          // Remove the uploader
+          userIds.delete(user.user_id);
+
+          // Insert one notification per user
+          const titulo = "Nueva evidencia";
+          const mensaje = `Se ha cargado una nueva evidencia en ${servicio.servicio_nombre}`;
+          const now = new Date().toISOString();
+
+          for (const uid of userIds) {
+            await supabase.from("notificaciones").insert({
+              usuario_id: uid,
+              titulo,
+              mensaje,
+              tipo: "evidencia",
+              referencia_id: input.servicio_id,
+              created_at: now,
+            });
+          }
+        }
+      } catch {
+        // No bloquear el upload si falla la notificación
+      }
+
       return { data: mapEvidencia(rows[0]) };
     }
   );
