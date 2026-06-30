@@ -29,9 +29,8 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function IndicadorCard({
-  numero, titulo, valor, unidad, descripcion, color, icon: Icon,
+  titulo, valor, unidad, descripcion, color, icon: Icon,
 }: {
-  numero: string;
   titulo: string;
   valor: string | number;
   unidad: string;
@@ -41,12 +40,9 @@ function IndicadorCard({
 }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <div className={`w-7 h-7 rounded-lg ${color} flex items-center justify-center`}>
-            <Icon className="w-3.5 h-3.5 text-white" />
-          </div>
-          <span className="text-[10px] font-mono font-bold text-slate-400">{numero}</span>
+      <div className="flex items-center gap-2 mb-2">
+        <div className={`w-7 h-7 rounded-lg ${color} flex items-center justify-center`}>
+          <Icon className="w-3.5 h-3.5 text-white" />
         </div>
       </div>
       <p className="text-[11px] text-slate-500 mb-1 leading-tight">{titulo}</p>
@@ -219,7 +215,6 @@ export function MiDesempenoPage() {
             {tieneDashboard ? (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <IndicadorCard
-                  numero="1.1"
                   titulo="Servicios con 100% tareas registradas"
                   valor={kpi!.servicios_con_tareas_pct ?? 0}
                   unidad="%"
@@ -228,7 +223,6 @@ export function MiDesempenoPage() {
                   icon={FileText}
                 />
                 <IndicadorCard
-                  numero="1.2"
                   titulo="Tareas documentadas (fecha/hora/responsable)"
                   valor={kpi!.registros_completos_pct ?? 0}
                   unidad="%"
@@ -237,7 +231,7 @@ export function MiDesempenoPage() {
                   icon={CheckCircle2}
                 />
                 <IndicadorCard
-                  numero="1.3"
+
                   titulo="Servicios con trazabilidad completa"
                   valor={kpi!.registros_completos_pct ?? 0}
                   unidad="%"
@@ -262,7 +256,7 @@ export function MiDesempenoPage() {
           >
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <IndicadorCard
-                numero="2.1"
+
                 titulo="Tiempo promedio de resolución"
                 valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min ?? "—"}
                 unidad="min"
@@ -271,7 +265,7 @@ export function MiDesempenoPage() {
                 icon={Clock}
               />
               <IndicadorCard
-                numero="2.2"
+
                 titulo="Servicios dentro del tiempo estimado"
                 valor={kpi?.completados_dentro_tiempo_pct ?? 0}
                 unidad="%"
@@ -280,7 +274,7 @@ export function MiDesempenoPage() {
                 icon={Target}
               />
               <IndicadorCard
-                numero="2.3"
+
                 titulo="Productividad personal"
                 valor={productividadPersonal ?? 0}
                 unidad="servicios"
@@ -301,7 +295,7 @@ export function MiDesempenoPage() {
             {tieneDashboard ? (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <IndicadorCard
-                  numero="3.1"
+
                   titulo="Servicios consultados por clientes"
                   valor={kpi!.servicios_consultados_pct ?? 0}
                   unidad="%"
@@ -310,7 +304,7 @@ export function MiDesempenoPage() {
                   icon={Eye}
                 />
                 <IndicadorCard
-                  numero="3.2"
+
                   titulo="Tiempo actualización → portal"
                   valor="< 1"
                   unidad="min"
@@ -319,7 +313,7 @@ export function MiDesempenoPage() {
                   icon={Clock}
                 />
                 <IndicadorCard
-                  numero="3.3"
+
                   titulo="Satisfacción con visibilidad"
                   valor={kpi!.satisfaccion_visibilidad ?? 0}
                   unidad="/5"
@@ -344,7 +338,7 @@ export function MiDesempenoPage() {
           >
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <IndicadorCard
-                numero="4.1"
+
                 titulo="Calificación promedio personal"
                 valor={misDatos.calificacion_promedio?.toFixed(1) ?? "—"}
                 unidad={misDatos.calificacion_promedio != null ? "/5" : ""}
@@ -353,7 +347,7 @@ export function MiDesempenoPage() {
                 icon={Star}
               />
               <IndicadorCard
-                numero="4.2"
+
                 titulo="Servicios evaluados por clientes"
                 valor={kpi?.servicios_evaluados_pct ?? 0}
                 unidad="%"
@@ -362,7 +356,7 @@ export function MiDesempenoPage() {
                 icon={CheckCircle2}
               />
               <IndicadorCard
-                numero="4.3"
+
                 titulo="Servicios con comentarios/sugerencias"
                 valor={kpi?.servicios_con_comentarios_pct ?? 0}
                 unidad="%"
