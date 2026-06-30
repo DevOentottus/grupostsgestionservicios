@@ -13,7 +13,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const destinoPorRol = (rol: string) =>
-    rol === "colaborador" || rol === "encargado" ? "/miarea" : "/dashboard";
+    rol === "colaborador" || rol === "encargado" ? "/midesempeno" : "/dashboard";
 
   useEffect(() => {
     if (isAuthenticated && user) {
