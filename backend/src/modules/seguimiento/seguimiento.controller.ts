@@ -965,7 +965,7 @@ export async function seguimientoController(app: FastifyInstance) {
 
     // Checkmark si está completo
     if (progresoPorcentaje === 100) {
-      const doneText = `✓ Completado — ${completadasCount} de ${totalTareas} tareas`;
+      const doneText = `Completado — ${completadasCount} de ${totalTareas} tareas`;
       page.drawText(doneText, { x: mg + 12, y: y - 7, size: 9, font: boldFont, color: green });
     } else {
       const countText = `${completadasCount} de ${totalTareas} tareas completadas`;
@@ -1041,7 +1041,7 @@ export async function seguimientoController(app: FastifyInstance) {
         switch (tEstado) {
           case "completado":
             tEstadoColor = green; tEstadoBg = greenLight;
-            estadoTxt = "✓ Completado";
+            estadoTxt = "Completado";
             break;
           case "en_progreso":
             tEstadoColor = blue; tEstadoBg = blueBg;
