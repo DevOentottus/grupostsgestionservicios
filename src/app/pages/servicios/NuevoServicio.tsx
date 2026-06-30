@@ -185,10 +185,10 @@ export function NuevoServicioPage() {
   // Resetear paso si se activa guía desde pasos avanzados
   const toggleGuiarEntrada = (v: boolean) => {
     setGuiarEntrada(v);
-    if (v) setPaso(1);
+    if (v) setPaso(3);
   };
 
-  const totalPasos = guiarEntrada ? 1 : 3; // guía activa: solo Servicio
+  const totalPasos = 3; // siempre 3 pasos en el stepper
 
   useEffect(() => {
     if (isColaborador && currentUser?.area_id) {
@@ -370,8 +370,7 @@ export function NuevoServicioPage() {
       </div>
 
       {/* ═══ INDICADOR DE PASOS ═══ */}
-      {!guiarEntrada && (
-        <div className="flex items-center justify-center gap-0">
+      <div className="flex items-center justify-center gap-0">
           {STEPS.map((step, idx) => {
             const StepIcon = step.icon;
             const activo = paso === step.id;
@@ -405,7 +404,6 @@ export function NuevoServicioPage() {
             );
           })}
         </div>
-      )}
 
       {/* ═══ FORMULARIO POR PASO ═══ */}
       <form
@@ -835,11 +833,11 @@ export function NuevoServicioPage() {
         <div className="flex items-center justify-between gap-3 pt-4 pb-8">
           <button
             type="button"
-            onClick={paso > 1 ? irAlAnterior : () => navigate("/servicios")}
+            onClick={guiarEntrada ? () => navigate("/servicios") : paso > 1 ? irAlAnterior : () => navigate("/servicios")}
             className="flex items-center gap-1.5 px-5 py-2.5 text-sm border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition"
           >
             <ChevronLeft className="w-4 h-4" />
-            {paso > 1 ? "Anterior" : "Cancelar"}
+            {guiarEntrada ? "Cancelar" : paso > 1 ? "Anterior" : "Cancelar"}
           </button>
 
           {paso < totalPasos ? (
