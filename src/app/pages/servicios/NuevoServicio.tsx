@@ -149,7 +149,6 @@ export function NuevoServicioPage() {
   const crearTarea = useCrearTarea();
 
   const isColaborador = currentUser?.rol === "colaborador";
-  const puedeToggleEvidencia = currentUser?.rol === "admin" || currentUser?.rol === "sistema";
 
   // -- Form state --
   const [form, setForm] = useState({
@@ -367,18 +366,7 @@ export function NuevoServicioPage() {
           label="Continuar guía de entrada"
           description="Al activar esta opción se ocultan los campos de Equipo y Accesorios, y se muestra la lista de tareas de la plantilla seleccionada."
         />
-        <CheckboxToggle
-          checked={permiteEvidencia}
-          onChange={puedeToggleEvidencia ? setPermiteEvidencia : undefined}
-          disabled={!puedeToggleEvidencia}
-          label="Mostrar evidencias del servicio"
-          description={
-            puedeToggleEvidencia
-              ? "Muestra las evidencias (fotos/videos) en la vista de detalle del servicio."
-              : "Solo administradores pueden desactivar esta opción."
-          }
-          icon={<Camera className="w-5 h-5 text-gray-300" />}
-        />
+
       </div>
 
       {/* ═══ INDICADOR DE PASOS ═══ */}

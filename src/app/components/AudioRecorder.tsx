@@ -170,6 +170,7 @@ export function AudioRecorder({
           <audio src={existingUrl} controls className="flex-1 h-10" preload="metadata" />
           {onAudioRemoved && !disabled && (
             <button
+              type="button"
               onClick={onAudioRemoved}
               className="p-2 rounded-lg hover:bg-red-100 text-red-500 transition shrink-0"
               title="Eliminar audio"
@@ -188,6 +189,7 @@ export function AudioRecorder({
         {label}
         {onAudioRemoved && existingUrl && !disabled && (
           <button
+            type="button"
             onClick={onAudioRemoved}
             className="ml-2 text-xs text-red-500 hover:text-red-700"
           >
@@ -211,6 +213,7 @@ export function AudioRecorder({
               />
             </div>
             <button
+              type="button"
               onClick={stopRecording}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition shrink-0"
             >
@@ -226,6 +229,7 @@ export function AudioRecorder({
             <audio src={audioUrl} controls className="w-full h-10" />
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={reRecord}
                 disabled={disabled}
                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition disabled:opacity-50"
@@ -234,6 +238,7 @@ export function AudioRecorder({
                 Regrabar
               </button>
               <button
+                type="button"
                 onClick={handleUpload}
                 disabled={uploading || disabled}
                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-900 text-white rounded-lg text-sm font-semibold hover:bg-blue-800 transition disabled:opacity-50"
@@ -257,6 +262,7 @@ export function AudioRecorder({
         {/* Botón inicial para empezar a grabar */}
         {!recording && !audioUrl && (
           <button
+            type="button"
             onClick={startRecording}
             disabled={disabled || permDenied}
             className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition

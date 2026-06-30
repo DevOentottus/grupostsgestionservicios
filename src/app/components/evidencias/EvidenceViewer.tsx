@@ -169,7 +169,7 @@ export function EvidenceViewer({
           )}
           <div className="absolute top-2 right-2 flex gap-1">
             {/* Mostrar al cliente — badge togglable cuando el usuario tiene permiso */}
-            {!readOnly && (userRol === "admin" || userRol === "sistema" || (userRol === "colaborador" && colaboradorPuedeEditar)) ? (
+            {!readOnly && (userRol === "admin" || userRol === "encargado" || userRol === "sistema" || (userRol === "colaborador" && colaboradorPuedeEditar)) ? (
               <label className="px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1 cursor-pointer select-none bg-sky-100 text-sky-700 hover:bg-sky-200 transition">
                 <input
                   type="checkbox"
