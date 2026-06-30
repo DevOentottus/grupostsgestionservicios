@@ -438,6 +438,7 @@ export default function Layout() {
                   <div className="p-3 border-b border-gray-100">
                     <p className="text-sm font-medium text-gray-900 truncate">{user?.nombres}</p>
                     <p className="text-xs text-gray-500 mt-1">{user?.email}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">@{user?.username}</p>
                     <div className="mt-1">
                       <RolBadge rol={user?.rol ?? ""} />
                     </div>

@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 import { useDashboard } from "@/api/queries/useDashboard.js";
 import {
-  TrendingUp, CheckCircle2, User, Star,
+  TrendingUp, CheckCircle2, Star,
   Clock, Target, Zap, BarChart3, Eye, MessageCircle, FileText,
 } from "lucide-react";
 
@@ -405,7 +405,7 @@ export function MiDesempenoPage() {
               <div className="px-5 py-4 border-b border-gray-100">
                 <h3 className="font-semibold text-slate-800 flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-slate-400" />
-                  Mis servicios asignados
+                  Servicios
                 </h3>
               </div>
               <div className="divide-y divide-slate-100">
@@ -429,33 +429,7 @@ export function MiDesempenoPage() {
             </div>
           )}
 
-          {/* Mi Perfil */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
-              <User className="w-4 h-4 text-slate-400" />
-              Mi Perfil
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-slate-500">Nombre</p>
-                <p className="text-sm font-medium text-slate-800">{user?.nombres || "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Email</p>
-                <p className="text-sm text-slate-600 truncate">{user?.email || "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Usuario</p>
-                <p className="text-sm text-slate-600">@{user?.username || "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500">Rol</p>
-                <span className="inline-block text-[11px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-100 text-green-700 mt-0.5">
-                  {user?.rol || "—"}
-                </span>
-              </div>
-            </div>
-          </div>
+
         </>
       )}
     </div>
