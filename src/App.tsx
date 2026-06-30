@@ -27,7 +27,7 @@ import Layout from "@/app/layout/Layout.js";
 /** Redirige según el rol del usuario autenticado */
 function IndexRedirect() {
   const { user } = useAuth();
-  const destino = user?.rol === "colaborador" ? "/midesempeno" : user?.rol === "encargado" ? "/miarea" : "/dashboard";
+  const destino = user?.rol === "colaborador" || user?.rol === "encargado" ? "/midesempeno" : "/dashboard";
   return <Navigate to={destino} replace />;
 }
 
