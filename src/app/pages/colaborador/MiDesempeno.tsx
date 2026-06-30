@@ -41,11 +41,11 @@ function IndicadorCard({
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
       <div className="flex items-center gap-2 mb-2">
-        <div className={`w-7 h-7 rounded-lg ${color} flex items-center justify-center`}>
+        <div className={`w-7 h-7 rounded-lg ${color} flex items-center justify-center shrink-0`}>
           <Icon className="w-3.5 h-3.5 text-white" />
         </div>
+        <p className="text-[11px] text-slate-500 leading-tight">{titulo}</p>
       </div>
-      <p className="text-[11px] text-slate-500 mb-1 leading-tight">{titulo}</p>
       <div className="flex items-baseline gap-1">
         <span className="text-2xl font-bold text-slate-800">{typeof valor === "number" ? valor.toLocaleString() : valor}</span>
         <span className="text-xs text-slate-400">{unidad}</span>
