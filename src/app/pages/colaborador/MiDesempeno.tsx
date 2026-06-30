@@ -46,11 +46,16 @@ function IndicadorCard({
         </div>
         <p className="text-[11px] text-slate-500 leading-tight">{titulo}</p>
       </div>
-      <div className="flex items-baseline gap-1">
+      <div className="flex items-baseline gap-1.5 flex-wrap">
         <span className="text-2xl font-bold text-slate-800">{typeof valor === "number" ? valor.toLocaleString() : valor}</span>
         <span className="text-xs text-slate-400">{unidad}</span>
+        {descripcion && (
+          <>
+            <span className="text-xs text-slate-300">|</span>
+            <span className="text-[10px] text-slate-400">{descripcion}</span>
+          </>
+        )}
       </div>
-      <p className="text-[10px] text-slate-400 mt-1">{descripcion}</p>
     </div>
   );
 }
