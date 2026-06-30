@@ -9,7 +9,7 @@ import { AudioRecorder } from "@/app/components/AudioRecorder.js";
 import type { Usuario } from "@shared/index.js";
 import {
   ArrowLeft, User, Monitor, Wrench, CheckSquare, Square, Camera,
-  ChevronRight, ChevronLeft, Save, Plus, Trash2, ChevronUp, ChevronDown, Pencil, Mic,
+  ChevronRight, ChevronLeft, Save, Plus, X, ChevronUp, ChevronDown, Pencil, Mic,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -257,8 +257,8 @@ export function NuevoServicioPage() {
       if (guiarEntrada && !form.cliente_dni.trim()) errs.cliente_dni = "Requerido";
       if (guiarEntrada && !form.codigo_servicio.trim()) errs.codigo_servicio = "Requerido";
       if (!isColaborador && !form.area_id) errs.area_id = "Requerido";
-      if (!form.cliente_reporte.trim()) errs.cliente_reporte = "Requerido";
-      if (!form.diagnostico_inicial.trim()) errs.diagnostico_inicial = "Requerido";
+      if (!form.cliente_reporte.trim() && !form.servicio_audio_cliente) errs.cliente_reporte = "Requerido";
+      if (!form.diagnostico_inicial.trim() && !form.servicio_audio_diagnostico) errs.diagnostico_inicial = "Requerido";
     }
     setErrors(errs);
     const ok = Object.keys(errs).length === 0;
@@ -614,7 +614,7 @@ export function NuevoServicioPage() {
                     onChange={(v) => set("cliente_reporte", v)}
                     rows={2}
                     placeholder="¿Qué reportó el cliente?"
-                    required
+                    required={!form.servicio_audio_cliente}
                     error={errors.cliente_reporte}
                   />
                   <AudioRecorder
@@ -631,7 +631,7 @@ export function NuevoServicioPage() {
                     onChange={(v) => set("diagnostico_inicial", v)}
                     rows={2}
                     placeholder="Primera impresión técnica"
-                    required
+                    required={!form.servicio_audio_diagnostico}
                     error={errors.diagnostico_inicial}
                   />
                   <AudioRecorder
@@ -773,17 +773,17 @@ export function NuevoServicioPage() {
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setTareas((prev) => prev.filter((x) => x.tempId !== t.tempId))
-                              }
-                              className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"
-                              title="Eliminar"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
                           </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setTareas((prev) => prev.filter((x) => x.tempId !== t.tempId))
+                            }
+                            className="ml-auto p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 shrink-0"
+                            title="Eliminar tarea"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       ))}
                     </div>
