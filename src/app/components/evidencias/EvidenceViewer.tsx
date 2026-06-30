@@ -168,7 +168,21 @@ export function EvidenceViewer({
             />
           )}
           <div className="absolute top-2 right-2 flex gap-1">
-            {ev.mostrar_cliente && (
+            {/* Mostrar al cliente — badge togglable cuando el usuario tiene permiso */}
+            {!readOnly && (userRol === "admin" || userRol === "sistema" || (userRol === "colaborador" && colaboradorPuedeEditar)) ? (
+              <label className="px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1 cursor-pointer select-none bg-sky-100 text-sky-700 hover:bg-sky-200 transition">
+                <input
+                  type="checkbox"
+                  checked={ev.mostrar_cliente}
+                  onChange={() =>
+                    cambiarMostrarCliente.mutate({ evidenciaId: ev.id, mostrar_cliente: !ev.mostrar_cliente })
+                  }
+                  className="w-3 h-3 rounded border-sky-300 text-sky-600 focus:ring-sky-500"
+                />
+                <Eye className="w-3 h-3" />
+                Cliente
+              </label>
+            ) : ev.mostrar_cliente && (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1 bg-sky-100 text-sky-700">
                 <Eye className="w-3 h-3" />
                 Cliente
@@ -334,22 +348,6 @@ export function EvidenceViewer({
               </p>
             </div>
           </div>
-        )}
-
-        {/* Mostrar al cliente (admin/sistema siempre, colaborador si tiene permiso) */}
-        {!readOnly && (userRol === "admin" || userRol === "sistema" || (userRol === "colaborador" && colaboradorPuedeEditar)) && (
-          <label className="flex items-center gap-2 px-4 py-2 border-t border-slate-100 cursor-pointer select-none hover:bg-slate-50 transition">
-            <input
-              type="checkbox"
-              checked={ev.mostrar_cliente}
-              onChange={() =>
-                cambiarMostrarCliente.mutate({ evidenciaId: ev.id, mostrar_cliente: !ev.mostrar_cliente })
-              }
-              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-            />
-            <Eye className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-xs text-slate-600 font-medium">Mostrar al cliente</span>
-          </label>
         )}
 
         {/* Colaborador comment */}

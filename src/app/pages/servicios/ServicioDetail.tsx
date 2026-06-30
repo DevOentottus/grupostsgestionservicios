@@ -211,7 +211,7 @@ function EvidenciasTabContent({ servicioId, tareas, userRol, tecnicoId, colabora
               className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
             />
             <span className="text-xs text-slate-600 font-medium">
-              Permitir a los técnicos mostrar evidencias al cliente
+              Permitir a los técnicos modificar visualización de evidencias del cliente
             </span>
           </label>
         )}
