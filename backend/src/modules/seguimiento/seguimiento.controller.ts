@@ -723,220 +723,369 @@ export async function seguimientoController(app: FastifyInstance) {
     const darkGray = rgb(0.3, 0.3, 0.3);
     const white = rgb(1, 1, 1);
     const black = rgb(0, 0, 0);
-    const blue = rgb(0.12, 0.24, 0.6);
-    const green = rgb(0.15, 0.6, 0.25);
-    const orange = rgb(0.9, 0.6, 0.1);
-    const red = rgb(0.8, 0.2, 0.15);
+    const blue = rgb(0.10, 0.22, 0.55);
+    const blueLight = rgb(0.12, 0.26, 0.62);
+    const blueBg = rgb(0.93, 0.95, 0.98);
+    const green = rgb(0.13, 0.58, 0.22);
+    const greenLight = rgb(0.90, 0.97, 0.91);
+    const orange = rgb(0.85, 0.55, 0.08);
+    const orangeLight = rgb(0.98, 0.94, 0.88);
+    const red = rgb(0.75, 0.18, 0.12);
+    const redLight = rgb(0.97, 0.91, 0.90);
+    const gold = rgb(0.82, 0.63, 0.12);
+    const goldAccent = rgb(0.85, 0.68, 0.22);
 
     let page = pdfDoc.addPage([pageW, pageH]);
     let y = pageH - mg;
+    let pageNum = 1;
 
     function addPageIfNeeded(needed: number) {
-      if (y - needed < mg + 30) {
+      if (y - needed < mg + 40) {
+        // Dibujar footer de página antes de cambiar
+        drawPageFooter();
         page = pdfDoc.addPage([pageW, pageH]);
+        pageNum++;
         y = pageH - mg;
+        // Repetir header en páginas siguientes (más compacto)
+        drawCompactHeader();
       }
     }
 
-    function drawText(text: string, opts: { x?: number; size?: number; color?: any; bold?: boolean } = {}) {
-      const f = opts.bold ? boldFont : font;
-      const s = opts.size || 10;
-      page.drawText(text, { x: opts.x ?? mg, y: y - s, size: s, font: f, color: opts.color ?? black });
-      y -= s * 1.5;
+    function drawPageFooter() {
+      const fY = 28;
+      // Línea separadora
+      page.drawRectangle({ x: mg, y: fY + 12, width: pageW - 2 * mg, height: 0.5, color: rgb(0.85, 0.85, 0.85) });
+      const pText = `Página ${pageNum}`;
+      page.drawText(pText, {
+        x: (pageW - font.widthOfTextAtSize(pText, 7)) / 2,
+        y: fY,
+        size: 7,
+        font,
+        color: lightGray,
+      });
+      page.drawText("ServicioLocal STS — Reporte de Seguimiento", {
+        x: mg,
+        y: fY,
+        size: 7,
+        font,
+        color: lightGray,
+      });
+      const genFooter = `Generado: ${new Date().toLocaleDateString("es-PE")}`;
+      page.drawText(genFooter, {
+        x: pageW - mg - font.widthOfTextAtSize(genFooter, 7),
+        y: fY,
+        size: 7,
+        font,
+        color: lightGray,
+      });
     }
 
-    // ─── HEADER ───
-    addPageIfNeeded(80);
+    function drawCompactHeader() {
+      page.drawRectangle({ x: 0, y: y - 28, width: pageW, height: 28, color: blue });
+      page.drawText("ServicioLocal STS", { x: mg, y: y - 19, size: 11, font: boldFont, color: white });
+      page.drawText(`Continuación — ${codigoStr}`, {
+        x: pageW - mg - font.widthOfTextAtSize(`Continuación — ${codigoStr}`, 8),
+        y: y - 12,
+        size: 8,
+        font,
+        color: rgb(0.8, 0.85, 1),
+      });
+      y -= 36;
+    }
 
-    // Logo / Title bar
-    page.drawRectangle({ x: 0, y: y - 40, width: pageW, height: 40, color: blue });
-    page.drawText("ServicioLocal STS", { x: mg, y: y - 28, size: 14, font: boldFont, color: white });
-    page.drawText("Reporte de Seguimiento", { x: mg, y: y - 28, size: 10, font: font, color: rgb(0.8, 0.85, 1) });
-    const fechaGen = new Date().toLocaleDateString("es-PE") + " " + new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false });
+    function drawSectionTitle(title: string) {
+      addPageIfNeeded(40);
+      // Barra lateral decorativa
+      page.drawRectangle({ x: mg, y: y - 8, width: 4, height: 16, color: goldAccent });
+      page.drawText(title, { x: mg + 14, y: y - 6, size: 12, font: boldFont, color: blueLight });
+      y -= 22;
+      // Línea separadora tenue
+      page.drawRectangle({ x: mg, y: y, width: pageW - 2 * mg, height: 0.5, color: rgb(0.88, 0.88, 0.9) });
+      y -= 10;
+    }
+
+    function drawInfoRow(label: string, value: string) {
+      addPageIfNeeded(22);
+      page.drawText(label, { x: mg + 4, y: y - 7, size: 9, font: boldFont, color: gray });
+      page.drawText(value || "—", { x: mg + 85, y: y - 7, size: 9.5, font: font, color: black });
+      y -= 18;
+    }
+
+    const codigoStr = servicio.servicio_codigo || `SRV${servicio.servicio_id}`;
+
+    // ─── HEADER PRINCIPAL ───
+    addPageIfNeeded(100);
+
+    // Barra superior oscura
+    page.drawRectangle({ x: 0, y: y - 48, width: pageW, height: 48, color: blue });
+
+    // Nombre empresa + subtítulo
+    page.drawText("ServicioLocal STS", { x: mg, y: y - 33, size: 16, font: boldFont, color: white });
+    page.drawText("Reporte de Seguimiento — Cliente", { x: mg, y: y - 16, size: 9, font: font, color: rgb(0.75, 0.82, 1) });
+
+    // Fecha + código a la derecha
+    const fechaGen = new Date().toLocaleDateString("es-PE", {
+      year: "numeric", month: "long", day: "numeric"
+    });
     page.drawText(fechaGen, {
-      x: pageW - mg - font.widthOfTextAtSize(fechaGen, 8),
-      y: y - 16,
-      size: 8,
+      x: pageW - mg - font.widthOfTextAtSize(fechaGen, 9),
+      y: y - 22,
+      size: 9,
       font,
       color: rgb(0.8, 0.85, 1),
     });
-    y -= 50;
+    page.drawText(`N° ${codigoStr}`, {
+      x: pageW - mg - font.widthOfTextAtSize(`N° ${codigoStr}`, 9),
+      y: y - 36,
+      size: 9,
+      font: boldFont,
+      color: rgb(0.85, 0.9, 1),
+    });
+    y -= 56;
 
-    // ─── ESTADO BADGE ───
+    // Línea decorativa gold debajo del header
+    page.drawRectangle({ x: 0, y: y, width: pageW, height: 3, color: goldAccent });
+    y -= 12;
+
+    // ───ESTADO BADGE ───
     addPageIfNeeded(40);
     const estadoStr = estadoLabel[servicio.servicio_estado] || servicio.servicio_estado;
-    const estadoColor = servicio.servicio_estado === "completado" ? green
-      : servicio.servicio_estado === "en_progreso" ? blue
-      : servicio.servicio_estado === "pendiente" ? orange
-      : servicio.servicio_estado === "bloqueado" ? red
-      : gray;
-    const badgeW = boldFont.widthOfTextAtSize(estadoStr.toUpperCase(), 10) + 20;
-    page.drawRectangle({ x: (pageW - badgeW) / 2, y: y - 22, width: badgeW, height: 22, color: estadoColor });
-    page.drawText(estadoStr.toUpperCase(), {
-      x: (pageW - boldFont.widthOfTextAtSize(estadoStr.toUpperCase(), 10)) / 2,
-      y: y - 17,
-      size: 10,
-      font: boldFont,
-      color: white,
+    let estadoColor, estadoBg;
+    switch (servicio.servicio_estado) {
+      case "completado": estadoColor = green; estadoBg = greenLight; break;
+      case "en_progreso": estadoColor = blue; estadoBg = blueBg; break;
+      case "pendiente": estadoColor = orange; estadoBg = orangeLight; break;
+      case "bloqueado": estadoColor = red; estadoBg = redLight; break;
+      default: estadoColor = gray; estadoBg = rgb(0.95, 0.95, 0.95); break;
+    }
+    const badgeW = boldFont.widthOfTextAtSize(estadoStr, 11) + 28;
+    const badgeH = 26;
+    // Sombra (rectángulo ligeramente desplazado)
+    page.drawRectangle({
+      x: (pageW - badgeW) / 2 + 1, y: y - badgeH - 1, width: badgeW, height: badgeH,
+      color: rgb(0.88, 0.88, 0.9),
     });
-    y -= 36;
+    // Fondo badge
+    page.drawRectangle({
+      x: (pageW - badgeW) / 2, y: y - badgeH, width: badgeW, height: badgeH,
+      color: estadoBg,
+    });
+    // Borde izquierdo coloreado
+    page.drawRectangle({
+      x: (pageW - badgeW) / 2, y: y - badgeH, width: 4, height: badgeH,
+      color: estadoColor,
+    });
+    // Texto
+    const badgeLabel = estadoStr === "en_progreso" ? "EN PROGRESO" : estadoStr.toUpperCase();
+    page.drawText(badgeLabel, {
+      x: (pageW - boldFont.widthOfTextAtSize(badgeLabel, 11)) / 2 + 4,
+      y: y - badgeH + 7,
+      size: 11,
+      font: boldFont,
+      color: estadoColor,
+    });
+    y -= badgeH + 14;
 
     // ─── DATOS DEL SERVICIO ───
-    addPageIfNeeded(140);
-    page.drawText("Datos del Servicio", { x: mg, y: y - 11, size: 11, font: boldFont, color: blue });
-    y -= 18;
+    drawSectionTitle("Datos del Servicio");
 
-    // Código
-    page.drawText("Código:", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
-    const codigoStr = servicio.servicio_codigo || `SRV${servicio.servicio_id}`;
-    page.drawText(codigoStr, { x: mg + 58, y: y - 10, size: 10, font: font, color: darkGray });
-    y -= 16;
+    // Card con fondo suave
+    const cardH = 128;
+    addPageIfNeeded(cardH);
+    page.drawRectangle({ x: mg, y: y - cardH, width: pageW - 2 * mg, height: cardH, color: rgb(0.985, 0.985, 0.99) });
+    const cardY = y;
+    y -= 8;
 
-    // Título
-    page.drawText("Servicio:", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
-    page.drawText(servicio.servicio_nombre || "—", { x: mg + 58, y: y - 10, size: 10, font: font, color: darkGray });
-    y -= 16;
+    drawInfoRow("Código:", codigoStr);
+    drawInfoRow("Servicio:", servicio.servicio_nombre || "—");
+    drawInfoRow("Cliente:", clienteNombre);
+    drawInfoRow("Área:", areaNombre);
+    drawInfoRow("Técnico:", colaboradorNombre);
 
-    // Cliente
-    page.drawText("Cliente:", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
-    page.drawText(clienteNombre, { x: mg + 58, y: y - 10, size: 10, font: font, color: darkGray });
-    y -= 16;
-
-    // Área
-    page.drawText("Área:", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
-    page.drawText(areaNombre, { x: mg + 58, y: y - 10, size: 10, font: font, color: darkGray });
-    y -= 16;
-
-    // Técnico
-    page.drawText("Técnico:", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
-    page.drawText(colaboradorNombre, { x: mg + 58, y: y - 10, size: 10, font: font, color: darkGray });
-    y -= 16;
+    y = cardY - cardH - 6;
 
     // Descripción
     if (servicio.servicio_descripcion) {
-      addPageIfNeeded(30);
-      page.drawText("Descripción:", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
-      y -= 14;
-      // Truncar si es muy larga
-      const maxW = pageW - 2 * mg;
-      const descLines = Math.min(3, Math.ceil(servicio.servicio_descripcion.length / 80));
-      const descH = descLines * 14;
-      addPageIfNeeded(descH);
-      page.drawText(servicio.servicio_descripcion.substring(0, 240), {
-        x: mg + 5, y: y - 8, size: 9, font: font, color: darkGray,
-      });
-      y -= descH + 6;
+      addPageIfNeeded(36);
+      page.drawText("Descripción", { x: mg + 4, y: y - 7, size: 9, font: boldFont, color: gray });
+      // Ajustar texto a múltiples líneas
+      const maxW = pageW - 2 * mg - 12;
+      const descSize = 9;
+      let descText = servicio.servicio_descripcion;
+      // Calcular cuánto entra en 3 líneas
+      const charsPerLine = Math.floor(maxW / (font.widthOfTextAtSize("A", descSize) * 1.05));
+      let line = 0;
+      let descY = y - 18;
+      while (descText.length > 0 && line < 4) {
+        const chunk = descText.substring(0, charsPerLine);
+        page.drawText(chunk, { x: mg + 8, y: descY, size: descSize, font: font, color: darkGray });
+        descText = descText.substring(charsPerLine);
+        descY -= 14;
+        line++;
+      }
+      if (descText.length > 0) {
+        page.drawText("...", { x: mg + 8, y: descY, size: descSize, font: font, color: lightGray });
+        line++;
+      }
+      y -= line * 14 + 12;
     }
 
-    y -= 6;
-
     // ─── PROGRESO ───
-    addPageIfNeeded(60);
-    page.drawText("Progreso", { x: mg, y: y - 11, size: 11, font: boldFont, color: blue });
-    y -= 18;
+    drawSectionTitle("Progreso");
 
-    // Barra de progreso visual
-    const barW = pageW - 2 * mg;
-    const barH = 18;
+    // Card de progreso
+    const progCardH = 70;
+    addPageIfNeeded(progCardH);
+    page.drawRectangle({ x: mg, y: y - progCardH, width: pageW - 2 * mg, height: progCardH, color: rgb(0.985, 0.985, 0.99) });
+    const progY = y;
+    y -= 14;
+
+    // Barra de progreso con bordes redondeados simulados
+    const barW = pageW - 2 * mg - 24;
+    const barH = 22;
+    const barX = mg + 12;
+
     addPageIfNeeded(barH + 10);
     // Fondo
-    page.drawRectangle({ x: mg, y: y - barH, width: barW, height: barH, color: rgb(0.92, 0.92, 0.94) });
+    page.drawRectangle({ x: barX, y: y - barH, width: barW, height: barH, color: rgb(0.92, 0.92, 0.94) });
     // Relleno
-    const pctW = Math.max(barW * (progresoPorcentaje / 100), progresoPorcentaje > 0 ? 3 : 0);
+    const pctW = Math.max(barW * (progresoPorcentaje / 100), progresoPorcentaje > 0 ? 4 : 0);
     const barColor = progresoPorcentaje === 100 ? green : blue;
-    page.drawRectangle({ x: mg, y: y - barH, width: pctW, height: barH, color: barColor });
-    // Texto
+    page.drawRectangle({ x: barX, y: y - barH, width: pctW, height: barH, color: barColor });
+    // Texto adentro
     const pctText = `${progresoPorcentaje}%`;
     page.drawText(pctText, {
-      x: (pageW - boldFont.widthOfTextAtSize(pctText, 10)) / 2,
-      y: y - barH + 4,
-      size: 10,
+      x: (pageW - boldFont.widthOfTextAtSize(pctText, 11)) / 2,
+      y: y - barH + 5,
+      size: 11,
       font: boldFont,
       color: progresoPorcentaje > 50 ? white : black,
     });
-    y -= barH + 4;
+    y -= barH + 6;
 
-    // Contador
-    const countText = `${completadasCount} de ${totalTareas} tareas completadas`;
-    page.drawText(countText, { x: mg, y: y - 7, size: 8, font: font, color: gray });
-    y -= 14;
+    // Checkmark si está completo
+    if (progresoPorcentaje === 100) {
+      const doneText = `✓ Completado — ${completadasCount} de ${totalTareas} tareas`;
+      page.drawText(doneText, { x: mg + 12, y: y - 7, size: 9, font: boldFont, color: green });
+    } else {
+      const countText = `${completadasCount} de ${totalTareas} tareas completadas`;
+      page.drawText(countText, { x: mg + 12, y: y - 7, size: 9, font: font, color: gray });
+    }
+    y -= 12;
+
+    y = progY - progCardH - 4;
 
     // ─── TAREAS ───
     const tareas = tareasList || [];
-    addPageIfNeeded(30);
-    page.drawText("Tareas", { x: mg, y: y - 11, size: 11, font: boldFont, color: blue });
-    y -= 18;
+    drawSectionTitle("Tareas");
 
     if (tareas.length === 0) {
-      drawText("Sin tareas registradas.", { size: 9, color: lightGray });
+      addPageIfNeeded(30);
+      page.drawRectangle({ x: mg, y: y - 50, width: pageW - 2 * mg, height: 50, color: rgb(0.98, 0.98, 0.98) });
+      page.drawText("No hay tareas registradas para este servicio.", {
+        x: (pageW - font.widthOfTextAtSize("No hay tareas registradas para este servicio.", 10)) / 2,
+        y: y - 30,
+        size: 10,
+        font,
+        color: lightGray,
+      });
+      y -= 58;
     } else {
-      const colX = [mg, 360, 500];
-      const rowH = 18;
-      const headerH = 20;
+      // Columnas: tarea (flexible), estado (fijo), tiempo (fijo)
+      const tableMg = mg + 4;
+      const tableW = pageW - 2 * tableMg;
+      const colX = [
+        tableMg,                     // tarea
+        tableMg + tableW * 0.55,     // estado
+        tableMg + tableW * 0.82,     // tiempo
+      ];
+      const rowH = 20;
+      const headerH = 22;
 
-      addPageIfNeeded(headerH + tareas.length * rowH + 20);
+      addPageIfNeeded(headerH + tareas.length * rowH + 10);
 
-      // Header
-      page.drawRectangle({ x: mg, y: y - headerH, width: pageW - 2 * mg, height: headerH, color: blue });
-      page.drawText("Tarea", { x: colX[0] + 6, y: y - headerH + 5, size: 9, font: boldFont, color: white });
-      page.drawText("Estado", { x: colX[1] + 6, y: y - headerH + 5, size: 9, font: boldFont, color: white });
-      page.drawText("Tiempo", { x: colX[2] + 6, y: y - headerH + 5, size: 9, font: boldFont, color: white });
-      y -= headerH + 4;
+      // Header de tabla
+      page.drawRectangle({ x: tableMg, y: y - headerH, width: tableW, height: headerH, color: blue });
+      page.drawText("Tarea", { x: colX[0] + 8, y: y - headerH + 6, size: 9, font: boldFont, color: white });
+      page.drawText("Estado", { x: colX[1] + 8, y: y - headerH + 6, size: 9, font: boldFont, color: white });
+      page.drawText("Tiempo", { x: colX[2] + 8, y: y - headerH + 6, size: 9, font: boldFont, color: white });
+      y -= headerH + 2;
 
       for (let i = 0; i < tareas.length; i++) {
         const t = tareas[i];
-        addPageIfNeeded(rowH + 4);
+        addPageIfNeeded(rowH + 2);
+
+        // Fila alternada
         if (i % 2 === 0) {
-          page.drawRectangle({ x: mg, y: y - rowH, width: pageW - 2 * mg, height: rowH, color: rgb(0.97, 0.97, 0.98) });
+          page.drawRectangle({ x: tableMg, y: y - rowH, width: tableW, height: rowH, color: rgb(0.975, 0.975, 0.98) });
         }
 
-        // Nombre de tarea (truncado)
-        const nombre = t.tarea_titulo || "—";
-        const maxNombreW = colX[1] - colX[0] - 16;
-        const truncated = font.widthOfTextAtSize(nombre, 9) > maxNombreW
-          ? nombre.substring(0, 35) + "..."
-          : nombre;
-        page.drawText(truncated, { x: colX[0] + 6, y: y - rowH + 4, size: 9, font: font, color: black });
+        // Línea separadora inferior
+        page.drawRectangle({ x: tableMg, y: y - rowH, width: tableW, height: 0.3, color: rgb(0.92, 0.92, 0.94) });
 
-        // Estado
+        // Nombre de tarea (truncado a ancho)
+        const nombre = t.tarea_titulo || "—";
+        const maxTW = colX[1] - colX[0] - 20;
+        let nombreDisplay = nombre;
+        if (font.widthOfTextAtSize(nombre, 9) > maxTW) {
+          while (font.widthOfTextAtSize(nombreDisplay + "...", 9) > maxTW && nombreDisplay.length > 3) {
+            nombreDisplay = nombreDisplay.slice(0, -1);
+          }
+          nombreDisplay += "...";
+        }
+        page.drawText(nombreDisplay, { x: colX[0] + 8, y: y - rowH + 5, size: 9, font: font, color: black });
+
+        // Estado con badge pequeño
         const tEstado = t.tarea_estado || "pendiente";
-        const tEstadoColor = tEstado === "completado" ? green
-          : tEstado === "en_progreso" ? blue
-          : rgb(0.7, 0.7, 0.7);
-        const estadoTxt = tEstado === "completado" ? "✓ Completado"
-          : tEstado === "en_progreso" ? "En Progreso"
-          : "Pendiente";
-        page.drawText(estadoTxt, { x: colX[1] + 6, y: y - rowH + 4, size: 9, font: boldFont, color: tEstadoColor });
+        let tEstadoColor, tEstadoBg, estadoTxt;
+        switch (tEstado) {
+          case "completado":
+            tEstadoColor = green; tEstadoBg = greenLight;
+            estadoTxt = "✓ Completado";
+            break;
+          case "en_progreso":
+            tEstadoColor = blue; tEstadoBg = blueBg;
+            estadoTxt = "En Progreso";
+            break;
+          default:
+            tEstadoColor = gray; tEstadoBg = rgb(0.95, 0.95, 0.95);
+            estadoTxt = "Pendiente";
+            break;
+        }
+        const estW = boldFont.widthOfTextAtSize(estadoTxt, 8) + 14;
+        page.drawRectangle({ x: colX[1] + 6, y: y - rowH + 3, width: estW, height: 14, color: tEstadoBg });
+        page.drawText(estadoTxt, {
+          x: colX[1] + 6 + (estW - boldFont.widthOfTextAtSize(estadoTxt, 8)) / 2,
+          y: y - rowH + 5,
+          size: 8,
+          font: boldFont,
+          color: tEstadoColor,
+        });
 
         // Tiempo
         const tiempo = t.tarea_tiempo_real
           ? `${Math.floor(t.tarea_tiempo_real / 60)}h ${t.tarea_tiempo_real % 60}m`
           : "—";
-        page.drawText(tiempo, { x: colX[2] + 6, y: y - rowH + 4, size: 9, font: font, color: darkGray });
+        page.drawText(tiempo, { x: colX[2] + 8, y: y - rowH + 5, size: 9, font: font, color: darkGray });
 
         y -= rowH;
       }
-      y -= 10;
+      y -= 8;
     }
 
-    // ─── FOOTER ───
-    addPageIfNeeded(40);
-    page.drawRectangle({ x: 0, y: y - 30, width: pageW, height: 30, color: rgb(0.95, 0.95, 0.97) });
-    const footer = "ServicioLocal STS — Reporte generado para el cliente";
-    page.drawText(footer, {
-      x: (pageW - font.widthOfTextAtSize(footer, 7)) / 2,
-      y: y - 12,
+    // ─── FOOTER FINAL ───
+    drawPageFooter();
+    y -= 4;
+
+    // Espacio después del footer
+    const finalFooterY = 16;
+    page.drawRectangle({ x: 0, y: 0, width: pageW, height: finalFooterY + 8, color: blue });
+    page.drawText("ServicioLocal STS — Tecnología al servicio de tu hogar", {
+      x: (pageW - font.widthOfTextAtSize("ServicioLocal STS — Tecnología al servicio de tu hogar", 7)) / 2,
+      y: finalFooterY + 2,
       size: 7,
       font,
-      color: lightGray,
-    });
-    const footer2 = "Si tenés dudas, contactanos a través de nuestro portal de servicio.";
-    page.drawText(footer2, {
-      x: (pageW - font.widthOfTextAtSize(footer2, 7)) / 2,
-      y: y - 21,
-      size: 7,
-      font,
-      color: lightGray,
+      color: rgb(0.75, 0.82, 1),
     });
 
     // ─── FINALIZAR ───
