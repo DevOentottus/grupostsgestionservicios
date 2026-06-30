@@ -36,6 +36,7 @@ const servicioSchema = z.object({
 const servicioUpdateSchema = z.object({
   titulo: z.string().min(1).optional(),
   descripcion: z.string().nullable().optional(),
+  colaborador_edita_visibilidad: z.boolean().optional(),
 });
 
 const tareaSchema = z.object({
@@ -201,6 +202,7 @@ export async function serviciosController(app: FastifyInstance) {
     const updateData: Record<string, any> = {};
     if (input.titulo !== undefined) updateData.servicio_nombre = input.titulo;
     if (input.descripcion !== undefined) updateData.servicio_descripcion = input.descripcion;
+    if (input.colaborador_edita_visibilidad !== undefined) updateData.servicio_colaborador_edita_visibilidad = input.colaborador_edita_visibilidad;
 
     const { data: updatedServicios, error } = await supabase
       .from("servicios")
@@ -1271,6 +1273,7 @@ function mapServicio(s: any) {
     id_plantilla_inicial: s.id_plantilla_inicial || null,
     datos_completos: false, // no disponible en Supabase
     consultado_cliente: false, // no disponible en Supabase
+    colaborador_edita_visibilidad: s.servicio_colaborador_edita_visibilidad ?? false,
     tiempo_estimado: s.servicio_tiempo_estimado,
     fecha_inicio: s.servicio_fecha_inicio,
     hora_inicio: s.servicio_hora_inicio,

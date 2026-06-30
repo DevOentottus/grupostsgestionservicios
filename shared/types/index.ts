@@ -57,6 +57,7 @@ export interface Servicio {
   id_plantilla_inicial: number | null;
   datos_completos: boolean;
   consultado_cliente: boolean;
+  colaborador_edita_visibilidad: boolean;
   tiempo_estimado: number | null;
   fecha_inicio: string | null;
   hora_inicio: string | null;

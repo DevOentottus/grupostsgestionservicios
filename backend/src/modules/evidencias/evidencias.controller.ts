@@ -361,12 +361,42 @@ export async function evidenciasController(app: FastifyInstance) {
   // -- PATCH /api/evidencias/:id/mostrar-cliente --
   app.patch(
     "/api/evidencias/:id/mostrar-cliente",
-    { preHandler: [requireRoles("admin", "sistema")] },
+    { preHandler: [requireRoles("admin", "sistema", "encargado", "colaborador")] },
     async (request) => {
       const { id } = request.params as { id: string };
       const input = z.object({ mostrar_cliente: z.boolean() }).parse(request.body);
-      const user = request.user as { user_id: number; rol: string; };
+      const user = request.user as { user_id: number; rol: string; area_id: number | null; };
       const evidenciaId = parseInt(id);
+
+      // Get evidence to check servicio permissions
+      const { data: ev } = await supabase
+        .from("evidencias")
+        .select("evidencia_id, servicio_id, tarea_id, submitted_by, servicios!inner(servicio_id, area_id, servicio_colaborador_edita_visibilidad)")
+        .eq("evidencia_id", evidenciaId)
+        .single();
+
+      if (!ev) throw new NotFoundError("Evidencia no encontrada");
+
+      const s = ev.servicios;
+
+      // Admin/sistema can always toggle
+      if (user.rol !== "admin" && user.rol !== "sistema") {
+        // Encargado can toggle for servicios in their area
+        if (user.rol === "encargado") {
+          if (s.area_id !== user.area_id) {
+            throw new ForbiddenError("No tenés acceso a este servicio");
+          }
+        }
+        // Colaborador can only toggle if servicio allows it AND they own the evidence
+        if (user.rol === "colaborador") {
+          if (!s.servicio_colaborador_edita_visibilidad) {
+            throw new ForbiddenError("No tenés permiso para cambiar la visibilidad de evidencias en este servicio");
+          }
+          if (ev.submitted_by !== user.user_id) {
+            throw new ForbiddenError("Solo podés modificar la visibilidad de tus propias evidencias");
+          }
+        }
+      }
 
       const { error } = await supabase
         .from("evidencias")

@@ -545,6 +545,7 @@ export type Database = {
           servicio_codigo: string
           servicio_codigo_acceso: string | null
           servicio_colaborador_desactiva: boolean | null
+          servicio_colaborador_edita_visibilidad: boolean | null
           servicio_descripcion: string | null
           servicio_descripcion_accesorio: string | null
           servicio_descripcion_equipo: string | null
@@ -582,6 +583,7 @@ export type Database = {
           servicio_codigo: string
           servicio_codigo_acceso?: string | null
           servicio_colaborador_desactiva?: boolean | null
+          servicio_colaborador_edita_visibilidad?: boolean | null
           servicio_descripcion?: string | null
           servicio_descripcion_accesorio?: string | null
           servicio_descripcion_equipo?: string | null
@@ -619,6 +621,7 @@ export type Database = {
           servicio_codigo?: string
           servicio_codigo_acceso?: string | null
           servicio_colaborador_desactiva?: boolean | null
+          servicio_colaborador_edita_visibilidad?: boolean | null
           servicio_descripcion?: string | null
           servicio_descripcion_accesorio?: string | null
           servicio_descripcion_equipo?: string | null

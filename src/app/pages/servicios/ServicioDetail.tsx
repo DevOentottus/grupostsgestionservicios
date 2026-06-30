@@ -151,9 +151,10 @@ const ESTADO_BAR_STYLE: Record<string, string> = {
 };
 
 // -- Evidencias Tab Component --
-function EvidenciasTabContent({ servicioId, tareas, userRol, tecnicoId }: { servicioId: number; tareas: Tarea[]; userRol?: string; tecnicoId?: number }) {
+function EvidenciasTabContent({ servicioId, tareas, userRol, tecnicoId, colaboradorPuedeEditar, onToggleVisibilidad }: { servicioId: number; tareas: Tarea[]; userRol?: string; tecnicoId?: number; colaboradorPuedeEditar?: boolean; onToggleVisibilidad?: () => void }) {
   const { data: evidencias, isLoading } = useEvidencias(servicioId);
   const [tareaSeleccionada, setTareaSeleccionada] = useState<number | null>(null);
+  const toggleVisibilidad = useEditarServicio();
 
   const tareaNombres = useMemo(() => {
     const map: Record<number, string> = {};
@@ -195,6 +196,25 @@ function EvidenciasTabContent({ servicioId, tareas, userRol, tecnicoId }: { serv
 
       {/* Lista de evidencias */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        {/* Encargado: toggle para permitir que colaborador edite visibilidad */}
+        {userRol === "encargado" && (
+          <label className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 cursor-pointer select-none hover:bg-slate-50 -mx-4 px-4 transition">
+            <input
+              type="checkbox"
+              checked={colaboradorPuedeEditar ?? false}
+              onChange={() => {
+                toggleVisibilidad.mutate(
+                  { id: servicioId, data: { colaborador_edita_visibilidad: !colaboradorPuedeEditar } },
+                  { onSuccess: () => onToggleVisibilidad?.() }
+                );
+              }}
+              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-xs text-slate-600 font-medium">
+              Permitir a los técnicos mostrar evidencias al cliente
+            </span>
+          </label>
+        )}
         <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
           <Camera className="w-4 h-4 text-slate-400" />
           Evidencias subidas
@@ -215,6 +235,7 @@ function EvidenciasTabContent({ servicioId, tareas, userRol, tecnicoId }: { serv
             tareaNombres={tareaNombres}
             userRol={userRol}
             tecnicoId={tecnicoId}
+            colaboradorPuedeEditar={colaboradorPuedeEditar}
           />
         )}
       </div>
@@ -1067,7 +1088,7 @@ export function ServicioDetailPage() {
 
         {/* EVIDENCIAS TAB */}
         {activeTab === "evidencias" && (
-          <EvidenciasTabContent servicioId={servicioId} tareas={tareas || []} userRol={user?.rol} tecnicoId={servicio?.colaborador_id ?? undefined} />
+          <EvidenciasTabContent servicioId={servicioId} tareas={tareas || []} userRol={user?.rol} tecnicoId={servicio?.colaborador_id ?? undefined} colaboradorPuedeEditar={servicio?.colaborador_edita_visibilidad} />
         )}
       </div>
 

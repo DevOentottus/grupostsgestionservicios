@@ -23,6 +23,8 @@ interface EvidenceViewerProps {
   userRol?: string;
   /** ID del técnico asignado al servicio, para notificarle cuando su evidencia es aprobada/rechazada */
   tecnicoId?: number;
+  /** Indica si el colaborador puede editar la visibilidad al cliente de sus evidencias */
+  colaboradorPuedeEditar?: boolean;
 }
 
 export function EvidenceViewer({
@@ -36,6 +38,7 @@ export function EvidenceViewer({
   tareaNombres,
   userRol,
   tecnicoId,
+  colaboradorPuedeEditar = false,
 }: EvidenceViewerProps) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [comentarios, setComentarios] = useState<Record<number, string>>({});
@@ -333,8 +336,8 @@ export function EvidenceViewer({
           </div>
         )}
 
-        {/* Mostrar al cliente (solo admin/sistema) */}
-        {!readOnly && (userRol === "admin" || userRol === "sistema") && (
+        {/* Mostrar al cliente (admin/sistema siempre, colaborador si tiene permiso) */}
+        {!readOnly && (userRol === "admin" || userRol === "sistema" || (userRol === "colaborador" && colaboradorPuedeEditar)) && (
           <label className="flex items-center gap-2 px-4 py-2 border-t border-slate-100 cursor-pointer select-none hover:bg-slate-50 transition">
             <input
               type="checkbox"
