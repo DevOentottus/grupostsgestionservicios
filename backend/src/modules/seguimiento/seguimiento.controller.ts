@@ -674,6 +674,14 @@ export async function seguimientoController(app: FastifyInstance) {
     const completadasCount = tareasList?.filter((t: any) => t.tarea_estado === "completado").length || 0;
     const progresoPorcentaje = totalTareas > 0 ? Math.round((completadasCount / totalTareas) * 100) : 0;
 
+    // Evidencias
+    const { data: evidencias } = await supabase
+      .from("evidencias")
+      .select("*, comentariosevidencias(*)")
+      .eq("servicio_id", servicio.servicio_id)
+      .neq("estado", "rechazado")
+      .order("created_at", { ascending: true });
+
     // Colaborador
     let colaboradorNombre = "—";
     if (servicio.tecnico_principal_id) {
@@ -1071,6 +1079,100 @@ export async function seguimientoController(app: FastifyInstance) {
         y -= rowH;
       }
       y -= 8;
+    }
+
+    // ─── EVIDENCIAS ───
+    const evs = evidencias || [];
+    drawSectionTitle("Evidencias");
+
+    if (evs.length === 0) {
+      addPageIfNeeded(30);
+      page.drawRectangle({ x: mg, y: y - 50, width: pageW - 2 * mg, height: 50, color: rgb(0.98, 0.98, 0.98) });
+      page.drawText("No hay evidencias registradas para este servicio.", {
+        x: (pageW - font.widthOfTextAtSize("No hay evidencias registradas para este servicio.", 10)) / 2,
+        y: y - 30,
+        size: 10,
+        font,
+        color: lightGray,
+      });
+      y -= 58;
+    } else {
+      for (let i = 0; i < evs.length; i++) {
+        const e = evs[i];
+        const evRowH = e.comentario_colaborador ? 52 : 38;
+
+        addPageIfNeeded(evRowH + 6);
+
+        // Fondo alternado
+        if (i % 2 === 0) {
+          page.drawRectangle({ x: mg, y: y - evRowH, width: pageW - 2 * mg, height: evRowH, color: rgb(0.975, 0.975, 0.98) });
+        }
+        // Línea separadora
+        page.drawRectangle({ x: mg, y: y - evRowH, width: pageW - 2 * mg, height: 0.3, color: rgb(0.92, 0.92, 0.94) });
+
+        // Tipo badge
+        const tipoLabel = e.tipo === "photo" ? "Foto" : e.tipo === "video" ? "Video" : e.tipo || "Archivo";
+        const tipoBg = e.tipo === "photo" ? blueBg : e.tipo === "video" ? orangeLight : rgb(0.95, 0.95, 0.95);
+        const tipoColor = e.tipo === "photo" ? blue : e.tipo === "video" ? orange : gray;
+        const tipoW = boldFont.widthOfTextAtSize(tipoLabel, 8) + 12;
+        page.drawRectangle({ x: mg + 4, y: y - evRowH + 18, width: tipoW, height: 14, color: tipoBg });
+        page.drawText(tipoLabel, {
+          x: mg + 4 + (tipoW - boldFont.widthOfTextAtSize(tipoLabel, 8)) / 2,
+          y: y - evRowH + 20,
+          size: 8,
+          font: boldFont,
+          color: tipoColor,
+        });
+
+        // Estado badge pequeño
+        let evEstadoLabel: string, evEstadoColor: any, evEstadoBg: any;
+        switch (e.estado) {
+          case "aprobado":
+            evEstadoLabel = "Aprobado"; evEstadoColor = green; evEstadoBg = greenLight; break;
+          case "pendiente":
+            evEstadoLabel = "Pendiente"; evEstadoColor = orange; evEstadoBg = orangeLight; break;
+          case "reemplazado":
+            evEstadoLabel = "Reemplazado"; evEstadoColor = gray; evEstadoBg = rgb(0.92, 0.92, 0.94); break;
+          default:
+            evEstadoLabel = e.estado || "—"; evEstadoColor = gray; evEstadoBg = rgb(0.95, 0.95, 0.95); break;
+        }
+        const evEstW = boldFont.widthOfTextAtSize(evEstadoLabel, 7.5) + 10;
+        page.drawRectangle({ x: mg + tipoW + 12, y: y - evRowH + 18, width: evEstW, height: 14, color: evEstadoBg });
+        page.drawText(evEstadoLabel, {
+          x: mg + tipoW + 12 + (evEstW - boldFont.widthOfTextAtSize(evEstadoLabel, 7.5)) / 2,
+          y: y - evRowH + 20,
+          size: 7.5,
+          font: boldFont,
+          color: evEstadoColor,
+        });
+
+        // Nombre de archivo (extraído de la URL)
+        const urlParts = (e.archivo_url || "").split("/");
+        const fileName = urlParts[urlParts.length - 1] || "—";
+        // Truncar si es muy largo (UUID largo)
+        const displayName = fileName.length > 30 ? fileName.substring(0, 14) + "..." + fileName.substring(fileName.length - 10) : fileName;
+        page.drawText(displayName, {
+          x: mg + 4,
+          y: y - evRowH + 5,
+          size: 7.5,
+          font: font,
+          color: darkGray,
+        });
+
+        // Comentario del colaborador
+        if (e.comentario_colaborador) {
+          page.drawText(e.comentario_colaborador, {
+            x: mg + 120,
+            y: y - evRowH + 20,
+            size: 8,
+            font: font,
+            color: gray,
+          });
+        }
+
+        y -= evRowH + 2;
+      }
+      y -= 6;
     }
 
     // ─── FOOTER FINAL ───
