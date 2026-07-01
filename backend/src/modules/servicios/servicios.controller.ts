@@ -1325,24 +1325,42 @@ async function reporteTecnicoPDF(request: any, reply: any) {
       const horaTxt = t.tarea_hora_completado || "—";
       page.drawText(horaTxt, { x: colX[4] + 6, y: y - rowH + 5, size: 7, font, color: darkGray });
 
-      // Tiempo (duración real formateada)
-      let tiempoTxt = "—";
-      if (t.tarea_tiempo_real != null) {
-        const mins = Math.floor(t.tarea_tiempo_real);
-        if (mins < 1) tiempoTxt = "< 1m";
-        else if (mins < 60) tiempoTxt = `${mins}m`;
-        else {
-          const h = Math.floor(mins / 60);
-          const m = mins % 60;
-          tiempoTxt = m > 0 ? `${h}h ${m}m` : `${h}h`;
-        }
-      }
-      page.drawText(tiempoTxt, { x: colX[5] + 6, y: y - rowH + 5, size: 7, font, color: darkGray });
-
-      y -= rowH;
+      // Tiempo (diferencia con la tarea anterior)
+let tiempoTxt = "—";
+if (i > 0) {
+  const prev = tareasList[i - 1];
+  const currFecha =
+    t.tarea_fecha_completado && t.tarea_hora_completado
+      ? new Date(`${t.tarea_fecha_completado}T${t.tarea_hora_completado}`)
+      : null;
+  const prevFecha =
+    prev.tarea_fecha_completado && prev.tarea_hora_completado
+      ? new Date(`${prev.tarea_fecha_completado}T${prev.tarea_hora_completado}`)
+      : null;
+  if (
+    currFecha && prevFecha &&
+    !isNaN(currFecha.getTime()) && !isNaN(prevFecha.getTime()) &&
+    currFecha.getTime() > prevFecha.getTime()
+  ) {
+    const diffMin = Math.floor(
+      (currFecha.getTime() - prevFecha.getTime()) / 60000
+    );
+    if (diffMin < 1) tiempoTxt = "< 1m";
+    else if (diffMin < 60) tiempoTxt = `${diffMin}m`;
+    else {
+      const h = Math.floor(diffMin / 60);
+      const m = diffMin % 60;
+      tiempoTxt = m > 0 ? `${h}h ${m}m` : `${h}h`;
     }
-    y -= 8;
   }
+}
+page.drawText(tiempoTxt, {
+  x: colX[5] + 6,
+  y: y - rowH + 5,
+  size: 7,
+  font,
+  color: darkGray,
+});
 
   // ─── EVIDENCIAS ───
   const eviList = evidencias || [];
