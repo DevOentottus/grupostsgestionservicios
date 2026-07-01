@@ -1,13 +1,14 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { cn } from "@/app/lib/utils";
 import {
-  Image, FileVideo, MessageCircle, Send, CheckCircle2,
+  Image, MessageCircle, Send, CheckCircle2,
   XCircle, Clock, ThumbsUp, ThumbsDown, ChevronRight, Eye,
-  Loader2, Upload,
+  Loader2, Upload, Camera,
 } from "lucide-react";
 import type { Evidencia, EvidenciaComentario } from "@shared/index.js";
 import { useAgregarComentarioEvidencia, useCambiarEstadoEvidencia, useCambiarMostrarCliente, useUploadEvidencia } from "@/api/queries/useEvidencias.js";
 import { evidenciasPublicApi } from "@/api/client.js";
+import { CameraCapture } from "./CameraCapture.js";
 
 interface EvidenceViewerProps {
   evidencias: (Evidencia & { comentarios?: EvidenciaComentario[] })[];
@@ -48,6 +49,7 @@ export function EvidenceViewer({
   const [motivoAprobacion, setMotivoAprobacion] = useState("");
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [replacingId, setReplacingId] = useState<number | null>(null);
+  const [replacingWithCamera, setReplacingWithCamera] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addComentario = useAgregarComentarioEvidencia();
   const cambiarEstado = useCambiarEstadoEvidencia();
@@ -129,6 +131,28 @@ export function EvidenceViewer({
     reader.readAsDataURL(file);
   };
 
+  const handleRejectedCameraCapture = async (dataUrl: string, mimeType: string) => {
+    if (!replacingId) return;
+    const ev = evidencias.find((x) => x.id === replacingId);
+    if (!ev) return;
+    setReplacingWithCamera(false);
+    setUploadingId(ev.id);
+    try {
+      await uploadMutation.mutateAsync({
+        servicio_id: ev.servicio_id,
+        tarea_id: ev.tarea_id,
+        tipo: "photo",
+        archivo_base64: dataUrl,
+        content_type: mimeType,
+      });
+      await cambiarEstado.mutateAsync({ evidenciaId: ev.id, estado: "reemplazado" });
+    } catch {
+      // Error manejado por la mutación
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
   const statusIcon = (estado: string) => {
     switch (estado) {
       case "aprobado": return <CheckCircle2 className="w-4 h-4 text-green-500" />;
@@ -188,13 +212,6 @@ export function EvidenceViewer({
                 Cliente
               </span>
             )}
-            <span className={cn(
-              "px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1",
-              ev.tipo === "photo" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"
-            )}>
-              {ev.tipo === "photo" ? <Image className="w-3 h-3" /> : <FileVideo className="w-3 h-3" />}
-              {ev.tipo === "photo" ? "Foto" : "Video"}
-            </span>
             {showStatus && (
               <span className={cn(
                 "px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1",
@@ -318,22 +335,35 @@ export function EvidenceViewer({
               </div>
             )}
 
-            {uploadingId === ev.id ? (
+            {replacingWithCamera && replacingId === ev.id ? (
+              <div className="space-y-2">
+                <CameraCapture
+                  onCapture={(dataUrl, mimeType) => handleRejectedCameraCapture(dataUrl, mimeType)}
+                  onCancel={() => setReplacingWithCamera(false)}
+                />
+              </div>
+            ) : uploadingId === ev.id ? (
               <div className="flex items-center gap-2 text-sm text-slate-600">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Subiendo nueva evidencia...
               </div>
             ) : (
-              <button
-                onClick={() => {
-                  setReplacingId(ev.id);
-                  fileInputRef.current?.click();
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-900 text-white rounded-lg text-sm font-medium hover:bg-blue-800 transition"
-              >
-                <Upload className="w-4 h-4" />
-                Subir nueva evidencia
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setReplacingId(ev.id); setReplacingWithCamera(true); }}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-900 text-white rounded-lg text-sm font-medium hover:bg-blue-800 transition"
+                >
+                  <Camera className="w-4 h-4" />
+                  Tomar foto
+                </button>
+                <button
+                  onClick={() => { setReplacingId(ev.id); fileInputRef.current?.click(); }}
+                  className="flex items-center gap-2 px-4 py-2 border border-blue-200 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-50 transition"
+                >
+                  <Upload className="w-4 h-4" />
+                  Subir archivo
+                </button>
+              </div>
             )}
           </div>
         )}

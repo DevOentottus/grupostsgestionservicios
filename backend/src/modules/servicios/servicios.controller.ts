@@ -990,14 +990,24 @@ async function reporteTecnicoPDF(request: any, reply: any) {
   // 6. Generar PDF con pdf-lib (incrusta JPEG/PNG sin decodificar)
   const { PDFDocument, rgb, StandardFonts } = await import("pdf-lib");
   const pdfDoc = await PDFDocument.create();
-  const pageW = 595, pageH = 842, mg = 40;
+  const pageW = 595, pageH = 842, mg = 45;
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const gray = rgb(0.4, 0.4, 0.4);
-  const darkGray = rgb(0.33, 0.33, 0.33);
-  const lightGray = rgb(0.6, 0.6, 0.6);
+  const gray = rgb(0.45, 0.45, 0.45);
+  const darkGray = rgb(0.3, 0.3, 0.3);
+  const lightGray = rgb(0.65, 0.65, 0.65);
   const white = rgb(1, 1, 1);
   const black = rgb(0, 0, 0);
+  const blue = rgb(0.10, 0.22, 0.55);
+  const blueLight = rgb(0.12, 0.26, 0.62);
+  const blueBg = rgb(0.93, 0.95, 0.98);
+  const green = rgb(0.13, 0.58, 0.22);
+  const greenLight = rgb(0.90, 0.97, 0.91);
+  const orange = rgb(0.85, 0.55, 0.08);
+  const orangeLight = rgb(0.98, 0.94, 0.88);
+  const red = rgb(0.75, 0.18, 0.12);
+  const redLight = rgb(0.97, 0.91, 0.90);
+  const goldAccent = rgb(0.85, 0.68, 0.22);
 
   const colab = s.usuario_colaborador;
   const tecnicoNombre = colab
@@ -1006,122 +1016,305 @@ async function reporteTecnicoPDF(request: any, reply: any) {
 
   let page = pdfDoc.addPage([pageW, pageH]);
   let y = pageH - mg;
+  let pageNum = 1;
 
   function addPageIfNeeded(needed: number) {
-    if (y - needed < mg) {
+    if (y - needed < mg + 40) {
+      drawPageFooter();
       page = pdfDoc.addPage([pageW, pageH]);
+      pageNum++;
       y = pageH - mg;
+      drawCompactHeader();
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function drawText(text: string, opts: { x?: number; size?: number; color?: any; bold?: boolean } = {}) {
-    const f = opts.bold ? boldFont : font;
-    const s = opts.size || 10;
-    page.drawText(text, { x: opts.x ?? mg, y: y - s, size: s, font: f, color: opts.color ?? black });
-    y -= s * 1.5;
+  function drawPageFooter() {
+    const fY = 28;
+    page.drawRectangle({ x: mg, y: fY + 12, width: pageW - 2 * mg, height: 0.5, color: rgb(0.85, 0.85, 0.85) });
+    const pText = `Página ${pageNum}`;
+    page.drawText(pText, {
+      x: (pageW - font.widthOfTextAtSize(pText, 7)) / 2,
+      y: fY,
+      size: 7,
+      font,
+      color: lightGray,
+    });
+    page.drawText("ServicioLocal STS — Reporte Técnico", {
+      x: mg,
+      y: fY,
+      size: 7,
+      font,
+      color: lightGray,
+    });
+    const genFooter = `Generado: ${new Date().toLocaleDateString("es-PE")}`;
+    page.drawText(genFooter, {
+      x: pageW - mg - font.widthOfTextAtSize(genFooter, 7),
+      y: fY,
+      size: 7,
+      font,
+      color: lightGray,
+    });
   }
 
-  function drawLabelValue(label: string, value: string) {
-    const s = 9;
-    page.drawText(label, { x: mg, y: y - s, size: s, font: boldFont, color: black });
-    const labelW = boldFont.widthOfTextAtSize(label, s);
-    page.drawText(value, { x: mg + labelW + 4, y: y - s, size: s, font, color: black });
-    y -= s * 1.6;
+  function drawCompactHeader() {
+    page.drawRectangle({ x: 0, y: y - 28, width: pageW, height: 28, color: blue });
+    page.drawText("ServicioLocal STS", { x: mg, y: y - 19, size: 11, font: boldFont, color: white });
+    const codStr = s.servicio_codigo || `SRV${s.servicio_id}`;
+    page.drawText(`Continuación — ${codStr}`, {
+      x: pageW - mg - font.widthOfTextAtSize(`Continuación — ${codStr}`, 8),
+      y: y - 12,
+      size: 8,
+      font,
+      color: rgb(0.8, 0.85, 1),
+    });
+    y -= 36;
   }
 
-  // ─── HEADER ───
-  addPageIfNeeded(60);
-  page.drawText("Hoja de Reporte Técnico", { x: mg, y: y - 16, size: 16, font: boldFont, color: black });
-  y -= 24;
-  const fechaGen = `${new Date().toLocaleDateString("es-PE")} ${new Date().toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false })}`;
-  page.drawText(`Generado: ${fechaGen}`, { x: pageW - mg - font.widthOfTextAtSize(`Generado: ${fechaGen}`, 8), y: y - 8, size: 8, font, color: gray });
-  y -= 18;
+  function drawSectionTitle(title: string) {
+    addPageIfNeeded(40);
+    page.drawRectangle({ x: mg, y: y - 8, width: 4, height: 16, color: goldAccent });
+    page.drawText(title, { x: mg + 14, y: y - 6, size: 12, font: boldFont, color: blueLight });
+    y -= 22;
+    page.drawRectangle({ x: mg, y: y, width: pageW - 2 * mg, height: 0.5, color: rgb(0.88, 0.88, 0.9) });
+    y -= 10;
+  }
+
+  function drawInfoRow(label: string, value: string) {
+    addPageIfNeeded(22);
+    page.drawText(label, { x: mg + 4, y: y - 7, size: 9, font: boldFont, color: gray });
+    page.drawText(value || "—", { x: mg + 85, y: y - 7, size: 9.5, font, color: black });
+    y -= 18;
+  }
+
+  const codigoStr = s.servicio_codigo || `SRV${s.servicio_id}`;
+
+  // ─── HEADER PRINCIPAL ───
+  addPageIfNeeded(100);
+
+  // Barra superior azul
+  page.drawRectangle({ x: 0, y: y - 48, width: pageW, height: 48, color: blue });
+
+  // Nombre empresa + subtítulo
+  page.drawText("ServicioLocal STS", { x: mg, y: y - 33, size: 16, font: boldFont, color: white });
+  page.drawText("Reporte Técnico — Interno", { x: mg, y: y - 16, size: 9, font, color: rgb(0.75, 0.82, 1) });
+
+  // Fecha + código a la derecha
+  const fechaGen = new Date().toLocaleDateString("es-PE", {
+    year: "numeric", month: "long", day: "numeric"
+  });
+  page.drawText(fechaGen, {
+    x: pageW - mg - font.widthOfTextAtSize(fechaGen, 9),
+    y: y - 22,
+    size: 9,
+    font,
+    color: rgb(0.8, 0.85, 1),
+  });
+  page.drawText(`N° ${codigoStr}`, {
+    x: pageW - mg - font.widthOfTextAtSize(`N° ${codigoStr}`, 9),
+    y: y - 36,
+    size: 9,
+    font: boldFont,
+    color: rgb(0.85, 0.9, 1),
+  });
+  y -= 56;
+
+  // Línea decorativa gold debajo del header
+  page.drawRectangle({ x: 0, y: y, width: pageW, height: 3, color: goldAccent });
+  y -= 12;
+
+  // ─── ESTADO BADGE ───
+  addPageIfNeeded(40);
+  const estadoStr = s.servicio_estado || "—";
+  let estadoColor: any, estadoBg: any;
+  switch (s.servicio_estado) {
+    case "completado": estadoColor = green; estadoBg = greenLight; break;
+    case "en_progreso": estadoColor = blue; estadoBg = blueBg; break;
+    case "pendiente": estadoColor = orange; estadoBg = orangeLight; break;
+    case "bloqueado": estadoColor = red; estadoBg = redLight; break;
+    default: estadoColor = gray; estadoBg = rgb(0.95, 0.95, 0.95); break;
+  }
+  const badgeLabel = estadoStr === "en_progreso" ? "EN PROGRESO" : estadoStr.toUpperCase();
+  const badgeW = boldFont.widthOfTextAtSize(badgeLabel, 11) + 28;
+  const badgeH = 26;
+  // Sombra
+  page.drawRectangle({
+    x: (pageW - badgeW) / 2 + 1, y: y - badgeH - 1, width: badgeW, height: badgeH,
+    color: rgb(0.88, 0.88, 0.9),
+  });
+  // Fondo badge
+  page.drawRectangle({
+    x: (pageW - badgeW) / 2, y: y - badgeH, width: badgeW, height: badgeH,
+    color: estadoBg,
+  });
+  // Borde izquierdo coloreado
+  page.drawRectangle({
+    x: (pageW - badgeW) / 2, y: y - badgeH, width: 4, height: badgeH,
+    color: estadoColor,
+  });
+  // Texto
+  page.drawText(badgeLabel, {
+    x: (pageW - boldFont.widthOfTextAtSize(badgeLabel, 11)) / 2 + 4,
+    y: y - badgeH + 7,
+    size: 11,
+    font: boldFont,
+    color: estadoColor,
+  });
+  y -= badgeH + 14;
 
   // ─── DATOS DEL SERVICIO ───
-  addPageIfNeeded(120);
-  page.drawText("Datos del Servicio", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
-  y -= 16;
+  drawSectionTitle("Datos del Servicio");
 
-  const svcInfo: [string, string][] = [
-    ["Código:", s.servicio_codigo || `SRV${s.servicio_id}`],
-    ["Nombre:", s.servicio_nombre || "—"],
-    ["Cliente:", [s.cliente_nombres, s.cliente_apellido_paterno, s.cliente_apellido_materno].filter(Boolean).join(" ") || "—"],
-    ["DNI:", s.cliente_dni || "—"],
-    ["Teléfono:", s.cliente_telefono || "—"],
-    ["Área:", s.areas?.area_nombre || "—"],
-    ["Técnico:", tecnicoNombre],
-    ["Estado:", s.servicio_estado || "—"],
-    ["Creado:", [s.servicio_fecha_creacion, s.servicio_hora_creacion].filter(Boolean).join(" ")],
-  ];
-
-  for (const [lbl, val] of svcInfo) {
-    addPageIfNeeded(16);
-    drawLabelValue(lbl, val);
-  }
-
+  const cardH = 142;
+  addPageIfNeeded(cardH);
+  page.drawRectangle({ x: mg, y: y - cardH, width: pageW - 2 * mg, height: cardH, color: rgb(0.985, 0.985, 0.99) });
+  const cardY = y;
   y -= 8;
+
+  drawInfoRow("Código:", codigoStr);
+  drawInfoRow("Servicio:", s.servicio_nombre || "—");
+  drawInfoRow("Cliente:", [s.cliente_nombres, s.cliente_apellido_paterno, s.cliente_apellido_materno].filter(Boolean).join(" ") || "—");
+  drawInfoRow("DNI:", s.cliente_dni || "—");
+  drawInfoRow("Teléfono:", s.cliente_telefono || "—");
+  drawInfoRow("Área:", s.areas?.area_nombre || "—");
+  drawInfoRow("Técnico:", tecnicoNombre);
+  drawInfoRow("Creado:", [s.servicio_fecha_creacion, s.servicio_hora_creacion].filter(Boolean).join(" ") || "—");
+
+  y = cardY - cardH - 6;
 
   // ─── SITUACIÓN INICIAL DEL CLIENTE ───
   if (s.servicio_cliente_reporte) {
-    addPageIfNeeded(40);
-    page.drawText("Situación Inicial del Cliente", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
-    y -= 16;
+    drawSectionTitle("Situación Inicial del Cliente");
     const txt = s.servicio_cliente_reporte;
-    page.drawText(truncate(txt, font, 9, pageW - 2 * mg), { x: mg, y: y - 9, size: 9, font, color: black });
-    y -= 14;
-    y -= 8;
+    addPageIfNeeded(40);
+    page.drawRectangle({ x: mg, y: y - 26, width: pageW - 2 * mg, height: 26, color: rgb(0.985, 0.985, 0.99) });
+    const lineH = 13;
+    let remain = txt;
+    let lineY = y - 10;
+    while (remain.length > 0 && lineY > y - 26) {
+      const chunk = remain.substring(0, Math.floor((pageW - 2 * mg - 12) / (font.widthOfTextAtSize("A", 9) * 1.05)));
+      page.drawText(chunk, { x: mg + 6, y: lineY, size: 9, font, color: black });
+      remain = remain.substring(chunk.length);
+      lineY -= lineH;
+    }
+    y = (y - 26) - 8;
   }
 
   // ─── DIAGNÓSTICO TÉCNICO ───
   if (s.servicio_diagnostico_inicial) {
-    addPageIfNeeded(40);
-    page.drawText("Diagnóstico Técnico", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
-    y -= 16;
+    drawSectionTitle("Diagnóstico Técnico");
     const txt = s.servicio_diagnostico_inicial;
-    page.drawText(truncate(txt, font, 9, pageW - 2 * mg), { x: mg, y: y - 9, size: 9, font, color: black });
-    y -= 14;
-    y -= 8;
+    addPageIfNeeded(40);
+    page.drawRectangle({ x: mg, y: y - 26, width: pageW - 2 * mg, height: 26, color: rgb(0.985, 0.985, 0.99) });
+    const lineH = 13;
+    let remain = txt;
+    let lineY = y - 10;
+    while (remain.length > 0 && lineY > y - 26) {
+      const chunk = remain.substring(0, Math.floor((pageW - 2 * mg - 12) / (font.widthOfTextAtSize("A", 9) * 1.05)));
+      page.drawText(chunk, { x: mg + 6, y: lineY, size: 9, font, color: black });
+      remain = remain.substring(chunk.length);
+      lineY -= lineH;
+    }
+    y = (y - 26) - 8;
   }
 
   // ─── TAREAS ───
   const tareasList = tareas || [];
-  addPageIfNeeded(30);
-  page.drawText("Tareas", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
-  y -= 16;
+  drawSectionTitle("Tareas");
 
   if (tareasList.length === 0) {
-    page.drawText("Sin tareas registradas.", { x: mg, y: y - 9, size: 9, font, color: lightGray });
-    y -= 16;
+    addPageIfNeeded(30);
+    page.drawRectangle({ x: mg, y: y - 50, width: pageW - 2 * mg, height: 50, color: rgb(0.98, 0.98, 0.98) });
+    page.drawText("No hay tareas registradas para este servicio.", {
+      x: (pageW - font.widthOfTextAtSize("No hay tareas registradas para este servicio.", 10)) / 2,
+      y: y - 30,
+      size: 10,
+      font,
+      color: lightGray,
+    });
+    y -= 58;
   } else {
-    // Tabla
-    const colX = [mg, 220, 300, 380, 470];
-    const rowH = 16;
-    const headerH = 18;
+    // Columnas: tarea (flexible), estado (fijo), completado por (fijo), fecha (fijo)
+    const tableMg = mg + 4;
+    const tableW = pageW - 2 * tableMg;
+    const colX = [
+      tableMg,                     // tarea
+      tableMg + tableW * 0.42,     // estado
+      tableMg + tableW * 0.62,     // completado por
+      tableMg + tableW * 0.82,     // fecha
+    ];
+    const rowH = 18;
+    const headerH = 22;
 
     addPageIfNeeded(headerH + tareasList.length * rowH + 10);
 
     // Header de tabla
-    page.drawRectangle({ x: mg, y: y - headerH, width: 510, height: headerH, color: rgb(0.12, 0.24, 0.37) });
-    const headers = ["Nombre", "Estado", "Completado por", "Fecha", "Hora"];
-    for (let i = 0; i < headers.length; i++) {
-      page.drawText(headers[i], { x: colX[i] + 4, y: y - headerH + 3, size: 8, font: boldFont, color: white });
-    }
+    page.drawRectangle({ x: tableMg, y: y - headerH, width: tableW, height: headerH, color: blue });
+    page.drawText("Tarea", { x: colX[0] + 8, y: y - headerH + 6, size: 9, font: boldFont, color: white });
+    page.drawText("Estado", { x: colX[1] + 8, y: y - headerH + 6, size: 9, font: boldFont, color: white });
+    page.drawText("Completado por", { x: colX[2] + 8, y: y - headerH + 6, size: 9, font: boldFont, color: white });
+    page.drawText("Fecha", { x: colX[3] + 8, y: y - headerH + 6, size: 9, font: boldFont, color: white });
     y -= headerH + 2;
 
     for (let i = 0; i < tareasList.length; i++) {
       const t = tareasList[i];
+      addPageIfNeeded(rowH + 2);
+
+      // Fila alternada
       if (i % 2 === 0) {
-        page.drawRectangle({ x: mg, y: y - rowH, width: 510, height: rowH, color: rgb(0.97, 0.97, 0.98) });
+        page.drawRectangle({ x: tableMg, y: y - rowH, width: tableW, height: rowH, color: rgb(0.975, 0.975, 0.98) });
       }
+      // Línea separadora inferior
+      page.drawRectangle({ x: tableMg, y: y - rowH, width: tableW, height: 0.3, color: rgb(0.92, 0.92, 0.94) });
+
+      // Nombre de tarea (truncado)
+      const nombre = t.tarea_titulo || "—";
+      const maxTW = colX[1] - colX[0] - 20;
+      let nombreDisplay = nombre;
+      if (font.widthOfTextAtSize(nombre, 9) > maxTW) {
+        while (font.widthOfTextAtSize(nombreDisplay + "...", 9) > maxTW && nombreDisplay.length > 3) {
+          nombreDisplay = nombreDisplay.slice(0, -1);
+        }
+        nombreDisplay += "...";
+      }
+      page.drawText(nombreDisplay, { x: colX[0] + 8, y: y - rowH + 5, size: 9, font, color: black });
+
+      // Estado con badge pequeño
+      const tEstado = t.tarea_estado || "pendiente";
+      let tEstadoColor: any, tEstadoBg: any, estadoTxt: string;
+      switch (tEstado) {
+        case "completado":
+          tEstadoColor = green; tEstadoBg = greenLight;
+          estadoTxt = "Completado";
+          break;
+        case "en_progreso":
+          tEstadoColor = blue; tEstadoBg = blueBg;
+          estadoTxt = "En Progreso";
+          break;
+        default:
+          tEstadoColor = gray; tEstadoBg = rgb(0.95, 0.95, 0.95);
+          estadoTxt = "Pendiente";
+          break;
+      }
+      const estW = boldFont.widthOfTextAtSize(estadoTxt, 8) + 14;
+      page.drawRectangle({ x: colX[1] + 6, y: y - rowH + 3, width: estW, height: 14, color: tEstadoBg });
+      page.drawText(estadoTxt, {
+        x: colX[1] + 6 + (estW - boldFont.widthOfTextAtSize(estadoTxt, 8)) / 2,
+        y: y - rowH + 5,
+        size: 8,
+        font: boldFont,
+        color: tEstadoColor,
+      });
+
+      // Completado por
       const c = t.usuario_completador
         ? `${t.usuario_completador.usuario_nombres || ""} ${t.usuario_completador.usuario_apellido_paterno || ""}`.trim()
         : "—";
-      const vals = [t.tarea_titulo || "—", t.tarea_estado || "—", c, t.tarea_fecha_completado || "—", t.tarea_hora_completado || "—"];
-      page.drawText(truncate(vals[0], boldFont, 8, 170), { x: colX[0] + 4, y: y - rowH + 3, size: 8, font, color: black });
-      for (let j = 1; j < vals.length; j++) {
-        page.drawText(vals[j], { x: colX[j] + 4, y: y - rowH + 3, size: 8, font, color: black });
-      }
+      page.drawText(truncate(c, font, 8, 80), { x: colX[2] + 8, y: y - rowH + 5, size: 8, font, color: darkGray });
+
+      // Fecha
+      const fechaTxt = t.tarea_fecha_completado || "—";
+      page.drawText(fechaTxt, { x: colX[3] + 8, y: y - rowH + 5, size: 8, font, color: darkGray });
+
       y -= rowH;
     }
     y -= 8;
@@ -1130,22 +1323,68 @@ async function reporteTecnicoPDF(request: any, reply: any) {
   // ─── EVIDENCIAS ───
   const eviList = evidencias || [];
   if (eviList.length > 0) {
-    addPageIfNeeded(30);
-    page.drawText("Evidencias", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
-    y -= 16;
+    drawSectionTitle("Evidencias");
 
     for (const t of tareasList) {
       const evis = eviPorTarea[t.tarea_id] || [];
       if (evis.length === 0) continue;
 
       addPageIfNeeded(20);
-      page.drawText(`Tarea: ${t.tarea_titulo}`, { x: mg, y: y - 9, size: 9, font: boldFont, color: black });
+      page.drawText(`Tarea: ${t.tarea_titulo}`, { x: mg + 4, y: y - 8, size: 9, font: boldFont, color: blueLight });
       y -= 14;
 
-      for (const ev of evis) {
-        const img = imgCache.get(ev.archivo_url);
-        if (img) {
-          addPageIfNeeded(320);
+      for (let ei = 0; ei < evis.length; ei++) {
+        const ev = evis[ei];
+        const desc = ev.comentario_cliente || ev.comentario_colaborador;
+        const hasImg = imgCache.has(ev.archivo_url);
+
+        // Calcular espacio necesario para esta evidencia
+        const infoH = desc ? 20 : 2;
+        const imgH = hasImg ? 270 : 0;
+        const totalEvH = 28 + imgH + infoH;
+
+        // Reserve space — page break if needed
+        addPageIfNeeded(totalEvH);
+
+        // Fondo alternado (todo el bloque)
+        if (ei % 2 === 0) {
+          page.drawRectangle({ x: mg, y: y - totalEvH, width: pageW - 2 * mg, height: totalEvH, color: rgb(0.975, 0.975, 0.98) });
+        }
+        page.drawRectangle({ x: mg, y: y - totalEvH, width: pageW - 2 * mg, height: 0.3, color: rgb(0.92, 0.92, 0.94) });
+
+        // Estado badge + fecha (top)
+        let evEstadoLabel: string, evEstadoColor: any, evEstadoBg: any;
+        switch (ev.estado) {
+          case "aprobado":
+            evEstadoLabel = "Aprobado"; evEstadoColor = green; evEstadoBg = greenLight; break;
+          case "pendiente":
+            evEstadoLabel = "Pendiente"; evEstadoColor = orange; evEstadoBg = orangeLight; break;
+          case "reemplazado":
+            evEstadoLabel = "Reemplazado"; evEstadoColor = gray; evEstadoBg = rgb(0.92, 0.92, 0.94); break;
+          default:
+            evEstadoLabel = ev.estado || "—"; evEstadoColor = gray; evEstadoBg = rgb(0.95, 0.95, 0.95); break;
+        }
+        const evEstW = boldFont.widthOfTextAtSize(evEstadoLabel, 7.5) + 10;
+        page.drawRectangle({ x: mg + 6, y: y - totalEvH + 3, width: evEstW, height: 14, color: evEstadoBg });
+        page.drawText(evEstadoLabel, {
+          x: mg + 6 + (evEstW - boldFont.widthOfTextAtSize(evEstadoLabel, 7.5)) / 2,
+          y: y - totalEvH + 5,
+          size: 7.5,
+          font: boldFont,
+          color: evEstadoColor,
+        });
+
+        // Fecha a la derecha del badge
+        const evFecha = ev.submitted_at || ev.created_at;
+        if (evFecha) {
+          const f = new Date(evFecha);
+          const fStr = `${f.toLocaleDateString("es-PE")} ${f.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false })}`;
+          page.drawText(fStr, { x: mg + evEstW + 16, y: y - totalEvH + 6, size: 7, font, color: gray });
+        }
+
+        // Imagen (centro)
+        if (hasImg) {
+          const img = imgCache.get(ev.archivo_url)!;
           try {
             let pdfImg;
             if (img.tipo === "jpg") {
@@ -1153,87 +1392,77 @@ async function reporteTecnicoPDF(request: any, reply: any) {
             } else {
               pdfImg = await pdfDoc.embedPng(img.buffer);
             }
-            const maxW = pageW - 2 * mg;
-            const maxH = 280;
+            const maxW = pageW - 2 * mg - 16;
+            const maxH = 260;
             const scale = Math.min(maxW / pdfImg.width, maxH / pdfImg.height, 1);
             const dw = pdfImg.width * scale;
             const dh = pdfImg.height * scale;
+            const imgY = y - totalEvH + 20;
             page.drawImage(pdfImg, {
               x: (pageW - dw) / 2,
-              y: y - dh,
+              y: imgY,
               width: dw,
               height: dh,
             });
-            y -= dh + 4;
           } catch {
-            page.drawText("[Imagen no disponible]", { x: mg + 20, y: y - 8, size: 8, font, color: lightGray });
-            y -= 14;
+            page.drawText("[Imagen no disponible]", { x: mg + 6, y: y - totalEvH + 80, size: 8, font, color: lightGray });
           }
-        } else {
-          page.drawText("[Imagen no disponible]", { x: mg + 20, y: y - 8, size: 8, font, color: lightGray });
-          y -= 14;
         }
 
-        // Fecha/hora
-        const evFecha = ev.submitted_at || ev.created_at;
-        if (evFecha) {
-          const f = new Date(evFecha);
-          const fStr = `${f.toLocaleDateString("es-PE")} ${f.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false })}`;
-          addPageIfNeeded(14);
-          page.drawText(fStr, { x: mg + 20, y: y - 7, size: 7, font, color: gray });
-          y -= 10;
-        }
-
-        // Descripción
-        const desc = ev.comentario_cliente || ev.comentario_colaborador;
+        // Descripción (abajo)
         if (desc) {
-          addPageIfNeeded(16);
-          page.drawText(truncate(desc, font, 8, pageW - 2 * mg - 20), { x: mg + 20, y: y - 8, size: 8, font, color: darkGray });
-          y -= 12;
+          const descY = y - totalEvH + 24 + imgH + 2;
+          page.drawText(truncate(desc, font, 8, pageW - 2 * mg - 14), { x: mg + 6, y: descY, size: 8, font, color: darkGray });
         }
+
+        y -= totalEvH + 2;
       }
-      y -= 6;
     }
   }
 
   // ─── COMENTARIOS ───
   const cmtList = comentarios || [];
   if (cmtList.length > 0) {
-    addPageIfNeeded(30);
-    page.drawText("Comentarios", { x: mg, y: y - 10, size: 10, font: boldFont, color: black });
-    y -= 16;
+    drawSectionTitle("Comentarios");
 
     for (const c of cmtList) {
       const autor = c.usuarios
         ? `${c.usuarios.usuario_nombres || ""} ${c.usuarios.usuario_apellido_paterno || ""}`.trim()
         : "—";
       addPageIfNeeded(30);
-      page.drawText(`${autor}:`, { x: mg, y: y - 9, size: 9, font: boldFont, color: rgb(0.2, 0.2, 0.2) });
-      y -= 14;
+      // Fondo ligero
+      page.drawRectangle({ x: mg, y: y - 26, width: pageW - 2 * mg, height: 26, color: rgb(0.985, 0.985, 0.99) });
+      page.drawText(`${autor}:`, { x: mg + 6, y: y - 10, size: 9, font: boldFont, color: rgb(0.2, 0.2, 0.2) });
       const txt = c.serviciocomentario_contenido || "—";
-      page.drawText(truncate(txt, font, 8, pageW - 2 * mg - 15), { x: mg + 15, y: y - 8, size: 8, font, color: darkGray });
-      y -= 12;
+      page.drawText(truncate(txt, font, 8, pageW - 2 * mg - 18), { x: mg + 6, y: y - 22, size: 8, font, color: darkGray });
       if (c.serviciocomentario_fecha) {
-        page.drawText(`${c.serviciocomentario_fecha} ${c.serviciocomentario_hora || ""}`.trim(), { x: mg + 15, y: y - 7, size: 7, font, color: lightGray });
-        y -= 10;
+        page.drawText(`${c.serviciocomentario_fecha} ${c.serviciocomentario_hora || ""}`.trim(), { x: pageW - mg - 6 - font.widthOfTextAtSize(`${c.serviciocomentario_fecha} ${c.serviciocomentario_hora || ""}`.trim(), 7), y: y - 10, size: 7, font, color: lightGray });
       }
-      y -= 4;
+      y -= 30;
     }
   }
 
-  // ─── FOOTER ───
-  addPageIfNeeded(20);
-  const footer = "— Este documento fue generado automáticamente por ServicioLocalSTS —";
-  page.drawText(footer, { x: (pageW - font.widthOfTextAtSize(footer, 7)) / 2, y: y - 7, size: 7, font, color: lightGray });
-  y -= 14;
+  // ─── FOOTER FINAL ───
+  drawPageFooter();
+  y -= 4;
+
+  // Espacio después del footer
+  const finalFooterY = 16;
+  page.drawRectangle({ x: 0, y: 0, width: pageW, height: finalFooterY + 8, color: blue });
+  page.drawText("ServicioLocal STS — Tecnología al servicio de tu hogar", {
+    x: (pageW - font.widthOfTextAtSize("ServicioLocal STS — Tecnología al servicio de tu hogar", 7)) / 2,
+    y: finalFooterY + 2,
+    size: 7,
+    font,
+    color: rgb(0.75, 0.82, 1),
+  });
 
   // ─── FINALIZAR ───
   const pdfBytes = await pdfDoc.save();
   const q = request.query as { download?: string };
   const disposition = q.download === "true" ? "attachment" : "inline";
-  const codigo = s.servicio_codigo || `SRV${s.servicio_id}`;
   reply.header("Content-Type", "application/pdf");
-  reply.header("Content-Disposition", `${disposition}; filename="reporte-tecnico-${codigo}.pdf"`);
+  reply.header("Content-Disposition", `${disposition}; filename="reporte-tecnico-${codigoStr}.pdf"`);
   reply.send(Buffer.from(pdfBytes));
 }
 

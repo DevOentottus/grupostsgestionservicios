@@ -4,7 +4,8 @@ import { useAuth } from "@/lib/auth.js";
 import { cn } from "@/app/lib/utils";
 import { HelpDrawer } from "@/app/help/HelpDrawer";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
-import { useNotificaciones, useNotificacionesNoLeidas, useMarcarTodasLeidas } from "@/api/queries/useNotificaciones.js";
+import { useNotificaciones, useNotificacionesNoLeidas, useMarcarTodasLeidas, useMarcarLeida } from "@/api/queries/useNotificaciones.js";
+import type { Notificacion } from "@/api/queries/useNotificaciones.js";
 import {
   LayoutDashboard,
   Wrench,
@@ -125,6 +126,15 @@ export default function Layout() {
   const { data: notificaciones } = useNotificaciones();
   const { data: noLeidas } = useNotificacionesNoLeidas();
   const marcarTodas = useMarcarTodasLeidas();
+  const marcarLeida = useMarcarLeida();
+
+  const irANotificacion = (n: Notificacion) => {
+    setNotifOpen(false);
+    if (!n.leida) marcarLeida.mutate(n.id);
+    if (n.tipo === "evidencia" && n.referencia_id) {
+      navigate(`/servicios/${n.referencia_id}`);
+    }
+  };
 
   const handleLogout = () => {
     setUserMenuOpen(false);
@@ -402,6 +412,7 @@ export default function Layout() {
                         {notificaciones.slice(0, 20).map((n) => (
                           <div
                             key={n.id}
+                            onClick={() => irANotificacion(n)}
                             className={`px-3 py-2.5 hover:bg-gray-50 transition cursor-pointer ${!n.leida ? "bg-blue-50/40" : ""}`}
                           >
                             <p className="text-xs font-medium text-gray-800">{n.titulo}</p>

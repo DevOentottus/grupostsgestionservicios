@@ -123,6 +123,13 @@ export function EvidenceUploader({ servicioId, tareaId, onUploaded, className }:
           <X className="w-4 h-4" />
           Cancelar
         </button>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-600 rounded-xl py-2 text-sm hover:bg-gray-50 transition"
+        >
+          <Image className="w-4 h-4" />
+          Seleccionar de galería
+        </button>
       </div>
     );
   }
@@ -193,21 +200,12 @@ export function EvidenceUploader({ servicioId, tareaId, onUploaded, className }:
 
   return (
     <div className={cn("flex flex-wrap gap-2", className)}>
-      {/* Camera button (direct capture) */}
+      {/* Photo button — camera + gallery */}
       <button
         onClick={() => setMode("camera")}
-        className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition flex-1 justify-center shadow-sm"
-      >
-        <Camera className="w-4 h-4" />
-        Tomar foto
-      </button>
-
-      {/* Gallery button */}
-      <button
-        onClick={() => fileInputRef.current?.click()}
         className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 rounded-xl text-sm font-medium hover:bg-blue-100 transition flex-1 justify-center"
       >
-        <Image className="w-4 h-4" />
+        <Camera className="w-4 h-4" />
         Subir foto
       </button>
       <input
