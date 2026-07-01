@@ -1233,14 +1233,16 @@ async function reporteTecnicoPDF(request: any, reply: any) {
     });
     y -= 58;
   } else {
-    // Columnas: tarea (flexible), estado (fijo), completado por (fijo), fecha (fijo)
+    // Columnas: tarea, estado, completado por, fecha, hora, tiempo
     const tableMg = mg + 4;
     const tableW = pageW - 2 * tableMg;
     const colX = [
-      tableMg,                     // tarea
-      tableMg + tableW * 0.42,     // estado
-      tableMg + tableW * 0.62,     // completado por
-      tableMg + tableW * 0.82,     // fecha
+      tableMg,                     // tarea (0%)
+      tableMg + tableW * 0.34,     // estado (34%)
+      tableMg + tableW * 0.48,     // completado por (48%)
+      tableMg + tableW * 0.63,     // fecha (63%)
+      tableMg + tableW * 0.75,     // hora (75%)
+      tableMg + tableW * 0.88,     // tiempo (88%)
     ];
     const rowH = 18;
     const headerH = 22;
@@ -1249,10 +1251,12 @@ async function reporteTecnicoPDF(request: any, reply: any) {
 
     // Header de tabla
     page.drawRectangle({ x: tableMg, y: y - headerH, width: tableW, height: headerH, color: blue });
-    page.drawText("Tarea", { x: colX[0] + 8, y: y - headerH + 6, size: 9, font: boldFont, color: white });
-    page.drawText("Estado", { x: colX[1] + 8, y: y - headerH + 6, size: 9, font: boldFont, color: white });
-    page.drawText("Completado por", { x: colX[2] + 8, y: y - headerH + 6, size: 9, font: boldFont, color: white });
-    page.drawText("Fecha", { x: colX[3] + 8, y: y - headerH + 6, size: 9, font: boldFont, color: white });
+    page.drawText("Tarea", { x: colX[0] + 8, y: y - headerH + 6, size: 8, font: boldFont, color: white });
+    page.drawText("Estado", { x: colX[1] + 6, y: y - headerH + 6, size: 8, font: boldFont, color: white });
+    page.drawText("Completado por", { x: colX[2] + 6, y: y - headerH + 6, size: 8, font: boldFont, color: white });
+    page.drawText("Fecha", { x: colX[3] + 6, y: y - headerH + 6, size: 8, font: boldFont, color: white });
+    page.drawText("Hora", { x: colX[4] + 6, y: y - headerH + 6, size: 8, font: boldFont, color: white });
+    page.drawText("Tiempo", { x: colX[5] + 6, y: y - headerH + 6, size: 8, font: boldFont, color: white });
     y -= headerH + 2;
 
     for (let i = 0; i < tareasList.length; i++) {
@@ -1268,15 +1272,15 @@ async function reporteTecnicoPDF(request: any, reply: any) {
 
       // Nombre de tarea (truncado)
       const nombre = t.tarea_titulo || "—";
-      const maxTW = colX[1] - colX[0] - 20;
+      const maxTW = colX[1] - colX[0] - 16;
       let nombreDisplay = nombre;
-      if (font.widthOfTextAtSize(nombre, 9) > maxTW) {
-        while (font.widthOfTextAtSize(nombreDisplay + "...", 9) > maxTW && nombreDisplay.length > 3) {
+      if (font.widthOfTextAtSize(nombre, 8) > maxTW) {
+        while (font.widthOfTextAtSize(nombreDisplay + "...", 8) > maxTW && nombreDisplay.length > 3) {
           nombreDisplay = nombreDisplay.slice(0, -1);
         }
         nombreDisplay += "...";
       }
-      page.drawText(nombreDisplay, { x: colX[0] + 8, y: y - rowH + 5, size: 9, font, color: black });
+      page.drawText(nombreDisplay, { x: colX[0] + 6, y: y - rowH + 5, size: 8, font, color: black });
 
       // Estado con badge pequeño
       const tEstado = t.tarea_estado || "pendiente";
@@ -1295,12 +1299,14 @@ async function reporteTecnicoPDF(request: any, reply: any) {
           estadoTxt = "Pendiente";
           break;
       }
-      const estW = boldFont.widthOfTextAtSize(estadoTxt, 8) + 14;
-      page.drawRectangle({ x: colX[1] + 6, y: y - rowH + 3, width: estW, height: 14, color: tEstadoBg });
+      const estW = boldFont.widthOfTextAtSize(estadoTxt, 7) + 12;
+      const maxEstW = colX[2] - colX[1] - 8;
+      const finalEstW = Math.min(estW, maxEstW);
+      page.drawRectangle({ x: colX[1] + 4, y: y - rowH + 3, width: finalEstW, height: 13, color: tEstadoBg });
       page.drawText(estadoTxt, {
-        x: colX[1] + 6 + (estW - boldFont.widthOfTextAtSize(estadoTxt, 8)) / 2,
+        x: colX[1] + 4 + (finalEstW - boldFont.widthOfTextAtSize(estadoTxt, 7)) / 2,
         y: y - rowH + 5,
-        size: 8,
+        size: 7,
         font: boldFont,
         color: tEstadoColor,
       });
@@ -1309,11 +1315,29 @@ async function reporteTecnicoPDF(request: any, reply: any) {
       const c = t.usuario_completador
         ? `${t.usuario_completador.usuario_nombres || ""} ${t.usuario_completador.usuario_apellido_paterno || ""}`.trim()
         : "—";
-      page.drawText(truncate(c, font, 8, 80), { x: colX[2] + 8, y: y - rowH + 5, size: 8, font, color: darkGray });
+      page.drawText(truncate(c, font, 7, colX[3] - colX[2] - 14), { x: colX[2] + 6, y: y - rowH + 5, size: 7, font, color: darkGray });
 
       // Fecha
       const fechaTxt = t.tarea_fecha_completado || "—";
-      page.drawText(fechaTxt, { x: colX[3] + 8, y: y - rowH + 5, size: 8, font, color: darkGray });
+      page.drawText(fechaTxt, { x: colX[3] + 6, y: y - rowH + 5, size: 7, font, color: darkGray });
+
+      // Hora
+      const horaTxt = t.tarea_hora_completado || "—";
+      page.drawText(horaTxt, { x: colX[4] + 6, y: y - rowH + 5, size: 7, font, color: darkGray });
+
+      // Tiempo (duración real formateada)
+      let tiempoTxt = "—";
+      if (t.tarea_tiempo_real != null) {
+        const mins = Math.floor(t.tarea_tiempo_real);
+        if (mins < 1) tiempoTxt = "< 1m";
+        else if (mins < 60) tiempoTxt = `${mins}m`;
+        else {
+          const h = Math.floor(mins / 60);
+          const m = mins % 60;
+          tiempoTxt = m > 0 ? `${h}h ${m}m` : `${h}h`;
+        }
+      }
+      page.drawText(tiempoTxt, { x: colX[5] + 6, y: y - rowH + 5, size: 7, font, color: darkGray });
 
       y -= rowH;
     }
