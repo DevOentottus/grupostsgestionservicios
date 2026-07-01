@@ -1325,42 +1325,45 @@ async function reporteTecnicoPDF(request: any, reply: any) {
       const horaTxt = t.tarea_hora_completado || "—";
       page.drawText(horaTxt, { x: colX[4] + 6, y: y - rowH + 5, size: 7, font, color: darkGray });
 
-      // Tiempo (diferencia con la tarea anterior)
-let tiempoTxt = "—";
-if (i > 0) {
-  const prev = tareasList[i - 1];
-  const currFecha =
-    t.tarea_fecha_completado && t.tarea_hora_completado
-      ? new Date(`${t.tarea_fecha_completado}T${t.tarea_hora_completado}`)
-      : null;
-  const prevFecha =
-    prev.tarea_fecha_completado && prev.tarea_hora_completado
-      ? new Date(`${prev.tarea_fecha_completado}T${prev.tarea_hora_completado}`)
-      : null;
-  if (
-    currFecha && prevFecha &&
-    !isNaN(currFecha.getTime()) && !isNaN(prevFecha.getTime()) &&
-    currFecha.getTime() > prevFecha.getTime()
-  ) {
-    const diffMin = Math.floor(
-      (currFecha.getTime() - prevFecha.getTime()) / 60000
-    );
-    if (diffMin < 1) tiempoTxt = "< 1m";
-    else if (diffMin < 60) tiempoTxt = `${diffMin}m`;
-    else {
-      const h = Math.floor(diffMin / 60);
-      const m = diffMin % 60;
-      tiempoTxt = m > 0 ? `${h}h ${m}m` : `${h}h`;
+      // Tiempo (diferencia con la tarea anterior o con inicio del servicio)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      function parseFechaHora(fecha: any, hora: any): Date | null {
+        if (!fecha || !hora) return null;
+        const d = new Date(`${fecha}T${hora}`);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      function formatDiff(minutos: number): string {
+        if (minutos < 1) return "< 1m";
+        if (minutos < 60) return `${minutos}m`;
+        const h = Math.floor(minutos / 60);
+        const m = minutos % 60;
+        return m > 0 ? `${h}h ${m}m` : `${h}h`;
+      }
+
+      let tiempoTxt = "—";
+      const currFecha = parseFechaHora(t.tarea_fecha_completado, t.tarea_hora_completado);
+      if (currFecha) {
+        if (i === 0) {
+          // Primera tarea: comparar con inicio del servicio
+          const inicioFecha = parseFechaHora(s.servicio_fecha_inicio, s.servicio_hora_inicio);
+          if (inicioFecha && currFecha.getTime() > inicioFecha.getTime()) {
+            tiempoTxt = formatDiff(Math.floor((currFecha.getTime() - inicioFecha.getTime()) / 60000));
+          }
+        } else {
+          // Siguientes tareas: comparar con la anterior
+          const prev = tareasList[i - 1];
+          const prevFecha = parseFechaHora(prev.tarea_fecha_completado, prev.tarea_hora_completado);
+          if (prevFecha && currFecha.getTime() > prevFecha.getTime()) {
+            tiempoTxt = formatDiff(Math.floor((currFecha.getTime() - prevFecha.getTime()) / 60000));
+          }
+        }
+      }
+      page.drawText(tiempoTxt, { x: colX[5] + 6, y: y - rowH + 5, size: 7, font, color: darkGray });
+
+      y -= rowH;
     }
+    y -= 8;
   }
-}
-page.drawText(tiempoTxt, {
-  x: colX[5] + 6,
-  y: y - rowH + 5,
-  size: 7,
-  font,
-  color: darkGray,
-});
 
   // ─── EVIDENCIAS ───
   const eviList = evidencias || [];
