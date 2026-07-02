@@ -150,6 +150,7 @@ export type Database = {
           auditoria_fecha: string
           auditoria_hora: string
           auditoria_id: number
+          auditoria_ip: string | null
           auditoria_registro_id: number | null
           auditoria_tabla: string
           usuario_id: number | null
@@ -160,6 +161,7 @@ export type Database = {
           auditoria_fecha?: string
           auditoria_hora?: string
           auditoria_id?: number
+          auditoria_ip?: string | null
           auditoria_registro_id?: number | null
           auditoria_tabla: string
           usuario_id?: number | null
@@ -170,6 +172,7 @@ export type Database = {
           auditoria_fecha?: string
           auditoria_hora?: string
           auditoria_id?: number
+          auditoria_ip?: string | null
           auditoria_registro_id?: number | null
           auditoria_tabla?: string
           usuario_id?: number | null
@@ -270,6 +273,44 @@ export type Database = {
           cliente_telefono?: string | null
         }
         Relationships: []
+      }
+      login_attempts: {
+        Row: {
+          id: number
+          usuario_id: number | null
+          username_intentado: string
+          ip_address: string | null
+          user_agent: string | null
+          exito: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          usuario_id?: number | null
+          username_intentado: string
+          ip_address?: string | null
+          user_agent?: string | null
+          exito?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          usuario_id?: number | null
+          username_intentado?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          exito?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "login_attempts_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["usuario_id"]
+          },
+        ]
       }
       comentariosevidencias: {
         Row: {
@@ -736,6 +777,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "servicios"
             referencedColumns: ["servicio_id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          id: number
+          user_id: number
+          token_jti: string
+          ip_address: string | null
+          user_agent: string | null
+          created_at: string
+          expires_at: string
+          last_activity: string
+          revoked: boolean
+          revoked_at: string | null
+        }
+        Insert: {
+          id?: number
+          user_id: number
+          token_jti: string
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+          expires_at: string
+          last_activity?: string
+          revoked?: boolean
+          revoked_at?: string | null
+        }
+        Update: {
+          id?: number
+          user_id?: number
+          token_jti?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+          expires_at?: string
+          last_activity?: string
+          revoked?: boolean
+          revoked_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["usuario_id"]
           },
         ]
       }

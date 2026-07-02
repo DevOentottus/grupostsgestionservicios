@@ -12,7 +12,7 @@ strict_tdd: false
 
 testing:
   strict_tdd: false
-  detected: 2026-06-17
+  detected: 2026-07-01
   runner:
     command: null
     framework: NOT_FOUND

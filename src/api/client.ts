@@ -339,3 +339,23 @@ export const ofertasApi = {
   listar: () => api.get("/ofertas"),
   imagenUrl: (filename: string) => `${API_BASE_URL}/api/ofertas/imagen/${encodeURIComponent(filename)}`,
 };
+
+// -- Seguridad API --
+export const seguridadApi = {
+  resumen: () => api.get("/seguridad/resumen"),
+  intentosFallidos: (params?: {
+    page?: number;
+    limit?: number;
+    desde?: string;
+    hasta?: string;
+    username?: string;
+  }) => api.get("/seguridad/intentos-fallidos", { params }),
+  sesiones: (params?: { page?: number; limit?: number }) =>
+    api.get("/seguridad/sesiones", { params }),
+  revocarSesion: (id: number) => api.delete(`/seguridad/sesiones/${id}`),
+  actividadSospechosa: (params?: { page?: number; limit?: number }) =>
+    api.get("/seguridad/sospechoso", { params }),
+  exportar: (tipo: string, params?: { desde?: string; hasta?: string }) =>
+    api.get(`/seguridad/exportar/${tipo}`, { params, responseType: "blob" }),
+  cleanup: () => api.post("/seguridad/cleanup"),
+};

@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
+import rateLimit from "@fastify/rate-limit";
 
 import { config } from "@/core/config/index.js";
 import { errorHandler } from "@/core/middleware/error-handler.js";
@@ -19,11 +20,13 @@ import { managerController } from "@/modules/manager/manager.controller.js";
 import { solicitudesController } from "@/modules/solicitudes/solicitudes.controller.js";
 import { anunciosController } from "@/modules/anuncios/anuncios.controller.js";
 import { rendimientoController } from "@/modules/rendimiento/rendimiento.controller.js";
+import { seguridadController } from "@/modules/seguridad/seguridad.controller.js";
 import { evidenciasController } from "@/modules/evidencias/evidencias.controller.js";
 import { audioController } from "@/modules/audio/audio.controller.js";
 import { pushController } from "@/modules/push/push.controller.js";
 import { ofertasController } from "@/modules/ofertas/ofertas.controller.js";
 import { notificacionesController } from "@/modules/notificaciones/notificaciones.controller.js";
+import { cleanupSeguridad } from "@/scripts/cleanup-seguridad.js";
 
 export async function buildApp() {
   const app = Fastify({ logger: config.isDev });
@@ -31,6 +34,16 @@ export async function buildApp() {
   // -- Plugins --
   await app.register(cors, { origin: config.cors.origin, credentials: true });
   await app.register(jwt, { secret: config.jwt.secret });
+  await app.register(rateLimit, {
+    max: 100,
+    timeWindow: "1 minute",
+    allowList: (request) => {
+      return request.url === "/api/auth/login";
+    },
+    keyGenerator: (request) => {
+      return request.ip;
+    },
+  });
 
   // -- Decorators --
   app.decorate("authenticate", authenticate);
@@ -66,11 +79,23 @@ export async function buildApp() {
   await app.register(solicitudesController);
   await app.register(anunciosController);
   await app.register(rendimientoController);
+  await app.register(seguridadController);
   await app.register(evidenciasController);
   await app.register(audioController);
   await app.register(pushController);
   await app.register(ofertasController);
   await app.register(notificacionesController);
+
+  // ── Cleanup programado de seguridad (cada 24h) ────────────
+  const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24h
+  const cleanupTimer = setInterval(() => {
+    cleanupSeguridad().catch((e) => console.error("Cleanup error:", e));
+  }, CLEANUP_INTERVAL_MS);
+
+  app.addHook("onClose", (_instance, done) => {
+    clearInterval(cleanupTimer);
+    done();
+  });
 
   return app;
 }

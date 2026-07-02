@@ -11,13 +11,18 @@ export async function authController(app: FastifyInstance) {
   // -- POST /api/auth/login --
   app.post("/api/auth/login", async (request, reply) => {
     const input = loginSchema.parse(request.body);
-    const result = await loginUser(input.username, input.password);
+    const ip = (request.ip as string) ||
+      (request.headers["x-forwarded-for"] as string) || null;
+    const ua = (request.headers["user-agent"] as string) || null;
+
+    const result = await loginUser(input.username, input.password, ip, ua);
 
     const token = app.jwt.sign(
       {
         user_id: result.user.id,
         rol: result.user.rol,
         area_id: result.user.area_id,
+        jti: result.jti,
       },
       { expiresIn: config.jwt.expiresIn }
     );
@@ -41,10 +46,10 @@ export async function authController(app: FastifyInstance) {
     }
 
     const oldToken = authHeader.slice(7);
-    let payload: { user_id: number; rol: string; area_id: number | null };
+    let payload: { user_id: number; rol: string; area_id: number | null; jti?: string };
     try {
       // Verificar incluso si expiró (ignoreExpiration) -- el token sigue siendo válido
-      payload = app.jwt.verify<{ user_id: number; rol: string; area_id: number | null }>(
+      payload = app.jwt.verify<{ user_id: number; rol: string; area_id: number | null; jti?: string }>(
         oldToken,
         { ignoreExpiration: true }
       );
@@ -82,12 +87,26 @@ export async function authController(app: FastifyInstance) {
       if (acData?.length) area_id = acData[0].area_id;
     }
 
-    // Emitir nuevo token
+    // Extraer jti del token viejo y actualizar last_activity en la sesión
+    const jti = payload.jti;
+    if (jti) {
+      try {
+        await supabase
+          .from("sessions")
+          .update({ last_activity: new Date().toISOString() })
+          .eq("token_jti", jti);
+      } catch {
+        // No fallar si la sesión no existe (tokens emitidos antes de esta feature)
+      }
+    }
+
+    // Emitir nuevo token con el mismo jti (la sesión es la misma)
     const newToken = app.jwt.sign(
       {
         user_id: payload.user_id,
         rol: payload.rol,
         area_id,
+        jti,
       },
       { expiresIn: config.jwt.expiresIn }
     );

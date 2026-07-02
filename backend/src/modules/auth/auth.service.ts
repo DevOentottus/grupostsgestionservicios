@@ -1,6 +1,8 @@
+import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { supabase } from "@/lib/supabase.js";
 import { UnauthorizedError } from "@/core/errors/index.js";
+import { config } from "@/core/config/index.js";
 import type { JwtPayload, Rol } from "@/core/types/index.js";
 
 export interface LoginResult {
@@ -14,6 +16,7 @@ export interface LoginResult {
     area_id: number | null;
     area_nombre: string | null;
   };
+  jti: string;
 }
 
 function nombreCompleto(
@@ -32,9 +35,42 @@ function nombreCompleto(
   return parts.join(" ");
 }
 
+/** Parse "15m", "2h", "7d" style strings → minutos */
+function parseExpiresIn(value: string): number {
+  const m = value.match(/^(\d+)\s*(m|min|mins|h|hr|hrs|d|day|days)?$/i);
+  if (!m) return 15;
+  const num = parseInt(m[1], 10);
+  const unit = (m[2] || "m").toLowerCase();
+  if (unit.startsWith("d")) return num * 1440;
+  if (unit.startsWith("h")) return num * 60;
+  return num;
+}
+
+/** Insertar intento fallido en login_attempts sin romper el flujo */
+async function logFailedAttempt(
+  username: string,
+  usuarioId: number | null,
+  ip: string | null | undefined,
+  userAgent: string | null | undefined,
+): Promise<void> {
+  try {
+    await supabase.from("login_attempts").insert({
+      username_intentado: username,
+      usuario_id: usuarioId,
+      ip_address: ip || null,
+      user_agent: userAgent || null,
+      exito: false,
+    });
+  } catch (err) {
+    console.error("Error al registrar intento fallido:", err);
+  }
+}
+
 export async function loginUser(
   username: string,
-  password: string
+  password: string,
+  ip?: string | null,
+  userAgent?: string | null
 ): Promise<LoginResult> {
   const { data: usuarios, error } = await supabase
     .from("usuarios")
@@ -46,12 +82,42 @@ export async function loginUser(
 
   if (error) throw new Error(`Error de base de datos: ${error.message}`);
   const usuario = usuarios?.[0];
-  if (!usuario) throw new UnauthorizedError("Credenciales inválidas");
 
-  if (!usuario.usuario_activo) throw new UnauthorizedError("Usuario desactivado");
+  // --- Login fallido: usuario no encontrado ---
+  if (!usuario) {
+    await logFailedAttempt(username, null, ip, userAgent);
+    throw new UnauthorizedError("Credenciales inválidas");
+  }
 
+  // --- Login fallido: usuario desactivado ---
+  if (!usuario.usuario_activo) {
+    await logFailedAttempt(username, usuario.usuario_id, ip, userAgent);
+    throw new UnauthorizedError("Usuario desactivado");
+  }
+
+  // --- Login fallido: contraseña inválida ---
   const valida = bcrypt.compareSync(password, usuario.usuario_contrasena);
-  if (!valida) throw new UnauthorizedError("Credenciales inválidas");
+  if (!valida) {
+    await logFailedAttempt(username, usuario.usuario_id, ip, userAgent);
+    throw new UnauthorizedError("Credenciales inválidas");
+  }
+
+  // --- Login exitoso: generar jti y crear sesión ---
+  const jti = randomUUID();
+  const minutes = parseExpiresIn(config.jwt.expiresIn);
+  const expiresAt = new Date(Date.now() + minutes * 60 * 1000);
+
+  try {
+    await supabase.from("sessions").insert({
+      user_id: usuario.usuario_id,
+      token_jti: jti,
+      ip_address: ip || null,
+      user_agent: userAgent || null,
+      expires_at: expiresAt.toISOString(),
+    });
+  } catch (err) {
+    console.error("Error al crear sesión:", err);
+  }
 
   // Registrar fecha de último login
   const today = new Date().toISOString().split("T")[0];
@@ -106,13 +172,15 @@ export async function loginUser(
       area_id,
       area_nombre,
     },
+    jti,
   };
 }
 
 export function generateJwtPayload(
   userId: number,
   rol: Rol,
-  area_id: number | null
+  area_id: number | null,
+  jti: string
 ): JwtPayload {
-  return { user_id: userId, rol, area_id };
+  return { user_id: userId, rol, area_id, jti };
 }

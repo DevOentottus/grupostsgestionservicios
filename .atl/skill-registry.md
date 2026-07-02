@@ -4,7 +4,7 @@
 
 See `_shared/skill-resolver.md` for the full resolution protocol.
 
-Last updated: 2026-06-17
+Last updated: 2026-07-01
 
 ## User Skills
 
@@ -93,3 +93,6 @@ Convention index: `C:\Users\jhan4\.config\opencode\AGENTS.md` (user-level — ap
 - **Conventions**: Conventional commits, TypeScript strict mode, ES Modules
 - **Testing**: No test infrastructure installed; typecheck-only (tsc --noEmit)
 - **Quality**: No ESLint, Prettier, or formatter configured
+- **Re-initialized**: 2026-07-01
+- **Engram context ID**: obs-80c946f6d3af1ee3 (topic: sdd-init/serviciolocalsts)
+- **Engram testing-capabilities ID**: obs-9f8ec34ad556c34c (topic: sdd/serviciolocalsts/testing-capabilities)

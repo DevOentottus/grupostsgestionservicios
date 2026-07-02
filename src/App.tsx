@@ -15,6 +15,7 @@ import { PlantillasPage } from "@/app/pages/plantillas/Plantillas.js";
 import { AuditoriaPage } from "@/app/pages/auditoria/Auditoria.js";
 import { ReportesPage } from "@/app/pages/reportes/Reportes.js";
 import { RendimientoSistemaPage } from "@/app/pages/admin/RendimientoSistema.js";
+import { SeguridadSistemaPage } from "@/app/pages/admin/SeguridadSistema.js";
 import { DisplayTVPage } from "@/app/pages/display/DisplayTV.js";
 import { ServicioPublicoPage } from "@/app/pages/servicios/ServicioPublico.js";
 import { SeguimientoClientePage } from "@/app/pages/seguimiento/SeguimientoCliente.js";
@@ -86,6 +87,11 @@ export default function App() {
           <Route path="admin/rendimiento" element={
             <RequireRole roles={["admin", "sistema"]}>
               <RendimientoSistemaPage />
+            </RequireRole>
+          } />
+          <Route path="admin/seguridad" element={
+            <RequireRole roles={["sistema"]}>
+              <SeguridadSistemaPage />
             </RequireRole>
           } />
           <Route path="usuarios" element={

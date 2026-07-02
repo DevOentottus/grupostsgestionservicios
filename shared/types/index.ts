@@ -126,6 +126,7 @@ export interface JwtPayload {
   user_id: number;
   rol: Rol;
   area_id: number | null;
+  jti: string;
 }
 
 // -- KPIs --
@@ -642,4 +643,54 @@ export interface Anuncio {
   fecha_expiracion: string | null;
   created_at: string;
   usuario?: { nombres: string; username: string } | null;
+}
+
+// -- Seguridad del Sistema --
+export interface SeguridadResumen {
+  https: { status: "ok" | "warning" | "error"; detalle: string };
+  jwt: { status: "ok" | "warning" | "error"; detalle: string };
+  cors: { status: "ok" | "warning" | "error"; detalle: string };
+  rls: { status: "ok" | "warning" | "error"; detalle: string };
+  rate_limit: { status: "ok" | "warning" | "error"; detalle: string };
+  login_tracking: { status: "ok" | "warning" | "error"; detalle: string };
+}
+
+export interface LoginAttempt {
+  id: number;
+  usuario_id: number | null;
+  username_intentado: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  exito: boolean;
+  created_at: string;
+  usuario?: { id: number; nombres: string; username: string } | null;
+}
+
+export interface SesionActiva {
+  id: number;
+  user_id: number;
+  token_jti: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+  expires_at: string;
+  last_activity: string;
+  revoked: boolean;
+  usuario?: { id: number; nombres: string; username: string } | null;
+}
+
+export interface ActividadSospechosa {
+  id: string;
+  tipo: "brute_force" | "fuera_horario" | "escalada_privilegios" | "multi_ip";
+  severidad: "critica" | "media" | "informativa";
+  descripcion: string;
+  timestamp: string;
+  datos: Record<string, unknown>;
+}
+
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }

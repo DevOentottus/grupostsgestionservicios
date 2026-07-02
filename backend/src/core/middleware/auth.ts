@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { supabase } from "@/lib/supabase.js";
 import { ForbiddenError, UnauthorizedError } from "@/core/errors/index.js";
 import type { Rol } from "@/core/types/index.js";
+import { verifySession } from "./session.js";
 
 export async function authenticate(request: FastifyRequest, _reply: FastifyReply) {
   try {
@@ -23,6 +24,10 @@ export function requireRoles(...roles: Rol[]) {
     } catch {
       throw new UnauthorizedError("Token inválido o expirado");
     }
+
+    // Verificar que la sesión no esté revocada ni expirada
+    await verifySession(request, _reply);
+
     const user = request.user as { user_id: number; rol: Rol; area_id: number | null } | undefined;
     if (!user) {
       throw new UnauthorizedError("No autenticado");
