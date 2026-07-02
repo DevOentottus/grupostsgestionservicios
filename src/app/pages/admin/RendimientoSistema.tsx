@@ -316,31 +316,6 @@ function KPITab({ data }: { data: RendimientoResponse }) {
 
   return (
     <div className="space-y-6">
-      {/* Estado cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          { label: "Completados", value: p.servicios_completados, icon: CheckCircle2, bg: "bg-green-100", text: "text-green-700" },
-          { label: "En Progreso", value: p.servicios_en_progreso, icon: Activity, bg: "bg-blue-100", text: "text-blue-700" },
-          { label: "Pendientes", value: p.servicios_pendientes, icon: Clock, bg: "bg-amber-100", text: "text-amber-700" },
-          { label: "Bloqueados", value: p.servicios_bloqueados, icon: AlertTriangle, bg: "bg-red-100", text: "text-red-700" },
-        ].map((s) => {
-          const SIcon = s.icon;
-          return (
-            <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center`}>
-                  <SIcon className={`w-5 h-5 ${s.text}`} />
-                </div>
-                <div>
-                  <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>{s.value}</p>
-                  <p className="text-xs text-gray-500">{s.label}</p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       {/* KPI groups */}
       {grupos.map((g) => {
         const GIcon = g.icon;
