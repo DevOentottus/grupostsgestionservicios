@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { supabase } from "@/lib/supabase.js";
-import { UnauthorizedError } from "@/core/errors/index.js";
+import { UnauthorizedError, SessionRevokedError } from "@/core/errors/index.js";
 
 interface CacheEntry {
   revoked: boolean;
@@ -30,7 +30,7 @@ export function invalidateSessionCache(jti: string): void {
  * - Extrae `jti` de `request.user` (inyectado por JWT verify).
  * - Cache hit (TTL 30s): retorna resultado cacheado.
  * - Cache miss: consulta `sessions` en DB por `revoked` y `expires_at`.
- * - Si `revoked = true`: lanza UnauthorizedError("Sesión revocada").
+ * - Si `revoked = true`: lanza SessionRevokedError.
  * - Si `expires_at < NOW()`: lanza UnauthorizedError("Sesión expirada").
  * - Si no hay `jti` en el payload (tokens pre-feature): skip (backward compat).
  * - Si falla la consulta a DB: fail open (permite el request).
@@ -48,7 +48,7 @@ export async function verifySession(
   const cached = sessionCache.get(user.jti);
   if (cached && Date.now() - cached.cachedAt < CACHE_TTL) {
     if (cached.revoked) {
-      throw new UnauthorizedError("Sesión revocada");
+      throw new SessionRevokedError();
     }
     return;
   }
@@ -94,6 +94,34 @@ export async function verifySession(
     throw new UnauthorizedError("Sesión expirada");
   }
   if (revoked) {
-    throw new UnauthorizedError("Sesión revocada");
+    throw new SessionRevokedError();
   }
+}
+
+/**
+ * Verifica que la sesión no esté revocada, ignorando expiración.
+ * NO usa el cache compartido con verifySession (que mezcla revoked+expired).
+ * Solo se llama desde /auth/refresh, así que no necesita cache agresivo.
+ */
+export async function checkSessionNotRevoked(
+  request: FastifyRequest
+): Promise<void> {
+  const user = request.user as { jti?: string } | undefined;
+  if (!user?.jti) return;
+
+  let revoked = false;
+  try {
+    const { data, error } = await supabase
+      .from("sessions")
+      .select("revoked")
+      .eq("token_jti", user.jti)
+      .limit(1);
+
+    if (error || !data?.[0]) return;
+    revoked = data[0].revoked;
+  } catch {
+    return;
+  }
+
+  if (revoked) throw new SessionRevokedError();
 }

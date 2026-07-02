@@ -5,7 +5,8 @@ import { loginUser, generateJwtPayload } from "./auth.service.js";
 import { config } from "@/core/config/index.js";
 import { loginSchema } from "./auth.schema.js";
 import { auditLog } from "@/core/utils/index.js";
-import { NotFoundError, ValidationError, UnauthorizedError } from "@/core/errors/index.js";
+import { NotFoundError, ValidationError, UnauthorizedError, SessionRevokedError } from "@/core/errors/index.js";
+import { checkSessionNotRevoked } from "@/core/middleware/session.js";
 
 export async function authController(app: FastifyInstance) {
   // -- POST /api/auth/login --
@@ -55,6 +56,11 @@ export async function authController(app: FastifyInstance) {
       );
     } catch {
       throw new UnauthorizedError("Token inválido");
+    }
+
+    // Verificar que la sesión no esté revocada (ignora expiración — el JWT puede haber expirado)
+    if (payload.jti) {
+      await checkSessionNotRevoked({ user: { jti: payload.jti } } as FastifyRequest);
     }
 
     // Verificar que el usuario siga activo y re-obtener area_id

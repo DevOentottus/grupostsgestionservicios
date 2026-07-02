@@ -37,11 +37,20 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // No es 401, o ya se reintentó, o es la misma request de refresh
+    const is401 = error.response?.status === 401;
     if (
-      error.response?.status !== 401 ||
+      !is401 ||
       originalRequest._retry ||
       originalRequest.url === "/auth/refresh"
     ) {
+      return Promise.reject(error);
+    }
+
+    // Sesión revocada → no intentar refresh, ir directo a login
+    if (error.response?.data?.title === "SESSION_REVOKED") {
+      sessionStorage.removeItem("auth_token");
+      sessionStorage.removeItem("auth_user");
+      window.location.href = "/login?revoked=true";
       return Promise.reject(error);
     }
 
@@ -80,7 +89,10 @@ api.interceptors.response.use(
       processQueue(null, refreshError);
       sessionStorage.removeItem("auth_token");
       sessionStorage.removeItem("auth_user");
-      window.location.href = "/login";
+      // Si el refresh falló por sesión revocada, pasar el mensaje
+      const err = refreshError as { response?: { data?: { title?: string } } };
+      const isRevoked = err?.response?.data?.title === "SESSION_REVOKED";
+      window.location.href = isRevoked ? "/login?revoked=true" : "/login";
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

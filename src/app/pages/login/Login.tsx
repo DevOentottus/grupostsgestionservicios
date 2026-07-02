@@ -1,16 +1,18 @@
 import { useState, type FormEvent, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
-import { Wrench, Eye, EyeOff, AlertCircle, User, Lock, LogIn, FileText } from "lucide-react";
+import { Wrench, Eye, EyeOff, AlertCircle, ShieldAlert, User, Lock, LogIn, FileText } from "lucide-react";
 
 export function LoginPage() {
   const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const revoked = searchParams.get("revoked") === "true";
 
   const destinoPorRol = (rol: string) =>
     rol === "colaborador" || rol === "encargado" ? "/midesempeno" : "/dashboard";
@@ -73,6 +75,19 @@ export function LoginPage() {
 
           <h2 className="text-gray-900 font-bold mb-1">Iniciar sesión</h2>
           <p className="text-gray-500 text-sm mb-6">Ingresa tus credenciales para continuar</p>
+
+          {revoked && (
+            <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 text-orange-800 rounded-xl p-4 mb-4 text-sm">
+              <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5 text-orange-600" />
+              <div>
+                <p className="font-semibold">Sesión revocada</p>
+                <p className="text-orange-700 mt-1">
+                  Tu sesión fue revocada por un administrador. Vuelve a intentar
+                  en 15 minutos.
+                </p>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 mb-4 text-sm">

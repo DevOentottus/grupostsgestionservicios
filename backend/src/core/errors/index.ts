@@ -15,6 +15,12 @@ export class UnauthorizedError extends AppError {
   }
 }
 
+export class SessionRevokedError extends AppError {
+  constructor() {
+    super("Sesión revocada", 401, "SESSION_REVOKED");
+  }
+}
+
 export class ForbiddenError extends AppError {
   constructor(message = "Acceso denegado") {
     super(message, 403, "FORBIDDEN");
