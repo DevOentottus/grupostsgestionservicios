@@ -3,11 +3,11 @@ import { serviciosApi, seguimientoApi } from "@/api/client.js";
 import { toast } from "sonner";
 import type { Servicio, Tarea } from "@shared/index.js";
 
-export function useServicios(estado?: string) {
+export function useServicios(params?: { estado?: string; archivados?: string; incluir_archivados?: string }) {
   return useQuery({
-    queryKey: ["servicios", estado],
+    queryKey: ["servicios", params],
     queryFn: async () => {
-      const r = await serviciosApi.listar(estado ? { estado } : undefined);
+      const r = await serviciosApi.listar(params);
       return r.data.data as Servicio[];
     },
   });
@@ -128,6 +128,30 @@ export function useEditarTareaInline() {
       toast.success("Tarea actualizada");
     },
     onError: (err: any) => toast.error(err.response?.data?.detail || "Error al actualizar"),
+  });
+}
+
+export function useArchivarServicio() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => serviciosApi.archive(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["servicios"] });
+      toast.success("Servicio archivado");
+    },
+    onError: (err: any) => toast.error(err.response?.data?.detail || "Error al archivar"),
+  });
+}
+
+export function useDesarchivarServicio() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => serviciosApi.unarchive(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["servicios"] });
+      toast.success("Servicio restaurado");
+    },
+    onError: (err: any) => toast.error(err.response?.data?.detail || "Error al restaurar"),
   });
 }
 

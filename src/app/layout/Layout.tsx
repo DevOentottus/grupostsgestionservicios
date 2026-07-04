@@ -249,7 +249,8 @@ export default function Layout() {
             .map((item) => {
               const { to, icon } = item;
               const label = getNavLabel(item);
-              const isActive = location.pathname === to || location.pathname.startsWith(to + "/");
+              const [basePath] = to.split("?");
+              const isActive = location.pathname === basePath || location.pathname.startsWith(basePath + "/");
               return (
                 <NavLink
                   key={to}

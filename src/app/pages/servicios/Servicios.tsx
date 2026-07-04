@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
-import { useServicios, useCrearServicio } from "@/api/queries/useServicios.js";
+import { useServicios, useCrearServicio, useArchivarServicio, useDesarchivarServicio } from "@/api/queries/useServicios.js";
 import { useAreas } from "@/api/queries/useAreas.js";
 import {
   usePlantillas,
@@ -12,7 +12,7 @@ import { cn } from "@/app/lib/utils";
 import type { Servicio, PlantillaTarea } from "@shared/index.js";
 import {
   Plus, Search, ClipboardList, ArrowRight, AlertTriangle, AlertCircle,
-  CheckCircle2, Clock, X, Users, Wrench, Calendar, Camera,
+  CheckCircle2, Clock, X, Users, Wrench, Calendar, Camera, Archive, RotateCcw,
 } from "lucide-react";
 
 const statusConfig: Record<string, { bg: string; text: string; dot: string; bar: string }> = {
@@ -39,7 +39,12 @@ export function ServiciosPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterArea, setFilterArea] = useState<number | "">("");
-  const { data: servicios, isLoading } = useServicios(undefined);
+  const [mostrarArchivados, setMostrarArchivados] = useState(false);
+  const { data: servicios, isLoading } = useServicios(
+    mostrarArchivados ? { incluir_archivados: "true" } : undefined,
+  );
+  const archivar = useArchivarServicio();
+  const desarchivar = useDesarchivarServicio();
   const { data: areas } = useAreas();
   const areaMap = new Map((areas || []).map((a: any) => [a.id, a.nombre]));
   const { data: plantillas } = usePlantillas();
@@ -61,7 +66,11 @@ export function ServiciosPage() {
   const plantillaId = form.plantilla_id ? Number(form.plantilla_id) : undefined;
   const { data: plantillaDetail } = usePlantilla(plantillaId ?? 0);
 
-  const filtered = (servicios || []).filter((s: Servicio) => {
+  const activos = (servicios || []).filter((s: Servicio) => !s.archived_at);
+  const archivados = (servicios || []).filter((s: Servicio) => s.archived_at);
+
+  const source = mostrarArchivados ? (servicios || []) : activos;
+  const filtered = source.filter((s: Servicio) => {
     const matchSearch = `${s.codigo} ${s.cliente_nombre} ${s.titulo}`
       .toLowerCase()
       .includes(search.toLowerCase());
@@ -124,7 +133,8 @@ export function ServiciosPage() {
         <div className="min-w-0">
           <h1 className="text-gray-900 font-bold text-xl">Gestión de Servicios</h1>
           <p className="text-gray-500 text-sm">
-            {servicios?.length || 0} servicios
+            {activos.length} activos
+            {archivados.length > 0 && ` · ${archivados.length} archivados`}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -202,6 +212,22 @@ export function ServiciosPage() {
               ))}
             </select>
           )}
+
+          {/* Toggle archivados */}
+          {archivados.length > 0 && (
+            <button
+              onClick={() => setMostrarArchivados((v) => !v)}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition whitespace-nowrap border",
+                mostrarArchivados
+                  ? "bg-orange-100 border-orange-300 text-orange-800"
+                  : "bg-white border-gray-200 text-gray-500 hover:border-gray-300",
+              )}
+            >
+              <Archive className="w-4 h-4" />
+              {mostrarArchivados ? "Ocultar archivados" : "Mostrar archivados"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -244,9 +270,12 @@ export function ServiciosPage() {
               <div
                 key={srv.id}
                 onClick={() => navigate(`/servicios/${srv.id}`)}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition cursor-pointer"
+                className={cn(
+                  "bg-white rounded-2xl shadow-sm border overflow-hidden hover:shadow-md transition cursor-pointer",
+                  srv.archived_at ? "border-orange-200 opacity-70 hover:opacity-100" : "border-gray-100",
+                )}
               >
-                <div className={cn("h-1.5", cfg.bar)} />
+                <div className={cn("h-1.5", srv.archived_at ? "bg-orange-300" : cfg.bar)} />
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">
@@ -299,8 +328,34 @@ export function ServiciosPage() {
                     </div>
                   </div>
 
-                  {/* View detail */}
-                  <div className="mt-3 flex justify-end">
+                  {/* Actions row */}
+                  <div className="mt-3 flex items-center justify-between">
+                    {/* Archive / Unarchive */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (srv.archived_at) {
+                          desarchivar.mutate(srv.id);
+                        } else {
+                          archivar.mutate(srv.id);
+                        }
+                      }}
+                      disabled={archivar.isPending || desarchivar.isPending}
+                      className={cn(
+                        "flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition",
+                        srv.archived_at
+                          ? "bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
+                          : "text-gray-400 hover:text-orange-600 hover:bg-orange-50",
+                      )}
+                      title={srv.archived_at ? "Restaurar" : "Archivar"}
+                    >
+                      {srv.archived_at ? (
+                        <><RotateCcw className="w-3 h-3" /> Restaurar</>
+                      ) : (
+                        <><Archive className="w-3 h-3" /> Archivar</>
+                      )}
+                    </button>
+
                     <span className="flex items-center gap-1 text-xs text-blue-700 font-semibold">
                       Ver detalle <ArrowRight className="w-3 h-3" />
                     </span>

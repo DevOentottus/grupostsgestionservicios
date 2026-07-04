@@ -158,6 +158,9 @@ export const serviciosApi = {
   cambiarEstadoMotivo: (id: number, estado: string, motivo: string) =>
     api.patch(`/servicios/${id}/estado`, { estado, motivo }),
   iniciar: (id: number) => api.post(`/servicios/${id}/iniciar`, {}),
+  archive: (id: number) => api.post(`/servicios/${id}/archive`, {}),
+  unarchive: (id: number) => api.post(`/servicios/${id}/unarchive`, {}),
+  listarArchivados: () => api.get("/servicios/archived"),
   // Tareas
   listarTareas: (servicioId: number) => api.get(`/servicios/${servicioId}/tareas`),
   crearTarea: (servicioId: number, data: any) =>

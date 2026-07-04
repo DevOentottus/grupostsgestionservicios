@@ -4,7 +4,7 @@ import {
   useServicio, useTareas,
   useCrearTarea, useCompletarTarea, useReabrirTarea, useEliminarTarea,
   useCambiarEstado, useEditarTareaInline, useReordenarTareas,
-  useEditarServicio,
+  useEditarServicio, useArchivarServicio,
 } from "@/api/queries/useServicios.js";
 
 import { useCrearPlantilla } from "@/api/queries/usePlantillas.js";
@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { cn } from "@/app/lib/utils";
 import QRCode from "qrcode";
 import {
-  ArrowLeft, CheckCircle2, Clock, MessageSquare,
+  Archive, ArrowLeft, CheckCircle2, Clock, MessageSquare,
   Send, AlertTriangle, Plus, X,
   Pencil, MessageCircle, Mic, Info,
   Save, Camera, Share2, Play, Lock, LockOpen, RotateCcw, ChevronUp, ChevronDown, FileText,
@@ -274,6 +274,7 @@ export function ServicioDetailPage() {
   const reabrirTarea = useReabrirTarea();
   const eliminarTarea = useEliminarTarea();
   const cambiarEstado = useCambiarEstado();
+  const archivarServicio = useArchivarServicio();
   const editarTareaInline = useEditarTareaInline();
   const crearPlantilla = useCrearPlantilla();
   const reordenarTareas = useReordenarTareas();
@@ -512,6 +513,15 @@ export function ServicioDetailPage() {
           >
             <FileText className="w-3.5 h-3.5" />
             <span className="hidden md:inline">PDF</span>
+          </button>
+          {/* Botón Archivar */}
+          <button
+            onClick={() => archivarServicio.mutate(servicioId)}
+            className="text-xs font-medium text-white/80 hover:text-white hover:bg-white/20 px-2.5 py-1 rounded-lg border border-white/30 shadow-sm transition flex items-center gap-1.5"
+            title="Archivar servicio (ocultar de la lista principal)"
+          >
+            <Archive className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Archivar</span>
           </button>
           {/* Gestion action buttons: solo admin o asignado — siempre visibles, deshabilitados con candado */}
           {(({ bloqueado, cancelado }: { bloqueado: boolean; cancelado: boolean }) => {

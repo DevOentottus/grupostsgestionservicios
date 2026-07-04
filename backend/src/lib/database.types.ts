@@ -680,6 +680,7 @@ export type Database = {
       }
       servicios: {
         Row: {
+          archived_at: string | null
           area_id: number | null
           cliente_apellido_materno: string | null
           cliente_apellido_paterno: string | null
@@ -720,6 +721,7 @@ export type Database = {
           tecnico_principal_id: number | null
         }
         Insert: {
+          archived_at?: string | null
           area_id?: number | null
           cliente_apellido_materno?: string | null
           cliente_apellido_paterno?: string | null
@@ -760,6 +762,7 @@ export type Database = {
           tecnico_principal_id?: number | null
         }
         Update: {
+          archived_at?: string | null
           area_id?: number | null
           cliente_apellido_materno?: string | null
           cliente_apellido_paterno?: string | null

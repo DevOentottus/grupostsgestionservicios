@@ -91,7 +91,7 @@ export async function serviciosController(app: FastifyInstance) {
 
   // -- GET /api/servicios --
   app.get("/api/servicios", { preHandler: [requireRoles()] }, async (request) => {
-    const query = request.query as { estado?: string };
+    const query = request.query as { estado?: string; archivados?: string };
     const user = request.user as { user_id: number; rol: string; area_id: number | null };
 
     let dbQuery = supabase
@@ -107,6 +107,18 @@ export async function serviciosController(app: FastifyInstance) {
       dbQuery = dbQuery.eq("area_id", user.area_id);
     }
 
+    // Filtro de archivados:
+    //   ?archivados=true      → solo archivados
+    //   ?incluir_archivados=true → todos (archivados + activos)
+    //   (ninguno)             → solo activos (default)
+    if (query.archivados === "true") {
+      dbQuery = dbQuery.not("archived_at", "is", null);
+    } else if (query.incluir_archivados === "true") {
+      // sin filtro — trae todo
+    } else {
+      dbQuery = dbQuery.is("archived_at", null);
+    }
+
     if (query.estado) {
       dbQuery = dbQuery.eq("servicio_estado", query.estado);
     }
@@ -117,6 +129,54 @@ export async function serviciosController(app: FastifyInstance) {
     return {
       data: (rows || []).map((s: any) => mapServicio(s)),
     };
+  });
+
+  // -- GET /api/servicios/archived (admin/sistema) — todos los archivados --
+  app.get("/api/servicios/archived", { preHandler: [requireRoles("admin", "sistema")] }, async () => {
+    const { data: rows } = await supabase
+      .from("servicios")
+      .select("*, usuario_colaborador:usuarios!tecnico_principal_id(usuario_nombres, usuario_apellido_paterno)")
+      .not("archived_at", "is", null)
+      .order("archived_at", { ascending: false });
+
+    return {
+      data: (rows || []).map((s: any) => mapServicio(s)),
+    };
+  });
+
+  // -- POST /api/servicios/:id/archive --
+  app.post("/api/servicios/:id/archive", { preHandler: [requireRoles()] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const numId = parseInt(id, 10);
+    const user = request.user as { user_id: number; rol: string; area_id: number | null };
+
+    await verificarPermisoModificar(numId, user);
+
+    const { error } = await supabase
+      .from("servicios")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("servicio_id", numId);
+
+    if (error) throw new Error(`Error al archivar: ${error.message}`);
+
+    await auditLog("servicios", numId, "archivar", user.user_id, { action: "archive" });
+    return reply.send({ data: { success: true } });
+  });
+
+  // -- POST /api/servicios/:id/unarchive (admin/sistema) --
+  app.post("/api/servicios/:id/unarchive", { preHandler: [requireRoles("admin", "sistema")] }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const numId = parseInt(id, 10);
+
+    const { error } = await supabase
+      .from("servicios")
+      .update({ archived_at: null })
+      .eq("servicio_id", numId);
+
+    if (error) throw new Error(`Error al desarchivar: ${error.message}`);
+
+    await auditLog("servicios", numId, "desarchivar", (request.user as any).user_id, { action: "unarchive" });
+    return reply.send({ data: { success: true } });
   });
 
   // -- GET /api/servicios/:id --
@@ -1556,6 +1616,7 @@ function mapServicio(s: any) {
     hora_creacion: s.servicio_hora_creacion,
     bloqueado_motivo: s.servicio_bloqueado_motivo || null,
     desbloqueo_motivo: s.servicio_desbloqueo_motivo || null,
+    archived_at: s.archived_at || null,
     created_at: s.servicio_fecha_creacion,
     updated_at: null,
   };
