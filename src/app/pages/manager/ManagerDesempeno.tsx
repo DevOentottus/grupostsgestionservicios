@@ -229,6 +229,22 @@ export function ManagerDesempenoPage() {
               className="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
+          {colaboradorId && (
+            <button
+              onClick={() => {
+                const base = import.meta.env.VITE_API_URL || "";
+                const params = new URLSearchParams();
+                if (fechaInicio) params.set("fecha_inicio", fechaInicio);
+                if (fechaFin) params.set("fecha_fin", fechaFin);
+                params.set("usuario_id", colaboradorId);
+                window.open(`${base}/api/reportes/exportar/colaborador/pdf?${params.toString()}`, "_blank");
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Exportar PDF
+            </button>
+          )}
         </div>
       </div>
 

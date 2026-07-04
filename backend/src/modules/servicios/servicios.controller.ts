@@ -91,7 +91,7 @@ export async function serviciosController(app: FastifyInstance) {
 
   // -- GET /api/servicios --
   app.get("/api/servicios", { preHandler: [requireRoles()] }, async (request) => {
-    const query = request.query as { estado?: string; archivados?: string };
+    const query = request.query as { estado?: string; archivados?: string; incluir_archivados?: string };
     const user = request.user as { user_id: number; rol: string; area_id: number | null };
 
     let dbQuery = supabase
@@ -126,8 +126,22 @@ export async function serviciosController(app: FastifyInstance) {
     const { data: rows } = await dbQuery
       .order("servicio_fecha_creacion", { ascending: true });
 
+    // Batch: qué servicios tienen visitas de clientes
+    const svcIds = (rows || []).map((s: any) => s.servicio_id).filter(Boolean);
+    let visitados = new Set<number>();
+    if (svcIds.length > 0) {
+      const { data: visitas } = await supabase
+        .from("serviciovisitas")
+        .select("servicio_id")
+        .in("servicio_id", svcIds);
+      visitados = new Set((visitas || []).map((v: any) => v.servicio_id));
+    }
+
     return {
-      data: (rows || []).map((s: any) => mapServicio(s)),
+      data: (rows || []).map((s: any) => ({
+        ...mapServicio(s),
+        consultado_cliente: visitados.has(s.servicio_id),
+      })),
     };
   });
 
@@ -139,8 +153,21 @@ export async function serviciosController(app: FastifyInstance) {
       .not("archived_at", "is", null)
       .order("archived_at", { ascending: false });
 
+    const svcIds = (rows || []).map((s: any) => s.servicio_id).filter(Boolean);
+    let visitados = new Set<number>();
+    if (svcIds.length > 0) {
+      const { data: visitas } = await supabase
+        .from("serviciovisitas")
+        .select("servicio_id")
+        .in("servicio_id", svcIds);
+      visitados = new Set((visitas || []).map((v: any) => v.servicio_id));
+    }
+
     return {
-      data: (rows || []).map((s: any) => mapServicio(s)),
+      data: (rows || []).map((s: any) => ({
+        ...mapServicio(s),
+        consultado_cliente: visitados.has(s.servicio_id),
+      })),
     };
   });
 
@@ -159,7 +186,7 @@ export async function serviciosController(app: FastifyInstance) {
 
     if (error) throw new Error(`Error al archivar: ${error.message}`);
 
-    await auditLog("servicios", numId, "archivar", user.user_id, { action: "archive" });
+    await auditLog(null, user.user_id, "archivar", "servicio", numId, { action: "archive" });
     return reply.send({ data: { success: true } });
   });
 
@@ -175,7 +202,7 @@ export async function serviciosController(app: FastifyInstance) {
 
     if (error) throw new Error(`Error al desarchivar: ${error.message}`);
 
-    await auditLog("servicios", numId, "desarchivar", (request.user as any).user_id, { action: "unarchive" });
+    await auditLog(null, (request.user as any).user_id, "desarchivar", "servicio", numId, { action: "unarchive" });
     return reply.send({ data: { success: true } });
   });
 
@@ -1605,8 +1632,8 @@ function mapServicio(s: any) {
     servicio_audio_cliente: s.servicio_audio_cliente || null,
     servicio_audio_diagnostico: s.servicio_audio_diagnostico || null,
     id_plantilla_inicial: s.id_plantilla_inicial || null,
-    datos_completos: false, // no disponible en Supabase
-    consultado_cliente: false, // no disponible en Supabase
+    datos_completos: !!(s.servicio_nombre && (s.cliente_nombres || s.cliente_dni) && (s.servicio_descripcion || s.servicio_cliente_reporte || s.servicio_diagnostico_inicial)),
+    consultado_cliente: false, // se calcula en listServicios batch
     colaborador_edita_visibilidad: s.servicio_colaborador_edita_visibilidad ?? false,
     tiempo_estimado: s.servicio_tiempo_estimado,
     fecha_inicio: s.servicio_fecha_inicio,

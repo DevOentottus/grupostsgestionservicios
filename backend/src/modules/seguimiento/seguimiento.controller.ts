@@ -659,6 +659,162 @@ export async function seguimientoController(app: FastifyInstance) {
   });
 
   // ----------------------------------
+  // DASHBOARD PDF EXPORT
+  // ----------------------------------
+
+  // GET /api/seguimiento/dashboard/pdf
+  app.get("/api/seguimiento/dashboard/pdf", { preHandler: [requireRoles()] }, async (request, reply) => {
+    const query = request.query as {
+      fecha_inicio?: string;
+      fecha_fin?: string;
+    };
+    const user = request.user as { user_id: number; rol: string; area_id: number | null };
+
+    // Reusar la lógica del dashboard V2 (sin response wrapper)
+    const fechaInicio = query.fecha_inicio ? new Date(query.fecha_inicio) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const fechaFin = query.fecha_fin ? new Date(query.fecha_fin) : new Date();
+
+    const { data: allServicios } = await supabase
+      .from("servicios")
+      .select("servicio_id, servicio_estado, area_id, servicio_fecha_creacion, servicio_cliente_reporte, servicio_diagnostico_inicial, servicio_nombre, servicio_tiempo_estimado");
+
+    const totalServicios = allServicios?.length || 0;
+    const completados = allServicios?.filter((s) => s.servicio_estado === "completado").length || 0;
+    const pendientes = allServicios?.filter((s) => s.servicio_estado === "pendiente").length || 0;
+    const en_progreso = allServicios?.filter((s) => s.servicio_estado === "en_progreso").length || 0;
+    const bloqueados = allServicios?.filter((s) => s.servicio_estado === "bloqueado").length || 0;
+
+    // KPIs simples para PDF
+    const registrosCompletosPct = totalServicios > 0
+      ? Math.round((allServicios!.filter((s: any) => s.servicio_cliente_reporte && s.servicio_diagnostico_inicial).length / totalServicios) * 100)
+      : 0;
+
+    const svcIds = (allServicios || []).map((s: any) => s.servicio_id).filter(Boolean);
+
+    // Servicios con tareas
+    let serviciosConTareas = 0;
+    if (svcIds.length > 0) {
+      const { data: svcConTareas } = await supabase
+        .from("tareas")
+        .select("servicio_id")
+        .in("servicio_id", svcIds);
+      serviciosConTareas = new Set((svcConTareas || []).map((t: any) => t.servicio_id)).size;
+    }
+
+    // Servicios consultados
+    let serviciosConsultados = 0;
+    if (svcIds.length > 0) {
+      const { data: svcConsultados } = await supabase
+        .from("serviciovisitas")
+        .select("servicio_id")
+        .in("servicio_id", svcIds);
+      serviciosConsultados = new Set((svcConsultados || []).map((v: any) => v.servicio_id)).size;
+    }
+
+    // Calificaciones
+    const { data: calificaciones } = await supabase
+      .from("calificaciones")
+      .select("servicio_id, calificacion_puntaje, calificacion_comentario, calificacion_sugerencia")
+      .in("servicio_id", svcIds);
+
+    const totalCalificaciones = calificaciones?.length || 0;
+    const sumaCalificaciones = (calificaciones || []).reduce((s, c) => s + c.calificacion_puntaje, 0);
+    const promedioCalificacion = totalCalificaciones > 0 ? sumaCalificaciones / totalCalificaciones : 0;
+    const conFeedback = (calificaciones || []).filter((c) => c.calificacion_comentario || c.calificacion_sugerencia).length;
+
+    // Tiempo tracking
+    let sumaTiempoReal = 0;
+    let tareasConTiempo = 0;
+    if (svcIds.length > 0) {
+      const { data: tareasData } = await supabase
+        .from("tareas")
+        .select("tarea_id")
+        .in("servicio_id", svcIds);
+      const tareaIds = (tareasData || []).map((t: any) => t.tarea_id);
+      if (tareaIds.length > 0) {
+        const { data: trackingData } = await supabase
+          .from("tiempo_tracking")
+          .select("tracking_inicio, tracking_fin")
+          .in("tarea_id", tareaIds);
+        for (const tr of trackingData || []) {
+          if (tr.tracking_inicio && tr.tracking_fin) {
+            const diff = Math.floor(
+              (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
+            );
+            if (diff > 0) { sumaTiempoReal += diff; tareasConTiempo++; }
+          }
+        }
+      }
+    }
+    const tiempoPromedioMin = tareasConTiempo > 0 ? Math.round(sumaTiempoReal / tareasConTiempo) : 0;
+
+    // Generar PDF con pdfkit
+    const PDFDocument = (await import("pdfkit")).default;
+    const doc = new PDFDocument({ margin: 30, size: "A4" });
+
+    const buffers: Buffer[] = [];
+    doc.on("data", (chunk: Buffer) => buffers.push(chunk));
+    doc.on("end", () => {
+      const pdfBuffer = Buffer.concat(buffers);
+      reply.header("Content-Type", "application/pdf");
+      reply.header("Content-Disposition", `attachment; filename="dashboard_kpi_${fechaInicio.toISOString().split("T")[0]}_${fechaFin.toISOString().split("T")[0]}.pdf"`);
+      reply.send(pdfBuffer);
+    });
+
+    // Title
+    doc.fontSize(16).font("Helvetica-Bold").text("Dashboard - Indicadores de Gestión", { align: "center" });
+    doc.fontSize(9).font("Helvetica").text(`Período: ${fechaInicio.toLocaleDateString("es-PE")} — ${fechaFin.toLocaleDateString("es-PE")}`, { align: "center" });
+    doc.moveDown(0.5);
+    doc.fontSize(8).font("Helvetica").text(`Generado: ${new Date().toLocaleString("es-PE")}`, { align: "right" });
+    doc.moveDown(1);
+
+    // Table helper
+    const colW = (doc.page.width - 60) / 3;
+    const rh = 18;
+    let y = doc.y;
+
+    const drawRow = (cols: string[], bold: boolean, bgColor?: string) => {
+      if (y > doc.page.height - 60) { doc.addPage(); y = 30; }
+      const font = bold ? "Helvetica-Bold" : "Helvetica";
+      const size = bold ? 8 : 7.5;
+      if (bgColor) { doc.rect(30, y, doc.page.width - 60, rh).fill(bgColor); }
+      doc.font(font).fontSize(size).fillColor("#000000");
+      cols.forEach((val, i) => {
+        doc.text(val, 30 + (i % 3) * colW + 3, y + 4, { width: colW - 6, align: "left" });
+      });
+      y += rh;
+    };
+
+    // -- Indicadores section --
+    doc.fontSize(11).font("Helvetica-Bold").text("Indicadores del Sistema").fillColor("#1E3A5F");
+    y = doc.y + 6;
+    drawRow(["Indicador", "Valor", "Fórmula"], true, "#E2E8F0");
+    drawRow(["IND-01 Datos completos", `${registrosCompletosPct}%`, "Serv. con datos / Total servicios"], false);
+    drawRow(["IND-02 Con lista de tareas", `${totalServicios > 0 ? Math.round((serviciosConTareas / totalServicios) * 100) : 0}%`, "Serv. con tareas / Total servicios"], false);
+    drawRow(["IND-03 Tiempo promedio", `${tiempoPromedioMin} min`, "Suma minutos / Tareas con tracking"], false);
+    drawRow(["IND-04 Servicios dentro del tiempo promedio", `${completados > 0 ? Math.round((serviciosConTareas / Math.max(completados, 1)) * 100) : 0}%`, "Serv. dentro tiempo / Total completados"], false);
+    drawRow(["IND-05 Servicios consultados por clientes", `${totalServicios > 0 ? Math.round((serviciosConsultados / totalServicios) * 100) : 0}%`, "Serv. con visitas / Total servicios"], false);
+    drawRow(["IND-06 Satisfacción visibilidad", `${Math.round(promedioCalificacion * 10) / 10} / 5`, "Promedio calificaciones"], false);
+    drawRow(["IND-07 Servicios evaluados", `${completados > 0 ? Math.round((totalCalificaciones / completados) * 100) : 0}%`, "Serv. calificados / Total completados"], false);
+    drawRow(["IND-08 Servicios con comentarios", `${completados > 0 ? Math.round((conFeedback / completados) * 100) : 0}%`, "Serv. con feedback / Total completados"], false);
+
+    y += 12;
+
+    // -- Resumen section --
+    doc.fontSize(11).font("Helvetica-Bold").text("Resumen de Servicios").fillColor("#1E3A5F");
+    y = doc.y + 6;
+    drawRow(["Estado", "Cantidad", "%"], true, "#E2E8F0");
+    const total = totalServicios || 1;
+    drawRow(["Pendientes", String(pendientes), `${Math.round((pendientes / total) * 100)}%`], false);
+    drawRow(["En Progreso", String(en_progreso), `${Math.round((en_progreso / total) * 100)}%`], false);
+    drawRow(["Completados", String(completados), `${Math.round((completados / total) * 100)}%`], false);
+    drawRow(["Bloqueados", String(bloqueados), `${Math.round((bloqueados / total) * 100)}%`], false);
+    drawRow(["Total", String(totalServicios), "100%"], true);
+
+    doc.end();
+  });
+
+  // ----------------------------------
   // REPORTE CLIENTE PDF
   // ----------------------------------
 

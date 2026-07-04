@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Zap,
   Star,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth.js";
 import { useDashboard } from "@/api/queries/useDashboard.js";
@@ -172,6 +173,19 @@ export function DashboardPage() {
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
               Actualizar
+            </button>
+            <button
+              onClick={() => {
+                const base = import.meta.env.VITE_API_URL || "";
+                const params = new URLSearchParams();
+                if (filters.fecha_inicio) params.set("fecha_inicio", filters.fecha_inicio);
+                if (filters.fecha_fin) params.set("fecha_fin", filters.fecha_fin);
+                window.open(`${base}/api/seguimiento/dashboard/pdf?${params.toString()}`, "_blank");
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-white"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Exportar PDF
             </button>
           </div>
         </div>
