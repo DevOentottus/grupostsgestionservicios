@@ -31,6 +31,7 @@ export function getHelpScreenshot(pathname: string, rol: string): string | null 
   const screenshotMap: Record<string, string> = {
     "dashboard": "dashboard",
     "miarea": "miarea",
+    "midesempeno": "midesempeno",
     "servicios": "servicios",
     "servicios-nuevo": "servicios-nuevo",
     "servicios-detalle": "servicios-detalle",
@@ -41,6 +42,7 @@ export function getHelpScreenshot(pathname: string, rol: string): string | null 
     "comunicaciones": "comunicaciones",
     "auditoria": "auditoria",
     "admin-rendimiento": "admin-rendimiento",
+    "admin-seguridad": "admin-seguridad",
     "manager-clientes": "manager-clientes",
     "manager-desempeno": "manager-desempeno",
   };
@@ -876,6 +878,20 @@ export const helpRegistry: HelpRegistry = {
         },
       ],
     },
+    sistema: {
+      title: "Reportes -- Visión completa",
+      sections: [
+        {
+          id: "reportes-sistema",
+          title: "Reportes globales",
+          steps: [
+            { number: 1, description: "Ves los reportes completos del sistema con datos de todas las áreas." },
+            { number: 2, description: "Usá los filtros de fecha y área para acotar los datos del reporte." },
+            { number: 3, description: "Exportá los reportes a Excel o PDF con los botones correspondientes." },
+          ],
+        },
+      ],
+    },
   },
 
   // --- T-011: Auditoría, Rendimiento ---
@@ -907,6 +923,84 @@ export const helpRegistry: HelpRegistry = {
           title: "Exportar log",
           steps: [
             { number: 1, description: "Hacé clic en 'Exportar' para descargar el log de auditoría como archivo CSV." },
+            { number: 2, description: "Los filtros aplicados se reflejan en la exportación." },
+          ],
+        },
+      ],
+    },
+    sistema: {
+      title: "Auditoría",
+      sections: [
+        {
+          id: "auditoria-sistema",
+          title: "Log de auditoría",
+          steps: [
+            { number: 1, description: "Ves el registro completo de auditoría del sistema con todas las acciones registradas." },
+            { number: 2, description: "Usá los filtros por usuario, tipo de acción y fecha para investigar eventos específicos." },
+            { number: 3, description: "Exportá el log como CSV para análisis externo o respaldo." },
+          ],
+        },
+      ],
+    },
+  },
+
+  // --- Seguridad del Sistema ---
+  "/admin/seguridad": {
+    sistema: {
+      title: "Seguridad del Sistema",
+      sections: [
+        {
+          id: "seguridad-resumen",
+          title: "Panel de seguridad",
+          steps: [
+            { number: 1, description: "Esta página centraliza la seguridad del sistema: monitoreo de accesos, sesiones activas y actividad sospechosa." },
+            { number: 2, description: "Las cards de resumen muestran: total de intentos de login, bloqueos, sesiones activas y actividades sospechosas." },
+            { number: 3, description: "Cada card tiene un color según la criticidad: rojo para alertas, azul para actividad normal." },
+          ],
+        },
+        {
+          id: "seguridad-intentos",
+          title: "Intentos de inicio de sesión",
+          steps: [
+            { number: 1, description: "La tabla de intentos de login registra todos los accesos al sistema, exitosos y fallidos." },
+            { number: 2, description: "Cada fila muestra: usuario, fecha/hora, dirección IP, navegador y resultado (éxito/falla)." },
+            { number: 3, description: "Usá el filtro de estado para ver solo los fallidos y detectar intentos de acceso no autorizados." },
+            { number: 4, description: "La barra de búsqueda permite filtrar por nombre de usuario o IP." },
+          ],
+        },
+        {
+          id: "seguridad-sesiones",
+          title: "Sesiones activas",
+          steps: [
+            { number: 1, description: "La pestaña 'Sesiones Activas' muestra todos los usuarios con sesión abierta en el sistema." },
+            { number: 2, description: "Cada sesión muestra: usuario, IP, inicio de sesión y última actividad." },
+            { number: 3, description: "Podés revocar sesiones individuales haciendo clic en el botón 'Revocar'. El usuario será forzado a iniciar sesión de nuevo." },
+            { number: 4, description: "Usá esta función cuando detectes una sesión sospechosa o cuando un usuario olvidó cerrar sesión en un equipo compartido." },
+          ],
+        },
+        {
+          id: "seguridad-sospechosa",
+          title: "Actividad sospechosa",
+          steps: [
+            { number: 1, description: "La pestaña 'Actividad Sospechosa' lista eventos que no siguen el patrón normal de uso." },
+            { number: 2, description: "Ejemplos: múltiples intentos fallidos desde la misma IP, accesos fuera del horario laboral, o intentos de acceso a recursos sin permisos." },
+            { number: 3, description: "Revisá periódicamente esta sección para detectar posibles brechas de seguridad." },
+          ],
+        },
+        {
+          id: "seguridad-cleanup",
+          title: "Limpieza de datos",
+          steps: [
+            { number: 1, description: "Usá el botón 'Limpiar logs antiguos' en la parte inferior para eliminar registros históricos." },
+            { number: 2, description: "Seleccioná la antigüedad (30, 60 o 90 días) para borrar intentos de login y sesiones anteriores a esa fecha." },
+            { number: 3, description: "Esta operación es irreversible. Asegurate de haber exportado los logs si necesitás conservarlos." },
+          ],
+        },
+        {
+          id: "seguridad-exportar",
+          title: "Exportar logs",
+          steps: [
+            { number: 1, description: "Usá el botón 'Exportar' para descargar los logs de seguridad como archivo CSV." },
             { number: 2, description: "Los filtros aplicados se reflejan en la exportación." },
           ],
         },
@@ -957,6 +1051,87 @@ export const helpRegistry: HelpRegistry = {
           steps: [
             { number: 1, description: "Ves las mismas métricas que el admin: rendimiento, visitas, calificaciones y uso." },
             { number: 2, description: "Usá estos datos para monitorear la salud general del sistema." },
+          ],
+        },
+      ],
+    },
+  },
+
+  // --- Mi Desempeño (colaborador, encargado) ---
+  "/midesempeno": {
+    colaborador: {
+      title: "Mi Desempeño -- Panel Personal",
+      sections: [
+        {
+          id: "midesempeno-visualizacion",
+          title: "Tu panel de desempeño",
+          steps: [
+            { number: 1, description: "Esta página muestra tus métricas individuales: tareas completadas, servicios completados, tareas activas y calificación promedio." },
+            { number: 2, description: "Las cards superiores resumen tu rendimiento general. Cada card tiene un color distinto para identificarlas rápido." },
+            { number: 3, description: "La calificación promedio se calcula con las estrellas que los clientes te asignan al completar servicios." },
+            { number: 4, description: "Si no tenés evaluaciones todavía, la card de calificación muestra 'Sin evaluaciones'." },
+          ],
+        },
+        {
+          id: "midesempeno-trazabilidad",
+          title: "Trazabilidad y control",
+          steps: [
+            { number: 1, description: "La sección 'Trazabilidad y Control Operativo' muestra indicadores de registro y documentación." },
+            { number: 2, description: "Servicios con 100% tareas registradas: porcentaje de servicios donde todas las tareas fueron creadas." },
+            { number: 3, description: "Tareas documentadas: porcentaje de tareas que tienen fecha, hora y responsable registrados." },
+            { number: 4, description: "Estos indicadores requieren configuración del administrador para estar disponibles." },
+          ],
+        },
+        {
+          id: "midesempeno-eficiencia",
+          title: "Eficiencia operativa",
+          steps: [
+            { number: 1, description: "La sección 'Eficiencia Operativa' muestra tiempo promedio de resolución del área y tu productividad personal." },
+            { number: 2, description: "Tiempo promedio de resolución: cuánto tarda tu área en completar servicios. Se mide en minutos." },
+            { number: 3, description: "Servicios dentro del tiempo estimado: porcentaje de servicios que completaste sin exceder el tiempo previsto." },
+            { number: 4, description: "Productividad personal: cantidad de servicios que completaste en el período actual." },
+          ],
+        },
+        {
+          id: "midesempeno-satisfaccion",
+          title: "Satisfacción y mejora continua",
+          steps: [
+            { number: 1, description: "Calificación promedio personal: tus estrellas promedio en todos los servicios completados." },
+            { number: 2, description: "Servicios evaluados: porcentaje de tus servicios completados que recibieron calificación del cliente." },
+            { number: 3, description: "Servicios con comentarios: porcentaje de servicios donde el cliente dejó feedback adicional." },
+            { number: 4, description: "La satisfacción del área se muestra al final si el área tiene métricas consolidadas." },
+          ],
+        },
+        {
+          id: "midesempeno-servicios",
+          title: "Servicios asignados",
+          steps: [
+            { number: 1, description: "Al final de la página ves la lista de servicios que tenés asignados actualmente." },
+            { number: 2, description: "Cada servicio muestra su código, título y estado con un color distintivo." },
+            { number: 3, description: "Si no hay servicios asignados, esta sección se oculta automáticamente." },
+          ],
+        },
+      ],
+    },
+    encargado: {
+      title: "Mi Desempeño -- Panel de Encargado",
+      sections: [
+        {
+          id: "midesempeno-encargado-visualizacion",
+          title: "Tu panel de gestión",
+          steps: [
+            { number: 1, description: "Como encargado, ves tus propias métricas igual que los colaboradores: tareas, servicios y calificación." },
+            { number: 2, description: "Además, ves la satisfacción de tu área y los indicadores de eficiencia del equipo." },
+            { number: 3, description: "Usá esta página para monitorear tu rendimiento individual y el de tu equipo en conjunto." },
+          ],
+        },
+        {
+          id: "midesempeno-encargado-equipo",
+          title: "Métricas del equipo",
+          steps: [
+            { number: 1, description: "Los indicadores de eficiencia operativa reflejan el promedio de tu área completa." },
+            { number: 2, description: "La satisfacción del área muestra promotores, pasivos y detractores según las calificaciones de los clientes." },
+            { number: 3, description: "Usá estos datos para identificar oportunidades de mejora en tu equipo." },
           ],
         },
       ],

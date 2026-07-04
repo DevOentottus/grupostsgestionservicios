@@ -36,7 +36,7 @@ function nombreCompleto(
 }
 
 /** Parse "15m", "2h", "7d" style strings → minutos */
-function parseExpiresIn(value: string): number {
+export function parseExpiresIn(value: string): number {
   const m = value.match(/^(\d+)\s*(m|min|mins|h|hr|hrs|d|day|days)?$/i);
   if (!m) return 15;
   const num = parseInt(m[1], 10);

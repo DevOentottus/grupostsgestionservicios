@@ -20,9 +20,21 @@ interface HelpDrawerProps {
 function getPageTitle(pathname: string): string {
   const segments = pathname.split("/").filter(Boolean);
   const mainSegment = segments[0] || "dashboard";
+
+  // Sub-rutas específicas
+  if (segments[0] === "servicios" && segments[1] === "nuevo") return "Nuevo Servicio";
+  if (segments[0] === "servicios" && segments[1]) return "Servicio";
+  if (segments[0] === "areas" && segments[1]) return "Área — Servicios";
+  if (segments[0] === "admin" && segments[1] === "rendimiento") return "Rendimiento del Sistema";
+  if (segments[0] === "admin" && segments[1] === "seguridad") return "Seguridad del Sistema";
+  if (segments[0] === "manager" && segments[1] === "clientes") return "Gestión de Clientes";
+  if (segments[0] === "manager" && segments[1] === "desempeno") return "Desempeño";
+  if (segments[0] === "manager" && segments[1] === "distribucion") return "Distribución";
+
   const titles: Record<string, string> = {
     dashboard: "Dashboard",
     miarea: "Mi Área",
+    midesempeno: "Mi Desempeño",
     misservicios: "Mis Servicios",
     servicios: "Servicios",
     plantillas: "Plantillas",

@@ -8,7 +8,7 @@ export const config = {
 
   jwt: {
     secret: process.env.JWT_SECRET || "dev-secret-servicio-local-sts-2026",
-    expiresIn: process.env.JWT_EXPIRES_IN || "15m",
+    expiresIn: process.env.JWT_EXPIRES_IN || "1h",
     refreshExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "7d",
   },
 

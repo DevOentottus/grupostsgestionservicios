@@ -4,6 +4,7 @@ import { UnauthorizedError, SessionRevokedError } from "@/core/errors/index.js";
 
 interface CacheEntry {
   revoked: boolean;
+  expired: boolean;
   cachedAt: number;
 }
 
@@ -11,6 +12,10 @@ interface CacheEntry {
  * Cache en memoria para verificación de sesiones.
  * Cada entrada tiene TTL individual de 30 segundos.
  * Límite de 5000 entradas para evitar memory leak.
+ *
+ * NOTA: revoked y expired se cachean por separado para NO confundir
+ * una sesión expirada con una revocada (bug: se cacheaba `revoked || expired`
+ * como un solo campo, causando SessionRevokedError en sesiones simplemente expiradas).
  */
 const sessionCache = new Map<string, CacheEntry>();
 const CACHE_TTL = 30_000; // 30 segundos
@@ -50,6 +55,9 @@ export async function verifySession(
     if (cached.revoked) {
       throw new SessionRevokedError();
     }
+    if (cached.expired) {
+      throw new UnauthorizedError("Sesión expirada");
+    }
     return;
   }
 
@@ -82,7 +90,8 @@ export async function verifySession(
       sessionCache.clear();
     }
     sessionCache.set(user.jti, {
-      revoked: revoked || expired,
+      revoked,
+      expired,
       cachedAt: Date.now(),
     });
   } catch {

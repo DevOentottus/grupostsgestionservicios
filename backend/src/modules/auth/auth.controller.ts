@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
 import bcrypt from "bcryptjs";
 import { supabase } from "@/lib/supabase.js";
-import { loginUser, generateJwtPayload } from "./auth.service.js";
+import { loginUser, generateJwtPayload, parseExpiresIn } from "./auth.service.js";
 import { config } from "@/core/config/index.js";
 import { loginSchema } from "./auth.schema.js";
 import { auditLog } from "@/core/utils/index.js";
@@ -97,10 +97,15 @@ export async function authController(app: FastifyInstance) {
     const jti = payload.jti;
     if (jti) {
       try {
-        await supabase
-          .from("sessions")
-          .update({ last_activity: new Date().toISOString() })
-          .eq("token_jti", jti);
+          const minutes = parseExpiresIn(config.jwt.expiresIn);
+          const newExpiresAt = new Date(Date.now() + minutes * 60 * 1000);
+          await supabase
+            .from("sessions")
+            .update({
+              last_activity: new Date().toISOString(),
+              expires_at: newExpiresAt.toISOString(),
+            })
+            .eq("token_jti", jti);
       } catch {
         // No fallar si la sesión no existe (tokens emitidos antes de esta feature)
       }

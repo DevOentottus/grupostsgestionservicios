@@ -80,10 +80,9 @@ export function LoginPage() {
             <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 text-orange-800 rounded-xl p-4 mb-4 text-sm">
               <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5 text-orange-600" />
               <div>
-                <p className="font-semibold">Sesión revocada</p>
+                <p className="font-semibold">Sesión cerrada</p>
                 <p className="text-orange-700 mt-1">
-                  Tu sesión fue revocada por un administrador. Vuelve a intentar
-                  en 15 minutos.
+                  Tu sesión anterior ya no es válida. Iniciá sesión de nuevo para continuar.
                 </p>
               </div>
             </div>
