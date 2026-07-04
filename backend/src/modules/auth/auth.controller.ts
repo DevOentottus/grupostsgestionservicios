@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import { FastifyInstance, FastifyRequest } from "fastify";
 import bcrypt from "bcryptjs";
 import { supabase } from "@/lib/supabase.js";
 import { loginUser, generateJwtPayload } from "./auth.service.js";

@@ -266,14 +266,14 @@ export async function getActividadSospechosa(
 
   if (fueraHorarioData) {
     for (const r of fueraHorarioData) {
-      const hora = new Date(r.created_at).getHours();
+      const hora = new Date(r.created_at ?? new Date().toISOString()).getHours();
       if (hora < 6 || hora >= 22) {
         alertas.push({
           id: `fuera-horario-${r.id}`,
           tipo: "fuera_horario",
           severidad: "media",
           descripcion: `Inicio de sesión fuera del horario laboral: "${r.username_intentado}" a las ${hora.toString().padStart(2, "0")}:00 desde ${r.ip_address || "IP desconocida"}`,
-          timestamp: r.created_at,
+          timestamp: r.created_at ?? new Date().toISOString(),
           datos: {
             username: r.username_intentado,
             ip_address: r.ip_address,

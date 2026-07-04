@@ -11,16 +11,9 @@ export default defineConfig({
       "@shared": path.resolve(__dirname, "shared/types"),
     },
   },
-  server: {
-    proxy: {
-      "/api": {
-        target: "https://grupostsgestionservicios.vercel.app",
-        changeOrigin: true,
-      },
-    },
-  },
   test: {
     globals: true,
     environment: "node",
+    exclude: ["node_modules", "dist", "backend"],
   },
 });

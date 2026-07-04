@@ -74,7 +74,7 @@ export async function verifySession(
       return;
     }
 
-    revoked = data[0].revoked;
+    revoked = data[0].revoked ?? false;
     expired = new Date(data[0].expires_at) < new Date();
 
     // Cache management: evitar crecimiento infinito
@@ -118,7 +118,7 @@ export async function checkSessionNotRevoked(
       .limit(1);
 
     if (error || !data?.[0]) return;
-    revoked = data[0].revoked;
+    revoked = data[0].revoked ?? false;
   } catch {
     return;
   }

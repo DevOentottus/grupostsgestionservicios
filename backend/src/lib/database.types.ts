@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
@@ -274,44 +276,6 @@ export type Database = {
         }
         Relationships: []
       }
-      login_attempts: {
-        Row: {
-          id: number
-          usuario_id: number | null
-          username_intentado: string
-          ip_address: string | null
-          user_agent: string | null
-          exito: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: number
-          usuario_id?: number | null
-          username_intentado: string
-          ip_address?: string | null
-          user_agent?: string | null
-          exito?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: number
-          usuario_id?: number | null
-          username_intentado?: string
-          ip_address?: string | null
-          user_agent?: string | null
-          exito?: boolean
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "login_attempts_usuario_id_fkey"
-            columns: ["usuario_id"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["usuario_id"]
-          },
-        ]
-      }
       comentariosevidencias: {
         Row: {
           comentarioevidencia_id: number
@@ -362,6 +326,7 @@ export type Database = {
           created_at: string | null
           estado: string | null
           evidencia_id: number
+          mostrar_cliente: boolean
           servicio_id: number
           submitted_at: string | null
           submitted_by: number | null
@@ -376,6 +341,7 @@ export type Database = {
           created_at?: string | null
           estado?: string | null
           evidencia_id?: number
+          mostrar_cliente?: boolean
           servicio_id: number
           submitted_at?: string | null
           submitted_by?: number | null
@@ -390,6 +356,7 @@ export type Database = {
           created_at?: string | null
           estado?: string | null
           evidencia_id?: number
+          mostrar_cliente?: boolean
           servicio_id?: number
           submitted_at?: string | null
           submitted_by?: number | null
@@ -418,6 +385,85 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tareas"
             referencedColumns: ["tarea_id"]
+          },
+        ]
+      }
+      login_attempts: {
+        Row: {
+          created_at: string | null
+          exito: boolean
+          id: number
+          ip_address: string | null
+          user_agent: string | null
+          username_intentado: string
+          usuario_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          exito?: boolean
+          id?: number
+          ip_address?: string | null
+          user_agent?: string | null
+          username_intentado: string
+          usuario_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          exito?: boolean
+          id?: number
+          ip_address?: string | null
+          user_agent?: string | null
+          username_intentado?: string
+          usuario_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "login_attempts_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["usuario_id"]
+          },
+        ]
+      }
+      notificaciones: {
+        Row: {
+          created_at: string | null
+          leida: boolean | null
+          mensaje: string
+          notificacion_id: number
+          referencia_id: number | null
+          tipo: string | null
+          titulo: string
+          usuario_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          leida?: boolean | null
+          mensaje: string
+          notificacion_id?: number
+          referencia_id?: number | null
+          tipo?: string | null
+          titulo: string
+          usuario_id: number
+        }
+        Update: {
+          created_at?: string | null
+          leida?: boolean | null
+          mensaje?: string
+          notificacion_id?: number
+          referencia_id?: number | null
+          tipo?: string | null
+          titulo?: string
+          usuario_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificaciones_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["usuario_id"]
           },
         ]
       }
@@ -456,6 +502,42 @@ export type Database = {
           },
         ]
       }
+      plantillas_favoritas: {
+        Row: {
+          created_at: string | null
+          plantilla_id: number
+          plantillafavorita_id: number
+          usuario_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          plantilla_id: number
+          plantillafavorita_id?: number
+          usuario_id: number
+        }
+        Update: {
+          created_at?: string | null
+          plantilla_id?: number
+          plantillafavorita_id?: number
+          usuario_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plantillas_favoritas_plantilla_id_fkey"
+            columns: ["plantilla_id"]
+            isOneToOne: false
+            referencedRelation: "plantillas"
+            referencedColumns: ["plantilla_id"]
+          },
+          {
+            foreignKeyName: "plantillas_favoritas_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["usuario_id"]
+          },
+        ]
+      }
       plantillatareas: {
         Row: {
           plantilla_id: number
@@ -490,6 +572,33 @@ export type Database = {
             referencedColumns: ["plantilla_id"]
           },
         ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth_key: string
+          created_at: string | null
+          dni: string
+          endpoint: string
+          id: number
+          p256dh_key: string
+        }
+        Insert: {
+          auth_key: string
+          created_at?: string | null
+          dni: string
+          endpoint: string
+          id?: number
+          p256dh_key: string
+        }
+        Update: {
+          auth_key?: string
+          created_at?: string | null
+          dni?: string
+          endpoint?: string
+          id?: number
+          p256dh_key?: string
+        }
+        Relationships: []
       }
       serviciocolaboradores: {
         Row: {
@@ -575,18 +684,20 @@ export type Database = {
           cliente_apellido_materno: string | null
           cliente_apellido_paterno: string | null
           cliente_dni: string | null
-          cliente_id: number
+          cliente_id: number | null
           cliente_nombres: string | null
           cliente_telefono: string | null
           id_plantilla_inicial: number | null
           plantilla_id: number | null
           servicio_audio_cliente: string | null
           servicio_audio_diagnostico: string | null
+          servicio_bloqueado_motivo: string | null
           servicio_cliente_reporte: string | null
           servicio_codigo: string
           servicio_codigo_acceso: string | null
           servicio_colaborador_desactiva: boolean | null
-          servicio_colaborador_edita_visibilidad: boolean | null
+          servicio_colaborador_edita_visibilidad: boolean
+          servicio_desbloqueo_motivo: string | null
           servicio_descripcion: string | null
           servicio_descripcion_accesorio: string | null
           servicio_descripcion_equipo: string | null
@@ -613,18 +724,20 @@ export type Database = {
           cliente_apellido_materno?: string | null
           cliente_apellido_paterno?: string | null
           cliente_dni?: string | null
-          cliente_id: number
+          cliente_id?: number | null
           cliente_nombres?: string | null
           cliente_telefono?: string | null
           id_plantilla_inicial?: number | null
           plantilla_id?: number | null
           servicio_audio_cliente?: string | null
           servicio_audio_diagnostico?: string | null
+          servicio_bloqueado_motivo?: string | null
           servicio_cliente_reporte?: string | null
           servicio_codigo: string
           servicio_codigo_acceso?: string | null
           servicio_colaborador_desactiva?: boolean | null
-          servicio_colaborador_edita_visibilidad?: boolean | null
+          servicio_colaborador_edita_visibilidad?: boolean
+          servicio_desbloqueo_motivo?: string | null
           servicio_descripcion?: string | null
           servicio_descripcion_accesorio?: string | null
           servicio_descripcion_equipo?: string | null
@@ -651,18 +764,20 @@ export type Database = {
           cliente_apellido_materno?: string | null
           cliente_apellido_paterno?: string | null
           cliente_dni?: string | null
-          cliente_id?: number
+          cliente_id?: number | null
           cliente_nombres?: string | null
           cliente_telefono?: string | null
           id_plantilla_inicial?: number | null
           plantilla_id?: number | null
           servicio_audio_cliente?: string | null
           servicio_audio_diagnostico?: string | null
+          servicio_bloqueado_motivo?: string | null
           servicio_cliente_reporte?: string | null
           servicio_codigo?: string
           servicio_codigo_acceso?: string | null
           servicio_colaborador_desactiva?: boolean | null
-          servicio_colaborador_edita_visibilidad?: boolean | null
+          servicio_colaborador_edita_visibilidad?: boolean
+          servicio_desbloqueo_motivo?: string | null
           servicio_descripcion?: string | null
           servicio_descripcion_accesorio?: string | null
           servicio_descripcion_equipo?: string | null
@@ -782,40 +897,40 @@ export type Database = {
       }
       sessions: {
         Row: {
-          id: number
-          user_id: number
-          token_jti: string
-          ip_address: string | null
-          user_agent: string | null
-          created_at: string
+          created_at: string | null
           expires_at: string
-          last_activity: string
-          revoked: boolean
+          id: number
+          ip_address: string | null
+          last_activity: string | null
+          revoked: boolean | null
           revoked_at: string | null
+          token_jti: string
+          user_agent: string | null
+          user_id: number
         }
         Insert: {
-          id?: number
-          user_id: number
-          token_jti: string
-          ip_address?: string | null
-          user_agent?: string | null
-          created_at?: string
+          created_at?: string | null
           expires_at: string
-          last_activity?: string
-          revoked?: boolean
+          id?: number
+          ip_address?: string | null
+          last_activity?: string | null
+          revoked?: boolean | null
           revoked_at?: string | null
+          token_jti: string
+          user_agent?: string | null
+          user_id: number
         }
         Update: {
-          id?: number
-          user_id?: number
-          token_jti?: string
-          ip_address?: string | null
-          user_agent?: string | null
-          created_at?: string
+          created_at?: string | null
           expires_at?: string
-          last_activity?: string
-          revoked?: boolean
+          id?: number
+          ip_address?: string | null
+          last_activity?: string | null
+          revoked?: boolean | null
           revoked_at?: string | null
+          token_jti?: string
+          user_agent?: string | null
+          user_id?: number
         }
         Relationships: [
           {
@@ -1100,33 +1215,6 @@ export type Database = {
         }
         Relationships: []
       }
-      push_subscriptions: {
-        Row: {
-          id: number
-          dni: string
-          endpoint: string
-          p256dh_key: string
-          auth_key: string
-          created_at: string | null
-        }
-        Insert: {
-          id?: number
-          dni: string
-          endpoint: string
-          p256dh_key: string
-          auth_key: string
-          created_at?: string | null
-        }
-        Update: {
-          id?: number
-          dni?: string
-          endpoint?: string
-          p256dh_key?: string
-          auth_key?: string
-          created_at?: string | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -1142,6 +1230,10 @@ export type Database = {
     }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
@@ -1239,5 +1331,25 @@ export type Enums<
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

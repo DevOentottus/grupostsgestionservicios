@@ -43,6 +43,15 @@ export async function buildApp() {
     keyGenerator: (request) => {
       return request.ip;
     },
+    errorResponseBuilder: (_request, context) => {
+      const segundos = Math.ceil((context.ttl || 60000) / 1000);
+      return {
+        type: "https://api.serviciolocalsts.com/errors/rate_limit",
+        title: "RATE_LIMIT",
+        status: 429,
+        detail: `Demasiadas solicitudes. Intentá de nuevo en ${segundos} segundos.`,
+      };
+    },
   });
 
   // -- Decorators --

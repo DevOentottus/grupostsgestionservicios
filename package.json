@@ -11,7 +11,9 @@
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:backend\"",
     "vercel-build": "cd backend && npm run build:serverless && cd .. && npm run build",
     "typecheck": "tsc --noEmit",
-    "typecheck:backend": "cd backend && npx tsc --noEmit"
+    "typecheck:backend": "cd backend && npx tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -76,6 +78,7 @@
     "concurrently": "^9.1.2",
     "tailwindcss": "^4.1.6",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^4.1.9"
   }
 }
