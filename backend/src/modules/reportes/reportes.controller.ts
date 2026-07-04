@@ -51,10 +51,10 @@ export async function reportesController(app: FastifyInstance) {
         if (!usuarios?.length) throw new ValidationError("Usuario no encontrado");
         const usuario = usuarios[0];
 
-        // Tareas completadas en el período (con ids para tracking)
+        // Tareas completadas en el período (con servicio_id para estimado)
         let tareasQuery = supabase
           .from("tareas")
-          .select("tarea_id")
+          .select("tarea_id, servicio_id")
           .eq("tarea_completado_por", usuarioId)
           .eq("tarea_estado", "completado");
 
@@ -68,9 +68,10 @@ export async function reportesController(app: FastifyInstance) {
         const { data: tareasData } = await tareasQuery;
         const tareasCompletadas = tareasData?.length || 0;
         const tareaIds = (tareasData || []).map((t: any) => t.tarea_id);
+        const servicioIds = [...new Set((tareasData || []).map((t: any) => t.servicio_id).filter(Boolean))];
 
         // Tiempo real desde tiempo_tracking
-        let sumaMinutos = 0;
+        let sumaMinutosReales = 0;
         let tareasConTiempo = 0;
         if (tareaIds.length > 0) {
           const { data: trackingData } = await supabase
@@ -82,11 +83,26 @@ export async function reportesController(app: FastifyInstance) {
               const diff = Math.floor(
                 (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
               );
-              if (diff > 0) { sumaMinutos += diff; tareasConTiempo++; }
+              if (diff > 0) { sumaMinutosReales += diff; tareasConTiempo++; }
             }
           }
         }
-        const tiempoPromedioMin = tareasConTiempo > 0 ? Math.round(sumaMinutos / tareasConTiempo) : 0;
+        const tiempoPromedioMin = tareasConTiempo > 0 ? Math.round(sumaMinutosReales / tareasConTiempo) : 0;
+
+        // Tiempo estimado total desde servicios asociados
+        let sumaEstimado = 0;
+        if (servicioIds.length > 0) {
+          const { data: svcEstimado } = await supabase
+            .from("servicios")
+            .select("servicio_tiempo_estimado")
+            .in("servicio_id", servicioIds);
+          sumaEstimado = (svcEstimado || []).reduce((s: number, r: any) => s + (r.servicio_tiempo_estimado || 0), 0);
+        }
+
+        // Eficiencia = (tiempo estimado total / tiempo real total) × 100
+        const eficiencia = sumaMinutosReales > 0
+          ? Math.round((sumaEstimado / sumaMinutosReales) * 100)
+          : 0;
 
         // Servicios donde el colaborador participó
         const { count: serviciosCompletados } = await supabase
@@ -106,7 +122,7 @@ export async function reportesController(app: FastifyInstance) {
             servicios_completados: serviciosCompletados || 0,
             tareas_completadas: tareasCompletadas,
             tiempo_promedio_min: tiempoPromedioMin,
-            eficiencia: 0,
+            eficiencia,
             periodo: {
               desde: fechaInicio?.toISOString() || null,
               hasta: fechaFin?.toISOString() || null,
@@ -216,11 +232,20 @@ export async function reportesController(app: FastifyInstance) {
         const totalServicios = servicios?.length || 0;
         const completados = servicios?.filter((s) => s.servicio_estado === "completado").length || 0;
 
-        // Tiempo promedio desde tiempo_tracking para servicios completados del área
+        // Tiempo real + eficiencia para servicios del área
         const svcIds = (servicios || []).map((s) => s.servicio_id).filter(Boolean);
-        let sumaMinutos = 0;
+        let sumaMinutosReales = 0;
         let tareasConTiempo = 0;
+        let sumaEstimado = 0;
         if (svcIds.length > 0) {
+          // Tiempo estimado total de los servicios del área
+          const { data: svcEstimado } = await supabase
+            .from("servicios")
+            .select("servicio_tiempo_estimado")
+            .in("servicio_id", svcIds);
+          sumaEstimado = (svcEstimado || []).reduce((s: number, r: any) => s + (r.servicio_tiempo_estimado || 0), 0);
+
+          // Tiempo real desde tiempo_tracking
           const { data: tareas } = await supabase
             .from("tareas")
             .select("tarea_id")
@@ -236,12 +261,15 @@ export async function reportesController(app: FastifyInstance) {
                 const diff = Math.floor(
                   (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
                 );
-                if (diff > 0) { sumaMinutos += diff; tareasConTiempo++; }
+                if (diff > 0) { sumaMinutosReales += diff; tareasConTiempo++; }
               }
             }
           }
         }
-        const tiempoPromedioMin = tareasConTiempo > 0 ? Math.round(sumaMinutos / tareasConTiempo) : 0;
+        const tiempoPromedioMin = tareasConTiempo > 0 ? Math.round(sumaMinutosReales / tareasConTiempo) : 0;
+        const eficiencia = sumaMinutosReales > 0
+          ? Math.round((sumaEstimado / sumaMinutosReales) * 100)
+          : 0;
 
         // Tendencias mensuales (agrupar en memoria)
         const tendenciasMap: Record<string, { creados: number; completados: number }> = {};
@@ -269,6 +297,7 @@ export async function reportesController(app: FastifyInstance) {
             total_servicios: totalServicios,
             completados,
             tiempo_promedio_min: tiempoPromedioMin,
+            eficiencia,
             tendencias,
             periodo: {
               desde: fechaInicio?.toISOString() || null,
