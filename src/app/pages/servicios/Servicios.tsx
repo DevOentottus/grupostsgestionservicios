@@ -67,7 +67,7 @@ export function ServiciosPage() {
   const activos = (servicios || []).filter((s: Servicio) => !s.archived_at);
   const archivados = (servicios || []).filter((s: Servicio) => s.archived_at);
 
-  const source = mostrarArchivados ? (servicios || []) : activos;
+  const source = mostrarArchivados ? archivados : activos;
   const filtered = source.filter((s: Servicio) => {
     const matchSearch = `${s.codigo} ${s.cliente_nombre} ${s.titulo}`
       .toLowerCase()
