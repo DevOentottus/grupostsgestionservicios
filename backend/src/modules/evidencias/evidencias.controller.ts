@@ -486,7 +486,7 @@ export async function evidenciasController(app: FastifyInstance) {
     const { data: clientes } = await supabase
       .from("clientes")
       .select("cliente_dni")
-      .eq("cliente_id", s.cliente_id)
+      .eq("cliente_id", s.cliente_id!)
       .limit(1);
 
     if (clientes?.[0] && clientes[0].cliente_dni !== query.dni) {

@@ -38,7 +38,7 @@ async function insertSafe(
   values: Record<string, unknown>,
   label: string,
 ): Promise<any> {
-  const { data, error } = await supabase.from(table).insert(values).select();
+  const { data, error } = await supabase.from(table as any).insert(values as any).select();
   if (error) {
     if (error.code === "23505") {
       return null;

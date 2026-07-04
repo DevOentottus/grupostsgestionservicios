@@ -110,7 +110,7 @@ export async function areasController(app: FastifyInstance) {
       const uniqueAreas = Array.from(seen.values());
 
       // 3. Obtener encargados y counts
-      const encargadoIds = [...new Set(uniqueAreas.map((a) => a.area_encargado_id).filter(Boolean))];
+      const encargadoIds = [...new Set(uniqueAreas.map((a) => a.area_encargado_id).filter(Boolean))] as number[];
 
       const encResult = encargadoIds.length > 0
         ? await supabase.from("usuarios").select("usuario_id, usuario_nombres, usuario_correo, usuario_username").in("usuario_id", encargadoIds)

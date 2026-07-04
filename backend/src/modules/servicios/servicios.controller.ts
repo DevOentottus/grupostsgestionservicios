@@ -199,14 +199,14 @@ export async function serviciosController(app: FastifyInstance) {
 
     await verificarPermisoModificar(parseInt(id), user);
 
-    const updateData: Record<string, any> = {};
+    const updateData: Partial<Record<string, unknown>> = {};
     if (input.titulo !== undefined) updateData.servicio_nombre = input.titulo;
     if (input.descripcion !== undefined) updateData.servicio_descripcion = input.descripcion;
     if (input.colaborador_edita_visibilidad !== undefined) updateData.servicio_colaborador_edita_visibilidad = input.colaborador_edita_visibilidad;
 
     const { data: updatedServicios, error } = await supabase
       .from("servicios")
-      .update(updateData)
+      .update(updateData as any)
       .eq("servicio_id", parseInt(id))
       .select();
 

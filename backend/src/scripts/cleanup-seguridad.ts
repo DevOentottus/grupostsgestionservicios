@@ -21,7 +21,8 @@ export async function cleanupSeguridad(): Promise<{ login_attempts: number; sess
   const { data: deletedSessions } = await supabase
     .from("sessions")
     .delete()
-    .lt("expires_at", cutoffSessions.toISOString());
+    .lt("expires_at", cutoffSessions.toISOString())
+    .select("id");
 
   return {
     login_attempts: deletedLogin?.length || 0,

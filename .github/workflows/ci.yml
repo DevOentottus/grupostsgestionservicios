@@ -37,7 +37,6 @@ jobs:
 
   typecheck-backend:
     runs-on: ubuntu-latest
-    continue-on-error: true # ~20 errores de nullabilidad pre-existentes; se limpian progresivamente
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

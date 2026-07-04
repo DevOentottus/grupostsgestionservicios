@@ -113,11 +113,11 @@ export async function reportesController(app: FastifyInstance) {
           const id = t.tarea_completado_por;
           if (!id) continue;
           if (!grouped[id]) {
-            const u = t.usuarios || {};
+            const u = (t.usuarios || {}) as { usuario_nombres?: string; usuario_apellido_paterno?: string; usuario_apellido_materno?: string } | null;
             grouped[id] = {
               usuario_id: id,
-              nombres: u.usuario_nombres || null,
-              apellidos: [u.usuario_apellido_paterno, u.usuario_apellido_materno]
+              nombres: u?.usuario_nombres || null,
+              apellidos: [u?.usuario_apellido_paterno, u?.usuario_apellido_materno]
                 .filter(Boolean).join(" "),
               tareas_completadas: 0,
             };
@@ -253,13 +253,13 @@ export async function reportesController(app: FastifyInstance) {
         // Agrupar en memoria
         const grouped: Record<number, any> = {};
         for (const r of rows || []) {
-          const a = r.areas || {};
+          const a = (r.areas || {}) as { area_nombre?: string } | null;
           const id = r.area_id;
           if (!id) continue;
           if (!grouped[id]) {
             grouped[id] = {
               area_id: id,
-              nombre: a.area_nombre || `Área #${id}`,
+              nombre: a?.area_nombre || `Área #${id}`,
               total: 0,
               completados: 0,
             };
@@ -345,10 +345,10 @@ export async function reportesController(app: FastifyInstance) {
         for (const t of tareasData || []) {
           const id = t.tarea_completado_por;
           if (!id) continue;
-          const u = t.usuarios || {};
+          const u = (t.usuarios || {}) as { usuario_nombres?: string; usuario_apellido_paterno?: string } | null;
           if (!grouped[id]) {
             grouped[id] = {
-              nombre: `${u.usuario_nombres || ""} ${u.usuario_apellido_paterno || ""}`.trim(),
+              nombre: `${u?.usuario_nombres || ""} ${u?.usuario_apellido_paterno || ""}`.trim(),
               count: 0,
             };
           }

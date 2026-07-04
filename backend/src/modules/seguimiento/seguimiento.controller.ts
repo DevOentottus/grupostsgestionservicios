@@ -25,10 +25,20 @@ export async function seguimientoController(app: FastifyInstance) {
     const input = encuestaSchema.parse(request.body);
 
     const now = new Date();
+
+    // Obtener cliente del servicio (cliente_id es NOT NULL en calificaciones)
+    const { data: svcCliente } = await supabase
+      .from("servicios")
+      .select("cliente_id")
+      .eq("servicio_id", parseInt(id))
+      .single();
+    if (!svcCliente?.cliente_id) throw new NotFoundError("Servicio no encontrado");
+
     const { data: califs } = await supabase
       .from("calificaciones")
       .insert({
         servicio_id: parseInt(id),
+        cliente_id: svcCliente.cliente_id,
         calificacion_puntaje: input.calificacion,
         calificacion_comentario: input.comentario || null,
         calificacion_sugerencia: input.sugerencia || null,
@@ -110,7 +120,8 @@ export async function seguimientoController(app: FastifyInstance) {
       .eq("servicio_codigo", codigo)
       .limit(1);
 
-    const servicio = servicios?.[0];
+    type ServicioConCliente = NonNullable<typeof servicios>[number] & { cliente_correo?: string | null };
+    const servicio = servicios?.[0] as ServicioConCliente | undefined;
     if (!servicio) throw new NotFoundError("Servicio no encontrado");
 
     const { data: tareasList } = await supabase
@@ -416,9 +427,9 @@ export async function seguimientoController(app: FastifyInstance) {
     for (const t of tareasCompletadasRaw || []) {
       const id = t.tarea_completado_por;
       if (!id) continue;
-      const u = t.usuarios || {};
+      const u = (t.usuarios || {}) as { usuario_nombres?: string } | null;
       if (!colabMap[id]) {
-        colabMap[id] = { nombres: u.usuario_nombres || `Usuario #${id}`, tareas: 0 };
+        colabMap[id] = { nombres: u?.usuario_nombres || `Usuario #${id}`, tareas: 0 };
       }
       colabMap[id].tareas++;
     }

@@ -23,7 +23,7 @@ async function insertSafe(
   values: Record<string, unknown>,
   label: string,
 ): Promise<any> {
-  const { data, error } = await supabase.from(table).insert(values).select();
+  const { data, error } = await supabase.from(table as any).insert(values as any).select();
   if (error) {
     if (error.code === "23505") {
       console.log(`  ⚠️  ${label} -- ya existe, ignorado`);
@@ -668,7 +668,7 @@ async function seed() {
       }
       return supabase
         .from("servicios")
-        .update({ colaborador_id: usr.usuario_id })
+        .update({ colaborador_id: usr.usuario_id } as any)
         .eq("servicio_id", serv.servicio_id)
         .then(({ error }) => {
           if (error) {

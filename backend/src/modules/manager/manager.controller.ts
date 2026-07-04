@@ -482,13 +482,15 @@ export async function managerController(app: FastifyInstance) {
 
       const serviceMap: Record<number, { total: number; ultimo: { codigo: string; fecha: string } | null }> = {};
       for (const s of servicios || []) {
-        if (!serviceMap[s.cliente_id]) {
-          serviceMap[s.cliente_id] = { total: 0, ultimo: null };
+        const cid = s.cliente_id;
+        if (cid === null) continue;
+        if (!serviceMap[cid]) {
+          serviceMap[cid] = { total: 0, ultimo: null };
         }
-        serviceMap[s.cliente_id].total++;
+        serviceMap[cid].total++;
         const fecha = s.servicio_fecha_creacion;
-        if (!serviceMap[s.cliente_id].ultimo || fecha > serviceMap[s.cliente_id].ultimo!.fecha) {
-          serviceMap[s.cliente_id].ultimo = { codigo: s.servicio_codigo, fecha };
+        if (!serviceMap[cid].ultimo || fecha > serviceMap[cid].ultimo!.fecha) {
+          serviceMap[cid].ultimo = { codigo: s.servicio_codigo, fecha };
         }
       }
 
