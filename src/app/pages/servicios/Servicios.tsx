@@ -40,9 +40,7 @@ export function ServiciosPage() {
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterArea, setFilterArea] = useState<number | "">("");
   const [mostrarArchivados, setMostrarArchivados] = useState(false);
-  const { data: servicios, isLoading } = useServicios(
-    mostrarArchivados ? { incluir_archivados: "true" } : undefined,
-  );
+  const { data: servicios, isLoading } = useServicios({ incluir_archivados: "true" });
   const archivar = useArchivarServicio();
   const desarchivar = useDesarchivarServicio();
   const { data: areas } = useAreas();
