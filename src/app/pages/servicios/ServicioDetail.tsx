@@ -151,7 +151,7 @@ const ESTADO_BAR_STYLE: Record<string, string> = {
 };
 
 // -- Evidencias Tab Component --
-function EvidenciasTabContent({ servicioId, tareas, userRol, tecnicoId, colaboradorPuedeEditar, onToggleVisibilidad }: { servicioId: number; tareas: Tarea[]; userRol?: string; tecnicoId?: number; colaboradorPuedeEditar?: boolean; onToggleVisibilidad?: () => void }) {
+function EvidenciasTabContent({ servicioId, tareas, userRol, userId, tecnicoId, colaboradorPuedeEditar, onToggleVisibilidad }: { servicioId: number; tareas: Tarea[]; userRol?: string; userId?: number; tecnicoId?: number; colaboradorPuedeEditar?: boolean; onToggleVisibilidad?: () => void }) {
   const { data: evidencias, isLoading } = useEvidencias(servicioId);
   const [tareaSeleccionada, setTareaSeleccionada] = useState<number | null>(null);
   const toggleVisibilidad = useEditarServicio();
@@ -234,6 +234,7 @@ function EvidenciasTabContent({ servicioId, tareas, userRol, tecnicoId, colabora
             showStatus
             tareaNombres={tareaNombres}
             userRol={userRol}
+            userId={userId}
             tecnicoId={tecnicoId}
             colaboradorPuedeEditar={colaboradorPuedeEditar}
           />
@@ -1088,7 +1089,7 @@ export function ServicioDetailPage() {
 
         {/* EVIDENCIAS TAB */}
         {activeTab === "evidencias" && (
-          <EvidenciasTabContent servicioId={servicioId} tareas={tareas || []} userRol={user?.rol} tecnicoId={servicio?.colaborador_id ?? undefined} colaboradorPuedeEditar={servicio?.colaborador_edita_visibilidad} />
+          <EvidenciasTabContent servicioId={servicioId} tareas={tareas || []} userRol={user?.rol} userId={user?.id} tecnicoId={servicio?.colaborador_id ?? undefined} colaboradorPuedeEditar={servicio?.colaborador_edita_visibilidad} />
         )}
       </div>
 

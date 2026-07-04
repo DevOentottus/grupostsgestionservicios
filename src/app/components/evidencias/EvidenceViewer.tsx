@@ -22,6 +22,8 @@ interface EvidenceViewerProps {
   tareaNombres?: Record<number, string>;
   /** Rol del usuario autenticado (admin/encargado/colaborador). Solo admin/encargado ven botones aprobar/rechazar */
   userRol?: string;
+  /** ID del usuario autenticado */
+  userId?: number;
   /** ID del técnico asignado al servicio, para notificarle cuando su evidencia es aprobada/rechazada */
   tecnicoId?: number;
   /** Indica si el colaborador puede editar la visibilidad al cliente de sus evidencias */
@@ -38,6 +40,7 @@ export function EvidenceViewer({
   onComentarioAdded,
   tareaNombres,
   userRol,
+  userId,
   tecnicoId,
   colaboradorPuedeEditar = false,
 }: EvidenceViewerProps) {
@@ -324,7 +327,7 @@ export function EvidenceViewer({
         )}
 
         {/* Evidencia rechazada — mostrar motivo y botón de re-subida */}
-        {!readOnly && ev.estado === "rechazado" && (
+        {!readOnly && ev.estado === "rechazado" && userId !== undefined && userId === tecnicoId && (
           <div className="px-4 py-3 bg-red-50 border-t border-red-100 space-y-3">
             {rejectionReason && (
               <div className="flex items-start gap-2">
