@@ -223,7 +223,7 @@ export function ServiciosPage() {
               )}
             >
               <Archive className="w-4 h-4" />
-              {mostrarArchivados ? "Ocultar archivados" : "Mostrar archivados"}
+              {mostrarArchivados ? "Ocultar archivados" : `Mostrar archivados (${archivados.length})`}
             </button>
           )}
         </div>
