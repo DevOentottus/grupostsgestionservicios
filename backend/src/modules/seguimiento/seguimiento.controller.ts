@@ -270,17 +270,45 @@ export async function seguimientoController(app: FastifyInstance) {
       return q;
     };
 
-    // -- Servicios del período --
+    // -- Servicios del período: incluir servicios con tareas completadas en el período --
+    // Primero obtenemos tareas completadas en el período, luego sus servicios
+    let allServicios: any[] = [];
+
+    // Buscar servicios por fecha de creación (enfoque original)
     let svcQuery = supabase.from("servicios").select("servicio_id, servicio_estado, servicio_tiempo_estimado, servicio_fecha_inicio, servicio_fecha_creacion, area_id, servicio_cliente_reporte, servicio_diagnostico_inicial");
     svcQuery = applyDateFilter(svcQuery, "servicio_fecha_creacion");
     svcQuery = applyAreaFilter(svcQuery, "area_id");
-    const { data: allServicios } = await svcQuery;
+    const { data: serviciosCreados } = await svcQuery;
+    allServicios = serviciosCreados || [];
+
+    // También incluir servicios que tienen tareas completadas en el período
+    // (aunque el servicio se haya creado antes)
+    {
+      const { data: tareasEnPeriodo } = await supabase
+        .from("tareas")
+        .select("servicio_id")
+        .eq("tarea_estado", "completado")
+        .gte("tarea_fecha_completado", fechaInicio ? fechaInicio.toISOString().split("T")[0] : "1970-01-01")
+        .lte("tarea_fecha_completado", fechaFin ? fechaFin.toISOString().split("T")[0] : "2100-01-01");
+
+      const idsAdicionales = [...new Set((tareasEnPeriodo || []).map((t: any) => t.servicio_id).filter(Boolean))];
+      const idsExistentes = new Set(allServicios.map((s: any) => s.servicio_id));
+      const idsNuevos = idsAdicionales.filter((id) => !idsExistentes.has(id));
+
+      if (idsNuevos.length > 0) {
+        const { data: serviciosAdicionales } = await supabase
+          .from("servicios")
+          .select("servicio_id, servicio_estado, servicio_tiempo_estimado, servicio_fecha_inicio, servicio_fecha_creacion, area_id, servicio_cliente_reporte, servicio_diagnostico_inicial")
+          .in("servicio_id", idsNuevos);
+        allServicios = [...allServicios, ...(serviciosAdicionales || [])];
+      }
+    }
 
     const totalServicios = allServicios?.length || 0;
-    const completados = allServicios?.filter((s) => s.servicio_estado === "completado").length || 0;
-    const en_progreso = allServicios?.filter((s) => s.servicio_estado === "en_progreso").length || 0;
-    const pendientes = allServicios?.filter((s) => s.servicio_estado === "pendiente").length || 0;
-    const bloqueados = allServicios?.filter((s) => s.servicio_estado === "bloqueado").length || 0;
+    const completados = allServicios?.filter((s: any) => s.servicio_estado === "completado").length || 0;
+    const en_progreso = allServicios?.filter((s: any) => s.servicio_estado === "en_progreso").length || 0;
+    const pendientes = allServicios?.filter((s: any) => s.servicio_estado === "pendiente").length || 0;
+    const bloqueados = allServicios?.filter((s: any) => s.servicio_estado === "bloqueado").length || 0;
 
     // -- Encuestas (calificaciones) del período --
     let califQuery = supabase
@@ -358,6 +386,18 @@ export async function seguimientoController(app: FastifyInstance) {
     }
     const { data: tareasCompletadasPeriodo } = await tareasQuery;
     const tareasCompletadasCount = tareasCompletadasPeriodo?.length || 0;
+
+    // -- Auditoría: servicios con trazabilidad completa --
+    let svcIdsConAuditoria = 0;
+    if (svcIdsPeriodo.length > 0) {
+      const { data: auditoriaRecords } = await supabase
+        .from("auditoria")
+        .select("auditoria_registro_id")
+        .eq("auditoria_tabla", "servicios")
+        .in("auditoria_registro_id", svcIdsPeriodo);
+      const idsUnicos = new Set((auditoriaRecords || []).map((a: any) => a.auditoria_registro_id));
+      svcIdsConAuditoria = idsUnicos.size;
+    }
 
     // -- Tiempo real desde tiempo_tracking --
     let trackingQuery = supabase
@@ -591,8 +631,11 @@ export async function seguimientoController(app: FastifyInstance) {
     return {
       data: {
         kpi: {
-          registros_completos_pct: totalServicios > 0
-            ? Math.round((allServicios!.filter((s: any) => s.servicio_cliente_reporte && s.servicio_diagnostico_inicial).length / totalServicios) * 100)
+          registros_completos_pct: totalServicios > 0 && svcIdsPeriodo.length > 0
+            ? (() => {
+                const auditados = svcIdsConAuditoria ?? 0;
+                return Math.round((auditados / totalServicios) * 100);
+              })()
             : 0,
           servicios_con_tareas_pct: serviciosConTareasPct,
           tiempo_promedio_min: tiempoPromedioMin,
@@ -684,12 +727,19 @@ export async function seguimientoController(app: FastifyInstance) {
     const en_progreso = allServicios?.filter((s) => s.servicio_estado === "en_progreso").length || 0;
     const bloqueados = allServicios?.filter((s) => s.servicio_estado === "bloqueado").length || 0;
 
-    // KPIs simples para PDF
-    const registrosCompletosPct = totalServicios > 0
-      ? Math.round((allServicios!.filter((s: any) => s.servicio_cliente_reporte && s.servicio_diagnostico_inicial).length / totalServicios) * 100)
-      : 0;
-
     const svcIds = (allServicios || []).map((s: any) => s.servicio_id).filter(Boolean);
+
+    // KPIs simples para PDF
+    let registrosCompletosPct = 0;
+    if (totalServicios > 0 && svcIds.length > 0) {
+      const { data: auditoriaRecords } = await supabase
+        .from("auditoria")
+        .select("auditoria_registro_id")
+        .eq("auditoria_tabla", "servicios")
+        .in("auditoria_registro_id", svcIds);
+      const idsUnicos = new Set((auditoriaRecords || []).map((a: any) => a.auditoria_registro_id));
+      registrosCompletosPct = Math.round((idsUnicos.size / totalServicios) * 100);
+    }
 
     // Servicios con tareas
     let serviciosConTareas = 0;
