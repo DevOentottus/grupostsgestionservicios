@@ -6,13 +6,14 @@ import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
 
 const servicioSchema = z.object({
-  titulo: z.string().min(1),
+  titulo: z.string().min(1, "Título es requerido"),
   descripcion: z.string().nullable().optional(),
+  cliente_nombre: z.string().nullable().optional(),
   cliente_email: z.string().email().nullable().optional(),
   area_id: z.number().int().nullable().optional(),
   prioridad: z.enum(["baja", "media", "alta", "urgente"]).nullable().optional(),
   tiempo_estimado: z.number().int().positive().nullable().optional(),
-  cliente_dni: z.string().min(1, "DNI del cliente es requerido"),
+  cliente_dni: z.string().nullable().optional(),
   cliente_apellido_paterno: z.string().nullable().optional(),
   cliente_apellido_materno: z.string().nullable().optional(),
   cliente_nombres: z.string().nullable().optional(),
@@ -27,7 +28,7 @@ const servicioSchema = z.object({
   servicio_audio_cliente: z.string().nullable().optional(),
   servicio_audio_diagnostico: z.string().nullable().optional(),
   id_plantilla_inicial: z.number().int().nullable().optional(),
-  colaborador_id: z.number().int(),
+  colaborador_id: z.number().int().nullable().optional(),
   permite_evidencia: z.boolean().nullable().optional(),
   codigo: z.string().nullable().optional(),
 });
@@ -259,7 +260,7 @@ export async function serviciosController(app: FastifyInstance) {
         cliente_dni: input.cliente_dni || null,
         cliente_apellido_paterno: input.cliente_apellido_paterno || null,
         cliente_apellido_materno: input.cliente_apellido_materno || null,
-        cliente_nombres: input.cliente_nombres || null,
+        cliente_nombres: input.cliente_nombres || input.cliente_nombre || null,
         cliente_telefono: input.cliente_telefono || null,
         servicio_descripcion_equipo: input.descripcion_equipo || null,
         servicio_serie_equipo: input.serie_equipo || null,

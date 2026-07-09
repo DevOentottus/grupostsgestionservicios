@@ -27,10 +27,15 @@ export function useNotificacionesNoLeidas() {
   return useQuery({
     queryKey: ["notificaciones", "no-leidas"],
     queryFn: async () => {
-      const r = await notificacionesApi.noLeidas();
-      return (r.data.data ?? 0) as number;
+      try {
+        const r = await notificacionesApi.noLeidas();
+        return (r.data.data ?? 0) as number;
+      } catch {
+        return 0;
+      }
     },
     refetchInterval: 15_000,
+    retry: false,
   });
 }
 
