@@ -245,7 +245,7 @@ export default function Layout() {
         <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
           {nav
             .filter((item) => canSee(item.roles))
-            .filter((item) => !(user?.rol === "sistema" && item.to === "/miarea"))
+            .filter((item) => !(user?.rol === "sistema" && (item.to === "/miarea" || item.to === "/midesempeno")))
             .map((item) => {
               const { to, icon } = item;
               const label = getNavLabel(item);
