@@ -3,6 +3,7 @@ import { useDesempeno, useMiArea } from "@/api/queries/useManager.js";
 import { useDashboard } from "@/api/queries/useDashboard.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import { useAuth } from "@/lib/auth.js";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import {
   TrendingUp, Clock, Target, CheckCircle2, Search, Calendar,
   User, Star, BarChart3, Eye, MessageCircle, FileText, Zap,
@@ -38,7 +39,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function IndicadorCard({
-  numero, titulo, valor, unidad, descripcion, color, icon: Icon,
+  numero, titulo, valor, unidad, descripcion, color, icon: Icon, formula,
 }: {
   numero: string;
   titulo: string;
@@ -47,6 +48,7 @@ function IndicadorCard({
   descripcion: string;
   color: string;
   icon: React.ComponentType<{ className?: string }>;
+  formula?: string;
 }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
@@ -56,6 +58,7 @@ function IndicadorCard({
             <Icon className="w-3.5 h-3.5 text-white" />
           </div>
           <span className="text-[10px] font-mono font-bold text-slate-400">{numero}</span>
+          {formula && <InfoPopover formula={formula} />}
         </div>
       </div>
       <p className="text-[11px] text-slate-500 mb-1 leading-tight">{titulo}</p>
@@ -333,6 +336,7 @@ export function ManagerDesempenoPage() {
                 descripcion="Total de tareas finalizadas por el colaborador"
                 color="bg-blue-600"
                 icon={CheckCircle2}
+                formula="N° de tareas con estado 'completado' asignadas al colaborador en el período seleccionado"
               />
               <IndicadorCard
                 numero="1.2"
@@ -342,6 +346,7 @@ export function ManagerDesempenoPage() {
                 descripcion="Servicios donde el colaborador participó"
                 color="bg-cyan-600"
                 icon={FileText}
+                formula="N° de servicios donde el colaborador es técnico principal y tienen estado 'completado' en el período"
               />
               <IndicadorCard
                 numero="1.3"
@@ -351,6 +356,7 @@ export function ManagerDesempenoPage() {
                 descripcion="Cantidad promedio de tareas por servicio completado"
                 color="bg-teal-600"
                 icon={BarChart3}
+                formula="Total de tareas completadas ÷ Total de servicios completados en el período"
               />
             </div>
           </PropuestaSection>
@@ -371,6 +377,7 @@ export function ManagerDesempenoPage() {
                 descripcion="Promedio de minutos invertidos por tarea completada"
                 color="bg-orange-600"
                 icon={Clock}
+                formula="Σ(tracking_fin − tracking_inicio de cada tarea del colaborador) ÷ N° de tareas con tiempo registrado"
               />
               <IndicadorCard
                 numero="2.2"
@@ -380,6 +387,7 @@ export function ManagerDesempenoPage() {
                 descripcion="Porcentaje de tareas dentro del tiempo estimado"
                 color="bg-green-600"
                 icon={Target}
+                formula="(Tareas cuyo tiempo real ≤ tiempo_estimado de la tarea ÷ Total de tareas completadas) × 100"
               />
               <IndicadorCard
                 numero="2.3"
@@ -389,6 +397,7 @@ export function ManagerDesempenoPage() {
                 descripcion="Suma total de tiempo en tareas del período"
                 color="bg-purple-600"
                 icon={Zap}
+                formula="Σ(tiempo real de cada tarea completada por el colaborador en el período)"
               />
             </div>
 
@@ -405,6 +414,7 @@ export function ManagerDesempenoPage() {
                     descripcion="Porcentaje del área en el mismo período"
                     color="bg-emerald-600"
                     icon={Target}
+                    formula="(Servicios del área cuyo tiempo real total ≤ tiempo_estimado ÷ Total servicios completados del área) × 100"
                   />
                   <IndicadorCard
                     numero="2.5"
@@ -414,6 +424,7 @@ export function ManagerDesempenoPage() {
                     descripcion="Promedio del área en el mismo período"
                     color="bg-amber-600"
                     icon={Clock}
+                    formula="Σ(tracking_fin − tracking_inicio de tareas del área en el período) ÷ N° de tareas con tiempo registrado"
                   />
                 </div>
               </div>
@@ -437,6 +448,7 @@ export function ManagerDesempenoPage() {
                   descripcion="Servicios del área con al menos 1 consulta en el portal"
                   color="bg-sky-600"
                   icon={Eye}
+                  formula="(Servicios con al menos 1 visita en visitas_portal ÷ Total de servicios del área) × 100"
                 />
                 <IndicadorCard
                   numero="3.2"
@@ -446,6 +458,7 @@ export function ManagerDesempenoPage() {
                   descripcion="Tiempo promedio en reflejar cambios al cliente"
                   color="bg-indigo-600"
                   icon={Clock}
+                  formula="Valor fijo: < 1 minuto (actualización en tiempo real vía Supabase Realtime)"
                 />
                 <IndicadorCard
                   numero="3.3"
@@ -455,6 +468,7 @@ export function ManagerDesempenoPage() {
                   descripcion="Evaluación de clientes sobre visibilidad del progreso"
                   color="bg-violet-600"
                   icon={Star}
+                  formula="Promedio de calificaciones (1–5) dadas por clientes en la categoría 'visibilidad del progreso'"
                 />
               </div>
             ) : (
@@ -480,6 +494,7 @@ export function ManagerDesempenoPage() {
                 descripcion="Promedio de estrellas recibidas (histórico general)"
                 color="bg-yellow-600"
                 icon={Star}
+                formula="Σ(calificación de cada servicio del colaborador) ÷ N° de servicios con calificación"
               />
               <IndicadorCard
                 numero="4.2"
@@ -489,6 +504,7 @@ export function ManagerDesempenoPage() {
                 descripcion="% de servicios completados que recibieron calificación"
                 color="bg-emerald-600"
                 icon={CheckCircle2}
+                formula="(Servicios completados con al menos 1 calificación ÷ Total servicios completados del área) × 100"
               />
               <IndicadorCard
                 numero="4.3"
@@ -498,6 +514,7 @@ export function ManagerDesempenoPage() {
                 descripcion="% de servicios con feedback del cliente"
                 color="bg-rose-600"
                 icon={MessageCircle}
+                formula="(Servicios completados con comentarios internos ÷ Total servicios completados del área) × 100"
               />
             </div>
 

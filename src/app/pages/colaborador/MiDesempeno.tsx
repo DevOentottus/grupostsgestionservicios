@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 import { useDashboard } from "@/api/queries/useDashboard.js";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import {
   TrendingUp, CheckCircle2, Star,
   Clock, Target, Zap, BarChart3, Eye, MessageCircle, FileText,
@@ -29,7 +30,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function IndicadorCard({
-  titulo, valor, unidad, descripcion, color, icon: Icon,
+  titulo, valor, unidad, descripcion, color, icon: Icon, formula,
 }: {
   titulo: string;
   valor: string | number;
@@ -37,6 +38,7 @@ function IndicadorCard({
   descripcion: string;
   color: string;
   icon: React.ComponentType<{ className?: string }>;
+  formula?: string;
 }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
@@ -45,6 +47,7 @@ function IndicadorCard({
           <Icon className="w-3.5 h-3.5 text-white" />
         </div>
         <p className="text-[11px] text-slate-500 leading-tight">{titulo}</p>
+        {formula && <InfoPopover formula={formula} />}
       </div>
       <div className="flex items-baseline gap-1.5 flex-wrap">
         <span className="text-2xl font-bold text-slate-800">{typeof valor === "number" ? valor.toLocaleString() : valor}</span>
@@ -226,6 +229,7 @@ export function MiDesempenoPage() {
                   descripcion="N° servicios con tareas creadas / Total servicios"
                   color="bg-blue-600"
                   icon={FileText}
+                  formula="(Servicios que tienen al menos 1 tarea creada ÷ Total de servicios) × 100"
                 />
                 <IndicadorCard
                   titulo="Tareas documentadas (fecha/hora/responsable)"
@@ -234,6 +238,7 @@ export function MiDesempenoPage() {
                   descripcion="Tareas con todos los datos de auditoría"
                   color="bg-cyan-600"
                   icon={CheckCircle2}
+                  formula="(Servicios que tienen registros en la tabla auditoría ÷ Total de servicios) × 100"
                 />
                 <IndicadorCard
 
@@ -243,6 +248,7 @@ export function MiDesempenoPage() {
                   descripcion="Servicios con historial de cambios completo"
                   color="bg-teal-600"
                   icon={BarChart3}
+                  formula="(Servicios que tienen registros en la tabla auditoría ÷ Total de servicios) × 100"
                 />
               </div>
             ) : (
@@ -268,6 +274,7 @@ export function MiDesempenoPage() {
                 descripcion="Promedio del área en el período actual"
                 color="bg-orange-600"
                 icon={Clock}
+                formula="Σ(tracking_fin − tracking_inicio de cada tarea) ÷ N° de tareas con tiempo registrado en el período"
               />
               <IndicadorCard
 
@@ -277,6 +284,7 @@ export function MiDesempenoPage() {
                 descripcion="N° servicios cumplieron el tiempo estimado"
                 color="bg-green-600"
                 icon={Target}
+                formula="(Servicios cuyo tiempo real total ≤ tiempo_estimado del servicio ÷ Total de servicios completados) × 100"
               />
               <IndicadorCard
 
@@ -286,6 +294,7 @@ export function MiDesempenoPage() {
                 descripcion="Servicios completados en el período"
                 color="bg-purple-600"
                 icon={Zap}
+                formula="N° de servicios completados por el colaborador en el período seleccionado"
               />
             </div>
           </PropuestaSection>
@@ -307,6 +316,7 @@ export function MiDesempenoPage() {
                   descripcion="Servicios con al menos 1 consulta en el portal"
                   color="bg-sky-600"
                   icon={Eye}
+                  formula="(Servicios que tienen al menos 1 visita en la tabla visitas_portal ÷ Total de servicios) × 100"
                 />
                 <IndicadorCard
 
@@ -316,6 +326,7 @@ export function MiDesempenoPage() {
                   descripcion="Tiempo promedio en reflejar cambios al cliente"
                   color="bg-indigo-600"
                   icon={Clock}
+                  formula="Valor fijo: < 1 minuto (actualización en tiempo real vía Supabase Realtime)"
                 />
                 <IndicadorCard
 
@@ -325,6 +336,7 @@ export function MiDesempenoPage() {
                   descripcion="Evaluación de clientes sobre visibilidad del progreso"
                   color="bg-violet-600"
                   icon={Star}
+                  formula="Promedio de calificaciones (1–5) dadas por clientes en la categoría 'visibilidad del progreso'"
                 />
               </div>
             ) : (
@@ -350,6 +362,7 @@ export function MiDesempenoPage() {
                 descripcion="Promedio de estrellas recibidas en servicios completados"
                 color="bg-yellow-600"
                 icon={Star}
+                formula="Σ(calificación de cada servicio completado por el colaborador) ÷ N° de servicios con calificación"
               />
               <IndicadorCard
 
@@ -359,6 +372,7 @@ export function MiDesempenoPage() {
                 descripcion="% de servicios completados que recibieron calificación"
                 color="bg-emerald-600"
                 icon={CheckCircle2}
+                formula="(Servicios completados que tienen al menos 1 calificación ÷ Total de servicios completados) × 100"
               />
               <IndicadorCard
 
@@ -368,6 +382,7 @@ export function MiDesempenoPage() {
                 descripcion="% de servicios con feedback del cliente"
                 color="bg-rose-600"
                 icon={MessageCircle}
+                formula="(Servicios completados que tienen comentarios internos registrados ÷ Total de servicios completados) × 100"
               />
             </div>
 
