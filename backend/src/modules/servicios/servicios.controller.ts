@@ -98,13 +98,25 @@ export async function serviciosController(app: FastifyInstance) {
       .from("servicios")
       .select("*, usuario_colaborador:usuarios!tecnico_principal_id(usuario_nombres, usuario_apellido_paterno)");
 
-    // Colaborador: solo ve servicios donde está asignado
-    if (user.rol === "colaborador") {
-      dbQuery = dbQuery.eq("tecnico_principal_id", user.user_id);
-    }
-    // Encargado: solo ve servicios de su área
-    if (user.rol === "encargado" && user.area_id) {
-      dbQuery = dbQuery.eq("area_id", user.area_id);
+    // Colaborador / Encargado: ve servicios donde participa (técnico principal, completó tareas, o está en serviciocolaboradores)
+    if ((user.rol === "colaborador" || user.rol === "encargado") && user.area_id) {
+      const [colabSvcRes, tareasRes] = await Promise.all([
+        supabase.from("serviciocolaboradores").select("servicio_id").eq("colaborador_id", user.user_id),
+        supabase.from("tareas").select("servicio_id").eq("tarea_completado_por", user.user_id).eq("tarea_estado", "completado"),
+      ]);
+      const svcColabIds = new Set((colabSvcRes.data || []).map((r: any) => r.servicio_id));
+      const svcTareaIds = new Set((tareasRes.data || []).map((r: any) => r.servicio_id));
+      const extraIds = [...new Set([...svcColabIds, ...svcTareaIds])];
+
+      if (extraIds.length > 0) {
+        dbQuery = dbQuery
+          .eq("area_id", user.area_id)
+          .or(`tecnico_principal_id.eq.${user.user_id},servicio_id.in.(${extraIds.join(",")})`);
+      } else {
+        dbQuery = dbQuery
+          .eq("area_id", user.area_id)
+          .eq("tecnico_principal_id", user.user_id);
+      }
     }
 
     // Filtro de archivados:
