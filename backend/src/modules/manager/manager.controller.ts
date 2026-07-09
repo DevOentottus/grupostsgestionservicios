@@ -438,6 +438,80 @@ export async function managerController(app: FastifyInstance) {
       // completó tareas
       const serviciosIds = new Set(tareasCompletadas.map((t: any) => t.servicio_id));
 
+      // -- Tiempo tracking para tareas completadas en el período --
+      const tareaIds = tareasCompletadas.map((t: any) => t.id);
+      let tiempoPromedio = 0;
+      let tiempoTotal = 0;
+      let eficiencia = 0;
+
+      if (tareaIds.length > 0) {
+        const { data: trackingData } = await supabase
+          .from("tiempo_tracking")
+          .select("tarea_id, tracking_inicio, tracking_fin")
+          .in("tarea_id", tareaIds);
+
+        let sumaMinutos = 0;
+        let tareasConTiempo = 0;
+        const tareaTiempoReal: Record<number, number> = {};
+
+        for (const tr of trackingData || []) {
+          if (tr.tracking_inicio && tr.tracking_fin) {
+            const diff = Math.floor(
+              (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
+            );
+            if (diff > 0) {
+              sumaMinutos += diff;
+              tareasConTiempo++;
+              tareaTiempoReal[tr.tarea_id] = diff;
+            }
+          }
+        }
+
+        tiempoPromedio = tareasConTiempo > 0 ? Math.round(sumaMinutos / tareasConTiempo) : 0;
+        tiempoTotal = sumaMinutos;
+
+        // -- Eficiencia: % de tareas dentro del tiempo estimado del servicio --
+        if (tareaIds.length > 0) {
+          const { data: tareasConServicio } = await supabase
+            .from("tareas")
+            .select("tarea_id, servicio_id")
+            .in("tarea_id", tareaIds);
+
+          const svcIds = [...new Set((tareasConServicio || []).map((t: any) => t.servicio_id))];
+
+          if (svcIds.length > 0) {
+            const { data: serviciosData } = await supabase
+              .from("servicios")
+              .select("servicio_id, servicio_tiempo_estimado")
+              .in("servicio_id", svcIds);
+
+            const svcEstimado: Record<number, number> = {};
+            for (const s of serviciosData || []) {
+              if (s.servicio_tiempo_estimado) {
+                svcEstimado[s.servicio_id] = s.servicio_tiempo_estimado;
+              }
+            }
+
+            const tareaSvc: Record<number, number> = {};
+            for (const t of tareasConServicio || []) {
+              tareaSvc[t.tarea_id] = t.servicio_id;
+            }
+
+            let dentro = 0;
+            let totalComparables = 0;
+            for (const [tareaId, realMin] of Object.entries(tareaTiempoReal)) {
+              const svcId = tareaSvc[Number(tareaId)];
+              const estimado = svcId ? svcEstimado[svcId] : 0;
+              if (estimado > 0) {
+                totalComparables++;
+                if (realMin <= estimado) dentro++;
+              }
+            }
+            eficiencia = totalComparables > 0 ? Math.round((dentro / totalComparables) * 100) : 0;
+          }
+        }
+      }
+
       return {
         data: {
           colaborador: {
@@ -453,9 +527,9 @@ export async function managerController(app: FastifyInstance) {
           },
           tareas_completadas: tareasCompletadas,
           total_tareas: tareasCompletadas.length,
-          tiempo_promedio_por_tarea: 0, // tiempo_tracking no disponible
-          tiempo_total_minutos: 0,
-          eficiencia: 0,
+          tiempo_promedio_por_tarea: tiempoPromedio,
+          tiempo_total_minutos: tiempoTotal,
+          eficiencia: eficiencia,
           servicios_completados: serviciosIds.size,
         },
       };
