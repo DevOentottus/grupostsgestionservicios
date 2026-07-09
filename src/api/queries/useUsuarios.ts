@@ -7,9 +7,14 @@ export function useUsuarios() {
   return useQuery({
     queryKey: ["usuarios"],
     queryFn: async () => {
-      const r = await usuariosApi.listar();
-      return r.data.data as Usuario[];
+      try {
+        const r = await usuariosApi.listar();
+        return r.data.data as Usuario[];
+      } catch {
+        return [];
+      }
     },
+    retry: false,
   });
 }
 

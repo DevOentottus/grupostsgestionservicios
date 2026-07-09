@@ -148,7 +148,7 @@ export function NuevoServicioPage() {
   const crearServicio = useCrearServicio();
   const crearTarea = useCrearTarea();
 
-  const isColaborador = currentUser?.rol === "colaborador";
+  const autoAsignar = currentUser?.rol === "colaborador" || currentUser?.rol === "encargado";
 
   // -- Form state --
   const [form, setForm] = useState({
@@ -191,10 +191,10 @@ export function NuevoServicioPage() {
   const totalPasos = 3; // siempre 3 pasos en el stepper
 
   useEffect(() => {
-    if (isColaborador && currentUser?.area_id) {
+    if (autoAsignar && currentUser?.area_id) {
       setForm((p) => ({ ...p, area_id: String(currentUser.area_id) }));
     }
-  }, [isColaborador, currentUser]);
+  }, [autoAsignar, currentUser]);
 
   const set = (key: string, value: string) => {
     setForm((p) => ({ ...p, [key]: value }));
@@ -253,10 +253,10 @@ export function NuevoServicioPage() {
     }
     if (step === 3 || (step === 1 && guiarEntrada)) {
       if (!form.titulo.trim()) errs.titulo = "Requerido";
-      if (!isColaborador && !form.colaborador_id) errs.colaborador_id = "Requerido";
+      if (!autoAsignar && !form.colaborador_id) errs.colaborador_id = "Requerido";
       if (guiarEntrada && !form.cliente_dni.trim()) errs.cliente_dni = "Requerido";
       if (guiarEntrada && !form.codigo_servicio.trim()) errs.codigo_servicio = "Requerido";
-      if (!isColaborador && !form.area_id) errs.area_id = "Requerido";
+      if (!autoAsignar && !form.area_id) errs.area_id = "Requerido";
       if (!form.cliente_reporte.trim() && !form.servicio_audio_cliente) errs.cliente_reporte = "Requerido";
       if (!form.diagnostico_inicial.trim() && !form.servicio_audio_diagnostico) errs.diagnostico_inicial = "Requerido";
     }
@@ -283,7 +283,7 @@ export function NuevoServicioPage() {
       titulo: form.titulo.trim(),
       descripcion: form.descripcion.trim() || null,
       area_id: form.area_id ? Number(form.area_id) : null,
-      colaborador_id: isColaborador
+      colaborador_id: autoAsignar
         ? (currentUser?.id ?? null)
         : (form.colaborador_id ? Number(form.colaborador_id) : null),
       id_plantilla_inicial: form.id_plantilla_inicial ? Number(form.id_plantilla_inicial) : null,
@@ -575,7 +575,7 @@ export function NuevoServicioPage() {
                 </div>
               )}
 
-              {!isColaborador && (
+              {!autoAsignar && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <SelectField
                     label="Área"
