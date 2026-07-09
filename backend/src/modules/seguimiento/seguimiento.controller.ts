@@ -458,30 +458,122 @@ export async function seguimientoController(app: FastifyInstance) {
     const { data: tareasCompletadasRaw } = await supabase
       .from("tareas")
       .select(`
+        tarea_id,
         tarea_completado_por,
+        servicio_id,
         usuarios!tareas_tarea_completado_por_fkey (usuario_id, usuario_nombres)
       `)
       .eq("tarea_estado", "completado");
 
-    const colabMap: Record<number, { nombres: string; tareas: number }> = {};
+    // Mapear colaborador → datos
+    const colabMap: Record<number, {
+      nombres: string;
+      tareas: number;
+      servicios: Set<number>;
+      tareaIds: number[];
+    }> = {};
+
     for (const t of tareasCompletadasRaw || []) {
       const id = t.tarea_completado_por;
       if (!id) continue;
       const u = (t.usuarios || {}) as { usuario_nombres?: string } | null;
       if (!colabMap[id]) {
-        colabMap[id] = { nombres: u?.usuario_nombres || `Usuario #${id}`, tareas: 0 };
+        colabMap[id] = {
+          nombres: u?.usuario_nombres || `Usuario #${id}`,
+          tareas: 0,
+          servicios: new Set(),
+          tareaIds: [],
+        };
       }
       colabMap[id].tareas++;
+      if (t.servicio_id) colabMap[id].servicios.add(t.servicio_id);
+      if (t.tarea_id) colabMap[id].tareaIds.push(t.tarea_id);
+    }
+
+    // Obtener tracking y servicio_tiempo_estimado para eficiencia
+    const todasTareaIds = Object.values(colabMap).flatMap((c) => c.tareaIds);
+    let trackingPorTarea: Record<number, number> = {};
+    let servicioEstimados: Record<number, number> = {};
+    let tareaServicio: Record<number, number> = {};
+
+    if (todasTareaIds.length > 0) {
+      const [trackingRes, serviciosRes] = await Promise.all([
+        supabase
+          .from("tiempo_tracking")
+          .select("tarea_id, tracking_inicio, tracking_fin")
+          .in("tarea_id", todasTareaIds),
+        supabase
+          .from("tareas")
+          .select("tarea_id, servicio_id")
+          .in("tarea_id", todasTareaIds),
+      ]);
+
+      for (const tr of trackingRes.data || []) {
+        if (tr.tracking_inicio && tr.tracking_fin) {
+          const diffMin = Math.floor(
+            (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
+          );
+          if (diffMin > 0) trackingPorTarea[tr.tarea_id] = diffMin;
+        }
+      }
+
+      for (const t of serviciosRes.data || []) {
+        if (t.tarea_id && t.servicio_id) tareaServicio[t.tarea_id] = t.servicio_id;
+      }
+
+      // Cargar servicio_tiempo_estimado de los servicios involucrados
+      const svcIds = [...new Set(Object.values(tareaServicio))];
+      if (svcIds.length > 0) {
+        const { data: svcs } = await supabase
+          .from("servicios")
+          .select("servicio_id, servicio_tiempo_estimado")
+          .in("servicio_id", svcIds);
+        for (const s of svcs || []) {
+          if (s.servicio_tiempo_estimado) servicioEstimados[s.servicio_id] = s.servicio_tiempo_estimado;
+        }
+      }
     }
 
     const colaboradoresDestacados = Object.entries(colabMap)
-      .map(([id, data]) => ({
-        usuario_id: parseInt(id),
-        nombres: data.nombres,
-        servicios_completados: 0,
-        tareas_completadas: data.tareas,
-        eficiencia: 0,
-      }))
+      .map(([id, data]) => {
+        // Contar tareas dentro del tiempo estimado de su servicio
+        let tareasDentroTiempo = 0;
+        let tareasConEstimadoYTracking = 0;
+
+        // Agrupar tareas por servicio para distribuir el estimado
+        const svcTareas: Record<number, number[]> = {};
+        for (const tId of data.tareaIds) {
+          const svcId = tareaServicio[tId];
+          if (!svcId) continue;
+          if (!svcTareas[svcId]) svcTareas[svcId] = [];
+          svcTareas[svcId].push(tId);
+        }
+
+        for (const [svcId, tIds] of Object.entries(svcTareas)) {
+          const estimadoTotal = servicioEstimados[parseInt(svcId)];
+          if (!estimadoTotal) continue;
+          const tareasConTracking = tIds.filter((tId) => trackingPorTarea[tId] != null);
+          if (tareasConTracking.length === 0) continue;
+
+          const sumaReal = tareasConTracking.reduce((acc, tId) => acc + trackingPorTarea[tId], 0);
+          tareasConEstimadoYTracking += tareasConTracking.length;
+          if (sumaReal <= estimadoTotal) {
+            tareasDentroTiempo += tareasConTracking.length;
+          }
+        }
+
+        const eficiencia = tareasConEstimadoYTracking > 0
+          ? Math.round((tareasDentroTiempo / tareasConEstimadoYTracking) * 100)
+          : 0;
+
+        return {
+          usuario_id: parseInt(id),
+          nombres: data.nombres,
+          servicios_completados: data.servicios.size,
+          tareas_completadas: data.tareas,
+          eficiencia,
+        };
+      })
       .sort((a, b) => b.tareas_completadas - a.tareas_completadas)
       .slice(0, 5);
 

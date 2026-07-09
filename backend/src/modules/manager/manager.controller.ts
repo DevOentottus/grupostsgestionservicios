@@ -116,8 +116,8 @@ export async function managerController(app: FastifyInstance) {
           const u = a.usuarios || {};
           const colId = u.usuario_id || a.colaborador_id;
 
-          // Servicios asignados a este colaborador dentro del área
-          const { data: servAsignados } = await supabase
+          // Servicios donde es técnico principal
+          const { data: servComoPrincipal } = await supabase
             .from("servicios")
             .select(`
               servicio_id,
@@ -131,33 +131,62 @@ export async function managerController(app: FastifyInstance) {
           // Tareas completadas por este colaborador
           const { data: tareasComp } = await supabase
             .from("tareas")
-            .select("tarea_id")
+            .select("tarea_id, servicio_id")
             .eq("tarea_completado_por", colId)
             .eq("tarea_estado", "completado");
 
-          // Tareas pendientes en los servicios asignados
-          const serviciosIds = (servAsignados || []).map((sa: any) => sa.servicio_id).filter(Boolean);
+          // Servicios donde completó tareas (aunque no sea técnico principal)
+          const svcIdsDeTareas = [...new Set((tareasComp || [])
+            .map((t: any) => t.servicio_id)
+            .filter(Boolean))] as number[];
+
+          // Unir ambos sets de servicios
+          const principalIds = (servComoPrincipal || []).map((s: any) => s.servicio_id);
+          const todosSvcIds = [...new Set([...principalIds, ...svcIdsDeTareas])];
+
+          // Obtener datos completos de los servicios donde participó
+          let servFinalList: any[] = servComoPrincipal || [];
+          if (svcIdsDeTareas.length > 0) {
+            const idsFaltantes = svcIdsDeTareas.filter((id) => !principalIds.includes(id));
+            if (idsFaltantes.length > 0) {
+              const { data: servExtra } = await supabase
+                .from("servicios")
+                .select(`
+                  servicio_id,
+                  servicio_codigo,
+                  servicio_nombre,
+                  servicio_estado
+                `)
+                .in("servicio_id", idsFaltantes)
+                .eq("area_id", areaId);
+              if (servExtra?.length) {
+                servFinalList = [...servFinalList, ...servExtra];
+              }
+            }
+          }
+
+          const serviciosCompletados = servFinalList.filter(
+            (s: any) => s.servicio_estado === "completado"
+          ).length;
+
+          // Tareas pendientes en servicios donde participó
           let tareasPend = 0;
-          if (serviciosIds.length > 0) {
+          if (todosSvcIds.length > 0) {
             const { data: pendientes } = await supabase
               .from("tareas")
               .select("tarea_id")
-              .in("servicio_id", serviciosIds)
+              .in("servicio_id", todosSvcIds)
               .eq("tarea_estado", "pendiente");
             tareasPend = pendientes?.length || 0;
           }
 
-          const serviciosCompletados = (servAsignados || []).filter(
-            (sa: any) => sa.servicio_estado === "completado"
-          ).length;
-
-          // Calificación promedio en los servicios asignados
+          // Calificación promedio en servicios donde participó
           let calificacionPromedio: number | null = null;
-          if (serviciosIds.length > 0) {
+          if (todosSvcIds.length > 0) {
             const { data: califs } = await supabase
               .from("calificaciones")
               .select("calificacion_puntaje")
-              .in("servicio_id", serviciosIds);
+              .in("servicio_id", todosSvcIds);
             if (califs && califs.length > 0) {
               const suma = califs.reduce((acc: number, c: any) => acc + c.calificacion_puntaje, 0);
               calificacionPromedio = Math.round((suma / califs.length) * 10) / 10;
@@ -177,11 +206,11 @@ export async function managerController(app: FastifyInstance) {
             tareas_completadas: tareasComp?.length || 0,
             servicios_completados: serviciosCompletados,
             calificacion_promedio: calificacionPromedio,
-            servicios_asignados: (servAsignados || []).map((sa: any) => ({
-              id: sa.servicio_id,
-              codigo: sa.servicio_codigo || null,
-              titulo: sa.servicio_nombre || null,
-              estado: sa.servicio_estado || null,
+            servicios_asignados: servFinalList.map((s: any) => ({
+              id: s.servicio_id,
+              codigo: s.servicio_codigo || null,
+              titulo: s.servicio_nombre || null,
+              estado: s.servicio_estado || null,
             })),
           };
         })
