@@ -265,7 +265,8 @@ export function ServicioPublicoPage() {
 
   const enviarEncuesta = useMutation({
     mutationFn: async () => {
-      await seguimientoApi.crearEncuesta(data!.servicio.id, {
+      await evidenciasPublicApi.crearEncuestaPublica(codigo!, {
+        dni,
         calificacion: rating,
         comentario: comentario || undefined,
         sugerencia: sugerencia || undefined,
@@ -281,7 +282,8 @@ export function ServicioPublicoPage() {
 
   const enviarVisibilidad = useMutation({
     mutationFn: async () => {
-      await seguimientoApi.crearEncuesta(data!.servicio.id, {
+      await evidenciasPublicApi.crearEncuestaPublica(codigo!, {
+        dni,
         satisfaccion_visibilidad: satisfaccionVisibilidad || undefined,
         sugerencia: visibilidadSugerencia || undefined,
       });

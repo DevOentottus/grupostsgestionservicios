@@ -318,6 +318,8 @@ export const evidenciasPublicApi = {
     codigo: string;
     dni?: string;
   }) => api.post(`/public/evidencias/${evidenciaId}/comentario`, data),
+  crearEncuestaPublica: (codigo: string, data: any) =>
+    api.post(`/public/servicios/${codigo}/encuesta`, data),
 };
 
 // -- Manager API --

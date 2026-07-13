@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
-import { NotFoundError, ValidationError } from "@/core/errors/index.js";
+import { NotFoundError, ValidationError, ForbiddenError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
@@ -264,6 +264,103 @@ export async function seguimientoController(app: FastifyInstance) {
           : null,
       },
     };
+  });
+
+  // POST /api/public/servicios/:codigo/encuesta — sin JWT, público con validación de DNI
+  app.post("/api/public/servicios/:codigo/encuesta", async (request, reply) => {
+    const { codigo } = request.params as { codigo: string };
+    const input: any = request.body || {};
+    const dni = input.dni;
+
+    if (!dni) {
+      return reply.status(400).send({ detail: "DNI es obligatorio" });
+    }
+
+    // Buscar servicio por código
+    const { data: servicios } = await supabase
+      .from("servicios")
+      .select("servicio_id, cliente_id")
+      .eq("servicio_codigo", codigo)
+      .limit(1);
+    if (!servicios?.length) throw new NotFoundError("Servicio no encontrado");
+
+    const s = servicios[0];
+    const clienteId = s.cliente_id;
+    if (!clienteId) {
+      return reply.status(400).send({ detail: "El servicio no tiene un cliente asignado" });
+    }
+
+    // Validar DNI del cliente
+    const { data: clientes } = await supabase
+      .from("clientes")
+      .select("cliente_dni")
+      .eq("cliente_id", clienteId)
+      .limit(1);
+    if (clientes?.[0] && clientes[0].cliente_dni !== dni) {
+      throw new ForbiddenError("DNI incorrecto");
+    }
+
+    const servicioId = s.servicio_id;
+    const now = new Date();
+
+    // Validar body con Zod schema
+    const payload = encuestaSchema.parse(input);
+
+    // Verificar si ya existe una calificación
+    const { data: existing } = await supabase
+      .from("calificaciones")
+      .select("calificacion_id")
+      .eq("servicio_id", servicioId)
+      .limit(1);
+
+    let califs;
+    if (existing?.length) {
+      // UPDATE: solo modificar los campos enviados
+      const updates: Record<string, unknown> = {};
+      if (payload.calificacion != null) updates.calificacion_puntaje = payload.calificacion;
+      if (payload.comentario != null) updates.calificacion_comentario = payload.comentario || null;
+      if (payload.sugerencia != null) updates.calificacion_sugerencia = payload.sugerencia || null;
+      if (payload.satisfaccion_visibilidad != null) updates.calificacion_observacion = String(payload.satisfaccion_visibilidad);
+      if (Object.keys(updates).length === 0) throw new ValidationError("No hay campos para actualizar");
+
+      const { data: updated } = await supabase
+        .from("calificaciones")
+        .update(updates as any)
+        .eq("calificacion_id", existing[0].calificacion_id)
+        .select();
+      califs = updated;
+    } else {
+      // INSERT
+      const { data: inserted } = await supabase
+        .from("calificaciones")
+        .insert({
+          servicio_id: servicioId,
+          cliente_id: s.cliente_id!,
+          calificacion_puntaje: payload.calificacion ?? 1,
+          calificacion_comentario: payload.comentario || null,
+          calificacion_sugerencia: payload.sugerencia || null,
+          calificacion_observacion: payload.satisfaccion_visibilidad ? String(payload.satisfaccion_visibilidad) : null,
+          calificacion_fecha: now.toISOString().split("T")[0],
+          calificacion_hora: now.toTimeString().split(" ")[0],
+        })
+        .select();
+      califs = inserted;
+    }
+
+    const encuesta = califs?.[0];
+    return reply.status(201).send({
+      data: encuesta
+        ? {
+            id: encuesta.calificacion_id,
+            servicio_id: encuesta.servicio_id,
+            calificacion: encuesta.calificacion_puntaje,
+            comentario: encuesta.calificacion_comentario,
+            sugerencia: encuesta.calificacion_sugerencia,
+            satisfaccion_visibilidad: encuesta.calificacion_observacion ? parseInt(encuesta.calificacion_observacion) : null,
+            created_at: encuesta.calificacion_fecha,
+          }
+        : null,
+    });
   });
 
   // ----------------------------------
