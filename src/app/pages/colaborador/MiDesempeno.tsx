@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 import { useDashboard } from "@/api/queries/useDashboard.js";
 import { InfoPopover } from "@/app/components/ui/info-popover.js";
+import { cn, formatMinutos } from "@/app/lib/utils";
 import {
   TrendingUp, CheckCircle2, Star,
   Clock, Target, Zap, BarChart3, Eye, MessageCircle, FileText,
@@ -272,8 +273,8 @@ export function MiDesempenoPage() {
               <IndicadorCard
 
                 titulo="Tiempo promedio de servicios completados"
-                valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min ?? "—"}
-                unidad="min"
+                valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_min) : "—"}
+                unidad=""
                 descripcion="Promedio del área en el período actual"
                 color="bg-orange-600"
                 icon={Clock}

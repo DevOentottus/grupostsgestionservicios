@@ -4,18 +4,11 @@ import { useDashboard } from "@/api/queries/useDashboard.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import { useAuth } from "@/lib/auth.js";
 import { InfoPopover } from "@/app/components/ui/info-popover.js";
+import { formatMinutos } from "@/app/lib/utils";
 import {
   TrendingUp, Clock, Target, CheckCircle2, Search, Calendar,
   User, Star, BarChart3, Eye, MessageCircle, FileText, Zap,
 } from "lucide-react";
-
-function formatMinutos(m: number): string {
-  if (m < 1) return "< 1 min";
-  if (m < 60) return `${Math.round(m)} min`;
-  const h = Math.floor(m / 60);
-  const min = Math.round(m % 60);
-  return min > 0 ? `${h}h ${min}m` : `${h}h`;
-}
 
 function StarRating({ rating }: { rating: number }) {
   const full = Math.floor(rating);
@@ -419,8 +412,8 @@ export function ManagerDesempenoPage() {
                   <IndicadorCard
                     numero="2.5"
                     titulo="Tiempo promedio del área"
-                    valor={kpi!.tiempo_promedio_min ?? 0}
-                    unidad="min"
+                    valor={formatMinutos(kpi!.tiempo_promedio_min)}
+                    unidad=""
                     descripcion="Promedio del área en el mismo período"
                     color="bg-amber-600"
                     icon={Clock}

@@ -31,7 +31,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { cn } from "@/app/lib/utils";
+import { cn, formatMinutos } from "@/app/lib/utils";
 import type { DashboardFilters, DashboardV2Response } from "@shared/index.js";
 
 // -- Helpers --
@@ -59,13 +59,6 @@ function getEstadoClass(e: string): string {
     case "pendiente": return "bg-slate-100 text-slate-600";
     default: return "bg-slate-100 text-slate-600";
   }
-}
-
-function formatMinutos(m: number): string {
-  if (m < 60) return `${Math.round(m)} min`;
-  const h = Math.floor(m / 60);
-  const min = Math.round(m % 60);
-  return `${h}h ${min}m`;
 }
 
 // -- Tabs --
@@ -382,7 +375,7 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
       iconBg: "bg-green-600",
       iconColor: "text-white",
       cards: [
-        { label: "Tiempo promedio", value: indicadores.eficiencia.tiempo_promedio_min, unit: "min" },
+        { label: "Tiempo promedio", value: formatMinutos(indicadores.eficiencia.tiempo_promedio_min), unit: "" },
         { label: "% a tiempo", value: indicadores.eficiencia.porcentaje_a_tiempo, unit: "%" },
         { label: "Cant. retrasos", value: indicadores.eficiencia.cantidad_retrasos, unit: "" },
       ],
@@ -484,7 +477,7 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
             { label: "Visibilidad", value: kpi.satisfaccion_visibilidad, unit: "/5" },
             { label: "Evaluados", value: kpi.servicios_evaluados_pct, unit: "%" },
             { label: "Con feedback", value: kpi.servicios_con_comentarios_pct, unit: "%" },
-            { label: "Tiempo prom.", value: kpi.tiempo_promedio_min, unit: "min" },
+            { label: "Tiempo prom.", value: formatMinutos(kpi.tiempo_promedio_min), unit: "" },
           ].map((k) => (
             <div key={k.label} className="bg-gray-50 rounded-xl p-3">
               <p className="text-lg text-gray-900" style={{ fontWeight: 700 }}>
@@ -1014,7 +1007,7 @@ function ComparativoTab({
         <h3 className="text-gray-800 mb-4" style={{ fontWeight: 600 }}>Resumen General</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: "Tiempo promedio", value: kpi.tiempo_promedio_min, unit: "min", color: "bg-blue-500", icon: Clock },
+            { label: "Tiempo promedio", value: formatMinutos(kpi.tiempo_promedio_min), unit: "", color: "bg-blue-500", icon: Clock },
             { label: "Productividad", value: indicadores.productividad.promedio_por_colaborador, unit: "/col", color: "bg-green-500", icon: Zap },
             { label: "Satisfacción", value: indicadores.satisfaccion.promedio_calificacion, unit: "/5", color: "bg-purple-500", icon: Star },
             { label: "% a tiempo", value: indicadores.eficiencia.porcentaje_a_tiempo, unit: "%", color: "bg-amber-500", icon: TrendingUp },

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useReporteColaborador, useReporteArea, useExportarReporte } from "@/api/queries/useReportes.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 import { usuariosApi, areasApi } from "@/api/client.js";
-import { cn } from "@/app/lib/utils";
+import { cn, formatMinutos } from "@/app/lib/utils";
 import type { Usuario, Area } from "@shared/index.js";
 import { useAuth } from "@/lib/auth.js";
 import {
@@ -210,7 +210,7 @@ export function ReportesPage() {
               {[
                 { label: "Servicios Completados", value: colabData.servicios_completados, icon: CheckCircle2, color: "bg-green-500" },
                 { label: "Tareas Completadas", value: colabData.tareas_completadas, icon: BarChart3, color: "bg-blue-500" },
-                { label: "Tiempo Promedio", value: `${colabData.tiempo_promedio_min} min`, icon: Clock, color: "bg-amber-500" },
+                { label: "Tiempo Promedio", value: formatMinutos(colabData.tiempo_promedio_min), icon: Clock, color: "bg-amber-500" },
                 { label: "Eficiencia", value: `${colabData.eficiencia}%`, icon: TrendingUp, color: "bg-purple-500" },
               ].map((s) => (
                 <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
@@ -281,7 +281,7 @@ export function ReportesPage() {
                           <span className="text-gray-800 font-medium">{colabData.tareas_completadas}</span>
                         </td>
                         <td className="px-5 py-4 text-center text-gray-700">{colabData.servicios_completados}</td>
-                        <td className="px-5 py-4 text-center text-gray-700">{colabData.tiempo_promedio_min} min</td>
+                        <td className="px-5 py-4 text-center text-gray-700">{formatMinutos(colabData.tiempo_promedio_min)}</td>
                         <td className="px-5 py-4 text-center">
                           <span className={cn(
                             "inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full font-semibold",
@@ -377,7 +377,7 @@ export function ReportesPage() {
                 { label: "Productividad", value: `${areaData.productividad}%`, icon: TrendingUp, color: "bg-green-500" },
                 { label: "Total Servicios", value: areaData.total_servicios, icon: BarChart3, color: "bg-blue-500" },
                 { label: "Completados", value: areaData.completados, icon: CheckCircle2, color: "bg-indigo-500" },
-                { label: "Tiempo Promedio", value: `${areaData.tiempo_promedio_min} min`, icon: Clock, color: "bg-amber-500" },
+                { label: "Tiempo Promedio", value: formatMinutos(areaData.tiempo_promedio_min), icon: Clock, color: "bg-amber-500" },
               ].map((s) => (
                 <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                   <div className={`w-11 h-11 ${s.color} rounded-xl flex items-center justify-center mb-3 shadow-sm`}>
@@ -448,7 +448,7 @@ export function ReportesPage() {
                             {areaData.productividad}%
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-center text-gray-700">{areaData.tiempo_promedio_min} min</td>
+                        <td className="px-5 py-4 text-center text-gray-700">{formatMinutos(areaData.tiempo_promedio_min)}</td>
                       </tr>
                     ) : (
                       areaData?.areas?.map((a: any) => (
