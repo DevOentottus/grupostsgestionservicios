@@ -275,6 +275,7 @@ export function ServicioPublicoPage() {
     },
     onSuccess: () => {
       toast.success("¡Gracias por tu evaluación!");
+      setRatingModalOpen(false);
       refetch();
     },
     onError: (err: any) => toast.error(err.response?.data?.detail || "Error al enviar"),
