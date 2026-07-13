@@ -232,7 +232,7 @@ export function MiDesempenoPage() {
                   descripcion="N° servicios donde todas las tareas tienen hora inicio/fin"
                   color="bg-blue-600"
                   icon={FileText}
-                  formula="(Servicios donde cada tarea tiene tracking_inicio y tracking_fin en la tabla tiempo_tracking ÷ Total de servicios) × 100"
+                  formula="Tiempo de ejecución: Tracking_final − Tracking_inicial"
                 />
                 <IndicadorCard
                   titulo="Tareas documentadas (fecha/hora/responsable)"

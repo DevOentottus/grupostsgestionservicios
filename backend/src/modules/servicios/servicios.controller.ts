@@ -845,13 +845,14 @@ export async function serviciosController(app: FastifyInstance) {
     const user = request.user as { user_id: number };
     const tareaId = parseInt(id);
 
-    // Verificar que la tarea existe
+    // Verificar que la tarea existe y obtener su servicio y orden
     const { data: tareas } = await supabase
       .from("tareas")
-      .select("tarea_id, tarea_estado")
+      .select("tarea_id, tarea_estado, tarea_orden, servicio_id")
       .eq("tarea_id", tareaId)
       .limit(1);
     if (!tareas?.length) throw new NotFoundError("Tarea no encontrada");
+    const tarea = tareas[0];
 
     // Finalizar cualquier tracking activo del usuario en esta tarea
     await supabase
@@ -861,13 +862,37 @@ export async function serviciosController(app: FastifyInstance) {
       .eq("usuario_id", user.user_id)
       .is("tracking_fin", null);
 
-    const now = new Date();
+    // Buscar la tarea anterior en el mismo servicio (por tarea_orden)
+    let trackingInicio = new Date().toISOString();
+    if (tarea.tarea_orden > 1 && tarea.servicio_id) {
+      const { data: prevTareas } = await supabase
+        .from("tareas")
+        .select("tarea_id")
+        .eq("servicio_id", tarea.servicio_id)
+        .eq("tarea_orden", tarea.tarea_orden - 1)
+        .limit(1);
+
+      if (prevTareas?.length) {
+        const { data: prevTrack } = await supabase
+          .from("tiempo_tracking")
+          .select("tracking_fin")
+          .eq("tarea_id", prevTareas[0].tarea_id)
+          .not("tracking_fin", "is", null)
+          .order("tracking_fin", { ascending: false })
+          .limit(1);
+
+        if (prevTrack?.[0]?.tracking_fin) {
+          trackingInicio = prevTrack[0].tracking_fin;
+        }
+      }
+    }
+
     const { data: newTrack } = await supabase
       .from("tiempo_tracking")
       .insert({
         tarea_id: tareaId,
         usuario_id: user.user_id,
-        tracking_inicio: now.toISOString(),
+        tracking_inicio: trackingInicio,
       })
       .select()
       .limit(1);
