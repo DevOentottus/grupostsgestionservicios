@@ -576,7 +576,7 @@ export async function seguimientoController(app: FastifyInstance) {
         }
       }
     }
-    const tiempoPromedioMin = tareasConTiempo > 0 ? Math.round(sumaTiempoReal / tareasConTiempo) : 0;
+    const tiempoPromedioMin = completados > 0 ? Math.round(sumaTiempoReal / completados) : 0;
 
     // -- Retrasos (tarea con tiempo estimado vs real) --
     // Usamos servicio_tiempo_estimado como referencia vs diff tracking
@@ -1144,7 +1144,7 @@ export async function seguimientoController(app: FastifyInstance) {
         }
       }
     }
-    const tiempoPromedioMin = tareasConTiempo > 0 ? Math.round(sumaTiempoReal / tareasConTiempo) : 0;
+    const tiempoPromedioMin = completados > 0 ? Math.round(sumaTiempoReal / completados) : 0;
 
     // Generar PDF con pdfkit
     const PDFDocument = (await import("pdfkit")).default;
@@ -1189,7 +1189,7 @@ export async function seguimientoController(app: FastifyInstance) {
     drawRow(["Indicador", "Valor", "Fórmula"], true, "#E2E8F0");
     drawRow(["IND-01 Datos completos", `${registrosCompletosPct}%`, "Serv. con datos / Total servicios"], false);
     drawRow(["IND-02 Con lista de tareas", `${totalServicios > 0 ? Math.round((serviciosConTareas / totalServicios) * 100) : 0}%`, "Serv. con tareas / Total servicios"], false);
-    drawRow(["IND-03 Tiempo promedio", `${tiempoPromedioMin} min`, "Suma minutos / Tareas con tracking"], false);
+    drawRow(["IND-03 Tiempo promedio de servicios completados", `${tiempoPromedioMin} min`, "Suma minutos / Servicios completados"], false);
     drawRow(["IND-04 Servicios dentro del tiempo promedio", `${completados > 0 ? Math.round((serviciosConTareas / Math.max(completados, 1)) * 100) : 0}%`, "Serv. dentro tiempo / Total completados"], false);
     drawRow(["IND-05 Servicios consultados por clientes", `${totalServicios > 0 ? Math.round((serviciosConsultados / totalServicios) * 100) : 0}%`, "Serv. con visitas / Total servicios"], false);
     drawRow(["IND-06 Satisfacción visibilidad", `${Math.round(promedioCalificacion * 10) / 10} / 5`, "Promedio calificaciones"], false);
