@@ -41,16 +41,16 @@ export function LoginPage() {
     <div className="min-h-screen flex" style={{ background: "linear-gradient(135deg, #1e3a5f 0%, #1e40af 50%, #2563eb 100%)" }}>
       {/* Left panel -- hidden on mobile */}
       <div className="hidden lg:flex flex-col justify-center items-center w-1/2 p-12 text-white">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-16 h-16 bg-yellow-400 rounded-2xl flex items-center justify-center shadow-lg">
-              <Wrench className="w-9 h-9 text-blue-900" />
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-16 h-16 bg-yellow-400 rounded-2xl flex items-center justify-center shadow-lg">
+                <Wrench className="w-9 h-9 text-blue-900" />
+              </div>
+              <div className="w-fit">
+                <h1 className="text-4xl text-white font-bold">ServicioSTS</h1>
+                <p className="text-blue-200 text-sm">Gestión de servicios Técnicos</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-4xl text-white font-bold">ServicioLocalSTS</h1>
-              <p className="text-blue-200 text-sm">Sistema de Gestión de Servicios Técnicos</p>
-            </div>
-          </div>
           <p className="text-blue-100 text-lg leading-relaxed max-w-md">
             Plataforma integral para gestión de servicios técnicos, seguimiento de tareas
             y monitoreo en tiempo real.
@@ -67,9 +67,9 @@ export function LoginPage() {
             <div className="w-12 h-12 bg-blue-800 rounded-xl flex items-center justify-center">
               <Wrench className="w-7 h-7 text-yellow-400" />
             </div>
-            <div>
-              <h2 className="text-blue-900 font-bold">ServicioLocalSTS</h2>
-              <p className="text-gray-500 text-xs">Sistema de Gestión Técnica</p>
+            <div className="w-fit">
+              <h2 className="text-blue-900 font-bold">ServicioSTS</h2>
+              <p className="text-gray-500 text-xs">Gestión de servicios Técnicos</p>
             </div>
           </div>
 
