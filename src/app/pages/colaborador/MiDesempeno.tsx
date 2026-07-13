@@ -271,13 +271,13 @@ export function MiDesempenoPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <IndicadorCard
 
-                titulo="Tiempo promedio de resolución"
+                titulo="Tiempo promedio de servicios completados"
                 valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min ?? "—"}
                 unidad="min"
                 descripcion="Promedio del área en el período actual"
                 color="bg-orange-600"
                 icon={Clock}
-                formula="Σ(tracking_fin − tracking_inicio de cada tarea) ÷ N° de tareas con tiempo registrado en el período"
+                formula="Σ(tracking_fin − tracking_inicio) ÷ N° de servicios completados en el período"
               />
               <IndicadorCard
 
