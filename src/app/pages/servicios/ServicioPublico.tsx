@@ -706,7 +706,7 @@ export function ServicioPublicoPage() {
 
               {/* Rating stars */}
               <div className="text-center">
-                <p className="text-sm text-gray-500 mb-3">Calificación</p>
+                <p className="text-sm text-gray-500 mb-3">Calificación del servicio técnico</p>
                 <div className="flex justify-center">
                   <StarRating
                     value={rating}
