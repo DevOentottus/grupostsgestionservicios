@@ -758,6 +758,68 @@ export async function seguimientoController(app: FastifyInstance) {
       ? Math.round((dentroTiempo / Math.max(dentroTiempo + retrasos, 1)) * 100)
       : 0;
 
+    // -- Tareas documentadas (con fecha, hora completada y responsable) --
+    let tareasDocumentadas = 0;
+    if (svcIdsPeriodo.length > 0) {
+      const { data: tareasDoc } = await supabase
+        .from("tareas")
+        .select("tarea_id")
+        .in("servicio_id", svcIdsPeriodo)
+        .not("tarea_fecha_completado", "is", null)
+        .not("tarea_hora_completado", "is", null)
+        .not("tarea_completado_por", "is", null);
+      tareasDocumentadas = tareasDoc?.length ?? 0;
+    }
+
+    // -- Tiempo actualización → portal (promedio: última tarea completada → primera visita) --
+    let sumaTiempoActualizacion = 0;
+    let visitasConReferencia = 0;
+    if (svcIdsPeriodo.length > 0) {
+      // Última tarea completada por servicio (fecha+hora)
+      const { data: tareasConFechas } = await supabase
+        .from("tareas")
+        .select("servicio_id, tarea_fecha_completado, tarea_hora_completado")
+        .in("servicio_id", svcIdsPeriodo)
+        .eq("tarea_estado", "completado")
+        .not("tarea_fecha_completado", "is", null)
+        .not("tarea_hora_completado", "is", null);
+
+      const ultimoCompletadoPorSvc = new Map<number, Date>();
+      for (const t of tareasConFechas || []) {
+        const ts = new Date(`${t.tarea_fecha_completado}T${t.tarea_hora_completado}`);
+        const existing = ultimoCompletadoPorSvc.get(t.servicio_id);
+        if (!existing || ts > existing) ultimoCompletadoPorSvc.set(t.servicio_id, ts);
+      }
+
+      if (ultimoCompletadoPorSvc.size > 0) {
+        const svcIdsConCompletado = [...ultimoCompletadoPorSvc.keys()];
+        const { data: visitas } = await supabase
+          .from("serviciovisitas")
+          .select("servicio_id, serviciovisita_fecha, serviciovisita_hora")
+          .in("servicio_id", svcIdsConCompletado);
+
+        // Primera visita por servicio
+        const primerVisitaPorSvc = new Map<number, Date>();
+        for (const v of visitas || []) {
+          const ts = new Date(`${v.serviciovisita_fecha}T${v.serviciovisita_hora}`);
+          const existing = primerVisitaPorSvc.get(v.servicio_id);
+          if (!existing || ts < existing) primerVisitaPorSvc.set(v.servicio_id, ts);
+        }
+
+        for (const [svcId, ultimoComp] of ultimoCompletadoPorSvc) {
+          const primerVisita = primerVisitaPorSvc.get(svcId);
+          if (primerVisita && primerVisita > ultimoComp) {
+            const diffMin = Math.floor((primerVisita.getTime() - ultimoComp.getTime()) / 60000);
+            sumaTiempoActualizacion += diffMin;
+            visitasConReferencia++;
+          }
+        }
+      }
+    }
+    const tiempoActualizacionPortalPromedioMin = visitasConReferencia > 0
+      ? Math.round(sumaTiempoActualizacion / visitasConReferencia)
+      : 0;
+
     return {
       data: {
         kpi: {
@@ -769,6 +831,8 @@ export async function seguimientoController(app: FastifyInstance) {
             : 0,
           servicios_con_tareas_pct: serviciosConTareasPct,
           servicios_con_tiempo_tracking_pct: serviciosConTrackingCompletoPct,
+          tareas_documentadas_conteo: tareasDocumentadas,
+          tiempo_actualizacion_portal_promedio_min: tiempoActualizacionPortalPromedioMin,
           tiempo_promedio_min: tiempoPromedioMin,
           completados_dentro_tiempo_pct: completadosDentroTiempoPct,
           servicios_consultados_pct: serviciosConsultadosPct,

@@ -236,12 +236,12 @@ export function MiDesempenoPage() {
                 />
                 <IndicadorCard
                   titulo="Tareas documentadas (fecha/hora/responsable)"
-                  valor={kpi!.registros_completos_pct ?? 0}
-                  unidad="%"
-                  descripcion="Tareas con todos los datos de auditoría"
+                  valor={kpi!.tareas_documentadas_conteo ?? 0}
+                  unidad="tareas"
+                  descripcion="Tareas con fecha, hora completada y responsable"
                   color="bg-cyan-600"
                   icon={CheckCircle2}
-                  formula="(Servicios que tienen registros en la tabla auditoría ÷ Total de servicios) × 100"
+                  formula="Conteo de tareas que tienen tarea_fecha_completado, tarea_hora_completado y tarea_completado_por en la tabla tareas"
                 />
                 <IndicadorCard
 
@@ -324,12 +324,12 @@ export function MiDesempenoPage() {
                 <IndicadorCard
 
                   titulo="Tiempo actualización → portal"
-                  valor="< 1"
+                  valor={kpi!.tiempo_actualizacion_portal_promedio_min ?? 0}
                   unidad="min"
-                  descripcion="Tiempo promedio en reflejar cambios al cliente"
+                  descripcion="Promedio: última tarea completada → primera visita al portal"
                   color="bg-indigo-600"
                   icon={Clock}
-                  formula="Valor fijo: < 1 minuto (actualización en tiempo real vía Supabase Realtime)"
+                  formula="Σ(primera visita al portal − última tarea completada) ÷ N° de servicios con visita después de completar"
                 />
                 <IndicadorCard
 

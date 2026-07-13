@@ -135,6 +135,8 @@ export interface DashboardKPI {
   registros_completos_pct: number;
   servicios_con_tareas_pct: number;
   servicios_con_tiempo_tracking_pct: number;
+  tareas_documentadas_conteo: number;
+  tiempo_actualizacion_portal_promedio_min: number;
   tiempo_promedio_min: number;
   completados_dentro_tiempo_pct: number;
   servicios_consultados_pct: number;
