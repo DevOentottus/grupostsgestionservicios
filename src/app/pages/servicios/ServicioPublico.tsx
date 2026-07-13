@@ -72,14 +72,14 @@ function StarRating({ value, onChange, readonly }: {
           disabled={readonly}
           onClick={() => onChange?.(star)}
           className={cn(
-            "w-9 h-9 flex items-center justify-center rounded-lg transition-all",
+            "w-9 h-9 flex items-center justify-center rounded-lg transition-all border-2",
             readonly ? "cursor-default" : "cursor-pointer hover:scale-125",
             star <= value
-              ? "text-yellow-400 border-2 border-yellow-400"
-              : "text-gray-200 border-2 border-transparent",
+              ? "bg-yellow-400 border-yellow-400 text-white"
+              : "bg-white border-yellow-400 text-gray-300",
           )}
         >
-          <Star className={cn("w-6 h-6", star <= value ? "fill-yellow-400" : "fill-none")} strokeWidth={1.5} />
+          <Star className={cn("w-6 h-6", star <= value ? "fill-white" : "fill-none")} strokeWidth={1.5} />
         </button>
       ))}
     </div>
@@ -175,6 +175,8 @@ export function ServicioPublicoPage() {
   const [comentario, setComentario] = useState("");
   const [sugerencia, setSugerencia] = useState("");
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
+  const [visibilidadModalOpen, setVisibilidadModalOpen] = useState(false);
+  const [visibilidadSugerencia, setVisibilidadSugerencia] = useState("");
   const [evidencias, setEvidencias] = useState<(Evidencia & { comentarios?: EvidenciaComentario[] })[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
@@ -272,6 +274,21 @@ export function ServicioPublicoPage() {
     },
     onSuccess: () => {
       toast.success("¡Gracias por tu evaluación!");
+      refetch();
+    },
+    onError: (err: any) => toast.error(err.response?.data?.detail || "Error al enviar"),
+  });
+
+  const enviarVisibilidad = useMutation({
+    mutationFn: async () => {
+      await seguimientoApi.crearEncuesta(data!.servicio.id, {
+        satisfaccion_visibilidad: satisfaccionVisibilidad || undefined,
+        sugerencia: visibilidadSugerencia || undefined,
+      });
+    },
+    onSuccess: () => {
+      toast.success("¡Gracias por tu feedback de visibilidad!");
+      setVisibilidadModalOpen(false);
       refetch();
     },
     onError: (err: any) => toast.error(err.response?.data?.detail || "Error al enviar"),
@@ -780,6 +797,96 @@ export function ServicioPublicoPage() {
                   <p className="text-xs text-gray-400">Gracias por tu tiempo</p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Botón flotante de visibilidad */}
+        <button
+          onClick={() => {
+            setSatisfaccionVisibilidad(data?.encuesta?.satisfaccion_visibilidad || 0);
+            setVisibilidadSugerencia(data?.encuesta?.sugerencia || "");
+            setVisibilidadModalOpen(true);
+          }}
+          className="fixed bottom-6 left-6 z-40 flex items-center gap-2 bg-white hover:bg-gray-50 text-blue-900 px-5 py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all font-semibold text-sm border-2 border-blue-200"
+        >
+          <Eye className="w-5 h-5" />
+          Calificar visibilidad
+        </button>
+
+        {/* Modal de visibilidad */}
+        {visibilidadModalOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            onClick={() => setVisibilidadModalOpen(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Eye className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-gray-900 font-semibold" style={{ fontWeight: 600 }}>
+                      Visibilidad del servicio
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-0.5">Servicio {servicio.codigo}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setVisibilidadModalOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 transition text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="text-center">
+                <p className="text-sm text-gray-500 mb-3">Satisfacción con la visibilidad del servicio</p>
+                <div className="flex justify-center">
+                  <StarRating
+                    value={satisfaccionVisibilidad}
+                    onChange={setSatisfaccionVisibilidad}
+                  />
+                </div>
+                {satisfaccionVisibilidad > 0 && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    {satisfaccionVisibilidad === 1 ? "Muy mala" :
+                     satisfaccionVisibilidad === 2 ? "Mala" :
+                     satisfaccionVisibilidad === 3 ? "Regular" :
+                     satisfaccionVisibilidad === 4 ? "Buena" :
+                     "Excelente"}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500 mb-2">Sugerencia</p>
+                <textarea
+                  value={visibilidadSugerencia}
+                  onChange={(e) => setVisibilidadSugerencia(e.target.value)}
+                  placeholder="¿Alguna sugerencia para mejorar la visibilidad?"
+                  rows={3}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm resize-none transition placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  maxLength={2000}
+                />
+              </div>
+
+              <button
+                onClick={() => enviarVisibilidad.mutate()}
+                disabled={satisfaccionVisibilidad === 0 || enviarVisibilidad.isPending}
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm transition disabled:opacity-50 font-semibold"
+              >
+                {enviarVisibilidad.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+                {enviarVisibilidad.isPending ? "Enviando..." : "Enviar feedback"}
+              </button>
             </div>
           </div>
         )}

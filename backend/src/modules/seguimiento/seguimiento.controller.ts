@@ -14,7 +14,7 @@ export async function seguimientoController(app: FastifyInstance) {
   // ----------------------------------
 
   const encuestaSchema = z.object({
-    calificacion: z.number().int().min(1).max(5),
+    calificacion: z.number().int().min(0).max(5).optional(),
     comentario: z.string().optional(),
     sugerencia: z.string().optional(),
     satisfaccion_visibilidad: z.number().int().min(1).max(5).optional(),
@@ -35,19 +35,46 @@ export async function seguimientoController(app: FastifyInstance) {
       .single();
     if (!svcCliente?.cliente_id) throw new NotFoundError("Servicio no encontrado");
 
-    const { data: califs } = await supabase
+    // Verificar si ya existe una calificación para este servicio
+    const { data: existing } = await supabase
       .from("calificaciones")
-      .insert({
-        servicio_id: parseInt(id),
-        cliente_id: svcCliente.cliente_id,
-        calificacion_puntaje: input.calificacion,
-        calificacion_comentario: input.comentario || null,
-        calificacion_sugerencia: input.sugerencia || null,
-        calificacion_observacion: input.satisfaccion_visibilidad ? String(input.satisfaccion_visibilidad) : null,
-        calificacion_fecha: now.toISOString().split("T")[0],
-        calificacion_hora: now.toTimeString().split(" ")[0],
-      })
-      .select();
+      .select("calificacion_id")
+      .eq("servicio_id", parseInt(id))
+      .limit(1);
+
+    let califs;
+    if (existing?.length) {
+      // UPDATE: solo modificar los campos enviados
+      const updates: any = {};
+      if (input.calificacion != null) updates.calificacion_puntaje = input.calificacion;
+      if (input.comentario != null) updates.calificacion_comentario = input.comentario || null;
+      if (input.sugerencia != null) updates.calificacion_sugerencia = input.sugerencia || null;
+      if (input.satisfaccion_visibilidad != null) updates.calificacion_observacion = String(input.satisfaccion_visibilidad);
+      if (Object.keys(updates).length === 0) throw new ValidationError("No hay campos para actualizar");
+
+      const { data: updated } = await supabase
+        .from("calificaciones")
+        .update(updates as any)
+        .eq("calificacion_id", existing[0].calificacion_id)
+        .select();
+      califs = updated;
+    } else {
+      // INSERT
+      const { data: inserted } = await supabase
+        .from("calificaciones")
+        .insert({
+          servicio_id: parseInt(id),
+          cliente_id: svcCliente.cliente_id,
+          calificacion_puntaje: input.calificacion ?? 1,
+          calificacion_comentario: input.comentario || null,
+          calificacion_sugerencia: input.sugerencia || null,
+          calificacion_observacion: input.satisfaccion_visibilidad ? String(input.satisfaccion_visibilidad) : null,
+          calificacion_fecha: now.toISOString().split("T")[0],
+          calificacion_hora: now.toTimeString().split(" ")[0],
+        })
+        .select();
+      califs = inserted;
+    }
 
     const encuesta = califs?.[0];
     return reply.status(201).send({
