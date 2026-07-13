@@ -279,28 +279,52 @@ export async function seguimientoController(app: FastifyInstance) {
     // Buscar servicio por código
     const { data: servicios } = await supabase
       .from("servicios")
-      .select("servicio_id, cliente_id")
+      .select("servicio_id, cliente_id, cliente_dni")
       .eq("servicio_codigo", codigo)
       .limit(1);
     if (!servicios?.length) throw new NotFoundError("Servicio no encontrado");
 
     const s = servicios[0];
-    const clienteId = s.cliente_id;
-    if (!clienteId) {
-      return reply.status(400).send({ detail: "El servicio no tiene un cliente asignado" });
+    const servicioId = s.servicio_id;
+
+    // Validar DNI: puede venir de clientes (FK) o del campo desnormalizado en servicios
+    let clienteIdParaInsert = s.cliente_id;
+    let dniValido = false;
+
+    if (s.cliente_id) {
+      const { data: clientes } = await supabase
+        .from("clientes")
+        .select("cliente_dni")
+        .eq("cliente_id", s.cliente_id)
+        .limit(1);
+      if (clientes?.[0] && clientes[0].cliente_dni === dni) dniValido = true;
     }
 
-    // Validar DNI del cliente
-    const { data: clientes } = await supabase
-      .from("clientes")
-      .select("cliente_dni")
-      .eq("cliente_id", clienteId)
-      .limit(1);
-    if (clientes?.[0] && clientes[0].cliente_dni !== dni) {
+    // Fallback: validar contra el campo desnormalizado servicios.cliente_dni
+    if (!dniValido && s.cliente_dni && s.cliente_dni === dni) {
+      dniValido = true;
+      // Buscar si existe un cliente con ese DNI en la tabla clientes
+      const { data: found } = await supabase
+        .from("clientes")
+        .select("cliente_id")
+        .eq("cliente_dni", dni)
+        .limit(1);
+      if (found?.[0]) {
+        clienteIdParaInsert = found[0].cliente_id;
+      } else {
+        // Crear cliente mínimo con el DNI
+        const { data: created } = await supabase
+          .from("clientes")
+          .insert({ cliente_dni: dni, cliente_nombres: dni })
+          .select("cliente_id")
+          .limit(1);
+        if (created?.[0]) clienteIdParaInsert = created[0].cliente_id;
+      }
+    }
+
+    if (!dniValido) {
       throw new ForbiddenError("DNI incorrecto");
     }
-
-    const servicioId = s.servicio_id;
     const now = new Date();
 
     // Validar body con Zod schema
@@ -335,7 +359,7 @@ export async function seguimientoController(app: FastifyInstance) {
         .from("calificaciones")
         .insert({
           servicio_id: servicioId,
-          cliente_id: s.cliente_id!,
+          cliente_id: clienteIdParaInsert!,
           calificacion_puntaje: payload.calificacion ?? 1,
           calificacion_comentario: payload.comentario || null,
           calificacion_sugerencia: payload.sugerencia || null,
