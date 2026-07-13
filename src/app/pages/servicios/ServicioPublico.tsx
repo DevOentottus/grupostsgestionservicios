@@ -706,7 +706,7 @@ export function ServicioPublicoPage() {
 
               {/* Rating stars */}
               <div className="text-center">
-                <p className="text-sm text-gray-500 mb-3">Calificación del servicio técnico</p>
+                <p className="text-sm text-gray-500 mb-3">Calificación del servicio técnico <span className="text-red-400">*</span></p>
                 <div className="flex justify-center">
                   <StarRating
                     value={rating}
@@ -727,7 +727,7 @@ export function ServicioPublicoPage() {
 
               {/* Satisfacción con la visibilidad */}
               <div className="text-center">
-                <p className="text-sm text-gray-500 mb-3">Satisfacción con esta página de visibilidad</p>
+                <p className="text-sm text-gray-500 mb-3">Satisfacción con esta página de visibilidad <span className="text-red-400">*</span></p>
                 <div className="flex justify-center">
                   <StarRating
                     value={satisfaccionVisibilidad}
@@ -778,7 +778,7 @@ export function ServicioPublicoPage() {
               {!encuestaYaEnviada ? (
                 <button
                   onClick={() => enviarEncuesta.mutate()}
-                  disabled={rating === 0 || enviarEncuesta.isPending}
+                  disabled={rating === 0 || satisfaccionVisibilidad === 0 || enviarEncuesta.isPending}
                   className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-sm transition disabled:opacity-50 font-semibold"
                 >
                   {enviarEncuesta.isPending ? (
@@ -845,7 +845,7 @@ export function ServicioPublicoPage() {
               </div>
 
               <div className="text-center">
-                <p className="text-sm text-gray-500 mb-3">Satisfacción con esta página de visibilidad</p>
+                <p className="text-sm text-gray-500 mb-3">Satisfacción con esta página de visibilidad <span className="text-red-400">*</span></p>
                 <div className="flex justify-center">
                   <StarRating
                     value={satisfaccionVisibilidad}
