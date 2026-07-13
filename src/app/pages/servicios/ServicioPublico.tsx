@@ -74,7 +74,9 @@ function StarRating({ value, onChange, readonly }: {
           className={cn(
             "w-9 h-9 flex items-center justify-center rounded-lg transition-all",
             readonly ? "cursor-default" : "cursor-pointer hover:scale-125",
-            star <= value ? "text-yellow-400" : "text-gray-200",
+            star <= value
+              ? "text-yellow-400 border-2 border-yellow-400"
+              : "text-gray-200 border-2 border-transparent",
           )}
         >
           <Star className={cn("w-6 h-6", star <= value ? "fill-yellow-400" : "fill-none")} strokeWidth={1.5} />
@@ -169,6 +171,7 @@ export function ServicioPublicoPage() {
     }
   }, []);
   const [rating, setRating] = useState(0);
+  const [satisfaccionVisibilidad, setSatisfaccionVisibilidad] = useState(0);
   const [comentario, setComentario] = useState("");
   const [sugerencia, setSugerencia] = useState("");
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
@@ -236,6 +239,7 @@ export function ServicioPublicoPage() {
   useEffect(() => {
     if (data?.encuesta) {
       setRating(data.encuesta.calificacion);
+      setSatisfaccionVisibilidad(data.encuesta.satisfaccion_visibilidad || 0);
       setComentario(data.encuesta.comentario || "");
       setSugerencia(data.encuesta.sugerencia || "");
     }
@@ -263,6 +267,7 @@ export function ServicioPublicoPage() {
         calificacion: rating,
         comentario: comentario || undefined,
         sugerencia: sugerencia || undefined,
+        satisfaccion_visibilidad: satisfaccionVisibilidad || undefined,
       });
     },
     onSuccess: () => {
@@ -698,6 +703,27 @@ export function ServicioPublicoPage() {
                      rating === 2 ? "Malo" :
                      rating === 3 ? "Regular" :
                      rating === 4 ? "Bueno" :
+                     "Excelente"}
+                  </p>
+                )}
+              </div>
+
+              {/* Satisfacción con la visibilidad */}
+              <div className="text-center">
+                <p className="text-sm text-gray-500 mb-3">Satisfacción con la visibilidad del servicio</p>
+                <div className="flex justify-center">
+                  <StarRating
+                    value={satisfaccionVisibilidad}
+                    onChange={!encuestaYaEnviada ? setSatisfaccionVisibilidad : undefined}
+                    readonly={encuestaYaEnviada}
+                  />
+                </div>
+                {satisfaccionVisibilidad > 0 && !encuestaYaEnviada && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    {satisfaccionVisibilidad === 1 ? "Muy mala" :
+                     satisfaccionVisibilidad === 2 ? "Mala" :
+                     satisfaccionVisibilidad === 3 ? "Regular" :
+                     satisfaccionVisibilidad === 4 ? "Buena" :
                      "Excelente"}
                   </p>
                 )}

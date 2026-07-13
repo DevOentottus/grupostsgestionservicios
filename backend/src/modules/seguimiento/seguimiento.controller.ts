@@ -17,6 +17,7 @@ export async function seguimientoController(app: FastifyInstance) {
     calificacion: z.number().int().min(1).max(5),
     comentario: z.string().optional(),
     sugerencia: z.string().optional(),
+    satisfaccion_visibilidad: z.number().int().min(1).max(5).optional(),
   });
 
   // POST /api/servicios/:id/encuesta
@@ -42,6 +43,7 @@ export async function seguimientoController(app: FastifyInstance) {
         calificacion_puntaje: input.calificacion,
         calificacion_comentario: input.comentario || null,
         calificacion_sugerencia: input.sugerencia || null,
+        calificacion_observacion: input.satisfaccion_visibilidad ? String(input.satisfaccion_visibilidad) : null,
         calificacion_fecha: now.toISOString().split("T")[0],
         calificacion_hora: now.toTimeString().split(" ")[0],
       })
@@ -56,6 +58,7 @@ export async function seguimientoController(app: FastifyInstance) {
             calificacion: encuesta.calificacion_puntaje,
             comentario: encuesta.calificacion_comentario,
             sugerencia: encuesta.calificacion_sugerencia,
+            satisfaccion_visibilidad: encuesta.calificacion_observacion ? parseInt(encuesta.calificacion_observacion) : null,
             created_at: encuesta.calificacion_fecha,
           }
         : null,
@@ -80,6 +83,7 @@ export async function seguimientoController(app: FastifyInstance) {
             calificacion: e.calificacion_puntaje,
             comentario: e.calificacion_comentario,
             sugerencia: e.calificacion_sugerencia,
+            satisfaccion_visibilidad: e.calificacion_observacion ? parseInt(e.calificacion_observacion) : null,
             created_at: e.calificacion_fecha,
           }
         : null,
@@ -228,6 +232,7 @@ export async function seguimientoController(app: FastifyInstance) {
               calificacion: califs[0].calificacion_puntaje,
               comentario: califs[0].calificacion_comentario,
               sugerencia: califs[0].calificacion_sugerencia,
+              satisfaccion_visibilidad: califs[0].calificacion_observacion ? parseInt(califs[0].calificacion_observacion) : null,
             }
           : null,
       },

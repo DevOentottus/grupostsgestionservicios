@@ -119,6 +119,7 @@ export interface Encuesta {
   calificacion: number;
   comentario: string | null;
   sugerencia: string | null;
+  satisfaccion_visibilidad: number | null;
   created_at: string;
 }
 
