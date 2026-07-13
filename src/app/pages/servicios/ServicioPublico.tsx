@@ -181,6 +181,7 @@ export function ServicioPublicoPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+  const [encuestaYaEnviada, setEncuestaYaEnviada] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
@@ -244,6 +245,7 @@ export function ServicioPublicoPage() {
       setSatisfaccionVisibilidad(data.encuesta.satisfaccion_visibilidad || 0);
       setComentario(data.encuesta.comentario || "");
       setSugerencia(data.encuesta.sugerencia || "");
+      setEncuestaYaEnviada(true);
     }
   }, [data]);
 
@@ -275,6 +277,7 @@ export function ServicioPublicoPage() {
     },
     onSuccess: () => {
       toast.success("¡Gracias por tu evaluación!");
+      setEncuestaYaEnviada(true);
       setRatingModalOpen(false);
       refetch();
     },
@@ -291,6 +294,7 @@ export function ServicioPublicoPage() {
     },
     onSuccess: () => {
       toast.success("¡Gracias por tu feedback de visibilidad!");
+      setEncuestaYaEnviada(true);
       setVisibilidadModalOpen(false);
       refetch();
     },
@@ -335,7 +339,7 @@ export function ServicioPublicoPage() {
   );
 
   // Satisfaction rating state
-  const encuestaYaEnviada = !!data?.encuesta;
+  // Inicializar encuestaYaEnviada desde data cargada
 
   // Convert tareas to flow steps
   const flowSteps = tareas.map((t: any) => ({
