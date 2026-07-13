@@ -203,8 +203,11 @@ export function MiDesempenoPage() {
                     </span>
                     <span className="text-xs text-slate-400">/ 5</span>
                   </div>
-                  <div className="mt-2">
+                  <div className="flex items-center gap-2 mt-2">
                     <StarRating rating={misDatos.calificacion_promedio} />
+                    <span className="text-xs text-slate-400 ml-1">
+                      {misDatos.total_calificaciones} calificación{misDatos.total_calificaciones !== 1 ? "es" : ""}
+                    </span>
                   </div>
                 </div>
               ) : (
@@ -223,13 +226,13 @@ export function MiDesempenoPage() {
             {tieneDashboard ? (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <IndicadorCard
-                  titulo="Servicios con 100% tareas registradas"
-                  valor={kpi!.servicios_con_tareas_pct ?? 0}
+                  titulo="Servicios con tiempo de ejecución en todas las tareas"
+                  valor={kpi!.servicios_con_tiempo_tracking_pct ?? 0}
                   unidad="%"
-                  descripcion="N° servicios con tareas creadas / Total servicios"
+                  descripcion="N° servicios donde todas las tareas tienen hora inicio/fin"
                   color="bg-blue-600"
                   icon={FileText}
-                  formula="(Servicios que tienen al menos 1 tarea creada ÷ Total de servicios) × 100"
+                  formula="(Servicios donde cada tarea tiene tracking_inicio y tracking_fin en la tabla tiempo_tracking ÷ Total de servicios) × 100"
                 />
                 <IndicadorCard
                   titulo="Tareas documentadas (fecha/hora/responsable)"

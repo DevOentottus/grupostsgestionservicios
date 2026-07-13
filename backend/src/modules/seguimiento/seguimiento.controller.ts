@@ -687,6 +687,44 @@ export async function seguimientoController(app: FastifyInstance) {
       ? Math.round((serviciosConTareas / totalServicios) * 100)
       : 0;
 
+    // -- Servicios con tiempo de ejecución en todas las tareas (tracking_fin - tracking_inicio) --
+    let serviciosConTrackingCompleto = 0;
+    if (svcIdsPeriodo.length > 0) {
+      // Obtener tareas de todos los servicios del período
+      const { data: tareasDelPeriodo } = await supabase
+        .from("tareas")
+        .select("tarea_id, servicio_id")
+        .in("servicio_id", svcIdsPeriodo);
+
+      const tareasPorServicio = new Map<number, number[]>();
+      const todasTareaIds: number[] = [];
+      for (const t of tareasDelPeriodo || []) {
+        const arr = tareasPorServicio.get(t.servicio_id) || [];
+        arr.push(t.tarea_id);
+        tareasPorServicio.set(t.servicio_id, arr);
+        todasTareaIds.push(t.tarea_id);
+      }
+
+      if (todasTareaIds.length > 0) {
+        const { data: trackingEntries } = await supabase
+          .from("tiempo_tracking")
+          .select("tarea_id")
+          .in("tarea_id", todasTareaIds)
+          .not("tracking_inicio", "is", null)
+          .not("tracking_fin", "is", null);
+
+        const tareasConTracking = new Set((trackingEntries || []).map((tt: any) => tt.tarea_id));
+
+        for (const [svcId, tareaIds] of tareasPorServicio) {
+          const todasTienenTracking = tareaIds.length > 0 && tareaIds.every((tid) => tareasConTracking.has(tid));
+          if (todasTienenTracking) serviciosConTrackingCompleto++;
+        }
+      }
+    }
+    const serviciosConTrackingCompletoPct = totalServicios > 0
+      ? Math.round((serviciosConTrackingCompleto / totalServicios) * 100)
+      : 0;
+
     // -- Servicios consultados (tiene al menos una serviciovisita) --
     let serviciosConsultados = 0;
     if (svcIdsPeriodo.length > 0) {
@@ -730,6 +768,7 @@ export async function seguimientoController(app: FastifyInstance) {
               })()
             : 0,
           servicios_con_tareas_pct: serviciosConTareasPct,
+          servicios_con_tiempo_tracking_pct: serviciosConTrackingCompletoPct,
           tiempo_promedio_min: tiempoPromedioMin,
           completados_dentro_tiempo_pct: completadosDentroTiempoPct,
           servicios_consultados_pct: serviciosConsultadosPct,

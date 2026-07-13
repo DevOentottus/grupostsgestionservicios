@@ -134,6 +134,7 @@ export interface JwtPayload {
 export interface DashboardKPI {
   registros_completos_pct: number;
   servicios_con_tareas_pct: number;
+  servicios_con_tiempo_tracking_pct: number;
   tiempo_promedio_min: number;
   completados_dentro_tiempo_pct: number;
   servicios_consultados_pct: number;
@@ -522,6 +523,7 @@ export interface ManagerMiAreaResponse {
     tareas_completadas: number;
     servicios_completados: number;
     calificacion_promedio: number | null;
+    total_calificaciones: number;
     servicios_asignados: {
       id: number;
       codigo: string | null;
