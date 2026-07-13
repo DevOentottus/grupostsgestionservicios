@@ -727,7 +727,7 @@ export function ServicioPublicoPage() {
 
               {/* Satisfacción con la visibilidad */}
               <div className="text-center">
-                <p className="text-sm text-gray-500 mb-3">Satisfacción con la visibilidad del servicio</p>
+                <p className="text-sm text-gray-500 mb-3">Satisfacción con esta página de visibilidad</p>
                 <div className="flex justify-center">
                   <StarRating
                     value={satisfaccionVisibilidad}
@@ -845,7 +845,7 @@ export function ServicioPublicoPage() {
               </div>
 
               <div className="text-center">
-                <p className="text-sm text-gray-500 mb-3">Satisfacción con la visibilidad del servicio</p>
+                <p className="text-sm text-gray-500 mb-3">Satisfacción con esta página de visibilidad</p>
                 <div className="flex justify-center">
                   <StarRating
                     value={satisfaccionVisibilidad}
