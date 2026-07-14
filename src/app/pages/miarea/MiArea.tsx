@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 import {
   Building2, Users, Wrench, Trophy, Star,
-  ArrowUpDown, ArrowRight,
+  ArrowUpDown, ArrowRight, Search,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { PieChartCard } from "@/app/components/charts/PieChart.js";
@@ -52,6 +52,8 @@ export function MiAreaPage() {
   const navigate = useNavigate();
   const [rankingSort, setRankingSort] = useState<"desc" | "asc">("desc");
   const [showInactivos, setShowInactivos] = useState(false);
+  const [filtroEstado, setFiltroEstado] = useState<string>("todos");
+  const [busqueda, setBusqueda] = useState("");
   const { data, isLoading, isError } = useMiArea(user?.area_id ?? undefined);
 
   const serviciosPorEstado = useMemo(() => {
@@ -103,6 +105,19 @@ export function MiAreaPage() {
   }
 
   const { area, servicios, estado_counts, colaboradores } = data;
+  const serviciosFiltrados = useMemo(() => {
+    return servicios.filter((s) => {
+      if (filtroEstado !== "todos" && s.estado !== filtroEstado) return false;
+      if (busqueda.trim()) {
+        const q = busqueda.trim().toLowerCase();
+        return (
+          s.codigo?.toLowerCase().includes(q) ||
+          s.titulo?.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [servicios, filtroEstado, busqueda]);
   const activos = colaboradores.filter((c) => c.activo !== false).length;
   const encargadoNombre = area.encargado_nombre || null;
 
@@ -346,14 +361,72 @@ export function MiAreaPage() {
           Servicios del área
         </h3>
 
-        {servicios.length === 0 ? (
+        {/* Filtros — solo para encargado */}
+        {user?.rol === "encargado" && (
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {/* Botones de estado */}
+            <div className="flex gap-2 min-w-max">
+              {[
+                { key: "todos", label: "Todos", dot: "bg-blue-600" },
+                { key: "pendiente", label: "Pendiente", dot: "bg-yellow-500" },
+                { key: "en_progreso", label: "En Progreso", dot: "bg-blue-500" },
+                { key: "completado", label: "Completado", dot: "bg-green-500" },
+                { key: "bloqueado", label: "Bloqueado", dot: "bg-red-500" },
+              ].map((btn) => {
+                const count = btn.key === "todos"
+                  ? servicios.length
+                  : (estado_counts as any)[btn.key] ?? 0;
+                const activo = filtroEstado === btn.key;
+                return (
+                  <button
+                    key={btn.key}
+                    onClick={() => setFiltroEstado(btn.key)}
+                    className={cn(
+                      "px-3 md:px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 whitespace-nowrap",
+                      activo
+                        ? "bg-yellow-400 text-blue-900"
+                        : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
+                    )}
+                  >
+                    <span className={cn("w-2 h-2 rounded-full", btn.dot)} />
+                    <span>{btn.label}</span>
+                    <span className={cn(
+                      "text-xs px-1.5 py-0.5 rounded-full",
+                      activo ? "bg-blue-900/20 text-blue-900" : "bg-gray-100 text-gray-500"
+                    )}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Buscador */}
+            <div className="relative min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Buscar por código o nombre..."
+                className="w-full pl-9 pr-3 py-2 rounded-xl text-sm border border-gray-200 bg-white outline-none focus:border-blue-500 transition"
+              />
+            </div>
+          </div>
+        )}
+
+        {serviciosFiltrados.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
             <Wrench className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-            <p className="text-sm text-slate-400">No hay servicios en esta área</p>
+            <p className="text-sm text-slate-400">
+              {busqueda || filtroEstado !== "todos"
+                ? "No hay servicios que coincidan con los filtros"
+                : "No hay servicios en esta área"}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {servicios.map((s) => {
+            {serviciosFiltrados.map((s) => {
               const cfg = statusConfig[s.estado] || statusConfig.pendiente;
               return (
                 <div
