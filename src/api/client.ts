@@ -386,6 +386,7 @@ export const tiposServicioApi = {
     api.put(`/tipos-servicio/${id}`, data),
   eliminar: (id: number) => api.delete(`/tipos-servicio/${id}`),
   // Fallas comunes
+  listarTodasFallas: () => api.get("/fallas-comunes"),
   listarFallas: (tipoId: number) => api.get(`/tipos-servicio/${tipoId}/fallas`),
   crearFalla: (tipoId: number, data: { nombre: string; descripcion?: string }) =>
     api.post(`/tipos-servicio/${tipoId}/fallas`, data),

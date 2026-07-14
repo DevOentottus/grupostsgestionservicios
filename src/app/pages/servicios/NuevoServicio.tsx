@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef, memo } from "react";
+import { useState, useEffect, useRef, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
 import { useAreas } from "@/api/queries/useAreas.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import { useCrearServicio, useCrearTarea } from "@/api/queries/useServicios.js";
 import { usePlantillas, usePlantilla } from "@/api/queries/usePlantillas.js";
+import { useFallasComunes } from "@/api/queries/useTiposServicio.js";
 import { AudioRecorder } from "@/app/components/AudioRecorder.js";
 import type { Usuario } from "@shared/index.js";
 import {
@@ -212,6 +213,19 @@ export function NuevoServicioPage() {
   const plantillaId = form.id_plantilla_inicial ? Number(form.id_plantilla_inicial) : 0;
   const { data: plantillaDetalle } = usePlantilla(plantillaId);
   const tareasPlantilla = plantillaDetalle?.tareas || [];
+
+  // Fallas comunes
+  const { data: fallas } = useFallasComunes();
+  const fallasAgrupadas = useMemo(() => {
+    if (!fallas?.length) return [];
+    const map = new Map<string, { value: string; label: string }[]>();
+    for (const f of fallas) {
+      const grupo = f.tipos_servicio?.nombre || "Sin tipo";
+      if (!map.has(grupo)) map.set(grupo, []);
+      map.get(grupo)!.push({ value: String(f.id), label: f.nombre });
+    }
+    return Array.from(map.entries());
+  }, [fallas]);
 
   // -- Tareas editables --
   interface TareaEditable { tempId: number; titulo: string; }
@@ -625,6 +639,39 @@ export function NuevoServicioPage() {
                   />
                 </div>
                 <div className="space-y-2">
+                  {/* Fallas comunes selector */}
+                  {fallasAgrupadas.length > 0 && (
+                    <div>
+                      <label className={labelClass}>Falla común</label>
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (!val) return;
+                          const falla = fallas?.find((f: any) => String(f.id) === val);
+                          if (!falla) return;
+                          const texto = `Falla: ${falla.nombre}`;
+                          const current = form.diagnostico_inicial.trim();
+                          const nuevo = current
+                            ? current.endsWith("\n") ? `${current}${texto}` : `${current}\n${texto}`
+                            : texto;
+                          set("diagnostico_inicial", nuevo);
+                          // Reset selector
+                          e.target.value = "";
+                        }}
+                        className={inputClass}
+                      >
+                        <option value="">Seleccionar falla...</option>
+                        {fallasAgrupadas.map(([grupo, opts]) => (
+                          <optgroup key={grupo} label={grupo}>
+                            {opts.map((o) => (
+                              <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <InputField
                     label="Diagnóstico Inicial"
                     value={form.diagnostico_inicial}

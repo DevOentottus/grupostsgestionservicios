@@ -726,4 +726,5 @@ export interface FallaComun {
   descripcion: string | null;
   activo: boolean;
   created_at: string;
+  tipos_servicio?: { nombre: string } | null;
 }

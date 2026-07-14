@@ -102,6 +102,17 @@ export async function tiposServicioController(app: FastifyInstance) {
     return reply.status(204).send();
   });
 
+  // ── GET /api/fallas-comunes ────────────────────────────
+  app.get("/api/fallas-comunes", { preHandler: [requireRoles()] }, async (_request) => {
+    const { data } = await (supabase as any)
+      .from("fallas_comunes")
+      .select("*, tipos_servicio(nombre)")
+      .eq("activo", true)
+      .order("nombre");
+
+    return { data: data || [] };
+  });
+
   // ── GET /api/tipos-servicio/:id/fallas ───────────────────
   app.get("/api/tipos-servicio/:id/fallas", { preHandler: [requireRoles()] }, async (request) => {
     const { id } = request.params as { id: string };
