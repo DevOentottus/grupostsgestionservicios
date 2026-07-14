@@ -227,6 +227,51 @@ export function NuevoServicioPage() {
     return Array.from(map.entries());
   }, [fallas]);
 
+  // Tipos únicos para el filtro de fallas
+  const tiposFalla = useMemo(() => {
+    if (!fallas?.length) return [];
+    const set = new Set<string>();
+    for (const f of fallas) {
+      if (f.tipos_servicio?.nombre) set.add(f.tipos_servicio.nombre);
+    }
+    return Array.from(set).sort();
+  }, [fallas]);
+
+  const [tipoFallaFiltro, setTipoFallaFiltro] = useState("");
+  const [fallasSeleccionadas, setFallasSeleccionadas] = useState<Set<number>>(new Set());
+
+  const fallasFiltradas = useMemo(() => {
+    if (!fallas?.length) return [];
+    return fallas.filter((f) => {
+      if (tipoFallaFiltro && f.tipos_servicio?.nombre !== tipoFallaFiltro) return false;
+      return true;
+    });
+  }, [fallas, tipoFallaFiltro]);
+
+  const toggleFalla = (fallaId: number, nombre: string) => {
+    const yaSeleccionada = fallasSeleccionadas.has(fallaId);
+
+    // Actualizar el set de seleccionadas
+    setFallasSeleccionadas((prev) => {
+      const next = new Set(prev);
+      if (yaSeleccionada) next.delete(fallaId);
+      else next.add(fallaId);
+      return next;
+    });
+
+    // Actualizar el texto del diagnóstico
+    setForm((p) => {
+      const current = p.diagnostico_inicial.trim();
+      if (yaSeleccionada) {
+        const lines = current.split("\n").filter((l) => l.trim() !== `- ${nombre}`);
+        return { ...p, diagnostico_inicial: lines.join("\n") };
+      } else {
+        const texto = `- ${nombre}`;
+        return { ...p, diagnostico_inicial: current ? `${current}\n${texto}` : texto };
+      }
+    });
+  };
+
   // -- Tareas editables --
   interface TareaEditable { tempId: number; titulo: string; }
   const nextTempId = useRef(0);
@@ -639,39 +684,6 @@ export function NuevoServicioPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  {/* Fallas comunes selector */}
-                  {fallasAgrupadas.length > 0 && (
-                    <div>
-                      <label className={labelClass}>Falla común</label>
-                      <select
-                        value=""
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (!val) return;
-                          const falla = fallas?.find((f: any) => String(f.id) === val);
-                          if (!falla) return;
-                          const texto = `Falla: ${falla.nombre}`;
-                          const current = form.diagnostico_inicial.trim();
-                          const nuevo = current
-                            ? current.endsWith("\n") ? `${current}${texto}` : `${current}\n${texto}`
-                            : texto;
-                          set("diagnostico_inicial", nuevo);
-                          // Reset selector
-                          e.target.value = "";
-                        }}
-                        className={inputClass}
-                      >
-                        <option value="">Seleccionar falla...</option>
-                        {fallasAgrupadas.map(([grupo, opts]) => (
-                          <optgroup key={grupo} label={grupo}>
-                            {opts.map((o) => (
-                              <option key={o.value} value={o.value}>{o.label}</option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
-                    </div>
-                  )}
                   <InputField
                     label="Diagnóstico Inicial"
                     value={form.diagnostico_inicial}
@@ -689,6 +701,43 @@ export function NuevoServicioPage() {
                   />
                 </div>
               </div>
+
+              {/* Fallas comunes — tipo + checkboxes */}
+              {fallas && fallas.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
+                  <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Fallas comunes</p>
+                  <select
+                    value={tipoFallaFiltro}
+                    onChange={(e) => setTipoFallaFiltro(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-gray-50 transition"
+                  >
+                    <option value="">Todas las categorías</option>
+                    {tiposFalla.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                  {fallasFiltradas.length === 0 ? (
+                    <p className="text-sm text-slate-400">Seleccioná una categoría para ver fallas</p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto">
+                      {fallasFiltradas.map((f) => (
+                        <label
+                          key={f.id}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer transition"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={fallasSeleccionadas.has(f.id)}
+                            onChange={() => toggleFalla(f.id, f.nombre)}
+                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-slate-700">{f.nombre}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <InputField
                 label="Descripción del Servicio"
