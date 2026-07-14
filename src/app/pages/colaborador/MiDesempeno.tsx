@@ -268,91 +268,93 @@ export function MiDesempenoPage() {
             </div>
           </div>
 
-          {/* ============================================ */}
-          {/* PROP. 1: TRAZABILIDAD Y CONTROL OPERATIVO */}
-          {/* ============================================ */}
-          <PropuestaSection
-            titulo="Trazabilidad y Control Operativo"
-            descripcion="Indicadores de registro, documentación y trazabilidad de tareas y servicios"
-          >
-            {tieneDashboard ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* ============================================ */}
+            {/* PROP. 1: TRAZABILIDAD Y CONTROL OPERATIVO */}
+            {/* ============================================ */}
+            <PropuestaSection
+              titulo="Trazabilidad y Control Operativo"
+              descripcion="Indicadores de registro, documentación y trazabilidad de tareas y servicios"
+            >
+              {tieneDashboard ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <IndicadorCard
+                    titulo="Servicios con tiempo de ejecución en todas las tareas"
+                    valor={kpi!.servicios_con_tiempo_tracking_pct ?? 0}
+                    unidad="%"
+                    descripcion="N° servicios donde todas las tareas tienen hora inicio/fin"
+                    color="bg-blue-600"
+                    icon={FileText}
+                    formula="Tiempo de ejecución: Tracking_final − Tracking_inicial"
+                  />
+                  <IndicadorCard
+                    titulo="Tareas documentadas (fecha/hora/responsable)"
+                    valor={kpi!.tareas_documentadas_conteo ?? 0}
+                    unidad="tareas"
+                    descripcion="Tareas con fecha, hora completada y responsable"
+                    color="bg-cyan-600"
+                    icon={CheckCircle2}
+                    formula="Conteo de tareas que tienen tarea_fecha_completado, tarea_hora_completado y tarea_completado_por en la tabla tareas"
+                  />
+                  <IndicadorCard
+
+                    titulo="Servicios con trazabilidad completa"
+                    valor={kpi!.registros_completos_pct ?? 0}
+                    unidad="%"
+                    descripcion="Servicios con historial de cambios completo"
+                    color="bg-teal-600"
+                    icon={BarChart3}
+                    formula="(Servicios que tienen registros en la tabla auditoría ÷ Total de servicios) × 100"
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 text-center py-4">
+                  Los indicadores de trazabilidad estarán disponibles cuando el administrador configure el módulo
+                </p>
+              )}
+            </PropuestaSection>
+
+            {/* ============================================ */}
+            {/* PROP. 2: EFICIENCIA OPERATIVA */}
+            {/* ============================================ */}
+            <PropuestaSection
+              titulo="Eficiencia Operativa"
+              descripcion="Métricas de tiempo, cumplimiento y productividad del equipo"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <IndicadorCard
-                  titulo="Servicios con tiempo de ejecución en todas las tareas"
-                  valor={kpi!.servicios_con_tiempo_tracking_pct ?? 0}
-                  unidad="%"
-                  descripcion="N° servicios donde todas las tareas tienen hora inicio/fin"
-                  color="bg-blue-600"
-                  icon={FileText}
-                  formula="Tiempo de ejecución: Tracking_final − Tracking_inicial"
-                />
-                <IndicadorCard
-                  titulo="Tareas documentadas (fecha/hora/responsable)"
-                  valor={kpi!.tareas_documentadas_conteo ?? 0}
-                  unidad="tareas"
-                  descripcion="Tareas con fecha, hora completada y responsable"
-                  color="bg-cyan-600"
-                  icon={CheckCircle2}
-                  formula="Conteo de tareas que tienen tarea_fecha_completado, tarea_hora_completado y tarea_completado_por en la tabla tareas"
+
+                  titulo="Tiempo promedio de servicios completados"
+                  valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_min) : "—"}
+                  unidad=""
+                  descripcion="Promedio de tus servicios completados en el período actual"
+                  color="bg-orange-600"
+                  icon={Clock}
+                  formula="Σ(tracking_fin − tracking_inicio) ÷ N° de servicios completados en el período"
                 />
                 <IndicadorCard
 
-                  titulo="Servicios con trazabilidad completa"
-                  valor={kpi!.registros_completos_pct ?? 0}
+                  titulo="Servicios dentro del tiempo estimado"
+                  valor={kpi?.completados_dentro_tiempo_pct ?? 0}
                   unidad="%"
-                  descripcion="Servicios con historial de cambios completo"
-                  color="bg-teal-600"
-                  icon={BarChart3}
-                  formula="(Servicios que tienen registros en la tabla auditoría ÷ Total de servicios) × 100"
+                  descripcion="N° servicios cumplieron el tiempo estimado"
+                  color="bg-green-600"
+                  icon={Target}
+                  formula="(Servicios cuyo tiempo real total ≤ tiempo_estimado del servicio ÷ Total de servicios completados) × 100"
+                />
+                <IndicadorCard
+
+                  titulo="Productividad personal"
+                  valor={productividadPersonal ?? 0}
+                  unidad="servicios"
+                  descripcion="Servicios completados en el período"
+                  color="bg-purple-600"
+                  icon={Zap}
+                  formula="N° de servicios completados por el colaborador en el período seleccionado"
                 />
               </div>
-            ) : (
-              <p className="text-sm text-slate-400 text-center py-4">
-                Los indicadores de trazabilidad estarán disponibles cuando el administrador configure el módulo
-              </p>
-            )}
-          </PropuestaSection>
-
-          {/* ============================================ */}
-          {/* PROP. 2: EFICIENCIA OPERATIVA */}
-          {/* ============================================ */}
-          <PropuestaSection
-            titulo="Eficiencia Operativa"
-            descripcion="Métricas de tiempo, cumplimiento y productividad del equipo"
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <IndicadorCard
-
-                titulo="Tiempo promedio de servicios completados"
-                valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_min) : "—"}
-                unidad=""
-                descripcion="Promedio de tus servicios completados en el período actual"
-                color="bg-orange-600"
-                icon={Clock}
-                formula="Σ(tracking_fin − tracking_inicio) ÷ N° de servicios completados en el período"
-              />
-              <IndicadorCard
-
-                titulo="Servicios dentro del tiempo estimado"
-                valor={kpi?.completados_dentro_tiempo_pct ?? 0}
-                unidad="%"
-                descripcion="N° servicios cumplieron el tiempo estimado"
-                color="bg-green-600"
-                icon={Target}
-                formula="(Servicios cuyo tiempo real total ≤ tiempo_estimado del servicio ÷ Total de servicios completados) × 100"
-              />
-              <IndicadorCard
-
-                titulo="Productividad personal"
-                valor={productividadPersonal ?? 0}
-                unidad="servicios"
-                descripcion="Servicios completados en el período"
-                color="bg-purple-600"
-                icon={Zap}
-                formula="N° de servicios completados por el colaborador en el período seleccionado"
-              />
-            </div>
-          </PropuestaSection>
+            </PropuestaSection>
+          </div>
 
           {/* ============================================ */}
           {/* PROP. 3: TRANSPARENCIA PARA EL CLIENTE */}
