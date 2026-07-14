@@ -524,22 +524,38 @@ export function ServicioDetailPage() {
               </>
             );
           })({ bloqueado: servicio.estado === "bloqueado", cancelado: servicio.estado === "cancelado" })}
-          {/* FI: fecha de inicio · FC: fecha de cierre · Tiempo */}
+          {/* FR: fecha de registro · FC: fecha de completado · Tiempo transcurrido */}
           {servicio.created_at && (
-            <span className="text-xs text-white/70 flex items-center gap-1" title={`Creado: ${servicio.created_at} ${servicio.hora_creacion || ""}${servicio.fecha_fin ? ` · Finalizado: ${servicio.fecha_fin} ${servicio.hora_fin || ""}` : ""}`}>
+            <span className="text-xs text-white/70 flex items-center gap-1" title={`Registrado: ${servicio.created_at} ${servicio.hora_creacion || ""}${servicio.fecha_fin ? ` · Completado: ${servicio.fecha_fin} ${servicio.hora_fin || ""}` : ""}`}>
               <Clock className="w-3 h-3 shrink-0" />
-              <span className="hidden md:inline font-medium text-white/90">FR:</span>
+              <span className="hidden md:inline font-medium text-white/90">Fecha de registro:</span>
               <span className="text-white/80 truncate max-w-[85px] md:max-w-none">{formatDateTime(servicio.created_at, servicio.hora_creacion)}</span>
               {servicio.fecha_fin && (
                 <>
                   <span className="text-white/40 mx-0.5">·</span>
-                  <span className="hidden md:inline font-medium text-white/90">FC:</span>
+                  <span className="hidden md:inline font-medium text-white/90">Fecha de completado:</span>
                   <span className="hidden md:inline text-white/80">{formatDateTime(servicio.fecha_fin, servicio.hora_fin)}</span>
                 </>
               )}
               <span className="text-white/40 mx-0.5">·</span>
               <span className="hidden md:inline font-medium text-white/90">Tiempo:</span>
-              <span className="font-mono text-white/80">{totalTiempoRealMin > 0 ? formatMinutos(totalTiempoRealMin) : "—"}</span>
+              <span className="font-mono text-white/80">
+                {(() => {
+                  const inicio = new Date(`${servicio.created_at}T${servicio.hora_creacion || "00:00:00"}`);
+                  const fin = servicio.fecha_fin ? new Date(`${servicio.fecha_fin}T${servicio.hora_fin || "00:00:00"}`) : new Date();
+                  const diff = fin.getTime() - inicio.getTime();
+                  if (diff < 0) return "—";
+                  const segs = Math.floor(diff / 1000);
+                  const mins = Math.floor(segs / 60);
+                  const hrs = Math.floor(mins / 60);
+                  const days = Math.floor(hrs / 24);
+                  const parts: string[] = [];
+                  if (days > 0) parts.push(`${days}d`);
+                  if (hrs % 24 > 0) parts.push(`${hrs % 24}h`);
+                  if (mins % 60 > 0) parts.push(`${mins % 60}m`);
+                  return parts.length > 0 ? parts.join(" ") : "< 1m";
+                })()}
+              </span>
             </span>
           )}
           {/* Right section: estado badge */}
