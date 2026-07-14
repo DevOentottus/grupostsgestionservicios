@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 import {
   Building2, Users, Wrench, Trophy, Star,
-  ArrowUpDown, ArrowRight, Search, Eye, EyeOff,
+  ArrowUpDown, ArrowRight, Search, Eye, EyeOff, CalendarDays,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { PieChartCard } from "@/app/components/charts/PieChart.js";
@@ -54,6 +54,22 @@ export function MiAreaPage() {
   const [showInactivos, setShowInactivos] = useState(false);
   const [filtroEstado, setFiltroEstado] = useState<string>("todos");
   const [busqueda, setBusqueda] = useState("");
+
+  // Filtro de fechas
+  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
+  const [periodoLabel, setPeriodoLabel] = useState("Todas");
+  const setPeriodo = (label: string, inicio: Date | null, fin: Date | null) => {
+    setFechaInicio(inicio ? inicio.toISOString().split("T")[0] : "");
+    setFechaFin(fin ? fin.toISOString().split("T")[0] : "");
+    setPeriodoLabel(label);
+  };
+  const presetsFecha = [
+    { label: "Hoy", active: periodoLabel === "Hoy", action: () => { const h = new Date(); setPeriodo("Hoy", h, h); } },
+    { label: "Esta semana", active: periodoLabel === "Esta semana", action: () => { const hoy = new Date(); const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1)); setPeriodo("Esta semana", lunes, hoy); } },
+    { label: "Este mes", active: periodoLabel === "Este mes", action: () => { const hoy = new Date(); const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1); setPeriodo("Este mes", inicio, hoy); } },
+  ];
   const { data, isLoading, isError } = useMiArea(user?.area_id ?? undefined);
 
   const serviciosPorEstado = useMemo(() => {
@@ -89,9 +105,13 @@ export function MiAreaPage() {
           s.titulo?.toLowerCase().includes(q)
         );
       }
+      if (fechaInicio && fechaFin) {
+        const d = (s.created_at ?? "").split("T")[0];
+        if (d < fechaInicio || d > fechaFin) return false;
+      }
       return true;
     });
-  }, [data?.servicios, filtroEstado, busqueda]);
+  }, [data?.servicios, filtroEstado, busqueda, fechaInicio, fechaFin]);
 
   if (isLoading) {
     return (
@@ -413,6 +433,39 @@ export function MiAreaPage() {
                 onChange={(e) => setBusqueda(e.target.value)}
                 placeholder="Buscar por código o nombre..."
                 className="w-full pl-9 pr-3 py-2 rounded-xl text-sm border border-gray-200 bg-white outline-none focus:border-blue-500 transition"
+              />
+            </div>
+
+            {/* Date filter presets */}
+            {presetsFecha.map((p) => (
+              <button
+                key={p.label}
+                onClick={p.action}
+                className={cn(
+                  "px-3 py-2 rounded-xl text-sm font-semibold transition whitespace-nowrap border",
+                  p.active
+                    ? "bg-blue-600 border-blue-600 text-white"
+                    : "bg-white border border-gray-200 text-gray-500 hover:border-gray-300",
+                )}
+              >
+                {p.label}
+              </button>
+            ))}
+
+            {/* Date range inputs */}
+            <div className="flex items-center gap-1">
+              <input
+                type="date"
+                value={fechaInicio}
+                onChange={(e) => { setFechaInicio(e.target.value); setFechaFin((f) => f || e.target.value); setPeriodoLabel("Personalizado"); }}
+                className="text-xs border border-gray-200 rounded-lg px-2 py-2 outline-none focus:border-blue-500 w-[130px]"
+              />
+              <span className="text-xs text-gray-400">→</span>
+              <input
+                type="date"
+                value={fechaFin}
+                onChange={(e) => { setFechaFin(e.target.value); setFechaInicio((f) => f || e.target.value); setPeriodoLabel("Personalizado"); }}
+                className="text-xs border border-gray-200 rounded-lg px-2 py-2 outline-none focus:border-blue-500 w-[130px]"
               />
             </div>
           </div>

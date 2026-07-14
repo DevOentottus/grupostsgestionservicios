@@ -31,6 +31,7 @@ const servicioSchema = z.object({
   colaborador_id: z.number().int().nullable().optional(),
   permite_evidencia: z.boolean().nullable().optional(),
   codigo: z.string().nullable().optional(),
+  falla_comun_id: z.number().int().nullable().optional(),
 });
 
 // Schema para actualización parcial — todos los campos son opcionales
@@ -238,6 +239,28 @@ export async function serviciosController(app: FastifyInstance) {
   app.post("/api/servicios", { preHandler: [requireRoles()] }, async (request, reply) => {
     const input = servicioSchema.parse(request.body);
 
+    // Si se seleccionó una falla común, resolver tipo_servicio y tiempo estimado
+    let tipoServicioId: number | null = null;
+    let tiempoEstimado: number | null = input.tiempo_estimado ?? null;
+    if (input.falla_comun_id) {
+      const { data: falla } = await supabase
+        .from("fallas_comunes")
+        .select("tipo_servicio_id")
+        .eq("id", input.falla_comun_id)
+        .single();
+      if (falla) {
+        tipoServicioId = falla.tipo_servicio_id;
+        const { data: tipo } = await supabase
+          .from("tipos_servicio")
+          .select("tiempo_estimado_min")
+          .eq("id", tipoServicioId)
+          .single();
+        if (tipo && tiempoEstimado == null) {
+          tiempoEstimado = tipo.tiempo_estimado_min;
+        }
+      }
+    }
+
     const now = new Date();
     const codigo = "SRV" + [
       now.getFullYear(),
@@ -254,9 +277,10 @@ export async function serviciosController(app: FastifyInstance) {
         servicio_nombre: input.titulo,
         servicio_descripcion: input.descripcion || null,
         servicio_estado: "pendiente",
-        servicio_tiempo_estimado: input.tiempo_estimado ?? null,
+        servicio_tiempo_estimado: tiempoEstimado,
         area_id: input.area_id ?? null,
         tecnico_principal_id: input.colaborador_id ?? null,
+        tipo_servicio_id: tipoServicioId,
         cliente_dni: input.cliente_dni || null,
         cliente_apellido_paterno: input.cliente_apellido_paterno || null,
         cliente_apellido_materno: input.cliente_apellido_materno || null,

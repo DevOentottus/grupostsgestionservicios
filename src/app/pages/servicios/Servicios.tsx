@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
 import { useServicios, useCrearServicio, useArchivarServicio, useDesarchivarServicio } from "@/api/queries/useServicios.js";
@@ -12,7 +12,7 @@ import { cn } from "@/app/lib/utils";
 import type { Servicio, PlantillaTarea } from "@shared/index.js";
 import {
   Plus, Search, ClipboardList, ArrowRight, AlertTriangle, AlertCircle,
-  CheckCircle2, Clock, X, Users, Wrench, Calendar, Camera, Archive, RotateCcw,
+  CheckCircle2, Clock, X, Users, Wrench, Calendar, Camera, Archive, RotateCcw, CalendarDays,
 } from "lucide-react";
 
 const statusConfig: Record<string, { bg: string; text: string; dot: string; bar: string }> = {
@@ -40,6 +40,22 @@ export function ServiciosPage() {
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterArea, setFilterArea] = useState<number | "">("");
   const [mostrarArchivados, setMostrarArchivados] = useState(false);
+
+  // Filtro de fechas
+  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
+  const [periodoLabel, setPeriodoLabel] = useState("Todas");
+  const setPeriodo = (label: string, inicio: Date | null, fin: Date | null) => {
+    setFechaInicio(inicio ? inicio.toISOString().split("T")[0] : "");
+    setFechaFin(fin ? fin.toISOString().split("T")[0] : "");
+    setPeriodoLabel(label);
+  };
+  const presetsFecha = [
+    { label: "Hoy", active: periodoLabel === "Hoy", action: () => { const h = new Date(); setPeriodo("Hoy", h, h); } },
+    { label: "Esta semana", active: periodoLabel === "Esta semana", action: () => { const hoy = new Date(); const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1)); setPeriodo("Esta semana", lunes, hoy); } },
+    { label: "Este mes", active: periodoLabel === "Este mes", action: () => { const hoy = new Date(); const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1); setPeriodo("Este mes", inicio, hoy); } },
+  ];
   const { data: servicios, isLoading } = useServicios({ incluir_archivados: "true" });
   const archivar = useArchivarServicio();
   const desarchivar = useDesarchivarServicio();
@@ -74,7 +90,8 @@ export function ServiciosPage() {
       .includes(search.toLowerCase());
     const matchArea = !filterArea || s.area_id === filterArea;
     const matchStatus = filterStatus === "todos" || s.estado === filterStatus;
-    return matchSearch && matchArea && matchStatus;
+    const matchDate = !fechaInicio || !fechaFin || (s.created_at?.split("T")[0] ?? "") >= fechaInicio && (s.created_at?.split("T")[0] ?? "") <= fechaFin;
+    return matchSearch && matchArea && matchStatus && matchDate;
   });
 
   const esAdminSistema = currentUser?.rol === "admin" || currentUser?.rol === "sistema";
@@ -167,9 +184,9 @@ export function ServiciosPage() {
         </div>
       </div>
 
-      {/* Status filter buttons + area filter — scroll horizontal en mobile */}
+      {/* Filtros, búsqueda, fechas — todo en una línea scrollable */}
       <div className="overflow-x-auto -mx-4 md:mx-0">
-        <div className="flex gap-2 px-4 md:px-0 min-w-max md:min-w-0">
+        <div className="flex gap-2 px-4 md:px-0 min-w-max md:min-w-0 items-center">
           {statusFilters.map((status) => (
             <button
               key={status}
@@ -211,6 +228,51 @@ export function ServiciosPage() {
             </select>
           )}
 
+          {/* Search inline */}
+          <div className="relative min-w-[160px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-blue-500 bg-gray-50"
+            />
+          </div>
+
+          {/* Date filter presets */}
+          {presetsFecha.map((p) => (
+            <button
+              key={p.label}
+              onClick={p.action}
+              className={cn(
+                "px-3 py-2 rounded-xl text-sm font-semibold transition whitespace-nowrap border",
+                p.active
+                  ? "bg-blue-600 border-blue-600 text-white"
+                  : "bg-white border-gray-200 text-gray-500 hover:border-gray-300",
+              )}
+            >
+              {p.label}
+            </button>
+          ))}
+
+          {/* Date range inputs */}
+          <div className="flex items-center gap-1">
+            <input
+              type="date"
+              value={fechaInicio}
+              onChange={(e) => { setFechaInicio(e.target.value); setFechaFin((f) => f || e.target.value); setPeriodoLabel("Personalizado"); }}
+              className="text-xs border border-gray-200 rounded-lg px-2 py-2 outline-none focus:border-blue-500 w-[130px]"
+            />
+            <span className="text-xs text-gray-400">→</span>
+            <input
+              type="date"
+              value={fechaFin}
+              onChange={(e) => { setFechaFin(e.target.value); setFechaInicio((f) => f || e.target.value); setPeriodoLabel("Personalizado"); }}
+              className="text-xs border border-gray-200 rounded-lg px-2 py-2 outline-none focus:border-blue-500 w-[130px]"
+            />
+          </div>
+
           {/* Toggle archivados */}
           {archivados.length > 0 && (
             <button
@@ -223,23 +285,9 @@ export function ServiciosPage() {
               )}
             >
               <Archive className="w-4 h-4" />
-              {mostrarArchivados ? "Ocultar archivados" : `Mostrar archivados (${archivados.length})`}
+              {mostrarArchivados ? "Ocultar archivados" : `Archivados (${archivados.length})`}
             </button>
           )}
-        </div>
-      </div>
-
-      {/* Search */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Buscar por código, cliente, título..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl outline-none focus:border-blue-500 bg-gray-50"
-          />
         </div>
       </div>
 

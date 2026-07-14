@@ -59,6 +59,9 @@ export interface Servicio {
   consultado_cliente: boolean;
   colaborador_edita_visibilidad: boolean;
   tiempo_estimado: number | null;
+  tipo_servicio_id: number | null;
+  falla_comun_id: number | null;
+  falla_comun_nombre: string | null;
   fecha_inicio: string | null;
   hora_inicio: string | null;
   fecha_fin: string | null;
@@ -701,4 +704,25 @@ export interface PaginationMeta {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+// -- Tipos de Servicio --
+export interface TipoServicio {
+  id: number;
+  nombre: string;
+  descripcion: string | null;
+  tiempo_estimado_min: number;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+  fallas?: FallaComun[];
+}
+
+export interface FallaComun {
+  id: number;
+  tipo_servicio_id: number;
+  nombre: string;
+  descripcion: string | null;
+  activo: boolean;
+  created_at: string;
 }

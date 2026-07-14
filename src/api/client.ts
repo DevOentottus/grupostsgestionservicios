@@ -376,3 +376,20 @@ export const seguridadApi = {
     api.get(`/seguridad/exportar/${tipo}`, { params, responseType: "blob" }),
   cleanup: () => api.post("/seguridad/cleanup"),
 };
+
+// -- Tipos de Servicio API --
+export const tiposServicioApi = {
+  listar: () => api.get("/tipos-servicio"),
+  crear: (data: { nombre: string; descripcion?: string; tiempo_estimado_min: number }) =>
+    api.post("/tipos-servicio", data),
+  editar: (id: number, data: { nombre?: string; descripcion?: string; tiempo_estimado_min?: number }) =>
+    api.put(`/tipos-servicio/${id}`, data),
+  eliminar: (id: number) => api.delete(`/tipos-servicio/${id}`),
+  // Fallas comunes
+  listarFallas: (tipoId: number) => api.get(`/tipos-servicio/${tipoId}/fallas`),
+  crearFalla: (tipoId: number, data: { nombre: string; descripcion?: string }) =>
+    api.post(`/tipos-servicio/${tipoId}/fallas`, data),
+  editarFalla: (id: number, data: { nombre?: string; descripcion?: string }) =>
+    api.put(`/fallas-comunes/${id}`, data),
+  eliminarFalla: (id: number) => api.delete(`/fallas-comunes/${id}`),
+};

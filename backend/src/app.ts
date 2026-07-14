@@ -26,6 +26,7 @@ import { audioController } from "@/modules/audio/audio.controller.js";
 import { pushController } from "@/modules/push/push.controller.js";
 import { ofertasController } from "@/modules/ofertas/ofertas.controller.js";
 import { notificacionesController } from "@/modules/notificaciones/notificaciones.controller.js";
+import { tiposServicioController } from "@/modules/tipos-servicio/tipos-servicio.controller.js";
 import { cleanupSeguridad } from "@/scripts/cleanup-seguridad.js";
 
 export async function buildApp() {
@@ -94,6 +95,7 @@ export async function buildApp() {
   await app.register(pushController);
   await app.register(ofertasController);
   await app.register(notificacionesController);
+  await app.register(tiposServicioController);
 
   // ── Cleanup programado de seguridad (cada 24h) ────────────
   const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24h
