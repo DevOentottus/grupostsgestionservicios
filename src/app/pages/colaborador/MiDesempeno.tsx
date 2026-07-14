@@ -6,8 +6,9 @@ import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { cn, formatMinutos } from "@/app/lib/utils";
 import {
   TrendingUp, CheckCircle2, Star,
-  Clock, Target, Zap, BarChart3, Eye, MessageCircle, FileText, CalendarDays,
+  Clock, Target, Zap, BarChart3, Eye, MessageCircle, FileText,
 } from "lucide-react";
+import { DateFilterCard } from "@/app/components/filters/DateFilterCard.js";
 
 function StarRating({ rating }: { rating: number }) {
   const full = Math.floor(rating);
@@ -98,13 +99,18 @@ export function MiDesempenoPage() {
   const [fechaFin, setFechaFin] = useState(todayStr);
   const [periodoLabel, setPeriodoLabel] = useState("Este mes");
 
-  const setPeriodo = (label: string, inicio: Date, fin: Date) => {
-    setFechaInicio(inicio.toISOString().split("T")[0]);
-    setFechaFin(fin.toISOString().split("T")[0]);
+  const setPeriodo = (label: string, inicio: Date | null, fin: Date | null) => {
+    setFechaInicio(inicio ? inicio.toISOString().split("T")[0] : "");
+    setFechaFin(fin ? fin.toISOString().split("T")[0] : "");
     setPeriodoLabel(label);
   };
 
   const presets = [
+    {
+      label: "Sin filtro",
+      active: periodoLabel === "Sin filtro",
+      action: () => setPeriodo("Sin filtro", null, null),
+    },
     {
       label: "Hoy",
       active: periodoLabel === "Hoy",
@@ -175,41 +181,15 @@ export function MiDesempenoPage() {
       </div>
 
       {/* Filtro de fechas */}
-      <div className="bg-white rounded-xl border border-slate-200 p-3 flex flex-wrap items-center gap-2">
-        <CalendarDays className="w-4 h-4 text-slate-400 shrink-0" />
-        <div className="flex flex-wrap gap-1.5">
-          {presets.map((p) => (
-            <button
-              key={p.label}
-              onClick={p.action}
-              className={cn(
-                "text-xs px-3 py-1.5 rounded-lg font-medium transition-colors",
-                p.active
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200",
-              )}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-1.5 ml-2">
-          <input
-            type="date"
-            value={fechaInicio}
-            onChange={(e) => { setFechaInicio(e.target.value); setPeriodoLabel("Personalizado"); }}
-            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-500"
-          />
-          <span className="text-xs text-slate-400">→</span>
-          <input
-            type="date"
-            value={fechaFin}
-            onChange={(e) => { setFechaFin(e.target.value); setPeriodoLabel("Personalizado"); }}
-            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-500"
-          />
-        </div>
-        <span className="text-[11px] text-slate-400 ml-auto">{periodoLabel}</span>
-      </div>
+      <DateFilterCard
+        presets={presets}
+        fechaInicio={fechaInicio}
+        fechaFin={fechaFin}
+        periodoLabel={periodoLabel}
+        onFechaInicio={(v) => setFechaInicio(v)}
+        onFechaFin={(v) => setFechaFin(v)}
+        onLabelChange={(l) => setPeriodoLabel(l)}
+      />
 
       {isLoading && (
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
