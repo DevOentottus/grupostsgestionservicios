@@ -85,6 +85,7 @@ export interface Tarea {
   tiempo_estimado: number | null;
   asignado_a: number | null;
   has_active_tracking?: boolean;
+  tiempo_real_minutos: number | null;
   created_at: string;
 }
 

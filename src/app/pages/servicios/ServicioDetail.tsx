@@ -17,7 +17,7 @@ import { ConfirmDialog } from "@/app/components/ConfirmDialog.js";
 import { AudioRecorder } from "@/app/components/AudioRecorder.js";
 import { useAuth } from "@/lib/auth.js";
 import { toast } from "sonner";
-import { cn } from "@/app/lib/utils";
+import { cn, formatMinutos } from "@/app/lib/utils";
 import QRCode from "qrcode";
 import {
   Archive, ArrowLeft, CheckCircle2, Clock, MessageSquare,
@@ -62,27 +62,6 @@ type TabId = (typeof TABS)[number]["id"];
 
 
 /** Combinar fecha + hora del backend a locale legible */
-function formatElapsed(fromDate: string, fromTime?: string | null, now?: number, toDate?: string | null, toTime?: string | null): string {
-  try {
-    const start = new Date(`${fromDate}T${fromTime || "00:00:00"}`);
-    const end = toDate ? new Date(`${toDate}T${toTime || "00:00:00"}`) : new Date(now ?? Date.now());
-    const diff = end.getTime() - start.getTime();
-    if (diff < 0) return "—";
-    const segs = Math.floor(diff / 1000);
-    const mins = Math.floor(segs / 60);
-    const hrs = Math.floor(mins / 60);
-    const days = Math.floor(hrs / 24);
-    const parts: string[] = [];
-    if (days > 0) parts.push(`${days}d`);
-    if (hrs % 24 > 0) parts.push(`${hrs % 24}h`);
-    if (mins % 60 > 0) parts.push(`${mins % 60}m`);
-    if (parts.length === 0) return "< 1m";
-    return parts.join(" ");
-  } catch {
-    return "—";
-  }
-}
-
 function formatDateTime(fecha: string, hora?: string | null): string {
   try {
     const d = new Date(`${fecha}T${hora || "00:00:00"}`);
@@ -293,13 +272,6 @@ export function ServicioDetailPage() {
   const [desbloqueoDialogOpen, setDesbloqueoDialogOpen] = useState(false);
   const [desbloqueoMotivo, setDesbloqueoMotivo] = useState("");
 
-  // Ticker para contador de tiempo transcurrido
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(id);
-  }, []);
-
   // Generar QR cuando se abre el modal
   useEffect(() => {
     if (qrModalOpen && servicio) {
@@ -314,6 +286,7 @@ export function ServicioDetailPage() {
   const completadasCount = tareasSorted.filter((t) => t.completada).length;
   const totalTareas = tareasSorted.length;
   const progresoPct = totalTareas > 0 ? Math.round((completadasCount / totalTareas) * 100) : 0;
+  const totalTiempoRealMin = tareasSorted.reduce((sum, t) => sum + (t.tiempo_real_minutos ?? 0), 0);
   const isPendiente = servicio?.estado === "pendiente";
   const isBloqueado = servicio?.estado === "bloqueado";
   const isCancelado = servicio?.estado === "cancelado";
@@ -566,7 +539,7 @@ export function ServicioDetailPage() {
               )}
               <span className="text-white/40 mx-0.5">·</span>
               <span className="hidden md:inline font-medium text-white/90">Tiempo:</span>
-              <span className="font-mono text-white/80">{formatElapsed(servicio.created_at, servicio.hora_creacion, now, servicio.fecha_fin, servicio.hora_fin)}</span>
+              <span className="font-mono text-white/80">{totalTiempoRealMin > 0 ? formatMinutos(totalTiempoRealMin) : "—"}</span>
             </span>
           )}
           {/* Right section: estado badge */}
@@ -710,12 +683,10 @@ export function ServicioDetailPage() {
             {/* Right: time indicators */}
             <div className="shrink-0 text-right hidden sm:block">
               <div className="bg-white/60 backdrop-blur rounded-xl border border-gray-200/60 px-4 py-3 min-w-[130px]">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Transcurrido</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Tiempo del servicio</p>
                 <p className="text-lg font-bold text-gray-900 tabular-nums leading-tight mt-0.5">
-                  {servicio.created_at ? formatElapsed(servicio.created_at, servicio.hora_creacion, now, servicio.fecha_fin, servicio.hora_fin) : "—"}
+                  {totalTiempoRealMin > 0 ? formatMinutos(totalTiempoRealMin) : "—"}
                 </p>
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mt-3">Restante estimado</p>
-                <p className="text-lg font-bold text-gray-900 tabular-nums leading-tight mt-0.5">—</p>
               </div>
             </div>
           </div>

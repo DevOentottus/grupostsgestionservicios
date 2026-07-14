@@ -459,6 +459,7 @@ export async function serviciosController(app: FastifyInstance) {
       asignado_a: null, // no disponible en Supabase tareas
       created_at: t.tarea_fecha_creacion,
       has_active_tracking: false, // tiempo_tracking no existe en Supabase
+      tiempo_real_minutos: t.tarea_tiempo_real,
     }));
 
     return { data: rows };
