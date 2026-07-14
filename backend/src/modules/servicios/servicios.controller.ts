@@ -1699,6 +1699,9 @@ function mapServicio(s: any) {
     consultado_cliente: false, // se calcula en listServicios batch
     colaborador_edita_visibilidad: s.servicio_colaborador_edita_visibilidad ?? false,
     tiempo_estimado: s.servicio_tiempo_estimado,
+    tipo_servicio_id: s.tipo_servicio_id || null,
+    falla_comun_id: null,
+    falla_comun_nombre: null,
     fecha_inicio: s.servicio_fecha_inicio,
     hora_inicio: s.servicio_hora_inicio,
     fecha_fin: s.servicio_fecha_fin,
