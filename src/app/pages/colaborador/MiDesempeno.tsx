@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 import { useDashboard } from "@/api/queries/useDashboard.js";
@@ -6,7 +6,7 @@ import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { cn, formatMinutos } from "@/app/lib/utils";
 import {
   TrendingUp, CheckCircle2, Star,
-  Clock, Target, Zap, BarChart3, Eye, MessageCircle, FileText,
+  Clock, Target, Zap, BarChart3, Eye, MessageCircle, FileText, CalendarDays,
 } from "lucide-react";
 
 function StarRating({ rating }: { rating: number }) {
@@ -88,16 +88,55 @@ export function MiDesempenoPage() {
   const { user } = useAuth();
   const { data: miArea, isLoading: areaLoading, isError: areaError } = useMiArea();
 
-  // Dashboard KPIs (puede fallar si el backend no da acceso)
-  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
-  const firstDay = useMemo(() => {
+  // Filtro de fechas
+  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const [fechaInicio, setFechaInicio] = useState(() => {
     const d = new Date();
     d.setDate(1);
     return d.toISOString().split("T")[0];
-  }, []);
+  });
+  const [fechaFin, setFechaFin] = useState(todayStr);
+  const [periodoLabel, setPeriodoLabel] = useState("Este mes");
+
+  const setPeriodo = (label: string, inicio: Date, fin: Date) => {
+    setFechaInicio(inicio.toISOString().split("T")[0]);
+    setFechaFin(fin.toISOString().split("T")[0]);
+    setPeriodoLabel(label);
+  };
+
+  const presets = [
+    {
+      label: "Hoy",
+      active: periodoLabel === "Hoy",
+      action: () => {
+        const h = new Date();
+        setPeriodo("Hoy", h, h);
+      },
+    },
+    {
+      label: "Esta semana",
+      active: periodoLabel === "Esta semana",
+      action: () => {
+        const hoy = new Date();
+        const lunes = new Date(hoy);
+        lunes.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1));
+        setPeriodo("Esta semana", lunes, hoy);
+      },
+    },
+    {
+      label: "Este mes",
+      active: periodoLabel === "Este mes",
+      action: () => {
+        const hoy = new Date();
+        const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        setPeriodo("Este mes", inicio, hoy);
+      },
+    },
+  ];
+
   const { data: dashboard, isLoading: dashLoading, isError: dashError } = useDashboard({
-    fecha_inicio: firstDay,
-    fecha_fin: today,
+    fecha_inicio: fechaInicio,
+    fecha_fin: fechaFin,
     usuario_id: user?.id,
   });
 
@@ -133,6 +172,43 @@ export function MiDesempenoPage() {
           <h2 className="text-xl font-bold text-slate-800">Mi Desempeño</h2>
           <p className="text-sm text-slate-500">{user?.nombres || "Colaborador"}</p>
         </div>
+      </div>
+
+      {/* Filtro de fechas */}
+      <div className="bg-white rounded-xl border border-slate-200 p-3 flex flex-wrap items-center gap-2">
+        <CalendarDays className="w-4 h-4 text-slate-400 shrink-0" />
+        <div className="flex flex-wrap gap-1.5">
+          {presets.map((p) => (
+            <button
+              key={p.label}
+              onClick={p.action}
+              className={cn(
+                "text-xs px-3 py-1.5 rounded-lg font-medium transition-colors",
+                p.active
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200",
+              )}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5 ml-2">
+          <input
+            type="date"
+            value={fechaInicio}
+            onChange={(e) => { setFechaInicio(e.target.value); setPeriodoLabel("Personalizado"); }}
+            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-500"
+          />
+          <span className="text-xs text-slate-400">→</span>
+          <input
+            type="date"
+            value={fechaFin}
+            onChange={(e) => { setFechaFin(e.target.value); setPeriodoLabel("Personalizado"); }}
+            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-500"
+          />
+        </div>
+        <span className="text-[11px] text-slate-400 ml-auto">{periodoLabel}</span>
       </div>
 
       {isLoading && (
