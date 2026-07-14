@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 import {
   Building2, Users, Wrench, Trophy, Star,
-  ArrowUpDown, ArrowRight, Search,
+  ArrowUpDown, ArrowRight, Search, Eye, EyeOff,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { PieChartCard } from "@/app/components/charts/PieChart.js";
@@ -295,14 +295,14 @@ export function MiAreaPage() {
                     <button
                       onClick={() => setShowInactivos((v) => !v)}
                       className={cn(
-                        "text-xs px-2 py-1 rounded-lg transition-colors",
+                        "p-1.5 rounded-lg transition-colors",
                         showInactivos
                           ? "bg-amber-100 text-amber-700"
                           : "bg-slate-100 text-slate-500 hover:bg-slate-200",
                       )}
-                      title={showInactivos ? "Ocultar inactivos" : "Mostrar inactivos"}
+                      title="Mostrar usuarios inactivos"
                     >
-                      {showInactivos ? "Inactivos" : "Activos"}
+                      {showInactivos ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                     <button
                       onClick={() => setRankingSort((s) => (s === "desc" ? "asc" : "desc"))}
@@ -342,7 +342,7 @@ export function MiAreaPage() {
                           <StarRating rating={col.calificacion_promedio} />
                         )}
                         <div className="text-right shrink-0">
-                          <p className="text-xs font-bold text-green-600">{col.servicios_completados || 0}</p>
+                          <p className="text-xs font-bold text-slate-500">({col.servicios_completados || 0})</p>
                         </div>
                       </div>
                     );
