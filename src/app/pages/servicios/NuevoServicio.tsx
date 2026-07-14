@@ -665,40 +665,50 @@ export function NuevoServicioPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <InputField
-                    label="Situación Inicial del Cliente"
-                    value={form.cliente_reporte}
-                    onChange={(v) => set("cliente_reporte", v)}
-                    rows={2}
-                    placeholder="¿Qué reportó el cliente?"
-                    required={!form.servicio_audio_cliente}
-                    error={errors.cliente_reporte}
-                  />
-                  <AudioRecorder
-                    label="Audio del reporte"
-                    existingUrl={form.servicio_audio_cliente || null}
-                    onAudioUploaded={(url) => set("servicio_audio_cliente", url)}
-                    onAudioRemoved={() => set("servicio_audio_cliente", "")}
-                  />
+              <div className="space-y-4">
+                <div>
+                  <label className={labelClass}>
+                    Situación Inicial del Servicio {!form.servicio_audio_cliente && <span className="text-red-400">*</span>}
+                  </label>
+                  <div className="flex gap-2 items-start">
+                    <textarea
+                      value={form.cliente_reporte}
+                      onChange={(e) => set("cliente_reporte", e.target.value)}
+                      className={`${inputClass} flex-1 resize-none`}
+                      rows={2}
+                      placeholder="¿Qué reportó el cliente?"
+                    />
+                    <AudioRecorder
+                      label="Audio"
+                      existingUrl={form.servicio_audio_cliente || null}
+                      onAudioUploaded={(url) => set("servicio_audio_cliente", url)}
+                      onAudioRemoved={() => set("servicio_audio_cliente", "")}
+                      className="shrink-0 w-44"
+                    />
+                  </div>
+                  {errors.cliente_reporte && <p className="text-xs text-red-500 mt-1">{errors.cliente_reporte}</p>}
                 </div>
-                <div className="space-y-2">
-                  <InputField
-                    label="Diagnóstico Inicial"
-                    value={form.diagnostico_inicial}
-                    onChange={(v) => set("diagnostico_inicial", v)}
-                    rows={2}
-                    placeholder="Primera impresión técnica"
-                    required={!form.servicio_audio_diagnostico}
-                    error={errors.diagnostico_inicial}
-                  />
-                  <AudioRecorder
-                    label="Audio del diagnóstico"
-                    existingUrl={form.servicio_audio_diagnostico || null}
-                    onAudioUploaded={(url) => set("servicio_audio_diagnostico", url)}
-                    onAudioRemoved={() => set("servicio_audio_diagnostico", "")}
-                  />
+                <div>
+                  <label className={labelClass}>
+                    Diagnóstico Inicial {!form.servicio_audio_diagnostico && <span className="text-red-400">*</span>}
+                  </label>
+                  <div className="flex gap-2 items-start">
+                    <textarea
+                      value={form.diagnostico_inicial}
+                      onChange={(e) => set("diagnostico_inicial", e.target.value)}
+                      className={`${inputClass} flex-1 resize-none`}
+                      rows={2}
+                      placeholder="Primera impresión técnica"
+                    />
+                    <AudioRecorder
+                      label="Audio"
+                      existingUrl={form.servicio_audio_diagnostico || null}
+                      onAudioUploaded={(url) => set("servicio_audio_diagnostico", url)}
+                      onAudioRemoved={() => set("servicio_audio_diagnostico", "")}
+                      className="shrink-0 w-44"
+                    />
+                  </div>
+                  {errors.diagnostico_inicial && <p className="text-xs text-red-500 mt-1">{errors.diagnostico_inicial}</p>}
                 </div>
               </div>
 
