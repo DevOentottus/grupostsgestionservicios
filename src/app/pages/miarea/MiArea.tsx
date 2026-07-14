@@ -395,11 +395,13 @@ export function MiAreaPage() {
                       <Users className="w-3 h-3" />
                       {s.tecnico?.nombres || <span className="italic">Sin técnico</span>}
                     </div>
-                    <div className="mt-3 flex justify-end">
-                      <span className="flex items-center gap-1 text-xs text-blue-700 font-semibold">
-                        Ver detalle <ArrowRight className="w-3 h-3" />
-                      </span>
-                    </div>
+                    {user?.rol !== "colaborador" && (
+                      <div className="mt-3 flex justify-end">
+                        <span className="flex items-center gap-1 text-xs text-blue-700 font-semibold">
+                          Ver detalle <ArrowRight className="w-3 h-3" />
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
