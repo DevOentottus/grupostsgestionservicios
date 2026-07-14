@@ -58,14 +58,17 @@ export async function managerController(app: FastifyInstance) {
             ? { id: s.tecnico_principal_id, nombres: nombresMap.get(s.tecnico_principal_id) || null }
             : null;
 
-          // Progreso de tareas
+          // Progreso de tareas + tiempo real
           const { data: tareasSvc } = await supabase
             .from("tareas")
-            .select("tarea_id, tarea_estado")
+            .select("tarea_id, tarea_estado, tarea_tiempo_real")
             .eq("servicio_id", s.servicio_id);
 
           const totalTareas = tareasSvc?.length || 0;
           const compTareas = tareasSvc?.filter((t: any) => t.tarea_estado === "completado").length || 0;
+          const tiempoTotal = (tareasSvc || [])
+            .filter((t: any) => t.tarea_estado === "completado" && t.tarea_tiempo_real != null)
+            .reduce((sum: number, t: any) => sum + t.tarea_tiempo_real, 0);
 
           return {
             id: s.servicio_id,
@@ -74,12 +77,14 @@ export async function managerController(app: FastifyInstance) {
             descripcion: s.servicio_descripcion,
             estado: s.servicio_estado,
             created_at: s.servicio_fecha_creacion,
+            fecha_fin: s.servicio_fecha_fin,
             cliente_nombre: null,
             prioridad: s.servicio_prioridad || "media",
             tecnico,
             progreso: totalTareas > 0 ? Math.round((compTareas / totalTareas) * 100) : 0,
             total_tareas: totalTareas,
             tareas_completadas: compTareas,
+            tiempo_total_minutos: tiempoTotal,
           };
         })
       );

@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 import {
   Building2, Users, Wrench, Trophy, Star,
-  ArrowUpDown, ArrowRight, Search, Eye, EyeOff,
+  ArrowUpDown, ArrowRight, Search, Eye, EyeOff, Clock,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { PieChartCard } from "@/app/components/charts/PieChart.js";
@@ -67,6 +67,7 @@ export function MiAreaPage() {
     setPeriodoLabel(label);
   };
   const presetsFecha = [
+    { label: "Sin filtro", active: periodoLabel === "Sin filtro" || periodoLabel === "Todas", action: () => setPeriodo("Sin filtro", null, null) },
     { label: "Hoy", active: periodoLabel === "Hoy", action: () => { const h = new Date(); setPeriodo("Hoy", h, h); } },
     { label: "Esta semana", active: periodoLabel === "Esta semana", action: () => { const hoy = new Date(); const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1)); setPeriodo("Esta semana", lunes, hoy); } },
     { label: "Este mes", active: periodoLabel === "Este mes", action: () => { const hoy = new Date(); const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1); setPeriodo("Este mes", inicio, hoy); } },
@@ -113,6 +114,28 @@ export function MiAreaPage() {
       return true;
     });
   }, [data?.servicios, filtroEstado, busqueda, fechaInicio, fechaFin]);
+
+  // Tiempo promedio de servicios completados en el período del filtro
+  const tiempoPromedio = useMemo(() => {
+    if (!data?.servicios) return null;
+    const completados = data.servicios.filter((s) => {
+      if (s.estado !== "completado") return false;
+      if (!s.tiempo_total_minutos || s.tiempo_total_minutos <= 0) return false;
+      if (fechaInicio && fechaFin) {
+        // Usar fecha_fin (fecha de completado) para filtrar
+        const d = (s.fecha_fin ?? "").split("T")[0];
+        if (!d) return false;
+        if (d < fechaInicio || d > fechaFin) return false;
+      }
+      return true;
+    });
+    if (completados.length === 0) return null;
+    const totalMin = completados.reduce((sum, s) => sum + s.tiempo_total_minutos, 0);
+    const avgMin = totalMin / completados.length;
+    const h = Math.floor(avgMin / 60);
+    const m = Math.round(avgMin % 60);
+    return { texto: `${h}h ${m}min`, count: completados.length };
+  }, [data?.servicios, fechaInicio, fechaFin]);
 
   if (isLoading) {
     return (
@@ -191,6 +214,19 @@ export function MiAreaPage() {
         onFechaFin={(v) => setFechaFin(v)}
         onLabelChange={(l) => setPeriodoLabel(l)}
       />
+
+      {/* Promedio de tiempo en el período */}
+      {tiempoPromedio && (
+        <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-slate-400" />
+            <span className="text-lg font-bold text-slate-800">{tiempoPromedio.texto}</span>
+          </div>
+          <div className="text-xs text-slate-400">
+            Promedio de tus servicios completados en el período actual ({tiempoPromedio.count} servicios)
+          </div>
+        </div>
+      )}
 
       {/* Indicadores del área: pie chart, satisfacción, ranking */}
       <div>

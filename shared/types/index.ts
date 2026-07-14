@@ -508,6 +508,7 @@ export interface ManagerMiAreaResponse {
     progreso: number;
     total_tareas: number;
     tareas_completadas: number;
+    tiempo_total_minutos: number;
   })[];
   estado_counts: {
     total: number;

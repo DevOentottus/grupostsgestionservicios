@@ -53,6 +53,7 @@ export function ServiciosPage() {
     setPeriodoLabel(label);
   };
   const presetsFecha = [
+    { label: "Sin filtro", active: periodoLabel === "Sin filtro" || periodoLabel === "Todas", action: () => setPeriodo("Sin filtro", null, null) },
     { label: "Hoy", active: periodoLabel === "Hoy", action: () => { const h = new Date(); setPeriodo("Hoy", h, h); } },
     { label: "Esta semana", active: periodoLabel === "Esta semana", action: () => { const hoy = new Date(); const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1)); setPeriodo("Esta semana", lunes, hoy); } },
     { label: "Este mes", active: periodoLabel === "Este mes", action: () => { const hoy = new Date(); const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1); setPeriodo("Este mes", inicio, hoy); } },
