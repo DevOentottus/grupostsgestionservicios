@@ -185,7 +185,18 @@ export function ServiciosPage() {
         </div>
       </div>
 
-      {/* Filtros, búsqueda, fechas — todo en una línea scrollable */}
+      {/* Filtro de fechas */}
+      <DateFilterCard
+        presets={presetsFecha}
+        fechaInicio={fechaInicio}
+        fechaFin={fechaFin}
+        periodoLabel={periodoLabel}
+        onFechaInicio={(v) => setFechaInicio(v)}
+        onFechaFin={(v) => setFechaFin(v)}
+        onLabelChange={(l) => setPeriodoLabel(l)}
+      />
+
+      {/* Filtros, búsqueda, archivados — todo en una línea scrollable */}
       <div className="overflow-x-auto -mx-4 md:mx-0">
         <div className="flex gap-2 px-4 md:px-0 min-w-max md:min-w-0 items-center">
           {statusFilters.map((status) => (
@@ -240,17 +251,6 @@ export function ServiciosPage() {
               className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-blue-500 bg-gray-50"
             />
           </div>
-
-          {/* Date filter card */}
-          <DateFilterCard
-            presets={presetsFecha}
-            fechaInicio={fechaInicio}
-            fechaFin={fechaFin}
-            periodoLabel={periodoLabel}
-            onFechaInicio={(v) => setFechaInicio(v)}
-            onFechaFin={(v) => setFechaFin(v)}
-            onLabelChange={(l) => setPeriodoLabel(l)}
-          />
 
           {/* Toggle archivados */}
           {archivados.length > 0 && (

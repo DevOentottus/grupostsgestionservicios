@@ -181,6 +181,17 @@ export function MiAreaPage() {
         </div>
       </div>
 
+      {/* Filtro de fechas */}
+      <DateFilterCard
+        presets={presetsFecha}
+        fechaInicio={fechaInicio}
+        fechaFin={fechaFin}
+        periodoLabel={periodoLabel}
+        onFechaInicio={(v) => setFechaInicio(v)}
+        onFechaFin={(v) => setFechaFin(v)}
+        onLabelChange={(l) => setPeriodoLabel(l)}
+      />
+
       {/* Indicadores del área: pie chart, satisfacción, ranking */}
       <div>
         <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
@@ -436,18 +447,8 @@ export function MiAreaPage() {
                 className="w-full pl-9 pr-3 py-2 rounded-xl text-sm border border-gray-200 bg-white outline-none focus:border-blue-500 transition"
               />
             </div>
-
-            {/* Date filter card */}
-            <DateFilterCard
-              presets={presetsFecha}
-              fechaInicio={fechaInicio}
-              fechaFin={fechaFin}
-              periodoLabel={periodoLabel}
-              onFechaInicio={(v) => setFechaInicio(v)}
-              onFechaFin={(v) => setFechaFin(v)}
-              onLabelChange={(l) => setPeriodoLabel(l)}
-            />
           </div>
+
         )}
 
         {serviciosFiltrados.length === 0 ? (
