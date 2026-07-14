@@ -77,6 +77,22 @@ export function MiAreaPage() {
     );
   }, [data?.colaboradores, rankingSort, showInactivos]);
 
+  // MUST be unconditional (before early returns) to avoid React #310
+  const serviciosFiltrados = useMemo(() => {
+    if (!data?.servicios) return [];
+    return data.servicios.filter((s) => {
+      if (filtroEstado !== "todos" && s.estado !== filtroEstado) return false;
+      if (busqueda.trim()) {
+        const q = busqueda.trim().toLowerCase();
+        return (
+          s.codigo?.toLowerCase().includes(q) ||
+          s.titulo?.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [data?.servicios, filtroEstado, busqueda]);
+
   if (isLoading) {
     return (
       <div className="space-y-4 animate-pulse">
@@ -105,19 +121,6 @@ export function MiAreaPage() {
   }
 
   const { area, servicios, estado_counts, colaboradores } = data;
-  const serviciosFiltrados = useMemo(() => {
-    return servicios.filter((s) => {
-      if (filtroEstado !== "todos" && s.estado !== filtroEstado) return false;
-      if (busqueda.trim()) {
-        const q = busqueda.trim().toLowerCase();
-        return (
-          s.codigo?.toLowerCase().includes(q) ||
-          s.titulo?.toLowerCase().includes(q)
-        );
-      }
-      return true;
-    });
-  }, [servicios, filtroEstado, busqueda]);
   const activos = colaboradores.filter((c) => c.activo !== false).length;
   const encargadoNombre = area.encargado_nombre || null;
 
