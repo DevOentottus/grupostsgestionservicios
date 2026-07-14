@@ -32,28 +32,27 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function IndicadorCard({
-  titulo, valor, unidad, descripcion, color, icon: Icon, formula,
+  titulo, valor, unidad, descripcion, color, formula,
 }: {
   titulo: string;
   valor: string | number;
   unidad: string;
   descripcion: string;
   color: string;
-  icon: React.ComponentType<{ className?: string }>;
   formula?: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-center gap-2 mb-2">
-        <div className={`w-7 h-7 rounded-lg ${color} flex items-center justify-center shrink-0`}>
-          <Icon className="w-3.5 h-3.5 text-white" />
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+      <div className={`h-1.5 ${color}`} />
+      <div className="p-3">
+        <div className="flex items-center gap-1.5">
+          <p className="text-[11px] text-slate-500 leading-tight">{titulo}</p>
+          {formula && <InfoPopover formula={formula} descripcion={descripcion} />}
+          <span className="ml-auto flex items-baseline gap-1 shrink-0">
+            <span className="text-lg font-bold text-slate-800">{typeof valor === "number" ? valor.toLocaleString() : valor}</span>
+            {unidad && <span className="text-xs text-slate-400">{unidad}</span>}
+          </span>
         </div>
-        <p className="text-[11px] text-slate-500 leading-tight">{titulo}</p>
-        {formula && <InfoPopover formula={formula} descripcion={descripcion} />}
-      </div>
-      <div className="flex items-baseline gap-1.5 flex-wrap">
-        <span className="text-2xl font-bold text-slate-800">{typeof valor === "number" ? valor.toLocaleString() : valor}</span>
-        <span className="text-xs text-slate-400">{unidad}</span>
       </div>
     </div>
   );
@@ -284,7 +283,7 @@ export function MiDesempenoPage() {
                     unidad="%"
                     descripcion="N° servicios donde todas las tareas tienen hora inicio/fin"
                     color="bg-blue-600"
-                    icon={FileText}
+
                     formula="Tiempo de ejecución: Tracking_final − Tracking_inicial"
                   />
                   <IndicadorCard
@@ -293,7 +292,7 @@ export function MiDesempenoPage() {
                     unidad="tareas"
                     descripcion="Tareas con fecha, hora completada y responsable"
                     color="bg-cyan-600"
-                    icon={CheckCircle2}
+
                     formula="Conteo de tareas que tienen tarea_fecha_completado, tarea_hora_completado y tarea_completado_por en la tabla tareas"
                   />
                   <IndicadorCard
@@ -303,7 +302,7 @@ export function MiDesempenoPage() {
                     unidad="%"
                     descripcion="Servicios con historial de cambios completo"
                     color="bg-teal-600"
-                    icon={BarChart3}
+
                     formula="(Servicios que tienen registros en la tabla auditoría ÷ Total de servicios) × 100"
                   />
                 </div>
@@ -329,7 +328,7 @@ export function MiDesempenoPage() {
                   unidad=""
                   descripcion="Promedio de tus servicios completados en el período actual"
                   color="bg-orange-600"
-                  icon={Clock}
+
                   formula="Σ(tracking_fin − tracking_inicio) ÷ N° de servicios completados en el período"
                 />
                 <IndicadorCard
@@ -339,7 +338,7 @@ export function MiDesempenoPage() {
                   unidad="%"
                   descripcion="N° servicios cumplieron el tiempo estimado"
                   color="bg-green-600"
-                  icon={Target}
+
                   formula="(Servicios cuyo tiempo real total ≤ tiempo_estimado del servicio ÷ Total de servicios completados) × 100"
                 />
                 <IndicadorCard
@@ -349,130 +348,132 @@ export function MiDesempenoPage() {
                   unidad="servicios"
                   descripcion="Servicios completados en el período"
                   color="bg-purple-600"
-                  icon={Zap}
+
                   formula="N° de servicios completados por el colaborador en el período seleccionado"
                 />
               </div>
             </PropuestaSection>
           </div>
 
-          {/* ============================================ */}
-          {/* PROP. 3: TRANSPARENCIA PARA EL CLIENTE */}
-          {/* ============================================ */}
-          <PropuestaSection
-            titulo="Transparencia para el Cliente"
-            descripcion="Indicadores de consulta, visibilidad y satisfacción con el portal"
-          >
-            {tieneDashboard ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* ============================================ */}
+            {/* PROP. 3: TRANSPARENCIA PARA EL CLIENTE */}
+            {/* ============================================ */}
+            <PropuestaSection
+              titulo="Transparencia para el Cliente"
+              descripcion="Indicadores de consulta, visibilidad y satisfacción con el portal"
+            >
+              {tieneDashboard ? (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <IndicadorCard
+
+                    titulo="Servicios consultados por clientes"
+                    valor={kpi!.servicios_consultados_pct ?? 0}
+                    unidad="%"
+                    descripcion="Servicios con al menos 1 consulta en el portal"
+                    color="bg-sky-600"
+
+                    formula="(Servicios que tienen al menos 1 visita en la tabla visitas_portal ÷ Total de servicios) × 100"
+                  />
+                  <IndicadorCard
+
+                    titulo="Tiempo actualización → portal"
+                    valor={kpi!.tiempo_actualizacion_portal_promedio_min ?? 0}
+                    unidad="min"
+                    descripcion="Promedio: última tarea completada → primera visita al portal"
+                    color="bg-indigo-600"
+
+                    formula="Σ(primera visita al portal − última tarea completada) ÷ N° de servicios con visita después de completar"
+                  />
+                  <IndicadorCard
+
+                    titulo="Satisfacción con visibilidad"
+                    valor={kpi!.satisfaccion_visibilidad ?? 0}
+                    unidad="/5"
+                    descripcion="Evaluación de clientes sobre visibilidad del progreso"
+                    color="bg-violet-600"
+
+                    formula="Promedio de calificaciones (1–5) dadas por clientes en la categoría 'visibilidad del progreso'"
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 text-center py-4">
+                  Los indicadores de transparencia se actualizarán cuando los clientes usen el portal de seguimiento
+                </p>
+              )}
+            </PropuestaSection>
+
+            {/* ============================================ */}
+            {/* PROP. 4: SATISFACCIÓN Y MEJORA CONTINUA */}
+            {/* ============================================ */}
+            <PropuestaSection
+              titulo="Satisfacción y Mejora Continua"
+              descripcion="Métricas de calificación, evaluación y feedback de clientes"
+            >
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <IndicadorCard
 
-                  titulo="Servicios consultados por clientes"
-                  valor={kpi!.servicios_consultados_pct ?? 0}
+                  titulo="Calificación promedio personal"
+                  valor={misDatos.calificacion_promedio?.toFixed(1) ?? "—"}
+                  unidad={misDatos.calificacion_promedio != null ? "/5" : ""}
+                  descripcion="Promedio de estrellas recibidas en servicios completados"
+                  color="bg-yellow-600"
+
+                  formula="Σ(calificación de cada servicio completado por el colaborador) ÷ N° de servicios con calificación"
+                />
+                <IndicadorCard
+
+                  titulo="Servicios evaluados por clientes"
+                  valor={kpi?.servicios_evaluados_pct ?? 0}
                   unidad="%"
-                  descripcion="Servicios con al menos 1 consulta en el portal"
-                  color="bg-sky-600"
-                  icon={Eye}
-                  formula="(Servicios que tienen al menos 1 visita en la tabla visitas_portal ÷ Total de servicios) × 100"
+                  descripcion="% de servicios completados que recibieron calificación"
+                  color="bg-emerald-600"
+
+                  formula="(Servicios completados que tienen al menos 1 calificación ÷ Total de servicios completados) × 100"
                 />
                 <IndicadorCard
 
-                  titulo="Tiempo actualización → portal"
-                  valor={kpi!.tiempo_actualizacion_portal_promedio_min ?? 0}
-                  unidad="min"
-                  descripcion="Promedio: última tarea completada → primera visita al portal"
-                  color="bg-indigo-600"
-                  icon={Clock}
-                  formula="Σ(primera visita al portal − última tarea completada) ÷ N° de servicios con visita después de completar"
-                />
-                <IndicadorCard
+                  titulo="Servicios con comentarios/sugerencias"
+                  valor={kpi?.servicios_con_comentarios_pct ?? 0}
+                  unidad="%"
+                  descripcion="% de servicios con feedback del cliente"
+                  color="bg-rose-600"
 
-                  titulo="Satisfacción con visibilidad"
-                  valor={kpi!.satisfaccion_visibilidad ?? 0}
-                  unidad="/5"
-                  descripcion="Evaluación de clientes sobre visibilidad del progreso"
-                  color="bg-violet-600"
-                  icon={Star}
-                  formula="Promedio de calificaciones (1–5) dadas por clientes en la categoría 'visibilidad del progreso'"
+                  formula="(Servicios completados que tienen comentarios internos registrados ÷ Total de servicios completados) × 100"
                 />
               </div>
-            ) : (
-              <p className="text-sm text-slate-400 text-center py-4">
-                Los indicadores de transparencia se actualizarán cuando los clientes usen el portal de seguimiento
-              </p>
-            )}
-          </PropuestaSection>
 
-          {/* ============================================ */}
-          {/* PROP. 4: SATISFACCIÓN Y MEJORA CONTINUA */}
-          {/* ============================================ */}
-          <PropuestaSection
-            titulo="Satisfacción y Mejora Continua"
-            descripcion="Métricas de calificación, evaluación y feedback de clientes"
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <IndicadorCard
-
-                titulo="Calificación promedio personal"
-                valor={misDatos.calificacion_promedio?.toFixed(1) ?? "—"}
-                unidad={misDatos.calificacion_promedio != null ? "/5" : ""}
-                descripcion="Promedio de estrellas recibidas en servicios completados"
-                color="bg-yellow-600"
-                icon={Star}
-                formula="Σ(calificación de cada servicio completado por el colaborador) ÷ N° de servicios con calificación"
-              />
-              <IndicadorCard
-
-                titulo="Servicios evaluados por clientes"
-                valor={kpi?.servicios_evaluados_pct ?? 0}
-                unidad="%"
-                descripcion="% de servicios completados que recibieron calificación"
-                color="bg-emerald-600"
-                icon={CheckCircle2}
-                formula="(Servicios completados que tienen al menos 1 calificación ÷ Total de servicios completados) × 100"
-              />
-              <IndicadorCard
-
-                titulo="Servicios con comentarios/sugerencias"
-                valor={kpi?.servicios_con_comentarios_pct ?? 0}
-                unidad="%"
-                descripcion="% de servicios con feedback del cliente"
-                color="bg-rose-600"
-                icon={MessageCircle}
-                formula="(Servicios completados que tienen comentarios internos registrados ÷ Total de servicios completados) × 100"
-              />
-            </div>
-
-            {/* Satisfacción del área si existe */}
-            {miArea?.satisfaccion && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-slate-500">Satisfacción del área</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-yellow-600">
-                      {miArea.satisfaccion.promedio.toFixed(1)}
-                    </span>
-                    <span className="text-xs text-slate-400">/ 5</span>
+              {/* Satisfacción del área si existe */}
+              {miArea?.satisfaccion && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-slate-500">Satisfacción del área</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-yellow-600">
+                        {miArea.satisfaccion.promedio.toFixed(1)}
+                      </span>
+                      <span className="text-xs text-slate-400">/ 5</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 text-xs">
+                      <span className="text-green-600">Promotores: {miArea.satisfaccion.promotores}</span>
+                    <span className="text-amber-600">Pasivos: {miArea.satisfaccion.pasivos}</span>
+                    <span className="text-red-600">Detractores: {miArea.satisfaccion.detractores}</span>
+                  </div>
+                  <div className="mt-2 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-green-500 h-full rounded-full"
+                      style={{ width: `${miArea.satisfaccion.calificaciones_positivas_pct ?? 0}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
+                    <span>{miArea.satisfaccion.calificaciones_positivas_pct?.toFixed(0) ?? 0}% positivas</span>
+                    <span>{miArea.satisfaccion.calificaciones_negativas_pct?.toFixed(0) ?? 0}% negativas</span>
                   </div>
                 </div>
-                <div className="flex gap-3 text-xs">
-                    <span className="text-green-600">Promotores: {miArea.satisfaccion.promotores}</span>
-                  <span className="text-amber-600">Pasivos: {miArea.satisfaccion.pasivos}</span>
-                  <span className="text-red-600">Detractores: {miArea.satisfaccion.detractores}</span>
-                </div>
-                <div className="mt-2 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-green-500 h-full rounded-full"
-                    style={{ width: `${miArea.satisfaccion.calificaciones_positivas_pct ?? 0}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
-                  <span>{miArea.satisfaccion.calificaciones_positivas_pct?.toFixed(0) ?? 0}% positivas</span>
-                  <span>{miArea.satisfaccion.calificaciones_negativas_pct?.toFixed(0) ?? 0}% negativas</span>
-                </div>
-              </div>
-            )}
-          </PropuestaSection>
+              )}
+            </PropuestaSection>
+          </div>
 
           {/* ============================================ */}
           {/* SERVICIOS ASIGNADOS */}
