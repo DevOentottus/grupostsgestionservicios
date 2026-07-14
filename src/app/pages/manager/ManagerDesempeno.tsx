@@ -511,43 +511,7 @@ export function ManagerDesempenoPage() {
               />
             </div>
 
-            {/* Satisfacción del área */}
-            {miArea?.satisfaccion && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-slate-500">Satisfacción del área</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-yellow-600">
-                      {miArea.satisfaccion.promedio.toFixed(1)}
-                    </span>
-                    <span className="text-xs text-slate-400">/ 5</span>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                  <span className="text-green-600">Promotores: {miArea.satisfaccion.promotores}</span>
-                  <span className="text-amber-600">Pasivos: {miArea.satisfaccion.pasivos}</span>
-                  <span className="text-red-600">Detractores: {miArea.satisfaccion.detractores}</span>
-                </div>
-                <div className="mt-2 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-green-500 h-full rounded-full"
-                    style={{ width: `${miArea.satisfaccion.calificaciones_positivas_pct ?? 0}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
-                  <span>{miArea.satisfaccion.calificaciones_positivas_pct?.toFixed(0) ?? 0}% positivas</span>
-                  <span>{miArea.satisfaccion.calificaciones_negativas_pct?.toFixed(0) ?? 0}% negativas</span>
-                </div>
-              </div>
-            )}
-
-            {/* Estrellas del colaborador si tiene calificación */}
-            {calificacionColaborador != null && (
-              <div className="mt-3 flex items-center gap-2 text-sm text-slate-500">
-                <StarRating rating={calificacionColaborador} />
-                <span>({calificacionColaborador.toFixed(1)} / 5)</span>
-              </div>
-            )}
+        
           </PropuestaSection>
 
           {/* ============================================ */}
