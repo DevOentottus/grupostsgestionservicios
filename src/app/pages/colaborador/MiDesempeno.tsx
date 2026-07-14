@@ -49,17 +49,11 @@ function IndicadorCard({
           <Icon className="w-3.5 h-3.5 text-white" />
         </div>
         <p className="text-[11px] text-slate-500 leading-tight">{titulo}</p>
-        {formula && <InfoPopover formula={formula} />}
+        {formula && <InfoPopover formula={formula} descripcion={descripcion} />}
       </div>
       <div className="flex items-baseline gap-1.5 flex-wrap">
         <span className="text-2xl font-bold text-slate-800">{typeof valor === "number" ? valor.toLocaleString() : valor}</span>
         <span className="text-xs text-slate-400">{unidad}</span>
-        {descripcion && (
-          <>
-            <span className="text-xs text-slate-300">|</span>
-            <span className="text-[10px] text-slate-400">{descripcion}</span>
-          </>
-        )}
       </div>
     </div>
   );
@@ -282,7 +276,7 @@ export function MiDesempenoPage() {
             descripcion="Indicadores de registro, documentación y trazabilidad de tareas y servicios"
           >
             {tieneDashboard ? (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <IndicadorCard
                   titulo="Servicios con tiempo de ejecución en todas las tareas"
                   valor={kpi!.servicios_con_tiempo_tracking_pct ?? 0}
