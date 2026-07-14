@@ -12,8 +12,9 @@ import { cn } from "@/app/lib/utils";
 import type { Servicio, PlantillaTarea } from "@shared/index.js";
 import {
   Plus, Search, ClipboardList, ArrowRight, AlertTriangle, AlertCircle,
-  CheckCircle2, Clock, X, Users, Wrench, Calendar, Camera, Archive, RotateCcw, CalendarDays,
+  CheckCircle2, Clock, X, Users, Wrench, Calendar, Camera, Archive, RotateCcw,
 } from "lucide-react";
+import { DateFilterCard } from "@/app/components/filters/DateFilterCard.js";
 
 const statusConfig: Record<string, { bg: string; text: string; dot: string; bar: string }> = {
   pendiente:   { bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500", bar: "bg-yellow-400" },
@@ -240,38 +241,16 @@ export function ServiciosPage() {
             />
           </div>
 
-          {/* Date filter presets */}
-          {presetsFecha.map((p) => (
-            <button
-              key={p.label}
-              onClick={p.action}
-              className={cn(
-                "px-3 py-2 rounded-xl text-sm font-semibold transition whitespace-nowrap border",
-                p.active
-                  ? "bg-blue-600 border-blue-600 text-white"
-                  : "bg-white border-gray-200 text-gray-500 hover:border-gray-300",
-              )}
-            >
-              {p.label}
-            </button>
-          ))}
-
-          {/* Date range inputs */}
-          <div className="flex items-center gap-1">
-            <input
-              type="date"
-              value={fechaInicio}
-              onChange={(e) => { setFechaInicio(e.target.value); setFechaFin((f) => f || e.target.value); setPeriodoLabel("Personalizado"); }}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-2 outline-none focus:border-blue-500 w-[130px]"
-            />
-            <span className="text-xs text-gray-400">→</span>
-            <input
-              type="date"
-              value={fechaFin}
-              onChange={(e) => { setFechaFin(e.target.value); setFechaInicio((f) => f || e.target.value); setPeriodoLabel("Personalizado"); }}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-2 outline-none focus:border-blue-500 w-[130px]"
-            />
-          </div>
+          {/* Date filter card */}
+          <DateFilterCard
+            presets={presetsFecha}
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+            periodoLabel={periodoLabel}
+            onFechaInicio={(v) => setFechaInicio(v)}
+            onFechaFin={(v) => setFechaFin(v)}
+            onLabelChange={(l) => setPeriodoLabel(l)}
+          />
 
           {/* Toggle archivados */}
           {archivados.length > 0 && (
