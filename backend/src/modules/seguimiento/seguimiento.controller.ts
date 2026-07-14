@@ -554,59 +554,36 @@ export async function seguimientoController(app: FastifyInstance) {
       svcIdsConAuditoria = idsUnicos.size;
     }
 
-    // -- Tiempo real desde tiempo_tracking --
-    let trackingQuery = supabase
-      .from("tiempo_tracking")
-      .select("tarea_id, tracking_inicio, tracking_fin, usuarios!tiempo_tracking_usuario_id_fkey (usuario_id)");
-
-    const tareaIdsInPeriodo = (tareasCompletadasPeriodo || []).map((t) => t.tarea_id);
-    if (tareaIdsInPeriodo.length > 0) {
-      trackingQuery = trackingQuery.in("tarea_id", tareaIdsInPeriodo);
-    }
-    const { data: trackingData } = await trackingQuery;
-
+    // -- Tiempo real desde tarea_tiempo_real (más confiable que tracking_fin - tracking_inicio) --
+    const svcConTiempo = new Set<number>();
     let sumaTiempoReal = 0;
-    let tareasConTiempo = 0;
-    for (const tr of trackingData || []) {
-      if (tr.tracking_inicio && tr.tracking_fin) {
-        const diffMin = Math.floor(
-          (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
-        );
-        if (diffMin > 0) {
-          sumaTiempoReal += diffMin;
-          tareasConTiempo++;
-        }
+    for (const t of tareasCompletadasPeriodo || []) {
+      if (t.tarea_tiempo_real != null && t.tarea_tiempo_real > 0) {
+        sumaTiempoReal += t.tarea_tiempo_real;
+        svcConTiempo.add(t.servicio_id);
       }
     }
-    const tiempoPromedioMin = completados > 0 ? Math.round(sumaTiempoReal / completados) : 0;
+    const totalSvcConTiempo = svcConTiempo.size;
+    const tiempoPromedioMin = totalSvcConTiempo > 0 ? Math.round(sumaTiempoReal / totalSvcConTiempo) : 0;
 
-    // Si se especificó un usuario, recalcular tiempo_promedio_min solo para sus servicios
+    // Si se especificó un usuario, recalcular solo con sus tareas
     let userTiempoPromedioMin: number | null = null;
     if (usuarioId) {
-      const userTareaIds = new Set(
-        (tareasCompletadasPeriodo || [])
-          .filter((t: any) => t.tarea_completado_por === usuarioId)
-          .map((t: any) => t.tarea_id)
-      );
-      const userSvcIds = new Set(
-        (tareasCompletadasPeriodo || [])
-          .filter((t: any) => t.tarea_completado_por === usuarioId)
-          .map((t: any) => t.servicio_id)
-      );
-      const userCompletados = userSvcIds.size;
-      if (userCompletados > 0) {
-        let userSuma = 0;
-        for (const tr of trackingData || []) {
-          if (userTareaIds.has(tr.tarea_id) && tr.tracking_inicio && tr.tracking_fin) {
-            const diffMin = Math.floor(
-              (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
-            );
-            if (diffMin > 0) userSuma += diffMin;
-          }
+      const userSvcConTiempo = new Set<number>();
+      let userSuma = 0;
+      for (const t of tareasCompletadasPeriodo || []) {
+        if (t.tarea_completado_por === usuarioId && t.tarea_tiempo_real != null && t.tarea_tiempo_real > 0) {
+          userSuma += t.tarea_tiempo_real;
+          userSvcConTiempo.add(t.servicio_id);
         }
-        userTiempoPromedioMin = Math.round(userSuma / userCompletados);
+      }
+      const userTotalSvc = userSvcConTiempo.size;
+      if (userTotalSvc > 0) {
+        userTiempoPromedioMin = Math.round(userSuma / userTotalSvc);
       }
     }
+
+    // -- Retrasos (tarea con tiempo estimado vs real) --
 
     // -- Retrasos (tarea con tiempo estimado vs real) --
     // Usamos servicio_tiempo_estimado como referencia vs diff tracking
@@ -618,18 +595,26 @@ export async function seguimientoController(app: FastifyInstance) {
         svcTiempoMap[s.servicio_id] = s.servicio_tiempo_estimado;
       }
     }
-    for (const tr of trackingData || []) {
-      const tarea = (tareasCompletadasPeriodo || []).find((t) => t.tarea_id === tr.tarea_id);
-      if (!tarea || !tr.tracking_fin || !tr.tracking_inicio) continue;
-      const realMin = Math.floor(
-        (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
-      );
-      const estimado = svcTiempoMap[tarea.servicio_id] || 0;
-      if (realMin > 0 && estimado > 0) {
-        if (realMin <= estimado) {
-          dentroTiempo++;
-        } else {
-          retrasos++;
+    // Necesitamos trackingData para comparar real vs estimado
+    const tareaIdsInPeriodo = (tareasCompletadasPeriodo || []).map((t: any) => t.tarea_id);
+    if (tareaIdsInPeriodo.length > 0) {
+      const { data: trackingData } = await supabase
+        .from("tiempo_tracking")
+        .select("tarea_id, tracking_inicio, tracking_fin")
+        .in("tarea_id", tareaIdsInPeriodo);
+      for (const tr of trackingData || []) {
+        const tarea = (tareasCompletadasPeriodo || []).find((t) => t.tarea_id === tr.tarea_id);
+        if (!tarea || !tr.tracking_fin || !tr.tracking_inicio) continue;
+        const realMin = Math.floor(
+          (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
+        );
+        const estimado = svcTiempoMap[tarea.servicio_id] || 0;
+        if (realMin > 0 && estimado > 0) {
+          if (realMin <= estimado) {
+            dentroTiempo++;
+          } else {
+            retrasos++;
+          }
         }
       }
     }
