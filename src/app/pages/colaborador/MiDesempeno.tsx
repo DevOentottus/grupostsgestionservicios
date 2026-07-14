@@ -98,6 +98,7 @@ export function MiDesempenoPage() {
   const { data: dashboard, isLoading: dashLoading, isError: dashError } = useDashboard({
     fecha_inicio: firstDay,
     fecha_fin: today,
+    usuario_id: user?.id,
   });
 
   const isLoading = areaLoading;
@@ -275,7 +276,7 @@ export function MiDesempenoPage() {
                 titulo="Tiempo promedio de servicios completados"
                 valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_min) : "—"}
                 unidad=""
-                descripcion="Promedio del área en el período actual"
+                descripcion="Promedio de tus servicios completados en el período actual"
                 color="bg-orange-600"
                 icon={Clock}
                 formula="Σ(tracking_fin − tracking_inicio) ÷ N° de servicios completados en el período"

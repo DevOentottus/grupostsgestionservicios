@@ -398,6 +398,7 @@ export async function seguimientoController(app: FastifyInstance) {
       fecha_inicio?: string;
       fecha_fin?: string;
       area_id?: string;
+      usuario_id?: string;
       comparar_periodo?: string;
       comparar_fecha_inicio?: string;
       comparar_fecha_fin?: string;
@@ -406,6 +407,7 @@ export async function seguimientoController(app: FastifyInstance) {
     const desde = query.fecha_inicio || query.desde || null;
     const hasta = query.fecha_fin || query.hasta || null;
     const areaId = query.area_id ? parseInt(query.area_id) : null;
+    const usuarioId = query.usuario_id ? parseInt(query.usuario_id) : null;
     const compararPeriodo = query.comparar_periodo === "true";
 
     const fechaInicio = desde ? new Date(desde) : null;
@@ -577,6 +579,34 @@ export async function seguimientoController(app: FastifyInstance) {
       }
     }
     const tiempoPromedioMin = completados > 0 ? Math.round(sumaTiempoReal / completados) : 0;
+
+    // Si se especificó un usuario, recalcular tiempo_promedio_min solo para sus servicios
+    let userTiempoPromedioMin: number | null = null;
+    if (usuarioId) {
+      const userTareaIds = new Set(
+        (tareasCompletadasPeriodo || [])
+          .filter((t: any) => t.tarea_completado_por === usuarioId)
+          .map((t: any) => t.tarea_id)
+      );
+      const userSvcIds = new Set(
+        (tareasCompletadasPeriodo || [])
+          .filter((t: any) => t.tarea_completado_por === usuarioId)
+          .map((t: any) => t.servicio_id)
+      );
+      const userCompletados = userSvcIds.size;
+      if (userCompletados > 0) {
+        let userSuma = 0;
+        for (const tr of trackingData || []) {
+          if (userTareaIds.has(tr.tarea_id) && tr.tracking_inicio && tr.tracking_fin) {
+            const diffMin = Math.floor(
+              (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
+            );
+            if (diffMin > 0) userSuma += diffMin;
+          }
+        }
+        userTiempoPromedioMin = Math.round(userSuma / userCompletados);
+      }
+    }
 
     // -- Retrasos (tarea con tiempo estimado vs real) --
     // Usamos servicio_tiempo_estimado como referencia vs diff tracking
@@ -1020,7 +1050,7 @@ export async function seguimientoController(app: FastifyInstance) {
             },
           },
           eficiencia: {
-            tiempo_promedio_min: tiempoPromedioMin,
+            tiempo_promedio_min: userTiempoPromedioMin ?? tiempoPromedioMin,
             porcentaje_a_tiempo: porcentajeATiempo,
             cantidad_retrasos: retrasos,
           },

@@ -616,6 +616,7 @@ export interface DashboardFilters {
   fecha_inicio?: string;
   fecha_fin?: string;
   area_id?: number;
+  usuario_id?: number;
   comparar_periodo?: boolean;
   comparar_fecha_inicio?: string;
   comparar_fecha_fin?: string;
