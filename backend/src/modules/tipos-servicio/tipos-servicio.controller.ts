@@ -30,7 +30,7 @@ export async function tiposServicioController(app: FastifyInstance) {
 
   // ── GET /api/tipos-servicio ──────────────────────────────
   app.get("/api/tipos-servicio", { preHandler: [requireRoles()] }, async (_request) => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("tipos_servicio")
       .select("*")
       .order("nombre");
@@ -41,7 +41,7 @@ export async function tiposServicioController(app: FastifyInstance) {
   // ── GET /api/tipos-servicio/:id ──────────────────────────
   app.get("/api/tipos-servicio/:id", { preHandler: [requireRoles()] }, async (request) => {
     const { id } = request.params as { id: string };
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("tipos_servicio")
       .select("*, fallas_comunes(*)")
       .eq("id", parseInt(id))
@@ -54,7 +54,7 @@ export async function tiposServicioController(app: FastifyInstance) {
   // ── POST /api/tipos-servicio ─────────────────────────────
   app.post("/api/tipos-servicio", { preHandler: [requireRoles("admin", "sistema")] }, async (request, reply) => {
     const input = crearTipoSchema.parse(request.body);
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("tipos_servicio")
       .insert({
         nombre: input.nombre,
@@ -79,7 +79,7 @@ export async function tiposServicioController(app: FastifyInstance) {
     if (input.tiempo_estimado_min !== undefined) updateData.tiempo_estimado_min = input.tiempo_estimado_min;
     updateData.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("tipos_servicio")
       .update(updateData)
       .eq("id", parseInt(id))
@@ -93,7 +93,7 @@ export async function tiposServicioController(app: FastifyInstance) {
   // ── DELETE /api/tipos-servicio/:id (soft) ────────────────
   app.delete("/api/tipos-servicio/:id", { preHandler: [requireRoles("admin", "sistema")] }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("tipos_servicio")
       .update({ activo: false, updated_at: new Date().toISOString() })
       .eq("id", parseInt(id));
@@ -105,7 +105,7 @@ export async function tiposServicioController(app: FastifyInstance) {
   // ── GET /api/tipos-servicio/:id/fallas ───────────────────
   app.get("/api/tipos-servicio/:id/fallas", { preHandler: [requireRoles()] }, async (request) => {
     const { id } = request.params as { id: string };
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("fallas_comunes")
       .select("*")
       .eq("tipo_servicio_id", parseInt(id))
@@ -119,7 +119,7 @@ export async function tiposServicioController(app: FastifyInstance) {
     const { id } = request.params as { id: string };
     const input = crearFallaSchema.parse(request.body);
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("fallas_comunes")
       .insert({
         tipo_servicio_id: parseInt(id),
@@ -142,7 +142,7 @@ export async function tiposServicioController(app: FastifyInstance) {
     if (input.nombre !== undefined) updateData.nombre = input.nombre;
     if (input.descripcion !== undefined) updateData.descripcion = input.descripcion;
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("fallas_comunes")
       .update(updateData)
       .eq("id", parseInt(id))
@@ -156,7 +156,7 @@ export async function tiposServicioController(app: FastifyInstance) {
   // ── DELETE /api/fallas-comunes/:id (soft) ────────────────
   app.delete("/api/fallas-comunes/:id", { preHandler: [requireRoles("admin", "sistema")] }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from("fallas_comunes")
       .update({ activo: false })
       .eq("id", parseInt(id));

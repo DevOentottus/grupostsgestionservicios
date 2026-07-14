@@ -243,14 +243,14 @@ export async function serviciosController(app: FastifyInstance) {
     let tipoServicioId: number | null = null;
     let tiempoEstimado: number | null = input.tiempo_estimado ?? null;
     if (input.falla_comun_id) {
-      const { data: falla } = await supabase
+      const { data: falla } = await (supabase as any)
         .from("fallas_comunes")
         .select("tipo_servicio_id")
         .eq("id", input.falla_comun_id)
         .single();
       if (falla) {
         tipoServicioId = falla.tipo_servicio_id;
-        const { data: tipo } = await supabase
+        const { data: tipo } = await (supabase as any)
           .from("tipos_servicio")
           .select("tiempo_estimado_min")
           .eq("id", tipoServicioId)
@@ -299,7 +299,7 @@ export async function serviciosController(app: FastifyInstance) {
         servicio_permite_evidencia: input.permite_evidencia ?? true,
         servicio_fecha_creacion: now.toISOString().split("T")[0],
         servicio_hora_creacion: now.toTimeString().split(" ")[0],
-      })
+      } as any)
       .select();
 
     if (error) throw new Error(error.message);
