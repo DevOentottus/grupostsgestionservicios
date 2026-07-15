@@ -2,7 +2,10 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import rateLimit from "@fastify/rate-limit";
-import fastifyStatic from "@fastify/static";
+
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
 
 import { config } from "@/core/config/index.js";
 import { errorHandler } from "@/core/middleware/error-handler.js";
@@ -29,12 +32,6 @@ import { ofertasController } from "@/modules/ofertas/ofertas.controller.js";
 import { notificacionesController } from "@/modules/notificaciones/notificaciones.controller.js";
 import { tiposServicioController } from "@/modules/tipos-servicio/tipos-servicio.controller.js";
 import { cleanupSeguridad } from "@/scripts/cleanup-seguridad.js";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
-import fs from "fs";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 export async function buildApp() {
   const app = Fastify({ logger: config.isDev });
@@ -105,20 +102,40 @@ export async function buildApp() {
   await app.register(tiposServicioController);
 
   // ── Frontend estático (Docker/producción) ────────────────
-  const publicDir = process.env.PUBLIC_DIR || join(__dirname, "..", "..", "..", "public");
-  if (fs.existsSync(publicDir)) {
-    await app.register(fastifyStatic, {
-      root: publicDir,
-      prefix: "/",
-      wildcard: false,
-    });
-
-    app.setNotFoundHandler(async (_request, reply) => {
-      if (_request.url.startsWith("/api")) {
-        return reply.status(404).send({ error: "Ruta no encontrada" });
+  let publicDir: string | undefined = process.env.PUBLIC_DIR;
+  if (!publicDir && typeof __dirname !== "undefined") {
+    // CJS (serverless bundle): __dirname funciona directamente
+    publicDir = join(__dirname, "..", "..", "..", "public");
+  }
+  if (!publicDir) {
+    try {
+      // ESM (tsx local dev): usar import.meta.url
+      const metaUrl: string | undefined = (import.meta as any)?.url;
+      if (metaUrl) {
+        publicDir = join(dirname(fileURLToPath(metaUrl)), "..", "..", "..", "public");
       }
-      return reply.sendFile("index.html");
-    });
+    } catch {
+      // Sin PUBLIC_DIR definido ni forma de detectar la ruta
+    }
+  }
+  if (publicDir && fs.existsSync(publicDir)) {
+    try {
+      const { default: fastifyStatic } = await import("@fastify/static");
+      await app.register(fastifyStatic, {
+        root: publicDir,
+        prefix: "/",
+        wildcard: false,
+      });
+
+      app.setNotFoundHandler(async (_request, reply) => {
+        if (_request.url.startsWith("/api")) {
+          return reply.status(404).send({ error: "Ruta no encontrada" });
+        }
+        return reply.sendFile("index.html");
+      });
+    } catch {
+      // Plugin no disponible o error al registrar
+    }
   }
 
   // ── Cleanup programado de seguridad (cada 24h) ────────────
