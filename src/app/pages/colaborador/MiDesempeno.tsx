@@ -395,68 +395,79 @@ export function MiDesempenoPage() {
    * ────────────────────────────────────────── */
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <>
       {/* ═══════════════════════════════ */}
-      {/* HERO HEADER                    */}
+      {/* HERO HEADER - FULL WIDTH       */}
       {/* ═══════════════════════════════ */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-5">
-          <div className="flex items-center gap-4">
-            <Avatar nombre={user?.nombres || "?"} className="w-12 h-12 text-base ring-4 ring-white/20" />
-            <div className="min-w-0">
-              <h1 className="text-xl font-bold text-white">Mi Desempeño</h1>
-              <p className="text-emerald-100 text-sm truncate">
-                {user?.nombres || "Colaborador"}
-                {miArea?.area?.nombre && <span className="hidden sm:inline"> · {miArea.area.nombre}</span>}
-              </p>
-            </div>
-            <div className="ml-auto hidden sm:flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2 text-emerald-50 text-xs">
-              <BarChart3 className="w-3.5 h-3.5 text-emerald-200" />
-              <span>{periodoLabel}</span>
+      <div className="bg-white shadow-sm">
+        <div className="bg-gradient-to-r from-emerald-600 to-emerald-700">
+          <div className="max-w-7xl mx-auto px-6 py-5">
+            <div className="flex items-center gap-4">
+              <Avatar nombre={user?.nombres || "?"} className="w-12 h-12 text-base ring-4 ring-white/20" />
+              <div className="min-w-0">
+                <h1 className="text-xl font-bold text-white">Mi Desempeño</h1>
+                <p className="text-emerald-100 text-sm truncate">
+                  {user?.nombres || "Colaborador"}
+                  {miArea?.area?.nombre && <span className="hidden sm:inline"> · {miArea.area.nombre}</span>}
+                </p>
+              </div>
+              <div className="ml-auto hidden sm:flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2 text-emerald-50 text-xs">
+                <BarChart3 className="w-3.5 h-3.5 text-emerald-200" />
+                <span>{periodoLabel}</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Micro-resumen */}
+        {/* Micro-resumen + Filtro de fechas */}
         {misDatos && (
-          <div className="px-5 py-4">
-            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-3">Resumen rápido</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {highlights.map((h) => {
-                const colorMap: Record<string, string> = {
-                  blue: "bg-blue-50 text-blue-700 border-blue-200",
-                  indigo: "bg-indigo-50 text-indigo-700 border-indigo-200",
-                  amber: "bg-amber-50 text-amber-700 border-amber-200",
-                  emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
-                };
-                return (
-                  <div
-                    key={h.label}
-                    className={cn("rounded-xl border px-3.5 py-2.5 flex items-center justify-between gap-2", colorMap[h.color])}
-                  >
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-medium opacity-75 truncate">{h.label}</p>
-                      <p className="text-lg font-bold leading-tight">{h.valor}</p>
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="py-4">
+              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-3">Resumen rápido</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {highlights.map((h) => {
+                  const colorMap: Record<string, string> = {
+                    blue: "bg-blue-50 text-blue-700 border-blue-200",
+                    indigo: "bg-indigo-50 text-indigo-700 border-indigo-200",
+                    amber: "bg-amber-50 text-amber-700 border-amber-200",
+                    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                  };
+                  return (
+                    <div
+                      key={h.label}
+                      className={cn("rounded-xl border px-3.5 py-2.5 flex items-center justify-between gap-2", colorMap[h.color])}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-medium opacity-75 truncate">{h.label}</p>
+                        <p className="text-lg font-bold leading-tight">{h.valor}</p>
+                      </div>
+                      {h.variacion != null && <TrendBadge variacion={h.variacion} size="xs" />}
                     </div>
-                    {h.variacion != null && <TrendBadge variacion={h.variacion} size="xs" />}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Filtro de fechas dentro del hero */}
+            <div className="pb-5">
+              <DateFilterCard
+                presets={presets}
+                fechaInicio={fechaInicio}
+                fechaFin={fechaFin}
+                periodoLabel={periodoLabel}
+                onFechaInicio={(v) => setFechaInicio(v)}
+                onFechaFin={(v) => setFechaFin(v)}
+                onLabelChange={(l) => setPeriodoLabel(l)}
+              />
             </div>
           </div>
         )}
       </div>
 
-      {/* Filtro de fechas */}
-      <DateFilterCard
-        presets={presets}
-        fechaInicio={fechaInicio}
-        fechaFin={fechaFin}
-        periodoLabel={periodoLabel}
-        onFechaInicio={(v) => setFechaInicio(v)}
-        onFechaFin={(v) => setFechaFin(v)}
-        onLabelChange={(l) => setPeriodoLabel(l)}
-      />
+      {/* ═══════════════════════════════ */}
+      {/* CONTENIDO PRINCIPAL            */}
+      {/* ═══════════════════════════════ */}
+      <div className="space-y-6 max-w-7xl mx-auto px-6">
 
       {/* ═══════════════════════════════ */}
       {/* LOADING STATE                   */}
@@ -855,5 +866,6 @@ export function MiDesempenoPage() {
         </>
       )}
     </div>
+    </>
   );
 }
