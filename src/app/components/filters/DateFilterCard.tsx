@@ -27,7 +27,7 @@ export function DateFilterCard({
   onLabelChange,
 }: DateFilterCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-3 flex flex-wrap items-center gap-2">
+    <div className="bg-white rounded-xl border border-slate-200 p-3 flex flex-wrap items-center gap-x-2 gap-y-2">
       <CalendarDays className="w-4 h-4 text-slate-400 shrink-0" />
       <div className="flex flex-wrap gap-1.5">
         {presets.map((p) => (
@@ -45,7 +45,7 @@ export function DateFilterCard({
           </button>
         ))}
       </div>
-      <div className="flex items-center gap-1.5 ml-2">
+      <div className="flex items-center gap-1.5 w-full sm:w-auto">
         <input
           type="date"
           value={fechaInicio}
@@ -55,9 +55,9 @@ export function DateFilterCard({
             if (!fechaFin) onFechaFin(v);
             onLabelChange("Personalizado");
           }}
-          className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-500"
+          className="flex-1 sm:flex-none text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 min-w-0"
         />
-        <span className="text-xs text-slate-400">→</span>
+        <span className="text-xs text-slate-400 shrink-0">→</span>
         <input
           type="date"
           value={fechaFin}
@@ -67,10 +67,10 @@ export function DateFilterCard({
             if (!fechaInicio) onFechaInicio(v);
             onLabelChange("Personalizado");
           }}
-          className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-500"
+          className="flex-1 sm:flex-none text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 min-w-0"
         />
+        <span className="text-[11px] text-slate-400 whitespace-nowrap shrink-0">{periodoLabel}</span>
       </div>
-      <span className="text-[11px] text-slate-400 ml-auto">{periodoLabel}</span>
     </div>
   );
 }

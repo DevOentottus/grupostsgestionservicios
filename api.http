@@ -1,0 +1,850 @@
+### ============================================
+### GRUPOSTS — API REST (REST Client)
+### ============================================
+### Instalá la extensión "REST Client" en VS Code
+### y usá "Send Request" arriba de cada bloque.
+### ============================================
+
+### ─── Variables ───
+@baseUrl = http://localhost:3000
+@token = 
+@servicioId = 1
+@tareaId = 1
+@areaId = 1
+@usuarioId = 1
+@codigoServicio = SRV-0001
+@codigoPublico = 123456
+@plantillaId = 1
+@anuncioId = 1
+@solicitudId = 1
+@notificacionId = 1
+@comentarioId = 1
+@evidenciaId = 1
+@tiempoId = 1
+@sesionId = 1
+@ofertaId = 1
+@tipoServicioId = 1
+@fallaId = 1
+
+### ══════════════════════════════════════════════
+### AUTH
+### ══════════════════════════════════════════════
+
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "123456"
+}
+
+### Refresh token
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": ""
+}
+
+### Obtener usuario actual
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### Cambiar contraseña
+PATCH {{baseUrl}}/api/auth/password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "password_actual": "123456",
+  "password_nueva": "nuevapass"
+}
+
+### ══════════════════════════════════════════════
+### HEALTH
+### ══════════════════════════════════════════════
+
+### Health check
+GET {{baseUrl}}/api/health
+
+### ══════════════════════════════════════════════
+### DASHBOARD / SEGUIMIENTO
+### ══════════════════════════════════════════════
+
+### Dashboard general
+GET {{baseUrl}}/api/dashboard
+Authorization: Bearer {{token}}
+
+### Dashboard PDF
+GET {{baseUrl}}/api/seguimiento/dashboard/pdf
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### SERVICIOS
+### ══════════════════════════════════════════════
+
+### Listar servicios
+GET {{baseUrl}}/api/servicios?limit=10&offset=0
+Authorization: Bearer {{token}}
+
+### Servicios archivados
+GET {{baseUrl}}/api/servicios/archived
+Authorization: Bearer {{token}}
+
+### Obtener servicio por ID
+GET {{baseUrl}}/api/servicios/{{servicioId}}
+Authorization: Bearer {{token}}
+
+### Crear servicio
+POST {{baseUrl}}/api/servicios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "cliente": "Cliente Ejemplo",
+  "telefono": "999888777",
+  "direccion": "Av. Principal 123",
+  "tipo_servicio_id": 1,
+  "area_id": 1,
+  "descripcion": "Servicio de prueba",
+  "prioridad": "normal"
+}
+
+### Actualizar servicio
+PUT {{baseUrl}}/api/servicios/{{servicioId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "cliente": "Cliente Actualizado"
+}
+
+### Cambiar estado del servicio
+PATCH {{baseUrl}}/api/servicios/{{servicioId}}/estado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "estado": "en_progreso"
+}
+
+### Archivar servicio
+POST {{baseUrl}}/api/servicios/{{servicioId}}/archive
+Authorization: Bearer {{token}}
+
+### Desarchivar servicio
+POST {{baseUrl}}/api/servicios/{{servicioId}}/unarchive
+Authorization: Bearer {{token}}
+
+### Iniciar servicio (asignar colaborador)
+POST {{baseUrl}}/api/servicios/{{servicioId}}/iniciar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "colaborador_id": 1
+}
+
+### ══════════════════════════════════════════════
+### TAREAS
+### ══════════════════════════════════════════════
+
+### Listar tareas de un servicio
+GET {{baseUrl}}/api/servicios/{{servicioId}}/tareas
+Authorization: Bearer {{token}}
+
+### Crear tarea
+POST {{baseUrl}}/api/servicios/{{servicioId}}/tareas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "descripcion": "Realizar diagnóstico",
+  "orden": 1
+}
+
+### Actualizar tarea
+PUT {{baseUrl}}/api/tareas/{{tareaId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "descripcion": "Descripción actualizada"
+}
+
+### Completar tarea
+PATCH {{baseUrl}}/api/tareas/{{tareaId}}/completar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "foto_evidencia": null
+}
+
+### Reabrir tarea
+PATCH {{baseUrl}}/api/tareas/{{tareaId}}/reabrir
+Authorization: Bearer {{token}}
+
+### Eliminar tarea
+DELETE {{baseUrl}}/api/tareas/{{tareaId}}
+Authorization: Bearer {{token}}
+
+### Reordenar tareas
+PUT {{baseUrl}}/api/tareas/reordenar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orden": [3, 1, 2]
+}
+
+### PATCH tarea desde servicio
+PATCH {{baseUrl}}/api/servicios/{{servicioId}}/tareas/{{tareaId}}
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### TIEMPOS
+### ══════════════════════════════════════════════
+
+### Iniciar tiempo de tarea
+POST {{baseUrl}}/api/tareas/{{tareaId}}/tiempo/iniciar
+Authorization: Bearer {{token}}
+
+### Obtener tiempo de tarea
+GET {{baseUrl}}/api/tareas/{{tareaId}}/tiempo
+Authorization: Bearer {{token}}
+
+### Obtener tiempos de servicio
+GET {{baseUrl}}/api/servicios/{{servicioId}}/tiempos
+Authorization: Bearer {{token}}
+
+### Pausar tiempo
+PATCH {{baseUrl}}/api/tiempo/{{tiempoId}}/pausar
+Authorization: Bearer {{token}}
+
+### Reanudar tiempo
+PATCH {{baseUrl}}/api/tiempo/{{tiempoId}}/reanudar
+Authorization: Bearer {{token}}
+
+### Finalizar tiempo
+PATCH {{baseUrl}}/api/tiempo/{{tiempoId}}/finalizar
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### ENCUESTAS / SATISFACCIÓN
+### ══════════════════════════════════════════════
+
+### Enviar encuesta (interno)
+POST {{baseUrl}}/api/servicios/{{servicioId}}/encuesta
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "calificacion": 5,
+  "comentario": "Excelente servicio"
+}
+
+### Obtener encuesta
+GET {{baseUrl}}/api/servicios/{{servicioId}}/encuesta
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### PÚBLICO (sin autenticación)
+### ══════════════════════════════════════════════
+
+### Obtener servicio por código (público)
+GET {{baseUrl}}/api/public/servicios/{{codigoPublico}}
+
+### Enviar encuesta (público)
+POST {{baseUrl}}/api/public/servicios/{{codigoPublico}}/encuesta
+Content-Type: application/json
+
+{
+  "calificacion": 4,
+  "comentario": "Buen servicio"
+}
+
+### Evidencias públicas
+GET {{baseUrl}}/api/public/servicios/{{codigoPublico}}/evidencias
+
+### Reporte público
+GET {{baseUrl}}/api/public/servicios/{{codigoPublico}}/reporte
+
+### Display TV
+GET {{baseUrl}}/api/public/display/tv
+
+### Display Sala de Espera
+GET {{baseUrl}}/api/public/display/sala-espera/{{codigoPublico}}
+
+### ══════════════════════════════════════════════
+### ÁREAS
+### ══════════════════════════════════════════════
+
+### Listar áreas
+GET {{baseUrl}}/api/areas
+Authorization: Bearer {{token}}
+
+### Obtener área
+GET {{baseUrl}}/api/areas/{{areaId}}
+Authorization: Bearer {{token}}
+
+### Crear área
+POST {{baseUrl}}/api/areas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Nueva Área",
+  "encargado_id": 1
+}
+
+### Actualizar área
+PUT {{baseUrl}}/api/areas/{{areaId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Área Actualizada"
+}
+
+### Eliminar área
+DELETE {{baseUrl}}/api/areas/{{areaId}}
+Authorization: Bearer {{token}}
+
+### Agregar colaborador a área
+POST {{baseUrl}}/api/areas/{{areaId}}/colaboradores
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "usuario_id": 2
+}
+
+### Quitar colaborador de área
+DELETE {{baseUrl}}/api/areas/{{areaId}}/colaboradores/{{usuarioId}}
+Authorization: Bearer {{token}}
+
+### Servicios de un área
+GET {{baseUrl}}/api/areas/{{areaId}}/servicios
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### USUARIOS
+### ══════════════════════════════════════════════
+
+### Listar usuarios
+GET {{baseUrl}}/api/usuarios
+Authorization: Bearer {{token}}
+
+### Crear usuario
+POST {{baseUrl}}/api/usuarios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombres": "Nuevo Usuario",
+  "email": "nuevo@ejemplo.com",
+  "username": "nuevousuario",
+  "password": "123456",
+  "rol": "colaborador"
+}
+
+### Actualizar usuario
+PUT {{baseUrl}}/api/usuarios/{{usuarioId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombres": "Nombre Actualizado"
+}
+
+### Cambiar estado de usuario
+PATCH {{baseUrl}}/api/usuarios/{{usuarioId}}/estado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "activo": false
+}
+
+### Cambiar contraseña de usuario
+PUT {{baseUrl}}/api/usuarios/{{usuarioId}}/password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "password": "nuevapass123"
+}
+
+### ══════════════════════════════════════════════
+### TIPOS DE SERVICIO / FALLAS
+### ══════════════════════════════════════════════
+
+### Listar tipos de servicio
+GET {{baseUrl}}/api/tipos-servicio
+Authorization: Bearer {{token}}
+
+### Obtener tipo de servicio
+GET {{baseUrl}}/api/tipos-servicio/{{tipoServicioId}}
+Authorization: Bearer {{token}}
+
+### Crear tipo de servicio
+POST {{baseUrl}}/api/tipos-servicio
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Reparación",
+  "descripcion": "Reparación general"
+}
+
+### Actualizar tipo de servicio
+PUT {{baseUrl}}/api/tipos-servicio/{{tipoServicioId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Reparación Electrónica"
+}
+
+### Eliminar tipo de servicio
+DELETE {{baseUrl}}/api/tipos-servicio/{{tipoServicioId}}
+Authorization: Bearer {{token}}
+
+### Listar fallas comunes
+GET {{baseUrl}}/api/fallas-comunes
+Authorization: Bearer {{token}}
+
+### Fallas de un tipo de servicio
+GET {{baseUrl}}/api/tipos-servicio/{{tipoServicioId}}/fallas
+Authorization: Bearer {{token}}
+
+### Crear falla común
+POST {{baseUrl}}/api/tipos-servicio/{{tipoServicioId}}/fallas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Pantalla rota",
+  "descripcion": "La pantalla está físicamente dañada"
+}
+
+### Actualizar falla común
+PUT {{baseUrl}}/api/fallas-comunes/{{fallaId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Pantalla agrietada"
+}
+
+### Eliminar falla común
+DELETE {{baseUrl}}/api/fallas-comunes/{{fallaId}}
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### PLANTILLAS
+### ══════════════════════════════════════════════
+
+### Listar plantillas
+GET {{baseUrl}}/api/plantillas
+Authorization: Bearer {{token}}
+
+### Obtener plantilla
+GET {{baseUrl}}/api/plantillas/{{plantillaId}}
+Authorization: Bearer {{token}}
+
+### Crear plantilla
+POST {{baseUrl}}/api/plantillas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Plantilla Diagnóstico",
+  "area_id": 1,
+  "tareas": [
+    {"descripcion": "Revisión inicial", "orden": 1},
+    {"descripcion": "Pruebas", "orden": 2}
+  ]
+}
+
+### Actualizar plantilla
+PUT {{baseUrl}}/api/plantillas/{{plantillaId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nombre": "Plantilla Actualizada"
+}
+
+### Eliminar plantilla
+DELETE {{baseUrl}}/api/plantillas/{{plantillaId}}
+Authorization: Bearer {{token}}
+
+### Aplicar plantilla a servicio
+POST {{baseUrl}}/api/plantillas/{{plantillaId}}/aplicar/{{servicioId}}
+Authorization: Bearer {{token}}
+
+### Marcar plantilla como favorita
+POST {{baseUrl}}/api/plantillas/favoritos/{{plantillaId}}
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### NOTIFICACIONES
+### ══════════════════════════════════════════════
+
+### Listar notificaciones
+GET {{baseUrl}}/api/notificaciones
+Authorization: Bearer {{token}}
+
+### Notificaciones no leídas
+GET {{baseUrl}}/api/notificaciones/no-leidas
+Authorization: Bearer {{token}}
+
+### Obtener notificación
+GET {{baseUrl}}/api/notificaciones/{{notificacionId}}
+Authorization: Bearer {{token}}
+
+### Marcar como leída
+PATCH {{baseUrl}}/api/notificaciones/{{notificacionId}}/leer
+Authorization: Bearer {{token}}
+
+### Marcar todas como leídas
+PATCH {{baseUrl}}/api/notificaciones/leer-todas
+Authorization: Bearer {{token}}
+
+### Enviar notificación manual
+POST {{baseUrl}}/api/notificaciones/enviar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "usuario_id": 1,
+  "titulo": "Notificación de prueba",
+  "mensaje": "Este es un mensaje de prueba",
+  "tipo": "info"
+}
+
+### ══════════════════════════════════════════════
+### EVIDENCIAS
+### ══════════════════════════════════════════════
+
+### Subir evidencia
+POST {{baseUrl}}/api/evidencias/upload
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="foto.jpg"
+Content-Type: image/jpeg
+
+< ./ruta/a/tu/foto.jpg
+--boundary
+Content-Disposition: form-data; name="servicio_id"
+
+1
+--boundary--
+
+### Evidencias de un servicio
+GET {{baseUrl}}/api/servicios/{{servicioId}}/evidencias
+Authorization: Bearer {{token}}
+
+### Agregar comentario a evidencia
+POST {{baseUrl}}/api/evidencias/{{evidenciaId}}/comentario
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "comentario": "Evidencia verificada"
+}
+
+### Cambiar estado de evidencia
+PATCH {{baseUrl}}/api/evidencias/{{evidenciaId}}/estado
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "estado": "aprobado"
+}
+
+### Mostrar evidencia al cliente
+PATCH {{baseUrl}}/api/evidencias/{{evidenciaId}}/mostrar-cliente
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "mostrar": true
+}
+
+### ══════════════════════════════════════════════
+### COMENTARIOS
+### ══════════════════════════════════════════════
+
+### Comentarios de un servicio
+GET {{baseUrl}}/api/servicios/{{servicioId}}/comentarios
+Authorization: Bearer {{token}}
+
+### Agregar comentario a servicio
+POST {{baseUrl}}/api/servicios/{{servicioId}}/comentarios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "contenido": "Comentario de prueba"
+}
+
+### Agregar comentario a tarea
+POST {{baseUrl}}/api/servicios/{{servicioId}}/tareas/{{tareaId}}/comentarios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "contenido": "Comentario sobre la tarea"
+}
+
+### Eliminar comentario
+DELETE {{baseUrl}}/api/comentarios/{{comentarioId}}
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### SOLICITUDES
+### ══════════════════════════════════════════════
+
+### Listar solicitudes
+GET {{baseUrl}}/api/solicitudes
+Authorization: Bearer {{token}}
+
+### Mis solicitudes
+GET {{baseUrl}}/api/solicitudes/mis-solicitudes
+Authorization: Bearer {{token}}
+
+### Crear solicitud
+POST {{baseUrl}}/api/solicitudes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "tipo": "soporte",
+  "descripcion": "Solicito asistencia técnica",
+  "prioridad": "alta"
+}
+
+### Atender solicitud
+PATCH {{baseUrl}}/api/solicitudes/{{solicitudId}}/atender
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "respuesta": "Solicitud atendida"
+}
+
+### ══════════════════════════════════════════════
+### ANUNCIOS
+### ══════════════════════════════════════════════
+
+### Listar anuncios
+GET {{baseUrl}}/api/anuncios
+Authorization: Bearer {{token}}
+
+### Todos los anuncios
+GET {{baseUrl}}/api/anuncios/todos
+Authorization: Bearer {{token}}
+
+### Crear anuncio
+POST {{baseUrl}}/api/anuncios
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "titulo": "Aviso importante",
+  "contenido": "Mantenimiento programado",
+  "tipo": "info"
+}
+
+### Actualizar anuncio
+PATCH {{baseUrl}}/api/anuncios/{{anuncioId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "titulo": "Aviso actualizado"
+}
+
+### Eliminar anuncio
+DELETE {{baseUrl}}/api/anuncios/{{anuncioId}}
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### OFERTAS
+### ══════════════════════════════════════════════
+
+### Listar ofertas
+GET {{baseUrl}}/api/ofertas
+Authorization: Bearer {{token}}
+
+### Imagen de oferta
+GET {{baseUrl}}/api/ofertas/imagen/nombre-archivo.jpg
+
+### ══════════════════════════════════════════════
+### AUDITORÍA
+### ══════════════════════════════════════════════
+
+### Log de auditoría
+GET {{baseUrl}}/api/auditoria?limit=50&offset=0
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### REPORTES
+### ══════════════════════════════════════════════
+
+### Reporte por área
+GET {{baseUrl}}/api/reportes/area?area_id=1&fecha_inicio=2026-01-01&fecha_fin=2026-12-31
+Authorization: Bearer {{token}}
+
+### Reporte por colaborador
+GET {{baseUrl}}/api/reportes/colaborador?usuario_id=1&fecha_inicio=2026-01-01&fecha_fin=2026-12-31
+Authorization: Bearer {{token}}
+
+### Exportar reporte (pdf / excel)
+GET {{baseUrl}}/api/reportes/exportar/area/pdf?area_id=1&fecha_inicio=2026-01-01&fecha_fin=2026-12-31
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### MANAGER / GESTIÓN
+### ══════════════════════════════════════════════
+
+### Mi área
+GET {{baseUrl}}/api/manager/mi-area
+Authorization: Bearer {{token}}
+
+### Distribución
+GET {{baseUrl}}/api/manager/distribucion?area_id=1
+Authorization: Bearer {{token}}
+
+### Desempeño de colaborador
+GET {{baseUrl}}/api/manager/desempeno/{{usuarioId}}?fecha_inicio=2026-01-01&fecha_fin=2026-12-31
+Authorization: Bearer {{token}}
+
+### Clientes
+GET {{baseUrl}}/api/manager/clientes
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### SEGURIDAD
+### ══════════════════════════════════════════════
+
+### Resumen de seguridad
+GET {{baseUrl}}/api/seguridad/resumen
+Authorization: Bearer {{token}}
+
+### Intentos fallidos
+GET {{baseUrl}}/api/seguridad/intentos-fallidos
+Authorization: Bearer {{token}}
+
+### Sesiones activas
+GET {{baseUrl}}/api/seguridad/sesiones
+Authorization: Bearer {{token}}
+
+### Cerrar sesión
+DELETE {{baseUrl}}/api/seguridad/sesiones/{{sesionId}}
+Authorization: Bearer {{token}}
+
+### IPs sospechosas
+GET {{baseUrl}}/api/seguridad/sospechoso
+Authorization: Bearer {{token}}
+
+### Exportar log de seguridad
+GET {{baseUrl}}/api/seguridad/exportar/pdf
+Authorization: Bearer {{token}}
+
+### Limpieza de seguridad
+POST {{baseUrl}}/api/seguridad/cleanup
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "dias": 90
+}
+
+### ══════════════════════════════════════════════
+### RENDIMIENTO
+### ══════════════════════════════════════════════
+
+### Rendimiento del sistema
+GET {{baseUrl}}/api/admin/rendimiento
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### DISPLAY
+### ══════════════════════════════════════════════
+
+### Trabajo en display
+GET {{baseUrl}}/api/display/trabajo
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### PUSH
+### ══════════════════════════════════════════════
+
+### Suscribir a push
+POST {{baseUrl}}/api/push/subscribe
+Content-Type: application/json
+
+{
+  "endpoint": "https://...",
+  "keys": {
+    "p256dh": "...",
+    "auth": "..."
+  }
+}
+
+### Desuscribir de push
+DELETE {{baseUrl}}/api/push/subscribe
+Content-Type: application/json
+
+{
+  "endpoint": "https://..."
+}
+
+### ══════════════════════════════════════════════
+### AUDIO
+### ══════════════════════════════════════════════
+
+### Subir audio
+POST {{baseUrl}}/api/upload/audio
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="audio.webm"
+Content-Type: audio/webm
+
+< ./ruta/a/tu/audio.webm
+--boundary
+Content-Disposition: form-data; name="servicio_id"
+
+1
+--boundary--
+
+### ══════════════════════════════════════════════
+### REPORTE TÉCNICO
+### ══════════════════════════════════════════════
+
+### Reporte técnico de servicio
+GET {{baseUrl}}/api/servicios/{{servicioId}}/reporte-tecnico
+Authorization: Bearer {{token}}
+
+### ══════════════════════════════════════════════
+### EVIDENCIA CONFIG EN TAREA
+### ══════════════════════════════════════════════
+
+### Configurar evidencia en tarea
+PATCH {{baseUrl}}/api/tareas/{{tareaId}}/evidencia-config
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "requiere_foto": true,
+  "requiere_audio": false
+}

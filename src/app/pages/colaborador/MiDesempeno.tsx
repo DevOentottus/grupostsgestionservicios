@@ -350,13 +350,15 @@ export function MiDesempenoPage() {
                 <h1 className="text-xl font-bold text-white">Mi Desempeño</h1>
                 <p className="text-emerald-100 text-sm truncate">
                   {user?.nombres || "Colaborador"}
-                  {miArea?.area?.nombre && <span className="hidden sm:inline"> · {miArea.area.nombre}</span>}
+                  {miArea?.area?.nombre && <span> · {miArea.area.nombre}</span>}
                 </p>
               </div>
-              <div className="ml-auto hidden sm:flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2 text-emerald-50 text-xs">
-                <BarChart3 className="w-3.5 h-3.5 text-emerald-200" />
-                <span>{periodoLabel}</span>
-              </div>
+              {periodoLabel && (
+                <div className="ml-auto flex items-center gap-1.5 bg-white/10 rounded-xl px-2.5 py-1.5 text-emerald-50 text-xs shrink-0">
+                  <BarChart3 className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
+                  <span className="min-w-0">{periodoLabel}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
