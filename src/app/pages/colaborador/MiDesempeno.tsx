@@ -46,10 +46,10 @@ function IndicadorCard({
       <div className={`h-1.5 ${color}`} />
       <div className="p-3">
         <div className="flex items-center gap-1.5">
-          <p className="text-[11px] text-slate-500 leading-tight">{titulo}</p>
+          <p className="text-xs text-slate-500 leading-tight">{titulo}</p>
           {formula && <InfoPopover formula={formula} descripcion={descripcion} />}
           <span className="ml-auto flex items-baseline gap-1 shrink-0">
-            <span className="text-lg font-bold text-slate-800">{typeof valor === "number" ? valor.toLocaleString() : valor}</span>
+            <span className="text-xl font-bold text-slate-800">{typeof valor === "number" ? valor.toLocaleString() : valor}</span>
             {unidad && <span className="text-xs text-slate-400">{unidad}</span>}
           </span>
         </div>
