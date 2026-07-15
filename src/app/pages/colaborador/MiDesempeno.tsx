@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
-import { useDashboard } from "@/api/queries/useDashboard.js";
+import { useDashboardWithComparison } from "@/api/queries/useDashboard.js";
 import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { cn, formatMinutos } from "@/app/lib/utils";
 import {
@@ -28,6 +28,34 @@ function StarRating({ rating }: { rating: number }) {
         />
       ))}
     </span>
+  );
+}
+
+function TrendBadge({ variacion }: { variacion: number }) {
+  if (variacion === 0) return <span className="text-xs text-slate-400">→ 0%</span>;
+  const up = variacion > 0;
+  return (
+    <span className={`text-xs font-medium inline-flex items-center gap-0.5 ${up ? "text-green-600" : "text-red-500"}`}>
+      {up ? "↑" : "↓"} {Math.abs(variacion)}%
+    </span>
+  );
+}
+
+function GoalBar({ actual, meta }: { actual: number; meta: number }) {
+  if (meta <= 0) return null;
+  const pct = Math.min(Math.round((actual / meta) * 100), 100);
+  const cumplida = actual >= meta;
+  return (
+    <div className="mt-2 pt-2 border-t border-slate-100">
+      <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+        <span>Progreso</span>
+        <span className={cumplida ? "text-green-600 font-medium" : ""}>{pct}%</span>
+      </div>
+      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${cumplida ? "bg-green-500" : "bg-amber-400"}`} style={{ width: `${pct}%` }} />
+      </div>
+      <p className="text-[10px] text-slate-400 mt-0.5">Meta: {meta}</p>
+    </div>
   );
 }
 
@@ -135,7 +163,7 @@ export function MiDesempenoPage() {
     },
   ];
 
-  const { data: dashboard, isLoading: dashLoading, isError: dashError } = useDashboard({
+  const { data: dashboard, isLoading: dashLoading, isError: dashError } = useDashboardWithComparison({
     fecha_inicio: fechaInicio,
     fecha_fin: fechaFin,
     usuario_id: user?.id,
@@ -155,12 +183,36 @@ export function MiDesempenoPage() {
   // Indicadores desde dashboard
   const kpi = dashboard?.kpi;
   const tieneDashboard = !!kpi;
+  const periodComparison = dashboard?.period_comparison;
 
   // Productividad personal (servicios completados en el período)
   const productividadPersonal = useMemo(() => {
     if (misDatos?.servicios_completados == null) return null;
     return misDatos.servicios_completados;
   }, [misDatos]);
+
+  // Benchmarking contra el área
+  const areaBenchmark = useMemo(() => {
+    if (!miArea?.colaboradores) return null;
+    const otros = miArea.colaboradores.filter(
+      (c: any) => c.usuario_id !== user?.id
+    );
+    if (otros.length === 0) return null;
+    const sumVal = (key: string) =>
+      otros.reduce((s: number, c: any) => s + (c[key] ?? 0), 0);
+    const avg = (key: string) => sumVal(key) / otros.length;
+    return {
+      avgServicios: avg("servicios_completados"),
+      avgCalificacion: (() => {
+        const conCalif = otros.filter((c: any) => c.calificacion_promedio != null);
+        return conCalif.length > 0
+          ? conCalif.reduce((s: number, c: any) => s + c.calificacion_promedio, 0) / conCalif.length
+          : null;
+      })(),
+      avgTareas: avg("tareas_completadas"),
+      totalColaboradores: otros.length,
+    };
+  }, [miArea, user?.id]);
 
   return (
     <div className="space-y-6">
@@ -222,6 +274,15 @@ export function MiDesempenoPage() {
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tareas completadas</p>
               </div>
               <p className="text-3xl font-bold text-slate-800">{misDatos.tareas_completadas ?? 0}</p>
+              {periodComparison && (
+                <div className="flex items-center gap-2 mt-2 text-xs">
+                  <span className="text-slate-400">{periodComparison.actual.tareas_completadas} en este período</span>
+                  <TrendBadge variacion={periodComparison.variacion.tareas} />
+                </div>
+              )}
+              {periodComparison && (
+                <GoalBar actual={periodComparison.actual.tareas_completadas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} />
+              )}
             </div>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-3">
@@ -231,13 +292,22 @@ export function MiDesempenoPage() {
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Servicios completados</p>
               </div>
               <p className="text-3xl font-bold text-indigo-600">{misDatos.servicios_completados ?? 0}</p>
+              {periodComparison && (
+                <div className="flex items-center gap-2 mt-2 text-xs">
+                  <span className="text-slate-400">{periodComparison.actual.servicios_completados} en este período</span>
+                  <TrendBadge variacion={periodComparison.variacion.servicios} />
+                </div>
+              )}
+              {periodComparison && (
+                <GoalBar actual={periodComparison.actual.servicios_completados} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} />
+              )}
             </div>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
                   <Clock className="w-4 h-4 text-amber-600" />
                 </div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tareas activas</p>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tareas pendientes</p>
               </div>
               <p className="text-3xl font-bold text-amber-600">{misDatos.tareas_activas ?? 0}</p>
             </div>
@@ -333,6 +403,12 @@ export function MiDesempenoPage() {
 
                   formula="Σ(tracking_fin − tracking_inicio) ÷ N° de servicios completados en el período"
                 />
+                {periodComparison && (
+                  <div className="flex items-center gap-1.5 px-5 pb-2 -mt-2">
+                    <span className="text-[10px] text-slate-400">Anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
+                    <TrendBadge variacion={periodComparison.variacion.tiempo} />
+                  </div>
+                )}
                 <IndicadorCard
 
                   titulo="Servicios dentro del tiempo estimado"
@@ -359,50 +435,64 @@ export function MiDesempenoPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* ============================================ */}
-            {/* PROP. 3: TRANSPARENCIA PARA EL CLIENTE */}
+            {/* PROP. 3: RENDIMIENTO VS ÁREA */}
             {/* ============================================ */}
             <PropuestaSection
-              titulo="Transparencia para el Cliente"
-              descripcion="Indicadores de consulta, visibilidad y satisfacción con el portal"
+              titulo="Rendimiento vs Área"
+              descripcion="Comparativa de tu rendimiento contra el promedio de tus compañeros"
             >
-              {tieneDashboard ? (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <IndicadorCard
-
-                    titulo="Servicios consultados por clientes"
-                    valor={kpi!.servicios_consultados_pct ?? 0}
-                    unidad="%"
-                    descripcion="Servicios con al menos 1 consulta en el portal"
-                    color="bg-sky-600"
-
-                    formula="(Servicios que tienen al menos 1 visita en la tabla visitas_portal ÷ Total de servicios) × 100"
-                  />
-                  <IndicadorCard
-
-                    titulo="Tiempo actualización → portal"
-                    valor={kpi!.tiempo_actualizacion_portal_promedio_min ?? 0}
-                    unidad="min"
-                    descripcion="Promedio: última tarea completada → primera visita al portal"
-                    color="bg-indigo-600"
-
-                    formula="Σ(primera visita al portal − última tarea completada) ÷ N° de servicios con visita después de completar"
-                  />
-                  <IndicadorCard
-
-                    titulo="Satisfacción con visibilidad"
-                    valor={kpi!.satisfaccion_visibilidad ?? 0}
-                    unidad="/5"
-                    descripcion="Evaluación de clientes sobre visibilidad del progreso"
-                    color="bg-violet-600"
-
-                    formula="Promedio de calificaciones (1–5) dadas por clientes en la categoría 'visibilidad del progreso'"
-                  />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="h-1.5 bg-indigo-600" />
+                  <div className="p-4">
+                    <p className="text-xs text-slate-500 mb-1">Servicios completados</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-bold text-slate-800">{misDatos.servicios_completados ?? 0}</span>
+                      <span className="text-xs text-slate-400">tú</span>
+                    </div>
+                    {areaBenchmark && (
+                      <div className="flex items-baseline gap-1.5 mt-1.5 pt-1.5 border-t border-slate-100">
+                        <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgServicios.toFixed(1)}</span>
+                        <span className="text-[10px] text-slate-400">prom. área ({areaBenchmark.totalColaboradores} colab.)</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <p className="text-sm text-slate-400 text-center py-4">
-                  Los indicadores de transparencia se actualizarán cuando los clientes usen el portal de seguimiento
-                </p>
-              )}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="h-1.5 bg-blue-600" />
+                  <div className="p-4">
+                    <p className="text-xs text-slate-500 mb-1">Tareas completadas</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-bold text-slate-800">{misDatos.tareas_completadas ?? 0}</span>
+                      <span className="text-xs text-slate-400">tú</span>
+                    </div>
+                    {areaBenchmark && (
+                      <div className="flex items-baseline gap-1.5 mt-1.5 pt-1.5 border-t border-slate-100">
+                        <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgTareas.toFixed(1)}</span>
+                        <span className="text-[10px] text-slate-400">prom. área</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="h-1.5 bg-yellow-600" />
+                  <div className="p-4">
+                    <p className="text-xs text-slate-500 mb-1">Calificación</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-bold text-slate-800">
+                        {misDatos.calificacion_promedio?.toFixed(1) ?? "—"}
+                      </span>
+                      <span className="text-xs text-slate-400">/5 · tú</span>
+                    </div>
+                    {areaBenchmark?.avgCalificacion != null && (
+                      <div className="flex items-baseline gap-1.5 mt-1.5 pt-1.5 border-t border-slate-100">
+                        <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgCalificacion.toFixed(1)}</span>
+                        <span className="text-[10px] text-slate-400">prom. área</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </PropuestaSection>
 
             {/* ============================================ */}
@@ -410,39 +500,76 @@ export function MiDesempenoPage() {
             {/* ============================================ */}
             <PropuestaSection
               titulo="Satisfacción y Mejora Continua"
-              descripcion="Métricas de calificación, evaluación y feedback de clientes"
+              descripcion="NPS, evaluación y feedback de clientes sobre tu servicio"
             >
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <IndicadorCard
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* NPS */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="h-1.5 bg-green-600" />
+                  <div className="p-4">
+                    <p className="text-xs text-slate-500 mb-1">NPS · Recomendación del servicio</p>
+                    {miArea?.satisfaccion && miArea.satisfaccion.cantidad > 0 ? (
+                      <>
+                        <div className="flex items-baseline gap-1.5">
+                          <span className={`text-3xl font-bold ${
+                            miArea.satisfaccion.nps > 0 ? "text-green-600" : miArea.satisfaccion.nps < 0 ? "text-red-600" : "text-slate-500"
+                          }`}>
+                            {miArea.satisfaccion.nps > 0 ? "+" : ""}{miArea.satisfaccion.nps}
+                          </span>
+                          <span className="text-sm text-slate-400">/ 100</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full overflow-hidden flex mt-2">
+                          <div className="h-full bg-green-500" style={{ width: `${(miArea.satisfaccion.promotores / miArea.satisfaccion.cantidad) * 100}%` }} />
+                          <div className="h-full bg-yellow-400" style={{ width: `${(miArea.satisfaccion.pasivos / miArea.satisfaccion.cantidad) * 100}%` }} />
+                          <div className="h-full bg-red-500" style={{ width: `${(miArea.satisfaccion.detractores / miArea.satisfaccion.cantidad) * 100}%` }} />
+                        </div>
+                        <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                          <span className="text-green-600">{miArea.satisfaccion.promotores} prom.</span>
+                          <span className="text-yellow-600">{miArea.satisfaccion.pasivos} pas.</span>
+                          <span className="text-red-600">{miArea.satisfaccion.detractores} det.</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-2 italic">
+                          Basado en {miArea.satisfaccion.cantidad} evaluación{miArea.satisfaccion.cantidad !== 1 ? "es" : ""} del área
+                        </p>
+                        <InfoPopover
+                          formula="NPS = % promotores − % detractores (escala 0–10)"
+                          descripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
+                        />
+                      </>
+                    ) : (
+                      <p className="text-sm text-slate-400 mt-2">Sin datos suficientes</p>
+                    )}
+                  </div>
+                </div>
 
-                  titulo="Calificación promedio personal"
-                  valor={misDatos.calificacion_promedio?.toFixed(1) ?? "—"}
-                  unidad={misDatos.calificacion_promedio != null ? "/5" : ""}
-                  descripcion="Promedio de estrellas recibidas en servicios completados"
-                  color="bg-yellow-600"
-
-                  formula="Σ(calificación de cada servicio completado por el colaborador) ÷ N° de servicios con calificación"
-                />
-                <IndicadorCard
-
-                  titulo="Servicios evaluados por clientes"
-                  valor={kpi?.servicios_evaluados_pct ?? 0}
-                  unidad="%"
-                  descripcion="% de servicios completados que recibieron calificación"
-                  color="bg-emerald-600"
-
-                  formula="(Servicios completados que tienen al menos 1 calificación ÷ Total de servicios completados) × 100"
-                />
-                <IndicadorCard
-
-                  titulo="Servicios con comentarios/sugerencias"
-                  valor={kpi?.servicios_con_comentarios_pct ?? 0}
-                  unidad="%"
-                  descripcion="% de servicios con feedback del cliente"
-                  color="bg-rose-600"
-
-                  formula="(Servicios completados que tienen comentarios internos registrados ÷ Total de servicios completados) × 100"
-                />
+                {/* Servicios evaluados (contextual) */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="h-1.5 bg-emerald-600" />
+                  <div className="p-4">
+                    <p className="text-xs text-slate-500 mb-1">Servicios evaluados por clientes</p>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-3xl font-bold text-slate-800">
+                        {misDatos.total_calificaciones ?? 0}
+                      </span>
+                      <span className="text-sm text-slate-400">
+                        de {misDatos.servicios_completados ?? 0} servicios
+                      </span>
+                    </div>
+                    {misDatos.servicios_completados > 0 && (
+                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-2">
+                        <div
+                          className="h-full rounded-full bg-emerald-500"
+                          style={{ width: `${Math.min(((misDatos.total_calificaciones ?? 0) / misDatos.servicios_completados) * 100, 100)}%` }}
+                        />
+                      </div>
+                    )}
+                    <p className="text-[10px] text-slate-400 mt-1.5">
+                      {misDatos.servicios_completados > 0
+                        ? `${((misDatos.total_calificaciones ?? 0) / misDatos.servicios_completados * 100).toFixed(0)}% de servicios recibieron calificación`
+                        : "Sin servicios completados en el período"}
+                    </p>
+                  </div>
+                </div>
               </div>
             </PropuestaSection>
           </div>

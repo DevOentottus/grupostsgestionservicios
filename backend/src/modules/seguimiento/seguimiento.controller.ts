@@ -782,17 +782,51 @@ export async function seguimientoController(app: FastifyInstance) {
       const anteriorFin = compararHasta ?? new Date(fechaFin.getTime() - (fechaFin.getTime() - fechaInicio.getTime()));
 
       const getPeriodMetrics = async (inicio: Date, fin: Date) => {
-        const { data: svcs } = await supabase
+        // Servicios completados en el período
+        let svcQuery = supabase
           .from("servicios")
-          .select("servicio_estado")
+          .select("servicio_id, servicio_estado")
           .gte("servicio_fecha_creacion", inicio.toISOString().split("T")[0])
-          .lte("servicio_fecha_creacion", fin.toISOString().split("T")[0])
-          .eq("servicio_estado", "completado");
+          .lte("servicio_fecha_creacion", fin.toISOString().split("T")[0]);
+
+        if (areaId) svcQuery = svcQuery.eq("area_id", areaId);
+
+        const { data: svcs } = await svcQuery;
+        const completados = (svcs || []).filter((s: any) => s.servicio_estado === "completado");
+        const svcIds = completados.map((s: any) => s.servicio_id);
+
+        // Tareas completadas de esos servicios
+        let tareasQuery = supabase
+          .from("tareas")
+          .select("tarea_id, tarea_tiempo_real, servicio_id")
+          .eq("tarea_estado", "completado");
+
+        if (svcIds.length > 0) {
+          tareasQuery = tareasQuery.in("servicio_id", svcIds);
+        }
+        if (usuarioId) {
+          tareasQuery = tareasQuery.eq("tarea_completado_por", usuarioId);
+        }
+
+        const { data: tareas } = await tareasQuery;
+        const tareasCount = tareas?.length || 0;
+
+        // Tiempo promedio (misma lógica que el período actual)
+        const svcConTiempo = new Set<number>();
+        let sumaTiempo = 0;
+        for (const t of tareas || []) {
+          if (t.tarea_tiempo_real != null && t.tarea_tiempo_real > 0) {
+            sumaTiempo += t.tarea_tiempo_real;
+            svcConTiempo.add(t.servicio_id);
+          }
+        }
+        const svcConTiempoCount = svcConTiempo.size;
+        const tiempoPromedio = svcConTiempoCount > 0 ? Math.round(sumaTiempo / svcConTiempoCount) : 0;
 
         return {
-          servicios_completados: svcs?.length || 0,
-          tareas_completadas: 0,
-          tiempo_promedio: 0,
+          servicios_completados: completados.length,
+          tareas_completadas: tareasCount,
+          tiempo_promedio: tiempoPromedio,
         };
       };
 
@@ -809,8 +843,8 @@ export async function seguimientoController(app: FastifyInstance) {
         anterior: anteriorMetrics,
         variacion: {
           servicios: calcVariacion(actualMetrics.servicios_completados, anteriorMetrics.servicios_completados),
-          tareas: 0,
-          tiempo: 0,
+          tareas: calcVariacion(actualMetrics.tareas_completadas, anteriorMetrics.tareas_completadas),
+          tiempo: calcVariacion(actualMetrics.tiempo_promedio, anteriorMetrics.tiempo_promedio),
         },
       };
     }
