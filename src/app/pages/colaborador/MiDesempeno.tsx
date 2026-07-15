@@ -24,28 +24,6 @@ import { DateFilterCard } from "@/app/components/filters/DateFilterCard.js";
  * COMPONENTES INTERNOS
  * ───────────────────────────────────────────── */
 
-/** Avatar con iniciales del colaborador */
-function Avatar({ nombre, className }: { nombre: string; className?: string }) {
-  const iniciales = nombre
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase() || "?";
-  return (
-    <div
-      className={cn(
-        "rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white font-bold shrink-0",
-        className,
-      )}
-      aria-hidden="true"
-    >
-      {iniciales}
-    </div>
-  );
-}
-
 /** Badge de tendencia con fondo tintado */
 function TrendBadge({ variacion, size = "sm" }: { variacion: number; size?: "sm" | "xs" }) {
   if (variacion === 0) {
@@ -53,7 +31,7 @@ function TrendBadge({ variacion, size = "sm" }: { variacion: number; size?: "sm"
       <span
         className={cn(
           "inline-flex items-center gap-1 rounded-full font-semibold bg-slate-100 text-slate-500",
-          size === "sm" ? "text-xs px-2.5 py-1" : "text-[10px] px-2 py-0.5",
+          size === "sm" ? "text-xs px-2.5 py-1" : "text-xs px-2 py-0.5",
         )}
       >
         <Minus className={size === "sm" ? "w-3 h-3" : "w-2.5 h-2.5"} /> 0%
@@ -66,7 +44,7 @@ function TrendBadge({ variacion, size = "sm" }: { variacion: number; size?: "sm"
       className={cn(
         "inline-flex items-center gap-1 rounded-full font-semibold",
         up ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
-        size === "sm" ? "text-xs px-2.5 py-1" : "text-[10px] px-2 py-0.5",
+        size === "sm" ? "text-xs px-2.5 py-1" : "text-xs px-2 py-0.5",
       )}
       aria-label={up ? "Subio " + Math.abs(variacion) + "% respecto al periodo anterior" : "Bajo " + Math.abs(variacion) + "% respecto al periodo anterior"}
     >
@@ -84,8 +62,8 @@ function GoalBar({ actual, meta, showMeta = true }: { actual: number; meta: numb
   return (
     <div className="mt-3">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-          <Target className="w-3 h-3 text-slate-400" />
+        <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
+          <Target className="w-3 h-3 text-slate-500" />
           Progreso vs meta
         </span>
         <div className="flex items-center gap-2">
@@ -93,7 +71,7 @@ function GoalBar({ actual, meta, showMeta = true }: { actual: number; meta: numb
             {pct}%
           </span>
           {showMeta && (
-            <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+            <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
               Meta: {meta}
             </span>
           )}
@@ -163,13 +141,13 @@ function KpiPrimarioCard({
           <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", iconBg)}>
             <Icon className={cn("w-5 h-5", iconColor)} />
           </div>
-          <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider text-right leading-tight">
+          <div className="text-xs font-medium text-slate-500 uppercase tracking-wider text-right leading-tight">
             {titulo}
           </div>
         </div>
         <div className="flex items-baseline gap-1.5">
           <span className="text-3xl font-bold text-slate-900 tracking-tight">{valor}</span>
-          {unidad && <span className="text-sm font-medium text-slate-400">{unidad}</span>}
+          {unidad && <span className="text-sm font-medium text-slate-500">{unidad}</span>}
         </div>
         {children}
       </div>
@@ -203,7 +181,7 @@ function IndicadorCard({
           <span className="text-2xl font-bold text-slate-900 tracking-tight">
             {typeof valor === "number" ? valor.toLocaleString() : valor}
           </span>
-          {unidad && <span className="text-xs font-medium text-slate-400">{unidad}</span>}
+          {unidad && <span className="text-xs font-medium text-slate-500">{unidad}</span>}
         </div>
         <div className="flex items-center gap-1">
           <p className="text-xs text-slate-500 leading-tight">{titulo}</p>
@@ -242,7 +220,7 @@ function Seccion({
           )}
           <div>
             <h3 className="font-semibold text-slate-800 text-sm">{titulo}</h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">{descripcion}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{descripcion}</p>
           </div>
         </div>
       </div>
@@ -355,41 +333,6 @@ export function MiDesempenoPage() {
     };
   }, [miArea, user?.id]);
 
-  // Highlights para el micro-resumen
-  const highlights = useMemo(() => {
-    const actual = periodComparison?.actual;
-    const variacion = periodComparison?.variacion;
-    const califVal = actual
-      ? actual.calificacion_promedio > 0 ? actual.calificacion_promedio : null
-      : misDatos?.calificacion_promedio;
-    return [
-      {
-        label: "Tareas",
-        valor: actual ? actual.tareas_completadas : (misDatos?.tareas_completadas ?? 0),
-        variacion: variacion?.tareas,
-        color: "blue" as const,
-      },
-      {
-        label: "Servicios",
-        valor: actual ? actual.servicios_completados : (misDatos?.servicios_completados ?? 0),
-        variacion: variacion?.servicios,
-        color: "indigo" as const,
-      },
-      {
-        label: "Calificacion",
-        valor: califVal != null ? califVal.toFixed(1) : "—",
-        variacion: variacion?.calificacion,
-        color: "amber" as const,
-      },
-      {
-        label: "NPS",
-        valor: actual && actual.total_calificaciones > 0 ? (actual.nps > 0 ? "+" + actual.nps : "" + actual.nps) : "—",
-        variacion: variacion?.nps,
-        color: "emerald" as const,
-      },
-    ];
-  }, [periodComparison, misDatos]);
-
   /* ──────────────────────────────────────────
    * RENDER
    * ────────────────────────────────────────── */
@@ -403,8 +346,7 @@ export function MiDesempenoPage() {
         <div className="bg-gradient-to-r from-emerald-600 to-emerald-700">
           <div className="max-w-7xl mx-auto px-6 py-5">
             <div className="flex items-center gap-4">
-              <Avatar nombre={user?.nombres || "?"} className="w-12 h-12 text-base ring-4 ring-white/20" />
-              <div className="min-w-0">
+            <div className="min-w-0">
                 <h1 className="text-xl font-bold text-white">Mi Desempeño</h1>
                 <p className="text-emerald-100 text-sm truncate">
                   {user?.nombres || "Colaborador"}
@@ -419,47 +361,18 @@ export function MiDesempenoPage() {
           </div>
         </div>
 
-        {/* Micro-resumen + Filtro de fechas */}
+        {/* Filtro de fechas dentro del hero */}
         {misDatos && (
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="py-4">
-              <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-3">Resumen rápido</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {highlights.map((h) => {
-                  const colorMap: Record<string, string> = {
-                    blue: "bg-blue-50 text-blue-700 border-blue-200",
-                    indigo: "bg-indigo-50 text-indigo-700 border-indigo-200",
-                    amber: "bg-amber-50 text-amber-700 border-amber-200",
-                    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
-                  };
-                  return (
-                    <div
-                      key={h.label}
-                      className={cn("rounded-xl border px-3.5 py-2.5 flex items-center justify-between gap-2", colorMap[h.color])}
-                    >
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-medium opacity-75 truncate">{h.label}</p>
-                        <p className="text-lg font-bold leading-tight">{h.valor}</p>
-                      </div>
-                      {h.variacion != null && <TrendBadge variacion={h.variacion} size="xs" />}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Filtro de fechas dentro del hero */}
-            <div className="pb-5">
-              <DateFilterCard
-                presets={presets}
-                fechaInicio={fechaInicio}
-                fechaFin={fechaFin}
-                periodoLabel={periodoLabel}
-                onFechaInicio={(v) => setFechaInicio(v)}
-                onFechaFin={(v) => setFechaFin(v)}
-                onLabelChange={(l) => setPeriodoLabel(l)}
-              />
-            </div>
+          <div className="max-w-7xl mx-auto px-6 pb-5">
+            <DateFilterCard
+              presets={presets}
+              fechaInicio={fechaInicio}
+              fechaFin={fechaFin}
+              periodoLabel={periodoLabel}
+              onFechaInicio={(v) => setFechaInicio(v)}
+              onFechaFin={(v) => setFechaFin(v)}
+              onLabelChange={(l) => setPeriodoLabel(l)}
+            />
           </div>
         )}
       </div>
@@ -467,7 +380,7 @@ export function MiDesempenoPage() {
       {/* ═══════════════════════════════ */}
       {/* CONTENIDO PRINCIPAL            */}
       {/* ═══════════════════════════════ */}
-      <div className="space-y-6 max-w-7xl mx-auto px-6">
+      <div className="space-y-6 px-6">
 
       {/* ═══════════════════════════════ */}
       {/* LOADING STATE                   */}
@@ -503,7 +416,7 @@ export function MiDesempenoPage() {
               <TrendingDown className="w-7 h-7 text-red-500" />
             </div>
             <p className="text-red-600 font-semibold text-lg">Error al cargar tu desempeño</p>
-            <p className="text-sm text-slate-400 mt-1 mb-4">No pudimos obtener tus indicadores. Intentá de nuevo más tarde.</p>
+            <p className="text-sm text-slate-500 mt-1 mb-4">No pudimos obtener tus indicadores. Intentá de nuevo más tarde.</p>
             <button
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-600 transition-colors"
@@ -521,10 +434,10 @@ export function MiDesempenoPage() {
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-8">
           <div className="flex flex-col items-center justify-center py-10">
             <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-              <User className="w-7 h-7 text-slate-400" />
+              <User className="w-7 h-7 text-slate-500" />
             </div>
             <p className="text-slate-600 font-semibold text-lg">Sin datos de desempeño</p>
-            <p className="text-sm text-slate-400 mt-1 max-w-md text-center">
+            <p className="text-sm text-slate-500 mt-1 max-w-md text-center">
               No encontramos información para tu usuario. Puede que no tengas un área asignada o que aún no haya registros.
             </p>
           </div>
@@ -554,14 +467,14 @@ export function MiDesempenoPage() {
               >
                 {periodComparison && (
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-                    <span className="text-[11px] text-slate-400">Período anterior: {periodComparison.anterior.tareas_completadas}</span>
+                    <span className="text-xs text-slate-500">Período anterior: {periodComparison.anterior.tareas_completadas}</span>
                     <TrendBadge variacion={periodComparison.variacion.tareas} size="xs" />
                   </div>
                 )}
                 {areaBenchmark && (
                   <div className="flex items-center gap-1.5 mt-2">
                     <span className="text-xs font-semibold text-slate-500">{areaBenchmark.avgTareas.toFixed(1)}</span>
-                    <span className="text-[10px] text-slate-400">prom. área</span>
+                    <span className="text-xs text-slate-500">Promedio área:</span>
                   </div>
                 )}
                 {periodComparison && (
@@ -579,14 +492,14 @@ export function MiDesempenoPage() {
               >
                 {periodComparison && (
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-                    <span className="text-[11px] text-slate-400">Período anterior: {periodComparison.anterior.servicios_completados}</span>
+                    <span className="text-xs text-slate-500">Período anterior: {periodComparison.anterior.servicios_completados}</span>
                     <TrendBadge variacion={periodComparison.variacion.servicios} size="xs" />
                   </div>
                 )}
                 {areaBenchmark && (
                   <div className="flex items-center gap-1.5 mt-2">
                     <span className="text-xs font-semibold text-slate-500">{areaBenchmark.avgServicios.toFixed(1)}</span>
-                    <span className="text-[10px] text-slate-400">prom. área ({areaBenchmark.totalColaboradores} colab.)</span>
+                    <span className="text-xs text-slate-500">Promedio área: ({areaBenchmark.totalColaboradores} colab.)</span>
                   </div>
                 )}
                 {periodComparison && (
@@ -625,22 +538,22 @@ export function MiDesempenoPage() {
                   return califVal != null ? (
                     <div className="flex items-center gap-2 mt-1">
                       <StarRating rating={califVal} />
-                      <span className="text-xs text-slate-400">{califCount} calificación{califCount !== 1 ? "es" : ""}</span>
+                      <span className="text-xs text-slate-500">{califCount} calificación{califCount !== 1 ? "es" : ""}</span>
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-400 mt-1">Sin evaluaciones</p>
+                    <p className="text-xs text-slate-500 mt-1">Sin evaluaciones</p>
                   );
                 })()}
                 {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-                    <span className="text-[11px] text-slate-400">Período anterior: {periodComparison.anterior.calificacion_promedio.toFixed(1)}</span>
+                    <span className="text-xs text-slate-500">Período anterior: {periodComparison.anterior.calificacion_promedio.toFixed(1)}</span>
                     <TrendBadge variacion={periodComparison.variacion.calificacion} size="xs" />
                   </div>
                 )}
                 {areaBenchmark?.avgCalificacion != null && (
                   <div className="flex items-center gap-1.5 mt-2">
                     <span className="text-xs font-semibold text-slate-500">{areaBenchmark.avgCalificacion.toFixed(1)}</span>
-                    <span className="text-[10px] text-slate-400">prom. área</span>
+                    <span className="text-xs text-slate-500">Promedio área:</span>
                   </div>
                 )}
               </KpiPrimarioCard>
@@ -681,12 +594,12 @@ export function MiDesempenoPage() {
                           <div className="h-full bg-amber-400" style={{ width: (pas / total) * 100 + "%" }} />
                           <div className="h-full bg-red-500" style={{ width: (det / total) * 100 + "%" }} />
                         </div>
-                        <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                        <div className="flex justify-between text-xs text-slate-500 mt-1">
                           <span className="text-emerald-600">{prom} prom.</span>
                           <span className="text-amber-600">{pas} pas.</span>
                           <span className="text-red-600">{det} det.</span>
                         </div>
-                        <p className="text-[10px] text-slate-400 mt-1 italic">
+                        <p className="text-xs text-slate-500 mt-1 italic">
                           Basado en {total} evaluación{total !== 1 ? "es" : ""} del {esPeriodo ? "período" : "área"}
                         </p>
                         <InfoPopover
@@ -696,11 +609,11 @@ export function MiDesempenoPage() {
                       </>
                     );
                   }
-                  return <p className="text-xs text-slate-400 mt-1">Sin datos suficientes</p>;
+                  return <p className="text-xs text-slate-500 mt-1">Sin datos suficientes</p>;
                 })()}
                 {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-                    <span className="text-[11px] text-slate-400">Período anterior: {periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</span>
+                    <span className="text-xs text-slate-500">Período anterior: {periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</span>
                     <TrendBadge variacion={periodComparison.variacion.nps} size="xs" />
                   </div>
                 )}
@@ -726,8 +639,8 @@ export function MiDesempenoPage() {
                     color="bg-blue-600"
                     formula="Tracking_final − Tracking_inicial"
                     comparacion={periodComparison ? (
-                      <div className="flex items-center gap-1.5 text-[10px]">
-                        <span className="text-slate-400">Período anterior: {periodComparison.anterior.servicios_con_tiempo_tracking_pct}%</span>
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <span className="text-slate-500">Período anterior: {periodComparison.anterior.servicios_con_tiempo_tracking_pct}%</span>
                         <TrendBadge variacion={periodComparison.variacion.tracking_pct} size="xs" />
                       </div>
                     ) : undefined}
@@ -740,8 +653,8 @@ export function MiDesempenoPage() {
                     color="bg-cyan-600"
                     formula="Conteo de tareas con fecha, hora y responsable"
                     comparacion={periodComparison ? (
-                      <div className="flex items-center gap-1.5 text-[10px]">
-                        <span className="text-slate-400">Período anterior: {periodComparison.anterior.tareas_documentadas_conteo}</span>
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <span className="text-slate-500">Período anterior: {periodComparison.anterior.tareas_documentadas_conteo}</span>
                         <TrendBadge variacion={periodComparison.variacion.tareas_documentadas} size="xs" />
                       </div>
                     ) : undefined}
@@ -754,15 +667,15 @@ export function MiDesempenoPage() {
                     color="bg-teal-600"
                     formula="(Servicios con auditoría ÷ Total) × 100"
                     comparacion={periodComparison ? (
-                      <div className="flex items-center gap-1.5 text-[10px]">
-                        <span className="text-slate-400">Período anterior: {periodComparison.anterior.registros_completos_pct}%</span>
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <span className="text-slate-500">Período anterior: {periodComparison.anterior.registros_completos_pct}%</span>
                         <TrendBadge variacion={periodComparison.variacion.auditoria_pct} size="xs" />
                       </div>
                     ) : undefined}
                   />
                 </div>
               ) : (
-                <p className="text-sm text-slate-400 text-center py-4">
+                <p className="text-sm text-slate-500 text-center py-4">
                   Los indicadores de trazabilidad estarán disponibles cuando el administrador configure el módulo.
                 </p>
               )}
@@ -783,8 +696,8 @@ export function MiDesempenoPage() {
                   color="bg-orange-600"
                   formula="Σ(tracking_fin − tracking_inicio) ÷ N° servicios completados"
                   comparacion={periodComparison ? (
-                    <div className="flex items-center gap-1.5 text-[10px]">
-                      <span className="text-slate-400">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <span className="text-slate-500">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
                       <TrendBadge variacion={periodComparison.variacion.tiempo} size="xs" />
                     </div>
                   ) : undefined}
@@ -797,8 +710,8 @@ export function MiDesempenoPage() {
                   color="bg-green-600"
                   formula="(Servicios con tiempo real ≤ estimado ÷ Total completados) × 100"
                   comparacion={periodComparison ? (
-                    <div className="flex items-center gap-1.5 text-[10px]">
-                      <span className="text-slate-400">Período anterior: {periodComparison.anterior.completados_dentro_tiempo_pct}%</span>
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <span className="text-slate-500">Período anterior: {periodComparison.anterior.completados_dentro_tiempo_pct}%</span>
                       <TrendBadge variacion={periodComparison.variacion.a_tiempo_pct} size="xs" />
                     </div>
                   ) : undefined}
@@ -811,8 +724,8 @@ export function MiDesempenoPage() {
                   color="bg-purple-600"
                   formula="Σ(tarea_tiempo_real) ÷ N° tareas con tiempo"
                   comparacion={periodComparison ? (
-                    <div className="flex items-center gap-1.5 text-[10px]">
-                      <span className="text-slate-400">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio_por_tarea)}</span>
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <span className="text-slate-500">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio_por_tarea)}</span>
                       <TrendBadge variacion={periodComparison.variacion.tiempo_por_tarea} size="xs" />
                     </div>
                   ) : undefined}
@@ -851,10 +764,10 @@ export function MiDesempenoPage() {
                         <span className={cn("w-2 h-2 rounded-full shrink-0", dot)} />
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-slate-800 truncate">{s.titulo || "Sin título"}</p>
-                          <p className="text-[11px] font-mono text-slate-400">{s.codigo || "—"}</p>
+                          <p className="text-xs font-mono text-slate-500">{s.codigo || "—"}</p>
                         </div>
                       </div>
-                      <span className={cn("text-[11px] px-2.5 py-0.5 rounded-full font-medium shrink-0", label)}>
+                      <span className={cn("text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0", label)}>
                         {s.estado || "—"}
                       </span>
                     </div>
