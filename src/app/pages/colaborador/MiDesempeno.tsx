@@ -42,16 +42,20 @@ function IndicadorCard({
   formula?: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-      <div className={`h-1.5 ${color}`} />
-      <div className="p-3">
-        <div className="flex items-center gap-1.5">
-          <p className="text-xs text-slate-500 leading-tight">{titulo}</p>
-          {formula && <InfoPopover formula={formula} descripcion={descripcion} />}
-          <span className="ml-auto flex items-baseline gap-1 shrink-0">
-            <span className="text-xl font-bold text-slate-800">{typeof valor === "number" ? valor.toLocaleString() : valor}</span>
-            {unidad && <span className="text-xs text-slate-400">{unidad}</span>}
-          </span>
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+      <div className="flex items-center gap-4">
+        <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center shrink-0`} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-3xl font-bold text-gray-900">
+              {typeof valor === "number" ? valor.toLocaleString() : valor}
+            </span>
+            {unidad && <span className="text-sm text-gray-400">{unidad}</span>}
+          </div>
+          <div className="flex items-center gap-1 mt-0.5">
+            <p className="text-gray-500 text-sm truncate">{titulo}</p>
+            {formula && <InfoPopover formula={formula} descripcion={descripcion} />}
+          </div>
         </div>
       </div>
     </div>
