@@ -196,6 +196,7 @@ export interface PlantillaTarea {
   descripcion: string | null;
   orden: number;
   asignado_a: number | null;
+  obligatoria?: boolean;
   created_at: string;
 }
 

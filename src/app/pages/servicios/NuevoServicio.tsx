@@ -10,13 +10,13 @@ import { AudioRecorder } from "@/app/components/AudioRecorder.js";
 import type { Usuario } from "@shared/index.js";
 import {
   ArrowLeft, User, Monitor, Wrench, CheckSquare, Square, Camera,
-  ChevronRight, ChevronLeft, Save, Plus, X, ChevronUp, ChevronDown, Pencil, Mic,
+  ChevronRight, ChevronLeft, Save, Plus, X, ChevronUp, ChevronDown, Pencil, Mic, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
-const inputClass = "w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-gray-50 transition";
-const labelClass = "block text-xs text-gray-600 font-semibold mb-1";
-const sectionTitleClass = "text-gray-800 font-bold text-sm flex items-center gap-2";
+const inputClass = "w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-white transition";
+const labelClass = "block text-xs text-slate-500 font-semibold mb-1";
+const sectionTitleClass = "text-slate-800 font-bold text-sm flex items-center gap-2";
 
 // --- Componentes extraídos ---
 
@@ -108,10 +108,10 @@ const CheckboxToggle = memo(function CheckboxToggle({
       } ${
         checked
           ? "border-blue-200 bg-blue-50/60"
-          : "border-gray-200 bg-white hover:bg-gray-50"
+          : "border-slate-200 bg-white hover:bg-slate-50"
       }`}
     >
-      <span className={`mt-0.5 flex-shrink-0 ${checked ? "text-blue-600" : "text-gray-300"} ${disabled ? "opacity-50" : ""}`}>
+      <span className={`mt-0.5 flex-shrink-0 ${checked ? "text-blue-600" : "text-slate-300"} ${disabled ? "opacity-50" : ""}`}>
         {checked ? (
           <CheckSquare className="w-5 h-5" />
         ) : icon ? (
@@ -121,12 +121,12 @@ const CheckboxToggle = memo(function CheckboxToggle({
         )}
       </span>
       <div>
-        <p className={`text-sm font-medium ${checked ? "text-blue-800" : "text-gray-700"}`}>
+        <p className={`text-sm font-medium ${checked ? "text-blue-800" : "text-slate-700"}`}>
           {label}
-          {disabled && <span className="ml-2 text-xs text-gray-400 font-normal">(bloqueado)</span>}
+          {disabled && <span className="ml-2 text-xs text-slate-400 font-normal">(bloqueado)</span>}
         </p>
         {description && (
-          <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+          <p className="text-xs text-slate-500 mt-0.5">{description}</p>
         )}
       </div>
     </button>
@@ -273,7 +273,7 @@ export function NuevoServicioPage() {
   };
 
   // -- Tareas editables --
-  interface TareaEditable { tempId: number; titulo: string; }
+  interface TareaEditable { tempId: number; titulo: string; obligatoria?: boolean; }
   const nextTempId = useRef(0);
   const [tareas, setTareas] = useState<TareaEditable[]>([]);
   const [editandoTarea, setEditandoTarea] = useState<number | null>(null);
@@ -287,7 +287,7 @@ export function NuevoServicioPage() {
     if (pid && pid !== lastPlantillaId.current && tareasPlantilla.length > 0) {
       setTareas(tareasPlantilla.map((t: any) => {
         const id = --nextTempId.current;
-        return { tempId: id, titulo: t.plantillatarea_titulo || t.titulo };
+        return { tempId: id, titulo: t.plantillatarea_titulo || t.titulo, obligatoria: t.obligatoria ?? false };
       }));
       lastPlantillaId.current = pid;
     }
@@ -398,71 +398,70 @@ export function NuevoServicioPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4 md:space-y-5">
+    <div className="max-w-6xl mx-auto space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <button
           onClick={() => navigate("/servicios")}
-          className="p-2 rounded-lg hover:bg-gray-100 transition"
+          className="p-1.5 rounded-lg hover:bg-slate-100 transition"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-500" />
+          <ArrowLeft className="w-5 h-5 text-slate-400" />
         </button>
         <div>
-          <h1 className="text-gray-900 font-bold text-lg">Nuevo Servicio Técnico</h1>
-          {totalPasos > 1 ? (
-            <p className="text-gray-500 text-xs">Paso {paso} de {totalPasos}</p>
-          ) : (
-            <p className="text-gray-500 text-xs">Guía de entrada rápida</p>
-          )}
+          <h1 className="text-slate-800 font-bold text-base">Nuevo Servicio Técnico</h1>
         </div>
+        <span className="ml-auto text-xs text-slate-400">
+          {guiarEntrada ? "Guía rápida" : `Paso ${paso} de ${totalPasos}`}
+        </span>
       </div>
 
       {/* ═══ OPCIONES ═══ */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-5 space-y-3">
+      <div className="bg-white rounded-xl border border-slate-200 p-4">
         <CheckboxToggle
           checked={guiarEntrada}
           onChange={toggleGuiarEntrada}
           label="Continuar guía de entrada"
           description="Al activar esta opción se ocultan los campos de Equipo y Accesorios, y se muestra la lista de tareas de la plantilla seleccionada."
         />
-
       </div>
 
       {/* ═══ INDICADOR DE PASOS ═══ */}
+      {!guiarEntrada && (
       <div className="flex items-center justify-center gap-0">
-          {STEPS.map((step, idx) => {
-            const StepIcon = step.icon;
-            const activo = paso === step.id;
-            const completado = paso > step.id;
-            return (
-              <div key={step.id} className="flex items-center">
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      activo
-                        ? "bg-blue-900 text-white shadow-md"
-                        : completado
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-400"
-                    }`}
-                  >
-                    {completado ? <CheckSquare className="w-4 h-4" /> : <StepIcon className="w-4 h-4" />}
-                  </div>
-                  <span className={`text-xs font-medium hidden sm:inline ${
-                    activo ? "text-blue-900" : completado ? "text-green-700" : "text-gray-400"
-                  }`}>
-                    {step.label}
-                  </span>
+        {STEPS.map((step, idx) => {
+          const StepIcon = step.icon;
+          const activo = paso === step.id;
+          const completado = paso > step.id;
+          return (
+            <div key={step.id} className="flex items-center">
+              <div className="flex items-center gap-1.5">
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                    activo
+                      ? "bg-blue-900 text-white"
+                      : completado
+                        ? "bg-green-100 text-green-700"
+                        : "bg-slate-100 text-slate-400"
+                  }`}
+                >
+                  {completado ? <CheckSquare className="w-3.5 h-3.5" /> : <StepIcon className="w-3.5 h-3.5" />}
                 </div>
-                {idx < 2 && (
-                  <div className={`w-8 sm:w-12 h-px mx-2 ${
-                    completado ? "bg-green-300" : "bg-gray-200"
-                  }`} />
-                )}
+                <span className={`text-[11px] font-medium hidden sm:inline ${
+                  activo ? "text-blue-900" : completado ? "text-green-700" : "text-slate-400"
+                }`}>
+                  {step.label}
+                </span>
               </div>
-            );
-          })}
-        </div>
+              {idx < 2 && (
+                <div className={`w-6 sm:w-10 h-px mx-1.5 ${
+                  completado ? "bg-green-300" : "bg-slate-200"
+                }`} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      )}
 
       {/* ═══ FORMULARIO POR PASO ═══ */}
       <form
@@ -474,7 +473,7 @@ export function NuevoServicioPage() {
       >
         {/* ═══ ERROR BANNER ═══ */}
         {Object.keys(errors).length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
             <p className="text-sm font-medium text-red-700">
               Completá todos los campos requeridos ({Object.keys(errors).length} pendiente{Object.keys(errors).length !== 1 ? "s" : ""})
             </p>
@@ -482,12 +481,12 @@ export function NuevoServicioPage() {
         )}
         {/* ─── PASO 1: CLIENTE (solo si guía INACTIVA) ─── */}
         {paso === 1 && !guiarEntrada && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-5 space-y-3 md:space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
             <h2 className={sectionTitleClass}>
               <User className="w-4 h-4 text-blue-600" />
               Cliente
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
               <InputField
                 label="DNI"
                 value={form.cliente_dni}
@@ -531,15 +530,15 @@ export function NuevoServicioPage() {
 
         {/* ─── PASO 2: EQUIPO Y ACCESORIOS (solo si guía INACTIVA) ─── */}
         {paso === 2 && !guiarEntrada && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-5 space-y-3 md:space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
             <h2 className={sectionTitleClass}>
               <Monitor className="w-4 h-4 text-blue-600" />
               Equipo y accesorios
             </h2>
 
-            <div className="space-y-4">
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Equipo</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Equipo</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
                   <InputField
                     label="Descripción"
@@ -563,18 +562,18 @@ export function NuevoServicioPage() {
                     label="Detalles"
                     value={form.detalles_equipo}
                     onChange={(v) => set("detalles_equipo", v)}
-                    rows={2}
+                    rows={1}
                     placeholder="Color, marca, modelo, estado físico..."
                   />
                 </div>
               </div>
             </div>
 
-            <hr className="border-gray-100" />
+            <hr className="border-slate-100" />
 
-            <div className="space-y-4">
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Accesorios</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Accesorios</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <InputField
                   label="Descripción"
                   value={form.descripcion_accesorio}
@@ -587,7 +586,7 @@ export function NuevoServicioPage() {
                   label="Detalles"
                   value={form.detalles_accesorio}
                   onChange={(v) => set("detalles_accesorio", v)}
-                  rows={2}
+                  rows={1}
                   placeholder="Cantidad, estado, observaciones..."
                 />
               </div>
@@ -597,24 +596,27 @@ export function NuevoServicioPage() {
 
         {/* ─── PASO 3 (o único si guía activa): SERVICIO ─── */}
         {paso === 3 || (paso === 1 && guiarEntrada) ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-5 space-y-3 md:space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-4">
             <h2 className={sectionTitleClass}>
               <Wrench className="w-4 h-4 text-blue-600" />
               Servicio
             </h2>
-            <div className="space-y-4">
-              <InputField
-                label="Nombre del Servicio"
-                value={form.titulo}
-                onChange={(v) => set("titulo", v)}
-                required
-                error={errors.titulo}
-                placeholder="Ej: Reparación de pantalla, Instalación de software..."
-              />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <InputField
+                  label="Nombre del Servicio"
+                  value={form.titulo}
+                  onChange={(v) => set("titulo", v)}
+                  required
+                  error={errors.titulo}
+                  placeholder="Ej: Reparación de pantalla, Instalación de software..."
+                />
+              </div>
 
               {/* Código y DNI en guía de entrada */}
               {guiarEntrada && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <>
                   <InputField
                     label="Código de servicio"
                     value={form.codigo_servicio}
@@ -631,11 +633,11 @@ export function NuevoServicioPage() {
                     required
                     error={errors.cliente_dni}
                   />
-                </div>
+                </>
               )}
 
               {!autoAsignar && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <>
                   <SelectField
                     label="Área"
                     value={form.area_id}
@@ -660,130 +662,140 @@ export function NuevoServicioPage() {
                     required
                   />
                   {errors.colaborador_id && (
-                    <p className="text-xs text-red-500 mt-1">{errors.colaborador_id}</p>
+                    <p className="text-xs text-red-500 mt-1 col-span-2">{errors.colaborador_id}</p>
                   )}
-                </div>
+                </>
               )}
+            </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className={labelClass}>
-                    Situación Inicial del Servicio {!form.servicio_audio_cliente && <span className="text-red-400">*</span>}
-                  </label>
-                  <div className="flex gap-2 items-start">
-                    <textarea
-                      value={form.cliente_reporte}
-                      onChange={(e) => set("cliente_reporte", e.target.value)}
-                      className={`${inputClass} flex-1 resize-none`}
-                      rows={2}
-                      placeholder="¿Qué reportó el cliente?"
-                    />
-                    <AudioRecorder
-                      label="Audio"
-                      existingUrl={form.servicio_audio_cliente || null}
-                      onAudioUploaded={(url) => set("servicio_audio_cliente", url)}
-                      onAudioRemoved={() => set("servicio_audio_cliente", "")}
-                      className="shrink-0 w-44"
-                    />
-                  </div>
-                  {errors.cliente_reporte && <p className="text-xs text-red-500 mt-1">{errors.cliente_reporte}</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>
+                  Situación Inicial del Servicio {!form.servicio_audio_cliente && <span className="text-red-400">*</span>}
+                </label>
+                <div className="space-y-2">
+                  <textarea
+                    value={form.cliente_reporte}
+                    onChange={(e) => set("cliente_reporte", e.target.value)}
+                    className={`${inputClass} resize-none`}
+                    rows={2}
+                    placeholder="¿Qué reportó el cliente?"
+                  />
+                  <AudioRecorder
+                    label="Audio"
+                    existingUrl={form.servicio_audio_cliente || null}
+                    onAudioUploaded={(url) => set("servicio_audio_cliente", url)}
+                    onAudioRemoved={() => set("servicio_audio_cliente", "")}
+                    className="w-full"
+                  />
                 </div>
-                <div>
-                  <label className={labelClass}>
-                    Diagnóstico Inicial {!form.servicio_audio_diagnostico && <span className="text-red-400">*</span>}
-                  </label>
-                  <div className="flex gap-2 items-start">
-                    <textarea
-                      value={form.diagnostico_inicial}
-                      onChange={(e) => set("diagnostico_inicial", e.target.value)}
-                      className={`${inputClass} flex-1 resize-none`}
-                      rows={2}
-                      placeholder="Primera impresión técnica"
-                    />
-                    <AudioRecorder
-                      label="Audio"
-                      existingUrl={form.servicio_audio_diagnostico || null}
-                      onAudioUploaded={(url) => set("servicio_audio_diagnostico", url)}
-                      onAudioRemoved={() => set("servicio_audio_diagnostico", "")}
-                      className="shrink-0 w-44"
-                    />
-                  </div>
-                  {errors.diagnostico_inicial && <p className="text-xs text-red-500 mt-1">{errors.diagnostico_inicial}</p>}
-                </div>
+                {errors.cliente_reporte && <p className="text-xs text-red-500 mt-1">{errors.cliente_reporte}</p>}
               </div>
-
-              {/* Fallas comunes — tipo + checkboxes */}
-              {fallas && fallas.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-                  <p className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Fallas comunes</p>
-                  <select
-                    value={tipoFallaFiltro}
-                    onChange={(e) => setTipoFallaFiltro(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-gray-50 transition"
-                  >
-                    <option value="">Todas las categorías</option>
-                    {tiposFalla.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                  {fallasFiltradas.length === 0 ? (
-                    <p className="text-sm text-slate-400">Seleccioná una categoría para ver fallas</p>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto">
-                      {fallasFiltradas.map((f) => (
-                        <label
-                          key={f.id}
-                          className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer transition"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={fallasSeleccionadas.has(f.id)}
-                            onChange={() => toggleFalla(f.id, f.nombre)}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="text-sm text-slate-700">{f.nombre}</span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
+              <div>
+                <label className={labelClass}>
+                  Diagnóstico Inicial {!form.servicio_audio_diagnostico && <span className="text-red-400">*</span>}
+                </label>
+                <div className="space-y-2">
+                  <textarea
+                    value={form.diagnostico_inicial}
+                    onChange={(e) => set("diagnostico_inicial", e.target.value)}
+                    className={`${inputClass} resize-none`}
+                    rows={2}
+                    placeholder="Primera impresión técnica"
+                  />
+                  <AudioRecorder
+                    label="Audio"
+                    existingUrl={form.servicio_audio_diagnostico || null}
+                    onAudioUploaded={(url) => set("servicio_audio_diagnostico", url)}
+                    onAudioRemoved={() => set("servicio_audio_diagnostico", "")}
+                    className="w-full"
+                  />
                 </div>
-              )}
+                {errors.diagnostico_inicial && <p className="text-xs text-red-500 mt-1">{errors.diagnostico_inicial}</p>}
+              </div>
+            </div>
 
-              <InputField
-                label="Descripción del Servicio"
-                value={form.descripcion}
-                onChange={(v) => set("descripcion", v)}
-                rows={3}
-                placeholder="Detalles adicionales del trabajo a realizar..."
-              />
+            {/* Fallas comunes — tipo + checkboxes */}
+            {fallas && fallas.length > 0 && (
+              <div className="border-t border-slate-100 pt-4 space-y-3">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Fallas comunes</p>
+                <select
+                  value={tipoFallaFiltro}
+                  onChange={(e) => setTipoFallaFiltro(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-white transition"
+                >
+                  <option value="">Todas las categorías</option>
+                  {tiposFalla.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+                {fallasFiltradas.length === 0 ? (
+                  <p className="text-sm text-slate-400">Seleccioná una categoría para ver fallas</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
+                    {fallasFiltradas.map((f) => (
+                      <label
+                        key={f.id}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer transition"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={fallasSeleccionadas.has(f.id)}
+                          onChange={() => toggleFalla(f.id, f.nombre)}
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-slate-700">{f.nombre}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-              <SelectField
-                label="Plantilla de Tareas"
-                value={form.id_plantilla_inicial}
-                onChange={(v) => set("id_plantilla_inicial", v)}
-                options={plantillasFiltradas.map((p: any) => ({
-                  value: String(p.id),
-                  label: `${p.nombre} (${p.tareas_count || 0} tareas)`,
-                }))}
-                placeholder="Sin plantilla"
-              />
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-sm">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" />
+              <div>
+                <p className="font-medium text-amber-800">Redacción para el cliente</p>
+                <p className="text-amber-700 mt-0.5 leading-relaxed">
+                  Evitá tecnicismos demasiado estrictos. Esta descripción la verá el cliente al dar seguimiento a su servicio.
+                </p>
+              </div>
+            </div>
+            <InputField
+              label="Descripción del Servicio"
+              value={form.descripcion}
+              onChange={(v) => set("descripcion", v)}
+              rows={2}
+              placeholder="Detalles adicionales del trabajo a realizar..."
+            />
 
-              {/* Lista de tareas editables */}
-              {(guiarEntrada || form.id_plantilla_inicial || tareas.length > 0) && (
-                <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 space-y-3">
-                  <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide flex items-center justify-between">
-                    <span>Tareas del servicio</span>
-                    <span className="text-gray-400 font-normal text-[10px]">{tareas.length} tareas</span>
-                  </p>
+            <SelectField
+              label="Plantilla de Tareas"
+              value={form.id_plantilla_inicial}
+              onChange={(v) => set("id_plantilla_inicial", v)}
+              options={plantillasFiltradas.map((p: any) => ({
+                value: String(p.id),
+                label: `${p.nombre} (${p.tareas_count || 0} tareas)`,
+              }))}
+              placeholder="Sin plantilla"
+            />
+
+            {/* Lista de tareas editables */}
+            {(guiarEntrada || form.id_plantilla_inicial || tareas.length > 0) && (
+              <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 space-y-3">
+                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide flex items-center justify-between">
+                  <span>Tareas del servicio</span>
+                  <span className="text-slate-400 font-normal text-[10px]">{tareas.length} tareas</span>
+                </p>
 
                   {tareas.length === 0 ? (
-                    <p className="text-sm text-gray-400 italic">Agregá tareas para este servicio</p>
+                    <p className="text-sm text-slate-400 italic">Agregá tareas para este servicio</p>
                   ) : (
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       {tareas.map((t, idx) => (
                         <div
                           key={t.tempId}
-                          className="flex items-center gap-1 bg-white rounded-lg border border-gray-200 px-2 py-2 text-sm group"
+                          className="flex items-center gap-1 bg-white rounded-lg border border-slate-200 px-2 py-1.5 text-sm group"
                         >
                           {/* Reorder arrows (before order number) */}
                           <div className="flex flex-col items-center gap-0.5 mr-0.5">
@@ -824,6 +836,12 @@ export function NuevoServicioPage() {
                           <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">
                             {idx + 1}
                           </span>
+                          {t.obligatoria && (
+                            <svg className="w-3 h-3 shrink-0 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                              <path d="M7 11V7a5 5 0 0110 0v4" />
+                            </svg>
+                          )}
 
                           {editandoTarea === t.tempId ? (
                             <input
@@ -880,16 +898,25 @@ export function NuevoServicioPage() {
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setTareas((prev) => prev.filter((x) => x.tempId !== t.tempId))
-                            }
-                            className="ml-auto p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 shrink-0"
-                            title="Eliminar tarea"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
+                          {t.obligatoria ? (
+                            <span className="ml-auto flex items-center gap-1 text-amber-500 text-[10px] font-medium shrink-0" title="Tarea obligatoria de la plantilla">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0110 0v4" />
+                              </svg>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setTareas((prev) => prev.filter((x) => x.tempId !== t.tempId))
+                              }
+                              className="ml-auto p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 shrink-0"
+                              title="Eliminar tarea"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -911,7 +938,7 @@ export function NuevoServicioPage() {
                         }
                       }}
                       placeholder="Escribí una tarea nueva..."
-                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 bg-white"
+                      className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 bg-white"
                     />
                     <button
                       type="button"
@@ -923,7 +950,7 @@ export function NuevoServicioPage() {
                         }
                       }}
                       disabled={!nuevaTareaTexto.trim()}
-                      className="flex items-center gap-1.5 px-3 py-2 bg-blue-900 hover:bg-blue-800 disabled:bg-gray-300 text-white rounded-lg text-sm font-semibold transition"
+                      className="flex items-center gap-1.5 px-3 py-2 bg-blue-900 hover:bg-blue-800 disabled:bg-slate-300 text-white rounded-lg text-sm font-semibold transition"
                     >
                       <Plus className="w-4 h-4" />
                       Agregar
@@ -936,11 +963,11 @@ export function NuevoServicioPage() {
         ) : null}
 
         {/* ═══ NAVEGACIÓN ═══ */}
-        <div className="flex items-center justify-between gap-3 pt-4 pb-8">
+        <div className="flex items-center justify-between gap-3 pt-3 pb-6">
           <button
             type="button"
             onClick={guiarEntrada ? () => navigate("/servicios") : paso > 1 ? irAlAnterior : () => navigate("/servicios")}
-            className="flex items-center gap-1.5 px-5 py-2.5 text-sm border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition"
           >
             <ChevronLeft className="w-4 h-4" />
             {guiarEntrada ? "Cancelar" : paso > 1 ? "Anterior" : "Cancelar"}
@@ -949,7 +976,7 @@ export function NuevoServicioPage() {
           {paso < totalPasos ? (
             <button
               type="submit"
-              className="flex items-center gap-1.5 bg-blue-900 hover:bg-blue-800 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition"
+              className="flex items-center gap-1.5 bg-blue-900 hover:bg-blue-800 text-white px-5 py-2 rounded-lg text-sm font-semibold transition"
             >
               Siguiente
               <ChevronRight className="w-4 h-4" />
@@ -958,7 +985,7 @@ export function NuevoServicioPage() {
             <button
               type="submit"
               disabled={crearServicio.isPending}
-              className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-50"
+              className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-5 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               {crearServicio.isPending ? "Guardando..." : "Crear Servicio"}

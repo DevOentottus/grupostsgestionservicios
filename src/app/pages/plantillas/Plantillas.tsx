@@ -15,6 +15,7 @@ import type { PlantillaWithTareas, PlantillaListItem } from "@/api/queries/usePl
 interface TareaFormItem {
   key: string;
   titulo: string;
+  obligatoria?: boolean;
 }
 
 // -- Confirm Dialog (inline component) --
@@ -132,15 +133,19 @@ function PlantillaCreateModal({
   if (!open) return null;
 
   const addTarea = () => {
-    setTareas([...tareas, { key: crypto.randomUUID(), titulo: "" }]);
+    setTareas([...tareas, { key: crypto.randomUUID(), titulo: "", obligatoria: false }]);
   };
 
   const removeTarea = (key: string) => {
     setTareas(tareas.filter((t) => t.key !== key));
   };
 
-  const updateTarea = (key: string, titulo: string) => {
-    setTareas(tareas.map((t) => (t.key === key ? { ...t, titulo } : t)));
+  const updateTarea = (key: string, value: string | Partial<TareaFormItem>) => {
+    if (typeof value === 'string') {
+      setTareas(tareas.map((t) => (t.key === key ? { ...t, titulo: value } : t)));
+    } else {
+      setTareas(tareas.map((t) => (t.key === key ? { ...t, ...value } : t)));
+    }
   };
 
   const moveTarea = (index: number, direction: "up" | "down") => {
@@ -159,7 +164,7 @@ function PlantillaCreateModal({
     try {
       const tareasPayload = tareas
         .filter((t) => t.titulo.trim())
-        .map((t, i) => ({ titulo: t.titulo.trim(), sort_order: i }));
+        .map((t, i) => ({ titulo: t.titulo.trim(), sort_order: i, obligatoria: t.obligatoria ?? false }));
 
       await crearPlantilla.mutateAsync({
         nombre: nombre.trim(),
@@ -303,6 +308,21 @@ function PlantillaCreateModal({
                       ▼
                     </button>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => updateTarea(tarea.key, { obligatoria: !tarea.obligatoria })}
+                    className={`p-1.5 rounded shrink-0 transition-colors ${
+                      tarea.obligatoria
+                        ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                        : "bg-slate-50 text-slate-300 hover:text-slate-400"
+                    }`}
+                    title={tarea.obligatoria ? "Obligatoria (técnico no puede eliminarla)" : "Voluntaria"}
+                  >
+                    <svg className="w-3.5 h-3.5" fill={tarea.obligatoria ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                  </button>
                   <input
                     value={tarea.titulo}
                     onChange={(e) => updateTarea(tarea.key, e.target.value)}
@@ -377,7 +397,7 @@ export function PlantillasPage() {
 
   // Expandable task list
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [expandedTareas, setExpandedTareas] = useState<Record<number, { titulo: string; orden: number }[]>>({});
+  const [expandedTareas, setExpandedTareas] = useState<Record<number, { titulo: string; orden: number; obligatoria?: boolean }[]>>({});
   const [loadingTareas, setLoadingTareas] = useState<number | null>(null);
 
   const toggleExpand = async (id: number) => {
@@ -412,6 +432,7 @@ export function PlantillasPage() {
         data.tareas.map((t) => ({
           key: `t-${t.id}`,
           titulo: t.titulo,
+          obligatoria: t.obligatoria,
         }))
       );
     } catch {
@@ -434,7 +455,7 @@ export function PlantillasPage() {
     try {
       const tareasPayload = editTareas
         .filter((t) => t.titulo.trim())
-        .map((t, i) => ({ titulo: t.titulo.trim(), sort_order: i }));
+        .map((t, i) => ({ titulo: t.titulo.trim(), sort_order: i, obligatoria: t.obligatoria ?? false }));
       await editarPlantilla.mutateAsync({
         id: editingId,
         data: {
@@ -473,6 +494,10 @@ export function PlantillasPage() {
 
   const updateEditTarea = (key: string, titulo: string) => {
     setEditTareas(editTareas.map((t) => (t.key === key ? { ...t, titulo } : t)));
+  };
+
+  const toggleEditTareaObligatoria = (key: string) => {
+    setEditTareas(tareas => tareas.map(t => t.key === key ? { ...t, obligatoria: !t.obligatoria } : t));
   };
 
   const moveEditTarea = (index: number, direction: "up" | "down") => {
@@ -653,6 +678,21 @@ export function PlantillasPage() {
                               ▼
                             </button>
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleEditTareaObligatoria(tarea.key)}
+                            className={`p-1.5 rounded shrink-0 transition-colors ${
+                              tarea.obligatoria
+                                ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                                : "bg-slate-50 text-slate-300 hover:text-slate-400"
+                            }`}
+                            title={tarea.obligatoria ? "Obligatoria (técnico no puede eliminarla)" : "Voluntaria"}
+                          >
+                            <svg className="w-3.5 h-3.5" fill={tarea.obligatoria ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                              <path d="M7 11V7a5 5 0 0110 0v4" />
+                            </svg>
+                          </button>
                           <input
                             value={tarea.titulo}
                             onChange={(e) => updateEditTarea(tarea.key, e.target.value)}
@@ -788,6 +828,12 @@ export function PlantillasPage() {
                             <span className="text-xs text-slate-400 font-mono mt-0.5 w-5 shrink-0 text-right">
                               {i + 1}.
                             </span>
+                            {t.obligatoria && (
+                              <svg className="w-3 h-3 shrink-0 text-amber-500 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0110 0v4" />
+                              </svg>
+                            )}
                             <span>{t.titulo}</span>
                           </div>
                         ))

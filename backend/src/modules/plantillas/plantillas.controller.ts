@@ -15,6 +15,7 @@ const crearPlantillaSchema = z.object({
         titulo: z.string().min(1, "Título de tarea requerido"),
         sort_order: z.number().int().optional(),
         asignado_a: z.number().int().nullable().optional(),
+        obligatoria: z.boolean().optional(),
       })
     )
     .optional(),
@@ -31,6 +32,7 @@ const actualizarPlantillaSchema = z.object({
         titulo: z.string().min(1),
         sort_order: z.number().int().optional(),
         asignado_a: z.number().int().nullable().optional(),
+        obligatoria: z.boolean().optional(),
       })
     )
     .optional(),
@@ -112,6 +114,7 @@ export async function plantillasController(app: FastifyInstance) {
         plantilla_id: t.plantilla_id,
         titulo: t.plantillatarea_titulo,
         orden: t.plantillatarea_orden,
+        obligatoria: t.plantillatarea_obligatoria,
       }));
 
       return reply.send({
@@ -192,6 +195,7 @@ export async function plantillasController(app: FastifyInstance) {
           plantilla_id: plantilla.plantilla_id,
           plantillatarea_titulo: t.titulo,
           plantillatarea_orden: t.sort_order ?? i,
+          plantillatarea_obligatoria: t.obligatoria ?? false,
         }));
         await supabase.from("plantillatareas").insert(tareasToInsert);
       }
@@ -212,6 +216,7 @@ export async function plantillasController(app: FastifyInstance) {
         plantilla_id: t.plantilla_id,
         titulo: t.plantillatarea_titulo,
         orden: t.plantillatarea_orden,
+        obligatoria: t.plantillatarea_obligatoria,
       }));
 
       return reply.status(201).send({
@@ -269,6 +274,7 @@ export async function plantillasController(app: FastifyInstance) {
           plantilla_id: plantillaId,
           plantillatarea_titulo: t.titulo,
           plantillatarea_orden: t.sort_order ?? i,
+          plantillatarea_obligatoria: t.obligatoria ?? false,
         }));
 
         if (tareasToInsert.length > 0) {
@@ -298,6 +304,7 @@ export async function plantillasController(app: FastifyInstance) {
         plantilla_id: t.plantilla_id,
         titulo: t.plantillatarea_titulo,
         orden: t.plantillatarea_orden,
+        obligatoria: t.plantillatarea_obligatoria,
       }));
 
       return reply.send({
