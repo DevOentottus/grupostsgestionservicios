@@ -210,17 +210,15 @@ function Seccion({
   children?: React.ReactNode;
 }) {
   return (
-    <div className={cn("bg-white rounded-2xl border border-slate-200/80 shadow-sm", className)}>
-      <div className="px-5 py-4 border-b border-slate-100">
-        <div className="flex items-center gap-2">
+    <div className={cn("bg-white rounded-xl border border-slate-200", className)}>
+      <div className="p-3 border-b border-slate-100">
+        <div className="flex items-center gap-3">
           {Icon && (
-            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-              <Icon className="w-4 h-4 text-slate-500" />
-            </div>
+            <Icon className="w-4 h-4 text-slate-500 shrink-0" />
           )}
-          <div>
-            <h3 className="font-semibold text-slate-800 text-sm">{titulo}</h3>
-            <p className="text-xs text-slate-500 mt-0.5">{descripcion}</p>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-slate-800 text-sm leading-tight">{titulo}</h3>
+            <p className="text-xs text-slate-500 mt-0.5 leading-tight">{descripcion}</p>
           </div>
         </div>
       </div>
