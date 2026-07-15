@@ -279,24 +279,37 @@ export function MiDesempenoPage() {
                 </div>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tareas completadas</p>
               </div>
-              <p className="text-3xl font-bold text-slate-800">
-                {misDatos.tareas_completadas ?? 0}
-                <span className="text-lg text-slate-400 font-normal"> / {(misDatos.tareas_completadas ?? 0) + (misDatos.tareas_activas ?? 0)}</span>
-              </p>
-              {periodComparison && (
-                <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
-                  <span className="text-slate-400">Anterior: {periodComparison.anterior.tareas_completadas}</span>
-                  <TrendBadge variacion={periodComparison.variacion.tareas} />
-                </div>
+              {periodComparison ? (
+                <p className="text-3xl font-bold text-slate-800">
+                  {periodComparison.actual.tareas_completadas}
+                  <span className="text-lg text-slate-400 font-normal"> / {periodComparison.actual.tareas_completadas + periodComparison.actual.tareas_activas}</span>
+                </p>
+              ) : (
+                <p className="text-3xl font-bold text-slate-800">
+                  {misDatos.tareas_completadas ?? 0}
+                  <span className="text-lg text-slate-400 font-normal"> / {(misDatos.tareas_completadas ?? 0) + (misDatos.tareas_activas ?? 0)}</span>
+                </p>
               )}
-              {areaBenchmark && (
+              {periodComparison && (
+                <>
+                  <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
+                    <span className="text-slate-400">Período anterior: {periodComparison.anterior.tareas_completadas}</span>
+                    <TrendBadge variacion={periodComparison.variacion.tareas} />
+                  </div>
+                  {areaBenchmark && (
+                    <div className="flex items-baseline gap-1.5 mt-2 pt-2 border-t border-slate-100">
+                      <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgTareas.toFixed(1)}</span>
+                      <span className="text-[10px] text-slate-400">prom. área</span>
+                    </div>
+                  )}
+                  <GoalBar actual={periodComparison.actual.tareas_completadas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} />
+                </>
+              )}
+              {!periodComparison && areaBenchmark && (
                 <div className="flex items-baseline gap-1.5 mt-2 pt-2 border-t border-slate-100">
                   <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgTareas.toFixed(1)}</span>
                   <span className="text-[10px] text-slate-400">prom. área</span>
                 </div>
-              )}
-              {periodComparison && (
-                <GoalBar actual={periodComparison.actual.tareas_completadas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} />
               )}
             </div>
 
@@ -308,21 +321,29 @@ export function MiDesempenoPage() {
                 </div>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Servicios completados</p>
               </div>
-              <p className="text-3xl font-bold text-indigo-600">{misDatos.servicios_completados ?? 0}</p>
+              <p className="text-3xl font-bold text-indigo-600">
+                {periodComparison ? periodComparison.actual.servicios_completados : (misDatos.servicios_completados ?? 0)}
+              </p>
               {periodComparison && (
-                <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
-                  <span className="text-slate-400">Anterior: {periodComparison.anterior.servicios_completados}</span>
-                  <TrendBadge variacion={periodComparison.variacion.servicios} />
-                </div>
+                <>
+                  <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
+                    <span className="text-slate-400">Período anterior: {periodComparison.anterior.servicios_completados}</span>
+                    <TrendBadge variacion={periodComparison.variacion.servicios} />
+                  </div>
+                  {areaBenchmark && (
+                    <div className="flex items-baseline gap-1.5 mt-2 pt-2 border-t border-slate-100">
+                      <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgServicios.toFixed(1)}</span>
+                      <span className="text-[10px] text-slate-400">prom. área ({areaBenchmark.totalColaboradores} colab.)</span>
+                    </div>
+                  )}
+                  <GoalBar actual={periodComparison.actual.servicios_completados} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} />
+                </>
               )}
-              {areaBenchmark && (
+              {!periodComparison && areaBenchmark && (
                 <div className="flex items-baseline gap-1.5 mt-2 pt-2 border-t border-slate-100">
                   <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgServicios.toFixed(1)}</span>
                   <span className="text-[10px] text-slate-400">prom. área ({areaBenchmark.totalColaboradores} colab.)</span>
                 </div>
-              )}
-              {periodComparison && (
-                <GoalBar actual={periodComparison.actual.servicios_completados} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} />
               )}
             </div>
 
@@ -334,27 +355,33 @@ export function MiDesempenoPage() {
                 </div>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Calificación</p>
               </div>
-              {misDatos.calificacion_promedio != null ? (
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-3xl font-bold text-yellow-600">
-                      {misDatos.calificacion_promedio.toFixed(1)}
-                    </span>
-                    <span className="text-xs text-slate-400">/ 5</span>
+              {(() => {
+                const califVal = periodComparison
+                  ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
+                  : misDatos.calificacion_promedio;
+                const califCount = periodComparison
+                  ? periodComparison.actual.total_calificaciones
+                  : misDatos.total_calificaciones;
+                return califVal != null ? (
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-3xl font-bold text-yellow-600">{califVal.toFixed(1)}</span>
+                      <span className="text-xs text-slate-400">/ 5</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <StarRating rating={califVal} />
+                      <span className="text-xs text-slate-400 ml-1">
+                        {califCount} calificación{califCount !== 1 ? "es" : ""}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <StarRating rating={misDatos.calificacion_promedio} />
-                    <span className="text-xs text-slate-400 ml-1">
-                      {misDatos.total_calificaciones} calificación{misDatos.total_calificaciones !== 1 ? "es" : ""}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-slate-400 mt-2">Sin evaluaciones</p>
-              )}
+                ) : (
+                  <p className="text-sm text-slate-400 mt-2">Sin evaluaciones</p>
+                );
+              })()}
               {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
                 <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
-                  <span className="text-slate-400">Anterior: {periodComparison.anterior.calificacion_promedio.toFixed(1)}</span>
+                  <span className="text-slate-400">Período anterior: {periodComparison.anterior.calificacion_promedio.toFixed(1)}</span>
                   <TrendBadge variacion={periodComparison.variacion.calificacion} />
                 </div>
               )}
@@ -374,40 +401,53 @@ export function MiDesempenoPage() {
                 </div>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">NPS · Recomendación</p>
               </div>
-              {miArea?.satisfaccion && miArea.satisfaccion.cantidad > 0 ? (
-                <div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className={`text-3xl font-bold ${
-                      miArea.satisfaccion.nps > 0 ? "text-green-600" : miArea.satisfaccion.nps < 0 ? "text-red-600" : "text-slate-500"
-                    }`}>
-                      {miArea.satisfaccion.nps > 0 ? "+" : ""}{miArea.satisfaccion.nps}
-                    </span>
-                    <span className="text-sm text-slate-400">/ 100</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full overflow-hidden flex mt-2">
-                    <div className="h-full bg-green-500" style={{ width: `${(miArea.satisfaccion.promotores / miArea.satisfaccion.cantidad) * 100}%` }} />
-                    <div className="h-full bg-yellow-400" style={{ width: `${(miArea.satisfaccion.pasivos / miArea.satisfaccion.cantidad) * 100}%` }} />
-                    <div className="h-full bg-red-500" style={{ width: `${(miArea.satisfaccion.detractores / miArea.satisfaccion.cantidad) * 100}%` }} />
-                  </div>
-                  <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                    <span className="text-green-600">{miArea.satisfaccion.promotores} prom.</span>
-                    <span className="text-yellow-600">{miArea.satisfaccion.pasivos} pas.</span>
-                    <span className="text-red-600">{miArea.satisfaccion.detractores} det.</span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 mt-2 italic">
-                    Basado en {miArea.satisfaccion.cantidad} evaluación{miArea.satisfaccion.cantidad !== 1 ? "es" : ""} del área
-                  </p>
-                  <InfoPopover
-                    formula="NPS = % promotores − % detractores (escala 0–10)"
-                    descripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
-                  />
-                </div>
-              ) : (
-                <p className="text-sm text-slate-400 mt-2">Sin datos suficientes</p>
-              )}
+              {(() => {
+                const esPeriodo = periodComparison && periodComparison.actual.total_calificaciones > 0;
+                const areaSat = miArea?.satisfaccion;
+                const npsData = esPeriodo
+                  ? periodComparison!.actual
+                  : (areaSat && areaSat.cantidad > 0 ? areaSat : null);
+                if (npsData) {
+                  const npsVal = npsData.nps;
+                  const total = esPeriodo ? periodComparison!.actual.total_calificaciones : areaSat!.cantidad;
+                  const prom = npsData.promotores;
+                  const pas = npsData.pasivos;
+                  const det = npsData.detractores;
+                  return (
+                    <div>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className={`text-3xl font-bold ${
+                          npsVal > 0 ? "text-green-600" : npsVal < 0 ? "text-red-600" : "text-slate-500"
+                        }`}>
+                          {npsVal > 0 ? "+" : ""}{npsVal}
+                        </span>
+                        <span className="text-sm text-slate-400">/ 100</span>
+                      </div>
+                      <div className="w-full h-2 rounded-full overflow-hidden flex mt-2">
+                        <div className="h-full bg-green-500" style={{ width: `${(prom / total) * 100}%` }} />
+                        <div className="h-full bg-yellow-400" style={{ width: `${(pas / total) * 100}%` }} />
+                        <div className="h-full bg-red-500" style={{ width: `${(det / total) * 100}%` }} />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                        <span className="text-green-600">{prom} prom.</span>
+                        <span className="text-yellow-600">{pas} pas.</span>
+                        <span className="text-red-600">{det} det.</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-2 italic">
+                        Basado en {total} evaluación{total !== 1 ? "es" : ""} del {esPeriodo ? "período" : "área"}
+                      </p>
+                      <InfoPopover
+                        formula="NPS = % promotores − % detractores (escala 0–10)"
+                        descripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
+                      />
+                    </div>
+                  );
+                }
+                return <p className="text-sm text-slate-400 mt-2">Sin datos suficientes</p>;
+              })()}
               {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
                 <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
-                  <span className="text-slate-400">Anterior: {periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</span>
+                  <span className="text-slate-400">Período anterior: {periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</span>
                   <TrendBadge variacion={periodComparison.variacion.nps} />
                 </div>
               )}
@@ -433,7 +473,7 @@ export function MiDesempenoPage() {
                     formula="Tiempo de ejecución: Tracking_final − Tracking_inicial"
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-[10px]">
-                        <span className="text-slate-400">Anterior: {periodComparison.anterior.servicios_con_tiempo_tracking_pct}%</span>
+                        <span className="text-slate-400">Período anterior: {periodComparison.anterior.servicios_con_tiempo_tracking_pct}%</span>
                         <TrendBadge variacion={periodComparison.variacion.tracking_pct} />
                       </div>
                     ) : undefined}
@@ -447,7 +487,7 @@ export function MiDesempenoPage() {
                     formula="Conteo de tareas que tienen tarea_fecha_completado, tarea_hora_completado y tarea_completado_por en la tabla tareas"
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-[10px]">
-                        <span className="text-slate-400">Anterior: {periodComparison.anterior.tareas_documentadas_conteo}</span>
+                        <span className="text-slate-400">Período anterior: {periodComparison.anterior.tareas_documentadas_conteo}</span>
                         <TrendBadge variacion={periodComparison.variacion.tareas_documentadas} />
                       </div>
                     ) : undefined}
@@ -461,7 +501,7 @@ export function MiDesempenoPage() {
                     formula="(Servicios que tienen registros en la tabla auditoría ÷ Total de servicios) × 100"
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-[10px]">
-                        <span className="text-slate-400">Anterior: {periodComparison.anterior.registros_completos_pct}%</span>
+                        <span className="text-slate-400">Período anterior: {periodComparison.anterior.registros_completos_pct}%</span>
                         <TrendBadge variacion={periodComparison.variacion.auditoria_pct} />
                       </div>
                     ) : undefined}
@@ -491,7 +531,7 @@ export function MiDesempenoPage() {
                   formula="Σ(tracking_fin − tracking_inicio) ÷ N° de servicios completados en el período"
                   comparacion={periodComparison ? (
                     <div className="flex items-center gap-1.5 text-[10px]">
-                      <span className="text-slate-400">Anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
+                      <span className="text-slate-400">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
                       <TrendBadge variacion={periodComparison.variacion.tiempo} />
                     </div>
                   ) : undefined}
@@ -505,7 +545,7 @@ export function MiDesempenoPage() {
                   formula="(Servicios cuyo tiempo real total ≤ tiempo_estimado del servicio ÷ Total de servicios completados) × 100"
                   comparacion={periodComparison ? (
                     <div className="flex items-center gap-1.5 text-[10px]">
-                      <span className="text-slate-400">Anterior: {periodComparison.anterior.completados_dentro_tiempo_pct}%</span>
+                      <span className="text-slate-400">Período anterior: {periodComparison.anterior.completados_dentro_tiempo_pct}%</span>
                       <TrendBadge variacion={periodComparison.variacion.a_tiempo_pct} />
                     </div>
                   ) : undefined}
@@ -519,7 +559,7 @@ export function MiDesempenoPage() {
                   formula="Σ(tarea_tiempo_real) ÷ N° de tareas completadas con tiempo en el período"
                   comparacion={periodComparison ? (
                     <div className="flex items-center gap-1.5 text-[10px]">
-                      <span className="text-slate-400">Anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio_por_tarea)}</span>
+                      <span className="text-slate-400">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio_por_tarea)}</span>
                       <TrendBadge variacion={periodComparison.variacion.tiempo_por_tarea} />
                     </div>
                   ) : undefined}

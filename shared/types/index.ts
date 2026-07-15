@@ -432,6 +432,7 @@ export interface DashboardV2Response {
 export interface PeriodMetrics {
   servicios_completados: number;
   tareas_completadas: number;
+  tareas_activas: number;
   tiempo_promedio: number;
   tiempo_promedio_por_tarea: number;
   servicios_con_tiempo_tracking_pct: number;
@@ -439,7 +440,11 @@ export interface PeriodMetrics {
   registros_completos_pct: number;
   completados_dentro_tiempo_pct: number;
   calificacion_promedio: number;
+  total_calificaciones: number;
   nps: number;
+  promotores: number;
+  pasivos: number;
+  detractores: number;
 }
 
 // -- Rendimiento del Sistema (admin) --

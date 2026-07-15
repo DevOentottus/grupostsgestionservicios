@@ -870,6 +870,17 @@ export async function seguimientoController(app: FastifyInstance) {
         }
         const trackingPct = totalSvc > 0 ? Math.round((serviciosConTracking / totalSvc) * 100) : 0;
 
+        // -- Tareas pendientes / activas --
+        let tareasActivas = 0;
+        if (allSvcIds.length > 0) {
+          const { data: pend } = await supabase
+            .from("tareas")
+            .select("tarea_id")
+            .in("servicio_id", allSvcIds)
+            .eq("tarea_estado", "pendiente");
+          tareasActivas = pend?.length || 0;
+        }
+
         // -- Auditoría (trazabilidad completa) --
         let svcConAuditoria = 0;
         if (allSvcIds.length > 0) {
@@ -895,7 +906,11 @@ export async function seguimientoController(app: FastifyInstance) {
 
         // -- Calificaciones y NPS del período --
         let califPromedio = 0;
+        let totalCalificaciones = 0;
         let nps = 0;
+        let promotores = 0;
+        let pasivos = 0;
+        let detractores = 0;
         if (allSvcIds.length > 0) {
           const { data: califs } = await supabase
             .from("calificaciones")
@@ -904,19 +919,21 @@ export async function seguimientoController(app: FastifyInstance) {
             .gte("calificacion_fecha", inicio.toISOString().split("T")[0])
             .lte("calificacion_fecha", fin.toISOString().split("T")[0]);
 
-          const total = califs?.length || 0;
-          if (total > 0) {
+          totalCalificaciones = califs?.length || 0;
+          if (totalCalificaciones > 0) {
             const suma = califs!.reduce((s: number, c: any) => s + c.calificacion_puntaje, 0);
-            califPromedio = Math.round((suma / total) * 10) / 10;
-            const promotores = califs!.filter((c: any) => c.calificacion_puntaje >= 4).length;
-            const detractores = califs!.filter((c: any) => c.calificacion_puntaje <= 2).length;
-            nps = Math.round(((promotores - detractores) / total) * 100);
+            califPromedio = Math.round((suma / totalCalificaciones) * 10) / 10;
+            promotores = califs!.filter((c: any) => c.calificacion_puntaje >= 4).length;
+            pasivos = califs!.filter((c: any) => c.calificacion_puntaje === 3).length;
+            detractores = califs!.filter((c: any) => c.calificacion_puntaje <= 2).length;
+            nps = Math.round(((promotores - detractores) / totalCalificaciones) * 100);
           }
         }
 
         return {
           servicios_completados: completados.length,
           tareas_completadas: tareasCount,
+          tareas_activas: tareasActivas,
           tiempo_promedio: tiempoPromedio,
           tiempo_promedio_por_tarea: tiempoPromedioPorTarea,
           servicios_con_tiempo_tracking_pct: trackingPct,
@@ -924,7 +941,11 @@ export async function seguimientoController(app: FastifyInstance) {
           registros_completos_pct: auditoriaPct,
           completados_dentro_tiempo_pct: aTiempoPct,
           calificacion_promedio: califPromedio,
+          total_calificaciones: totalCalificaciones,
           nps,
+          promotores,
+          pasivos,
+          detractores,
         };
       };
 
