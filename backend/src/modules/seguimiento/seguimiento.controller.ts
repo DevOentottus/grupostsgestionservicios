@@ -785,7 +785,8 @@ export async function seguimientoController(app: FastifyInstance) {
       const anteriorFin = compararHasta ?? new Date(fechaFin.getTime() - (fechaFin.getTime() - fechaInicio.getTime()));
 
       const getPeriodMetrics = async (inicio: Date, fin: Date) => {
-        // -- Servicios del período --
+        // -- Servicios del período: igual que el dashboard principal --
+        // 1) Servicios creados en el período
         let svcQuery = supabase
           .from("servicios")
           .select("servicio_id, servicio_estado, servicio_tiempo_estimado")
@@ -794,9 +795,39 @@ export async function seguimientoController(app: FastifyInstance) {
 
         if (areaId) svcQuery = svcQuery.eq("area_id", areaId);
 
-        const { data: svcs } = await svcQuery;
-        const allSvcIds = (svcs || []).map((s: any) => s.servicio_id);
-        const completados = (svcs || []).filter((s: any) => s.servicio_estado === "completado");
+        const { data: svcsCreados } = await svcQuery;
+        const allSvcSet = new Set<number>((svcsCreados || []).map((s: any) => s.servicio_id));
+
+        // 2) Servicios con tareas completadas en el período (aunque creados antes)
+        {
+          let tareasPeriodoQuery = supabase
+            .from("tareas")
+            .select("servicio_id")
+            .eq("tarea_estado", "completado")
+            .gte("tarea_fecha_completado", inicio.toISOString().split("T")[0])
+            .lte("tarea_fecha_completado", fin.toISOString().split("T")[0]);
+          if (usuarioId) tareasPeriodoQuery = tareasPeriodoQuery.eq("tarea_completado_por", usuarioId);
+          const { data: tareasEnPeriodo } = await tareasPeriodoQuery;
+          for (const t of tareasEnPeriodo || []) {
+            if (t.servicio_id) allSvcSet.add(t.servicio_id);
+          }
+        }
+
+        const allSvcIds = [...allSvcSet];
+        const completados = [...(svcsCreados || []).filter((s: any) => s.servicio_estado === "completado")];
+        // También buscar completados entre los adicionales
+        if (allSvcIds.length > (svcsCreados || []).length) {
+          const idsAdicionales = allSvcIds.filter((id) => !(svcsCreados || []).some((s: any) => s.servicio_id === id));
+          if (idsAdicionales.length > 0) {
+            const { data: svcsCompl } = await supabase
+              .from("servicios")
+              .select("servicio_id, servicio_estado, servicio_tiempo_estimado")
+              .in("servicio_id", idsAdicionales);
+            for (const s of svcsCompl || []) {
+              if (s.servicio_estado === "completado") completados.push(s);
+            }
+          }
+        }
         const svcIdsCompletados = completados.map((s: any) => s.servicio_id);
         const totalSvc = allSvcIds.length;
 
@@ -808,6 +839,8 @@ export async function seguimientoController(app: FastifyInstance) {
 
         if (svcIdsCompletados.length > 0) {
           tareasQuery = tareasQuery.in("servicio_id", svcIdsCompletados);
+        } else {
+          tareasQuery = tareasQuery.in("servicio_id", [-1]); // fuerza resultado vacío
         }
         if (usuarioId) {
           tareasQuery = tareasQuery.eq("tarea_completado_por", usuarioId);
