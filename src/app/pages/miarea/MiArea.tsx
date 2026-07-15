@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 import {
   Building2, Users, Wrench, Trophy, Star,
-  ArrowUpDown, ArrowRight, Search, Eye, EyeOff, Clock,
+  ArrowUpDown, ArrowRight, Search, Eye, EyeOff,
 } from "lucide-react";
 import { cn } from "@/app/lib/utils";
 import { PieChartCard } from "@/app/components/charts/PieChart.js";
@@ -214,19 +214,6 @@ export function MiAreaPage() {
         onFechaFin={(v) => setFechaFin(v)}
         onLabelChange={(l) => setPeriodoLabel(l)}
       />
-
-      {/* Promedio de tiempo en el período */}
-      {tiempoPromedio && (
-        <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-slate-400" />
-            <span className="text-lg font-bold text-slate-800">{tiempoPromedio.texto}</span>
-          </div>
-          <div className="text-xs text-slate-400">
-            Promedio de tus servicios completados en el período actual ({tiempoPromedio.count} servicios)
-          </div>
-        </div>
-      )}
 
       {/* Indicadores del área: pie chart, satisfacción, ranking */}
       <div>
