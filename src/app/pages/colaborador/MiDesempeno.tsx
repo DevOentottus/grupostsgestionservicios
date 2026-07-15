@@ -5,61 +5,187 @@ import { useDashboardWithComparison } from "@/api/queries/useDashboard.js";
 import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { cn, formatMinutos } from "@/app/lib/utils";
 import {
-  TrendingUp, CheckCircle2, Star,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  CheckCircle2,
+  Star,
+  Target,
+  ClipboardCheck,
+  Timer,
+  BarChart3,
+  ShieldCheck,
+  Layers,
+  User,
 } from "lucide-react";
 import { DateFilterCard } from "@/app/components/filters/DateFilterCard.js";
 
-function StarRating({ rating }: { rating: number }) {
+/* ─────────────────────────────────────────────
+ * COMPONENTES INTERNOS
+ * ───────────────────────────────────────────── */
+
+/** Avatar con iniciales del colaborador */
+function Avatar({ nombre, className }: { nombre: string; className?: string }) {
+  const iniciales = nombre
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase() || "?";
+  return (
+    <div
+      className={cn(
+        "rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white font-bold shrink-0",
+        className,
+      )}
+      aria-hidden="true"
+    >
+      {iniciales}
+    </div>
+  );
+}
+
+/** Badge de tendencia con fondo tintado */
+function TrendBadge({ variacion, size = "sm" }: { variacion: number; size?: "sm" | "xs" }) {
+  if (variacion === 0) {
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 rounded-full font-semibold bg-slate-100 text-slate-500",
+          size === "sm" ? "text-xs px-2.5 py-1" : "text-[10px] px-2 py-0.5",
+        )}
+      >
+        <Minus className={size === "sm" ? "w-3 h-3" : "w-2.5 h-2.5"} /> 0%
+      </span>
+    );
+  }
+  const up = variacion > 0;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full font-semibold",
+        up ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
+        size === "sm" ? "text-xs px-2.5 py-1" : "text-[10px] px-2 py-0.5",
+      )}
+      aria-label={up ? "Subio " + Math.abs(variacion) + "% respecto al periodo anterior" : "Bajo " + Math.abs(variacion) + "% respecto al periodo anterior"}
+    >
+      {up ? <TrendingUp className={size === "sm" ? "w-3 h-3" : "w-2.5 h-2.5"} /> : <TrendingDown className={size === "sm" ? "w-3 h-3" : "w-2.5 h-2.5"} />}
+      {Math.abs(variacion)}%
+    </span>
+  );
+}
+
+/** Barra de progreso contra meta */
+function GoalBar({ actual, meta, showMeta = true }: { actual: number; meta: number; showMeta?: boolean }) {
+  if (meta <= 0) return null;
+  const pct = Math.min(Math.round((actual / meta) * 100), 100);
+  const cumplida = actual >= meta;
+  return (
+    <div className="mt-3">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
+          <Target className="w-3 h-3 text-slate-400" />
+          Progreso vs meta
+        </span>
+        <div className="flex items-center gap-2">
+          <span className={cn("text-xs font-bold", cumplida ? "text-emerald-600" : "text-amber-600")}>
+            {pct}%
+          </span>
+          {showMeta && (
+            <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+              Meta: {meta}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          className={cn("h-full rounded-full transition-all duration-500", cumplida ? "bg-emerald-500" : "bg-amber-400")}
+          style={{ width: pct + "%" }}
+          role="progressbar"
+          aria-valuenow={pct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={pct + "% de la meta"}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Estrellas de calificacion */
+function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "xs" }) {
   const full = Math.floor(rating);
   const half = rating - full >= 0.5;
+  const starSize = size === "sm" ? "w-4 h-4" : "w-3 h-3";
   return (
-    <span className="inline-flex items-center gap-0.5" title={`${rating.toFixed(1)} / 5`}>
+    <span className="inline-flex items-center gap-0.5" title={rating.toFixed(1) + " / 5"}>
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={`w-3 h-3 ${
+          className={cn(
+            starSize,
             i <= full
-              ? "fill-yellow-400 text-yellow-400"
+              ? "fill-amber-400 text-amber-400"
               : i === full + 1 && half
-                ? "fill-yellow-400/50 text-yellow-400"
-                : "fill-slate-200 text-slate-200"
-          }`}
+                ? "fill-amber-400/50 text-amber-400"
+                : "fill-slate-200 text-slate-200",
+          )}
         />
       ))}
     </span>
   );
 }
 
-function TrendBadge({ variacion }: { variacion: number }) {
-  if (variacion === 0) return <span className="text-xs text-slate-400">→ 0%</span>;
-  const up = variacion > 0;
+/** Card principal para KPI primario */
+function KpiPrimarioCard({
+  icon: Icon,
+  iconBg,
+  iconColor,
+  titulo,
+  valor,
+  unidad,
+  children,
+}: {
+  icon: React.ElementType;
+  iconBg: string;
+  iconColor: string;
+  titulo: string;
+  valor: React.ReactNode;
+  unidad?: string;
+  children?: React.ReactNode;
+}) {
   return (
-    <span className={`text-xs font-medium inline-flex items-center gap-0.5 ${up ? "text-green-600" : "text-red-500"}`}>
-      {up ? "↑" : "↓"} {Math.abs(variacion)}%
-    </span>
-  );
-}
-
-function GoalBar({ actual, meta }: { actual: number; meta: number }) {
-  if (meta <= 0) return null;
-  const pct = Math.min(Math.round((actual / meta) * 100), 100);
-  const cumplida = actual >= meta;
-  return (
-    <div className="mt-2 pt-2 border-t border-slate-100">
-      <div className="flex justify-between text-[10px] text-slate-400 mb-1">
-        <span>Progreso</span>
-        <span className={cumplida ? "text-green-600 font-medium" : ""}>{pct}%</span>
+    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+      <div className="p-5">
+        <div className="flex items-start justify-between mb-3">
+          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", iconBg)}>
+            <Icon className={cn("w-5 h-5", iconColor)} />
+          </div>
+          <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider text-right leading-tight">
+            {titulo}
+          </div>
+        </div>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-3xl font-bold text-slate-900 tracking-tight">{valor}</span>
+          {unidad && <span className="text-sm font-medium text-slate-400">{unidad}</span>}
+        </div>
+        {children}
       </div>
-      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full transition-all ${cumplida ? "bg-green-500" : "bg-amber-400"}`} style={{ width: `${pct}%` }} />
-      </div>
-      <p className="text-[10px] text-slate-400 mt-0.5">Meta: {meta}</p>
     </div>
   );
 }
 
+/** Card para indicadores secundarios */
 function IndicadorCard({
-  titulo, valor, unidad, descripcion, color, formula, comparacion,
+  titulo,
+  valor,
+  unidad,
+  descripcion,
+  color,
+  formula,
+  comparacion,
 }: {
   titulo: string;
   valor: string | number;
@@ -70,48 +196,69 @@ function IndicadorCard({
   comparacion?: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-      <div className={`h-1.5 ${color}`} />
-      <div className="p-5">
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-3xl font-bold text-gray-900">
+    <div className="bg-white rounded-xl border border-slate-200/70 shadow-sm hover:shadow transition-shadow overflow-hidden">
+      <div className={cn("h-1", color)} />
+      <div className="p-4">
+        <div className="flex items-baseline gap-1.5 mb-1">
+          <span className="text-2xl font-bold text-slate-900 tracking-tight">
             {typeof valor === "number" ? valor.toLocaleString() : valor}
           </span>
-          {unidad && <span className="text-sm text-gray-400">{unidad}</span>}
+          {unidad && <span className="text-xs font-medium text-slate-400">{unidad}</span>}
         </div>
-        <div className="flex items-center gap-1 mt-1">
-          <p className="text-gray-500 text-sm">{titulo}</p>
+        <div className="flex items-center gap-1">
+          <p className="text-xs text-slate-500 leading-tight">{titulo}</p>
           {formula && <InfoPopover formula={formula} descripcion={descripcion} />}
         </div>
         {comparacion && (
-          <div className="mt-2 pt-2 border-t border-slate-100">
-            {comparacion}
-          </div>
+          <div className="mt-2 pt-2 border-t border-slate-100">{comparacion}</div>
         )}
       </div>
     </div>
   );
 }
 
-function PropuestaSection({
-  titulo, descripcion, children,
+/** Seccion con cabecera */
+function Seccion({
+  icon: Icon,
+  titulo,
+  descripcion,
+  className,
+  children,
 }: {
+  icon?: React.ElementType;
   titulo: string;
   descripcion: string;
-  children: React.ReactNode;
+  className?: string;
+  children?: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
-        <h3 className="font-semibold text-slate-800 text-sm">{titulo}</h3>
-        <p className="text-xs text-slate-500 mt-0.5">{descripcion}</p>
+    <div className={cn("bg-white rounded-2xl border border-slate-200/80 shadow-sm", className)}>
+      <div className="px-5 py-4 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          {Icon && (
+            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+              <Icon className="w-4 h-4 text-slate-500" />
+            </div>
+          )}
+          <div>
+            <h3 className="font-semibold text-slate-800 text-sm">{titulo}</h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">{descripcion}</p>
+          </div>
+        </div>
       </div>
-      <div className="p-4">
-        {children}
-      </div>
+      <div className="p-4">{children}</div>
     </div>
   );
 }
+
+/** Skeleton */
+function Skeleton({ className }: { className?: string }) {
+  return <div className={cn("animate-pulse rounded-lg bg-slate-200", className)} />;
+}
+
+/* ─────────────────────────────────────────────
+ * PAGINA PRINCIPAL
+ * ───────────────────────────────────────────── */
 
 export function MiDesempenoPage() {
   const { user } = useAuth();
@@ -174,15 +321,13 @@ export function MiDesempenoPage() {
     usuario_id: user?.id,
   });
 
-  const isLoading = areaLoading;
-  const isError = areaError;
+  const isLoading = areaLoading && dashLoading;
+  const isError = areaError || dashError;
 
   // Datos del colaborador logueado
   const misDatos = useMemo(() => {
     if (!miArea?.colaboradores) return null;
-    return miArea.colaboradores.find(
-      (c: any) => c.usuario_id === user?.id
-    ) || null;
+    return miArea.colaboradores.find((c: any) => c.usuario_id === user?.id) || null;
   }, [miArea, user?.id]);
 
   // Indicadores desde dashboard
@@ -190,21 +335,12 @@ export function MiDesempenoPage() {
   const tieneDashboard = !!kpi;
   const periodComparison = dashboard?.period_comparison;
 
-  // Productividad personal (servicios completados en el período)
-  const productividadPersonal = useMemo(() => {
-    if (misDatos?.servicios_completados == null) return null;
-    return misDatos.servicios_completados;
-  }, [misDatos]);
-
-  // Benchmarking contra el área
+  // Benchmarking contra el area
   const areaBenchmark = useMemo(() => {
     if (!miArea?.colaboradores) return null;
-    const otros = miArea.colaboradores.filter(
-      (c: any) => c.usuario_id !== user?.id
-    );
+    const otros = miArea.colaboradores.filter((c: any) => c.usuario_id !== user?.id);
     if (otros.length === 0) return null;
-    const sumVal = (key: string) =>
-      otros.reduce((s: number, c: any) => s + (c[key] ?? 0), 0);
+    const sumVal = (key: string) => otros.reduce((s: number, c: any) => s + (c[key] ?? 0), 0);
     const avg = (key: string) => sumVal(key) / otros.length;
     return {
       avgServicios: avg("servicios_completados"),
@@ -219,17 +355,96 @@ export function MiDesempenoPage() {
     };
   }, [miArea, user?.id]);
 
+  // Highlights para el micro-resumen
+  const highlights = useMemo(() => {
+    const actual = periodComparison?.actual;
+    const variacion = periodComparison?.variacion;
+    const califVal = actual
+      ? actual.calificacion_promedio > 0 ? actual.calificacion_promedio : null
+      : misDatos?.calificacion_promedio;
+    return [
+      {
+        label: "Tareas",
+        valor: actual ? actual.tareas_completadas : (misDatos?.tareas_completadas ?? 0),
+        variacion: variacion?.tareas,
+        color: "blue" as const,
+      },
+      {
+        label: "Servicios",
+        valor: actual ? actual.servicios_completados : (misDatos?.servicios_completados ?? 0),
+        variacion: variacion?.servicios,
+        color: "indigo" as const,
+      },
+      {
+        label: "Calificacion",
+        valor: califVal != null ? califVal.toFixed(1) : "—",
+        variacion: variacion?.calificacion,
+        color: "amber" as const,
+      },
+      {
+        label: "NPS",
+        valor: actual && actual.total_calificaciones > 0 ? (actual.nps > 0 ? "+" + actual.nps : "" + actual.nps) : "—",
+        variacion: variacion?.nps,
+        color: "emerald" as const,
+      },
+    ];
+  }, [periodComparison, misDatos]);
+
+  /* ──────────────────────────────────────────
+   * RENDER
+   * ────────────────────────────────────────── */
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center shrink-0">
-          <TrendingUp className="w-5 h-5 text-green-600" />
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* ═══════════════════════════════ */}
+      {/* HERO HEADER                    */}
+      {/* ═══════════════════════════════ */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-5">
+          <div className="flex items-center gap-4">
+            <Avatar nombre={user?.nombres || "?"} className="w-12 h-12 text-base ring-4 ring-white/20" />
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-white">Mi Desempeño</h1>
+              <p className="text-emerald-100 text-sm truncate">
+                {user?.nombres || "Colaborador"}
+                {miArea?.area?.nombre && <span className="hidden sm:inline"> · {miArea.area.nombre}</span>}
+              </p>
+            </div>
+            <div className="ml-auto hidden sm:flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2 text-emerald-50 text-xs">
+              <BarChart3 className="w-3.5 h-3.5 text-emerald-200" />
+              <span>{periodoLabel}</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-800">Mi Desempeño</h2>
-          <p className="text-sm text-slate-500">{user?.nombres || "Colaborador"}</p>
-        </div>
+
+        {/* Micro-resumen */}
+        {misDatos && (
+          <div className="px-5 py-4">
+            <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-3">Resumen rápido</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {highlights.map((h) => {
+                const colorMap: Record<string, string> = {
+                  blue: "bg-blue-50 text-blue-700 border-blue-200",
+                  indigo: "bg-indigo-50 text-indigo-700 border-indigo-200",
+                  amber: "bg-amber-50 text-amber-700 border-amber-200",
+                  emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
+                };
+                return (
+                  <div
+                    key={h.label}
+                    className={cn("rounded-xl border px-3.5 py-2.5 flex items-center justify-between gap-2", colorMap[h.color])}
+                  >
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-medium opacity-75 truncate">{h.label}</p>
+                      <p className="text-lg font-bold leading-tight">{h.valor}</p>
+                    </div>
+                    {h.variacion != null && <TrendBadge variacion={h.variacion} size="xs" />}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filtro de fechas */}
@@ -243,310 +458,337 @@ export function MiDesempenoPage() {
         onLabelChange={(l) => setPeriodoLabel(l)}
       />
 
+      {/* ═══════════════════════════════ */}
+      {/* LOADING STATE                   */}
+      {/* ═══════════════════════════════ */}
       {isLoading && (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-500 mt-3 text-sm">Cargando tu desempeño...</p>
-        </div>
-      )}
-
-      {isError && (
-        <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <p className="text-red-500 font-medium">Error al cargar tu desempeño</p>
-          <p className="text-sm text-slate-400 mt-1">Intentalo de nuevo más tarde</p>
-        </div>
-      )}
-
-      {!isLoading && !isError && !misDatos && (
-        <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-100">
-          <TrendingUp className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500 font-medium">No se encontraron datos de desempeño</p>
-          <p className="text-sm text-slate-400 mt-1">Puede que no tengas un área asignada</p>
-        </div>
-      )}
-
-      {!isLoading && !isError && misDatos && (
-        <>
-          {/* ============================================ */}
-          {/* RESUMEN PERSONAL */}
-          {/* ============================================ */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* TAREAS COMPLETADAS */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                </div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tareas completadas</p>
-              </div>
-              {periodComparison ? (
-                <p className="text-3xl font-bold text-slate-800">
-                  {periodComparison.actual.tareas_completadas}
-                  <span className="text-lg text-slate-400 font-normal"> / {periodComparison.actual.tareas_completadas + periodComparison.actual.tareas_activas}</span>
-                </p>
-              ) : (
-                <p className="text-3xl font-bold text-slate-800">
-                  {misDatos.tareas_completadas ?? 0}
-                  <span className="text-lg text-slate-400 font-normal"> / {(misDatos.tareas_completadas ?? 0) + (misDatos.tareas_activas ?? 0)}</span>
-                </p>
-              )}
-              {periodComparison && (
-                <>
-                  <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
-                    <span className="text-slate-400">Período anterior: {periodComparison.anterior.tareas_completadas}</span>
-                    <TrendBadge variacion={periodComparison.variacion.tareas} />
-                  </div>
-                  {areaBenchmark && (
-                    <div className="flex items-baseline gap-1.5 mt-2 pt-2 border-t border-slate-100">
-                      <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgTareas.toFixed(1)}</span>
-                      <span className="text-[10px] text-slate-400">prom. área</span>
-                    </div>
-                  )}
-                  <GoalBar actual={periodComparison.actual.tareas_completadas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} />
-                </>
-              )}
-              {!periodComparison && areaBenchmark && (
-                <div className="flex items-baseline gap-1.5 mt-2 pt-2 border-t border-slate-100">
-                  <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgTareas.toFixed(1)}</span>
-                  <span className="text-[10px] text-slate-400">prom. área</span>
-                </div>
-              )}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-8">
+          <div className="flex flex-col items-center justify-center py-10">
+            <div className="relative w-12 h-12">
+              <div className="absolute inset-0 rounded-full border-4 border-emerald-100" />
+              <div className="absolute inset-0 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
             </div>
-
-            {/* SERVICIOS COMPLETADOS */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-indigo-600" />
+            <p className="text-slate-500 mt-4 text-sm font-medium">Preparando tu desempeño...</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 w-full">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-3">
+                  <Skeleton className="h-10 w-10 rounded-xl" />
+                  <Skeleton className="h-6 w-24" />
+                  <Skeleton className="h-3 w-32" />
                 </div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Servicios completados</p>
-              </div>
-              <p className="text-3xl font-bold text-indigo-600">
-                {periodComparison ? periodComparison.actual.servicios_completados : (misDatos.servicios_completados ?? 0)}
-              </p>
-              {periodComparison && (
-                <>
-                  <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
-                    <span className="text-slate-400">Período anterior: {periodComparison.anterior.servicios_completados}</span>
-                    <TrendBadge variacion={periodComparison.variacion.servicios} />
-                  </div>
-                  {areaBenchmark && (
-                    <div className="flex items-baseline gap-1.5 mt-2 pt-2 border-t border-slate-100">
-                      <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgServicios.toFixed(1)}</span>
-                      <span className="text-[10px] text-slate-400">prom. área ({areaBenchmark.totalColaboradores} colab.)</span>
-                    </div>
-                  )}
-                  <GoalBar actual={periodComparison.actual.servicios_completados} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} />
-                </>
-              )}
-              {!periodComparison && areaBenchmark && (
-                <div className="flex items-baseline gap-1.5 mt-2 pt-2 border-t border-slate-100">
-                  <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgServicios.toFixed(1)}</span>
-                  <span className="text-[10px] text-slate-400">prom. área ({areaBenchmark.totalColaboradores} colab.)</span>
-                </div>
-              )}
-            </div>
-
-            {/* CALIFICACIÓN */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
-                  <Star className="w-4 h-4 text-yellow-600" />
-                </div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Calificación</p>
-              </div>
-              {(() => {
-                const califVal = periodComparison
-                  ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
-                  : misDatos.calificacion_promedio;
-                const califCount = periodComparison
-                  ? periodComparison.actual.total_calificaciones
-                  : misDatos.total_calificaciones;
-                return califVal != null ? (
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-3xl font-bold text-yellow-600">{califVal.toFixed(1)}</span>
-                      <span className="text-xs text-slate-400">/ 5</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <StarRating rating={califVal} />
-                      <span className="text-xs text-slate-400 ml-1">
-                        {califCount} calificación{califCount !== 1 ? "es" : ""}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-400 mt-2">Sin evaluaciones</p>
-                );
-              })()}
-              {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
-                <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
-                  <span className="text-slate-400">Período anterior: {periodComparison.anterior.calificacion_promedio.toFixed(1)}</span>
-                  <TrendBadge variacion={periodComparison.variacion.calificacion} />
-                </div>
-              )}
-              {areaBenchmark?.avgCalificacion != null && (
-                <div className="flex items-baseline gap-1.5 mt-2 pt-2 border-t border-slate-100">
-                  <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgCalificacion.toFixed(1)}</span>
-                  <span className="text-[10px] text-slate-400">prom. área</span>
-                </div>
-              )}
-            </div>
-
-            {/* NPS */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">
-                  <Star className="w-4 h-4 text-green-600" />
-                </div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">NPS · Recomendación</p>
-              </div>
-              {(() => {
-                const esPeriodo = periodComparison && periodComparison.actual.total_calificaciones > 0;
-                const areaSat = miArea?.satisfaccion;
-                const npsData = esPeriodo
-                  ? periodComparison!.actual
-                  : (areaSat && areaSat.cantidad > 0 ? areaSat : null);
-                if (npsData) {
-                  const npsVal = npsData.nps;
-                  const total = esPeriodo ? periodComparison!.actual.total_calificaciones : areaSat!.cantidad;
-                  const prom = npsData.promotores;
-                  const pas = npsData.pasivos;
-                  const det = npsData.detractores;
-                  return (
-                    <div>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className={`text-3xl font-bold ${
-                          npsVal > 0 ? "text-green-600" : npsVal < 0 ? "text-red-600" : "text-slate-500"
-                        }`}>
-                          {npsVal > 0 ? "+" : ""}{npsVal}
-                        </span>
-                        <span className="text-sm text-slate-400">/ 100</span>
-                      </div>
-                      <div className="w-full h-2 rounded-full overflow-hidden flex mt-2">
-                        <div className="h-full bg-green-500" style={{ width: `${(prom / total) * 100}%` }} />
-                        <div className="h-full bg-yellow-400" style={{ width: `${(pas / total) * 100}%` }} />
-                        <div className="h-full bg-red-500" style={{ width: `${(det / total) * 100}%` }} />
-                      </div>
-                      <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                        <span className="text-green-600">{prom} prom.</span>
-                        <span className="text-yellow-600">{pas} pas.</span>
-                        <span className="text-red-600">{det} det.</span>
-                      </div>
-                      <p className="text-[10px] text-slate-400 mt-2 italic">
-                        Basado en {total} evaluación{total !== 1 ? "es" : ""} del {esPeriodo ? "período" : "área"}
-                      </p>
-                      <InfoPopover
-                        formula="NPS = % promotores − % detractores (escala 0–10)"
-                        descripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
-                      />
-                    </div>
-                  );
-                }
-                return <p className="text-sm text-slate-400 mt-2">Sin datos suficientes</p>;
-              })()}
-              {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
-                <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
-                  <span className="text-slate-400">Período anterior: {periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</span>
-                  <TrendBadge variacion={periodComparison.variacion.nps} />
-                </div>
-              )}
+              ))}
             </div>
           </div>
+        </div>
+      )}
 
+      {/* ═══════════════════════════════ */}
+      {/* ERROR STATE                     */}
+      {/* ═══════════════════════════════ */}
+      {isError && !isLoading && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-8">
+          <div className="flex flex-col items-center justify-center py-10">
+            <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <TrendingDown className="w-7 h-7 text-red-500" />
+            </div>
+            <p className="text-red-600 font-semibold text-lg">Error al cargar tu desempeño</p>
+            <p className="text-sm text-slate-400 mt-1 mb-4">No pudimos obtener tus indicadores. Intentá de nuevo más tarde.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-600 transition-colors"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════ */}
+      {/* EMPTY STATE                     */}
+      {/* ═══════════════════════════════ */}
+      {!isLoading && !isError && !misDatos && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-8">
+          <div className="flex flex-col items-center justify-center py-10">
+            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+              <User className="w-7 h-7 text-slate-400" />
+            </div>
+            <p className="text-slate-600 font-semibold text-lg">Sin datos de desempeño</p>
+            <p className="text-sm text-slate-400 mt-1 max-w-md text-center">
+              No encontramos información para tu usuario. Puede que no tengas un área asignada o que aún no haya registros.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════ */}
+      {/* CONTENIDO PRINCIPAL             */}
+      {/* ═══════════════════════════════ */}
+      {!isLoading && !isError && misDatos && (
+        <>
+          {/* --- SECCION 1: KPIS PRINCIPALES --- */}
+          <section aria-label="Indicadores principales">
+            <div className="flex items-center gap-2 mb-3">
+              <BarChart3 className="w-5 h-5 text-slate-500" />
+              <h2 className="text-lg font-bold text-slate-800">Tus indicadores</h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* TAREAS COMPLETADAS */}
+              <KpiPrimarioCard
+                icon={CheckCircle2}
+                iconBg="bg-blue-100"
+                iconColor="text-blue-600"
+                titulo="Tareas completadas"
+                valor={periodComparison ? periodComparison.actual.tareas_completadas : (misDatos.tareas_completadas ?? 0)}
+              >
+                {periodComparison && (
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
+                    <span className="text-[11px] text-slate-400">Período anterior: {periodComparison.anterior.tareas_completadas}</span>
+                    <TrendBadge variacion={periodComparison.variacion.tareas} size="xs" />
+                  </div>
+                )}
+                {areaBenchmark && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="text-xs font-semibold text-slate-500">{areaBenchmark.avgTareas.toFixed(1)}</span>
+                    <span className="text-[10px] text-slate-400">prom. área</span>
+                  </div>
+                )}
+                {periodComparison && (
+                  <GoalBar actual={periodComparison.actual.tareas_completadas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} />
+                )}
+              </KpiPrimarioCard>
+
+              {/* SERVICIOS COMPLETADOS */}
+              <KpiPrimarioCard
+                icon={Layers}
+                iconBg="bg-indigo-100"
+                iconColor="text-indigo-600"
+                titulo="Servicios completados"
+                valor={periodComparison ? periodComparison.actual.servicios_completados : (misDatos.servicios_completados ?? 0)}
+              >
+                {periodComparison && (
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
+                    <span className="text-[11px] text-slate-400">Período anterior: {periodComparison.anterior.servicios_completados}</span>
+                    <TrendBadge variacion={periodComparison.variacion.servicios} size="xs" />
+                  </div>
+                )}
+                {areaBenchmark && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="text-xs font-semibold text-slate-500">{areaBenchmark.avgServicios.toFixed(1)}</span>
+                    <span className="text-[10px] text-slate-400">prom. área ({areaBenchmark.totalColaboradores} colab.)</span>
+                  </div>
+                )}
+                {periodComparison && (
+                  <GoalBar actual={periodComparison.actual.servicios_completados} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} />
+                )}
+              </KpiPrimarioCard>
+
+              {/* CALIFICACION */}
+              <KpiPrimarioCard
+                icon={Star}
+                iconBg="bg-amber-100"
+                iconColor="text-amber-600"
+                titulo="Calificación"
+                valor={
+                  (() => {
+                    const califVal = periodComparison
+                      ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
+                      : misDatos.calificacion_promedio;
+                    return califVal != null ? califVal.toFixed(1) : "—";
+                  })()
+                }
+                unidad={(() => {
+                  const califVal = periodComparison
+                    ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
+                    : misDatos.calificacion_promedio;
+                  return califVal != null ? "/ 5" : "";
+                })()}
+              >
+                {(() => {
+                  const califVal = periodComparison
+                    ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
+                    : misDatos.calificacion_promedio;
+                  const califCount = periodComparison
+                    ? periodComparison.actual.total_calificaciones
+                    : misDatos.total_calificaciones;
+                  return califVal != null ? (
+                    <div className="flex items-center gap-2 mt-1">
+                      <StarRating rating={califVal} />
+                      <span className="text-xs text-slate-400">{califCount} calificación{califCount !== 1 ? "es" : ""}</span>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 mt-1">Sin evaluaciones</p>
+                  );
+                })()}
+                {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
+                    <span className="text-[11px] text-slate-400">Período anterior: {periodComparison.anterior.calificacion_promedio.toFixed(1)}</span>
+                    <TrendBadge variacion={periodComparison.variacion.calificacion} size="xs" />
+                  </div>
+                )}
+                {areaBenchmark?.avgCalificacion != null && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="text-xs font-semibold text-slate-500">{areaBenchmark.avgCalificacion.toFixed(1)}</span>
+                    <span className="text-[10px] text-slate-400">prom. área</span>
+                  </div>
+                )}
+              </KpiPrimarioCard>
+
+              {/* NPS */}
+              <KpiPrimarioCard
+                icon={ShieldCheck}
+                iconBg="bg-emerald-100"
+                iconColor="text-emerald-600"
+                titulo="NPS · Recomendación"
+                valor={
+                  (() => {
+                    const esPeriodo = periodComparison && periodComparison.actual.total_calificaciones > 0;
+                    const areaSat = miArea?.satisfaccion;
+                    const npsData = esPeriodo ? periodComparison!.actual : (areaSat && areaSat.cantidad > 0 ? areaSat : null);
+                    if (npsData) {
+                      const npsVal = npsData.nps;
+                      return npsVal > 0 ? "+" + npsVal : "" + npsVal;
+                    }
+                    return "—";
+                  })()
+                }
+                unidad="/ 100"
+              >
+                {(() => {
+                  const esPeriodo = periodComparison && periodComparison.actual.total_calificaciones > 0;
+                  const areaSat = miArea?.satisfaccion;
+                  const npsData = esPeriodo ? periodComparison!.actual : (areaSat && areaSat.cantidad > 0 ? areaSat : null);
+                  if (npsData) {
+                    const total = esPeriodo ? periodComparison!.actual.total_calificaciones : areaSat!.cantidad;
+                    const prom = npsData.promotores;
+                    const pas = npsData.pasivos;
+                    const det = npsData.detractores;
+                    return (
+                      <>
+                        <div className="w-full h-2 rounded-full overflow-hidden flex mt-3">
+                          <div className="h-full bg-emerald-500" style={{ width: (prom / total) * 100 + "%" }} />
+                          <div className="h-full bg-amber-400" style={{ width: (pas / total) * 100 + "%" }} />
+                          <div className="h-full bg-red-500" style={{ width: (det / total) * 100 + "%" }} />
+                        </div>
+                        <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                          <span className="text-emerald-600">{prom} prom.</span>
+                          <span className="text-amber-600">{pas} pas.</span>
+                          <span className="text-red-600">{det} det.</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1 italic">
+                          Basado en {total} evaluación{total !== 1 ? "es" : ""} del {esPeriodo ? "período" : "área"}
+                        </p>
+                        <InfoPopover
+                          formula="NPS = % promotores − % detractores (escala 0–10)"
+                          descripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
+                        />
+                      </>
+                    );
+                  }
+                  return <p className="text-xs text-slate-400 mt-1">Sin datos suficientes</p>;
+                })()}
+                {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
+                    <span className="text-[11px] text-slate-400">Período anterior: {periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</span>
+                    <TrendBadge variacion={periodComparison.variacion.nps} size="xs" />
+                  </div>
+                )}
+              </KpiPrimarioCard>
+            </div>
+          </section>
+
+          {/* --- SECCION 2: TRAZABILIDAD Y EFICIENCIA --- */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* ============================================ */}
-            {/* PROP. 1: TRAZABILIDAD Y CONTROL OPERATIVO */}
-            {/* ============================================ */}
-            <PropuestaSection
+            {/* TRAZABILIDAD */}
+            <Seccion
+              icon={ClipboardCheck}
               titulo="Trazabilidad y Control Operativo"
               descripcion="Indicadores de registro, documentación y trazabilidad de tareas y servicios"
             >
               {tieneDashboard ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <IndicadorCard
-                    titulo="Servicios con tiempo de ejecución en todas las tareas"
+                    titulo="Servicios con tracking de tiempo"
                     valor={kpi!.servicios_con_tiempo_tracking_pct ?? 0}
                     unidad="%"
-                    descripcion="N° servicios donde todas las tareas tienen hora inicio/fin"
+                    descripcion="Servicios donde todas las tareas tienen hora inicio/fin"
                     color="bg-blue-600"
-                    formula="Tiempo de ejecución: Tracking_final − Tracking_inicial"
+                    formula="Tracking_final − Tracking_inicial"
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-[10px]">
                         <span className="text-slate-400">Período anterior: {periodComparison.anterior.servicios_con_tiempo_tracking_pct}%</span>
-                        <TrendBadge variacion={periodComparison.variacion.tracking_pct} />
+                        <TrendBadge variacion={periodComparison.variacion.tracking_pct} size="xs" />
                       </div>
                     ) : undefined}
                   />
                   <IndicadorCard
-                    titulo="Tareas documentadas (fecha/hora/responsable)"
+                    titulo="Tareas documentadas"
                     valor={kpi!.tareas_documentadas_conteo ?? 0}
                     unidad="tareas"
                     descripcion="Tareas con fecha, hora completada y responsable"
                     color="bg-cyan-600"
-                    formula="Conteo de tareas que tienen tarea_fecha_completado, tarea_hora_completado y tarea_completado_por en la tabla tareas"
+                    formula="Conteo de tareas con fecha, hora y responsable"
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-[10px]">
                         <span className="text-slate-400">Período anterior: {periodComparison.anterior.tareas_documentadas_conteo}</span>
-                        <TrendBadge variacion={periodComparison.variacion.tareas_documentadas} />
+                        <TrendBadge variacion={periodComparison.variacion.tareas_documentadas} size="xs" />
                       </div>
                     ) : undefined}
                   />
                   <IndicadorCard
-                    titulo="Servicios con trazabilidad completa"
+                    titulo="Trazabilidad completa"
                     valor={kpi!.registros_completos_pct ?? 0}
                     unidad="%"
                     descripcion="Servicios con historial de cambios completo"
                     color="bg-teal-600"
-                    formula="(Servicios que tienen registros en la tabla auditoría ÷ Total de servicios) × 100"
+                    formula="(Servicios con auditoría ÷ Total) × 100"
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-[10px]">
                         <span className="text-slate-400">Período anterior: {periodComparison.anterior.registros_completos_pct}%</span>
-                        <TrendBadge variacion={periodComparison.variacion.auditoria_pct} />
+                        <TrendBadge variacion={periodComparison.variacion.auditoria_pct} size="xs" />
                       </div>
                     ) : undefined}
                   />
                 </div>
               ) : (
                 <p className="text-sm text-slate-400 text-center py-4">
-                  Los indicadores de trazabilidad estarán disponibles cuando el administrador configure el módulo
+                  Los indicadores de trazabilidad estarán disponibles cuando el administrador configure el módulo.
                 </p>
               )}
-            </PropuestaSection>
+            </Seccion>
 
-            {/* ============================================ */}
-            {/* PROP. 2: EFICIENCIA OPERATIVA */}
-            {/* ============================================ */}
-            <PropuestaSection
+            {/* EFICIENCIA */}
+            <Seccion
+              icon={Timer}
               titulo="Eficiencia Operativa"
-              descripcion="Métricas de tiempo, cumplimiento y productividad del equipo"
+              descripcion="Métricas de tiempo, cumplimiento y productividad"
             >
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <IndicadorCard
-                  titulo="Tiempo promedio de servicios completados"
+                  titulo="Tiempo promedio por servicio"
                   valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_min) : "—"}
                   unidad=""
-                  descripcion="Promedio de tus servicios completados en el período actual"
+                  descripcion="Promedio de tiempo por servicio completado"
                   color="bg-orange-600"
-                  formula="Σ(tracking_fin − tracking_inicio) ÷ N° de servicios completados en el período"
+                  formula="Σ(tracking_fin − tracking_inicio) ÷ N° servicios completados"
                   comparacion={periodComparison ? (
                     <div className="flex items-center gap-1.5 text-[10px]">
                       <span className="text-slate-400">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
-                      <TrendBadge variacion={periodComparison.variacion.tiempo} />
+                      <TrendBadge variacion={periodComparison.variacion.tiempo} size="xs" />
                     </div>
                   ) : undefined}
                 />
                 <IndicadorCard
-                  titulo="Servicios dentro del tiempo estimado"
+                  titulo="Dentro del tiempo estimado"
                   valor={kpi?.completados_dentro_tiempo_pct ?? 0}
                   unidad="%"
-                  descripcion="N° servicios cumplieron el tiempo estimado"
+                  descripcion="Servicios que cumplieron el tiempo estimado"
                   color="bg-green-600"
-                  formula="(Servicios cuyo tiempo real total ≤ tiempo_estimado del servicio ÷ Total de servicios completados) × 100"
+                  formula="(Servicios con tiempo real ≤ estimado ÷ Total completados) × 100"
                   comparacion={periodComparison ? (
                     <div className="flex items-center gap-1.5 text-[10px]">
                       <span className="text-slate-400">Período anterior: {periodComparison.anterior.completados_dentro_tiempo_pct}%</span>
-                      <TrendBadge variacion={periodComparison.variacion.a_tiempo_pct} />
+                      <TrendBadge variacion={periodComparison.variacion.a_tiempo_pct} size="xs" />
                     </div>
                   ) : undefined}
                 />
@@ -554,55 +796,62 @@ export function MiDesempenoPage() {
                   titulo="Tiempo promedio por tarea"
                   valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_por_tarea != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_por_tarea) : "—"}
                   unidad=""
-                  descripcion="Promedio de tiempo real por tarea completada en el período"
+                  descripcion="Promedio de tiempo por tarea completada"
                   color="bg-purple-600"
-                  formula="Σ(tarea_tiempo_real) ÷ N° de tareas completadas con tiempo en el período"
+                  formula="Σ(tarea_tiempo_real) ÷ N° tareas con tiempo"
                   comparacion={periodComparison ? (
                     <div className="flex items-center gap-1.5 text-[10px]">
                       <span className="text-slate-400">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio_por_tarea)}</span>
-                      <TrendBadge variacion={periodComparison.variacion.tiempo_por_tarea} />
+                      <TrendBadge variacion={periodComparison.variacion.tiempo_por_tarea} size="xs" />
                     </div>
                   ) : undefined}
                 />
               </div>
-            </PropuestaSection>
+            </Seccion>
           </div>
 
-
-
-          {/* ============================================ */}
-          {/* SERVICIOS ASIGNADOS */}
-          {/* ============================================ */}
+          {/* --- SECCION 3: SERVICIOS ASIGNADOS --- */}
           {misDatos.servicios_asignados && misDatos.servicios_asignados.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="px-5 py-4 border-b border-gray-100">
-                <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-slate-400" />
-                  Servicios
-                </h3>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {misDatos.servicios_asignados.map((s: any) => (
-                  <div key={s.id} className="px-5 py-3 flex items-center justify-between hover:bg-slate-50 transition">
-                    <div>
-                      <span className="text-xs font-mono text-slate-400">{s.codigo}</span>
-                      <p className="text-sm font-medium text-slate-800">{s.titulo}</p>
+            <Seccion
+              icon={Layers}
+              titulo="Servicios asignados"
+              descripcion={misDatos.servicios_asignados.length + " servicio" + (misDatos.servicios_asignados.length !== 1 ? "s" : "") + " a tu nombre"}
+            >
+              <div className="space-y-1">
+                {misDatos.servicios_asignados.map((s: any) => {
+                  const estadoColor: Record<string, string> = {
+                    completado: "bg-emerald-100 text-emerald-700",
+                    en_progreso: "bg-blue-100 text-blue-700",
+                    pendiente: "bg-amber-100 text-amber-700",
+                  };
+                  const estadoDot: Record<string, string> = {
+                    completado: "bg-emerald-500",
+                    en_progreso: "bg-blue-500",
+                    pendiente: "bg-amber-500",
+                  };
+                  const label = estadoColor[s.estado] || "bg-slate-100 text-slate-600";
+                  const dot = estadoDot[s.estado] || "bg-slate-400";
+                  return (
+                    <div
+                      key={s.id}
+                      className="flex items-center justify-between px-4 py-2.5 rounded-xl hover:bg-slate-50 transition-colors group cursor-default"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className={cn("w-2 h-2 rounded-full shrink-0", dot)} />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-800 truncate">{s.titulo || "Sin título"}</p>
+                          <p className="text-[11px] font-mono text-slate-400">{s.codigo || "—"}</p>
+                        </div>
+                      </div>
+                      <span className={cn("text-[11px] px-2.5 py-0.5 rounded-full font-medium shrink-0", label)}>
+                        {s.estado || "—"}
+                      </span>
                     </div>
-                    <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${
-                      s.estado === "completado" ? "bg-green-100 text-green-700" :
-                      s.estado === "en_progreso" ? "bg-blue-100 text-blue-700" :
-                      s.estado === "pendiente" ? "bg-yellow-100 text-yellow-700" :
-                      "bg-slate-100 text-slate-600"
-                    }`}>
-                      {s.estado || "—"}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            </div>
+            </Seccion>
           )}
-
-
         </>
       )}
     </div>
