@@ -338,44 +338,42 @@ export function MiDesempenoPage() {
   return (
     <>
       {/* ═══════════════════════════════ */}
-      {/* HERO HEADER - FULL WIDTH       */}
+      {/* HERO HEADER                       */}
       {/* ═══════════════════════════════ */}
-      <div className="bg-white shadow-sm -mx-4 md:-mx-6">
-        <div className="px-4 md:px-6 py-5">
-          <div className="bg-gray-300 text-gray-900 px-4 py-2.5 flex items-center gap-2 text-sm flex-wrap">
-            <span className="font-bold">Mi Desempeño</span>
-            <span className="opacity-40">·</span>
-            <span>{user?.nombres || "Colaborador"}</span>
-            {miArea?.area?.nombre && (
-              <>
-                <span className="opacity-40">·</span>
-                <span>{miArea.area.nombre}</span>
-              </>
-            )}
-            {periodoLabel && (
-              <>
-                <span className="opacity-40">·</span>
-                <span className="font-medium">{periodoLabel}</span>
-              </>
-            )}
-          </div>
+      <div className="py-5">
+        <div className="bg-gray-300 text-gray-900 px-4 py-2.5 flex items-center gap-2 text-sm flex-wrap rounded-xl">
+          <span className="font-bold">Mi Desempeño</span>
+          <span className="opacity-40">·</span>
+          <span>{user?.nombres || "Colaborador"}</span>
+          {miArea?.area?.nombre && (
+            <>
+              <span className="opacity-40">·</span>
+              <span>{miArea.area.nombre}</span>
+            </>
+          )}
+          {periodoLabel && (
+            <>
+              <span className="opacity-40">·</span>
+              <span className="font-medium">{periodoLabel}</span>
+            </>
+          )}
         </div>
-
-        {/* Filtro de fechas dentro del hero */}
-        {misDatos && (
-          <div className="px-4 md:px-6 pb-5">
-            <DateFilterCard
-              presets={presets}
-              fechaInicio={fechaInicio}
-              fechaFin={fechaFin}
-              periodoLabel={periodoLabel}
-              onFechaInicio={(v) => setFechaInicio(v)}
-              onFechaFin={(v) => setFechaFin(v)}
-              onLabelChange={(l) => setPeriodoLabel(l)}
-            />
-          </div>
-        )}
       </div>
+
+      {/* Filtro de fechas */}
+      {misDatos && (
+        <div className="pb-5">
+          <DateFilterCard
+            presets={presets}
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+            periodoLabel={periodoLabel}
+            onFechaInicio={(v) => setFechaInicio(v)}
+            onFechaFin={(v) => setFechaFin(v)}
+            onLabelChange={(l) => setPeriodoLabel(l)}
+          />
+        </div>
+      )}
 
       {/* ═══════════════════════════════ */}
       {/* CONTENIDO PRINCIPAL            */}
