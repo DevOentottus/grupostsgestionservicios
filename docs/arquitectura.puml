@@ -1,0 +1,228 @@
+@startuml GrupoSTS - Arquitectura
+' PlantUML v1.2024+
+' Skin
+!define RICHBLUE #3982E6
+!define DARKGREEN #1B8C3A
+!define LIGHTGRAY #F0F0F0
+!define MEDGRAY #CCCCCC
+!define SOFTYELLOW #FFF8DC
+!define SOFTBLUE #E8F0FE
+!define SOFTRED #FFE8E8
+!define SOFTGREEN #E8FFE8
+!define ACCENTORANGE #E67E22
+
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam component {
+  BackgroundColor SOFTBLUE
+  BorderColor #333333
+  FontSize 14
+  FontStyle bold
+}
+skinparam database {
+  BackgroundColor SOFTGREEN
+  BorderColor #1B8C3A
+  FontSize 13
+}
+skinparam actor {
+  BorderColor #333333
+  FontSize 13
+  FontStyle bold
+}
+skinparam rectangle {
+  BorderColor #333333
+}
+skinparam note {
+  BackgroundColor SOFTYELLOW
+  BorderColor #CC9900
+}
+skinparam arrow {
+  Color #666666
+  FontSize 11
+}
+skinparam package {
+  BorderColor #999999
+  BackgroundColor #FAFAFA
+}
+skinparam node {
+  BorderColor #999999
+  BackgroundColor #F5F5F5
+}
+
+left to right direction
+
+' ═══════════════════════════════════════
+' ACTORES
+' ═══════════════════════════════════════
+
+actor "👤 Administrador" as Admin
+actor "👤 Encargado\n(Supervisor)" as Encargado
+actor "👤 Colaborador\n(Técnico)" as Colaborador
+actor "👤 Cliente\n(Visitante)" as Cliente
+actor "📺 Display TV" as DisplayTV
+
+' ═══════════════════════════════════════
+' CONTENEDORES
+' ═══════════════════════════════════════
+
+package "Cliente Web (Browser)" as Browser {
+  rectangle "<size:16>🌐</size>\n<size:14><b>GrupoSTS SPA</b></size>\nReact 18 · TypeScript · Vite" as Frontend
+}
+
+package "Servidor" as Server {
+  rectangle "<size:16>⚡</size>\n<size:14><b>GrupoSTS API</b></size>\nFastify 5 · TypeScript\nVercel / Node.js" as Backend
+}
+
+database "<size:16>🗄️</size>\n<size:14><b>Supabase\n(PostgreSQL)</b></size>\nBase de datos relacional" as Database {
+}
+
+' ═══════════════════════════════════════
+' RELACIONES SISTEMA
+' ═══════════════════════════════════════
+
+Admin --> Frontend : Gestión del sistema
+Encargado --> Frontend : Supervisión y reportes
+Colaborador --> Frontend : Atención de servicios
+Cliente --> Frontend : Seguimiento\nencuestas
+DisplayTV --> Backend : Polling público
+
+Frontend ..> Backend : HTTPS / JSON API
+Backend ..> Database : Supabase JS Client\n(service_role)
+
+' ═══════════════════════════════════════
+' FRONTEND — COMPONENTES
+' ═══════════════════════════════════════
+
+package "Frontend - Capas" as FEComponents {
+  rectangle "<b>Routing</b>\nReact Router v7\nAuthProvider · RequireAuth\nRequireRole" as Routing
+
+  rectangle "<b>Páginas</b>\n13 páginas agrupadas\npor rol" as Pages
+
+  rectangle "<b>API Client</b>\nAxios · JWT interceptor\nRefresh queue" as ApiClient
+
+  rectangle "<b>Custom Hooks</b>\n15 hooks (TanStack Query)\nuseServicios · useAreas · etc." as Hooks
+
+  rectangle "<b>UI Components</b>\nRadix UI · Tailwind v4\nshadcn · Recharts" as UI
+
+  rectangle "<b>Auth</b>\nuseAuth context\nsessionStorage · roles" as AuthFE
+
+  rectangle "<b>Layout</b>\nSidebar + Header\nResponsive" as Layout
+
+  Routing --> Pages
+  Pages --> Hooks
+  Hooks --> ApiClient
+  Pages --> UI
+  Routing --> AuthFE
+  Routing --> Layout
+}
+
+Frontend -[hidden]> FEComponents
+
+' ═══════════════════════════════════════
+' BACKEND — COMPONENTES
+' ═══════════════════════════════════════
+
+package "Backend - Núcleo (core)" as CoreLayer {
+  rectangle "<b>Config</b>\nvariables de entorno\n.env" as Config
+  rectangle "<b>Middleware</b>\nauth.ts · error-handler.ts\nsession.ts" as Middleware
+  rectangle "<b>Errors</b>\nNotFoundError\nValidationError" as Errors
+  rectangle "<b>Utils</b>\nauditLog\ny más" as Utils
+}
+
+package "Backend - Módulos (21)" as Modules {
+  rectangle "<b>Auth</b>\nlogin · refresh · me" as ModAuth
+  rectangle "<b>Servicios</b>\nCRUD + estados\narchivar · tareas" as ModServ
+  rectangle "<b>Tareas</b>\nCRUD · completar\nreabrir · reordenar" as ModTareas
+  rectangle "<b>Áreas</b>\nCRUD · colaboradores" as ModAreas
+  rectangle "<b>Usuarios</b>\nCRUD · roles\ngestión" as ModUsers
+  rectangle "<b>Seguimiento</b>\nDashboard · tiempo\nencuestas · comparación" as ModSeg
+  rectangle "<b>Manager</b>\nmi área · distribución\ndesempeño · clientes" as ModMgr
+  rectangle "<b>Plantillas</b>\nCRUD · aplicar\na servicios" as ModPlant
+  rectangle "<b>Notificaciones</b>\nenviar · listar\nleer · push" as ModNotif
+  rectangle "<b>Evidencias</b>\nupload · comentarios\nestados · públicos" as ModEvid
+  rectangle "<b>Seguridad</b>\nresumen · sesiones\nintentos fallidos" as ModSegur
+  rectangle "<b>Reportes</b>\ncolaborador · área\nexportar (PDF/XLSX)" as ModReport
+  rectangle "<b>Display</b>\nTV · sala de espera" as ModDisplay
+  rectangle "<b>+ 9 más</b>\nanuncios · auditoría\nofertas · push · audio\nsolicitudes · tipos\nrendimiento · comentarios" as ModOthers
+}
+
+rectangle "<b>Supabase Client</b>\ncreateClient<Database>\nservice_role key" as SupaClient
+
+' Conexiones core
+Config <-- Backend
+Middleware <-- Backend
+Errors <-- Backend
+Utils <-- Backend
+
+' Conexiones módulos
+ModAuth -[hidden]l- ModServ
+ModServ -[hidden]l- ModTareas
+ModTareas -[hidden]l- ModAreas
+ModAreas -[hidden]l- ModUsers
+ModUsers -[hidden]l- ModSeg
+ModSeg -[hidden]l- ModMgr
+ModMgr -[hidden]l- ModPlant
+ModPlant -[hidden]l- ModNotif
+ModNotif -[hidden]l- ModEvid
+ModEvid -[hidden]l- ModSegur
+ModSegur -[hidden]l- ModReport
+ModReport -[hidden]l- ModDisplay
+ModDisplay -[hidden]l- ModOthers
+
+' Todos los módulos usan Supabase
+ModAuth ..> SupaClient
+ModServ ..> SupaClient
+ModTareas ..> SupaClient
+ModAreas ..> SupaClient
+ModUsers ..> SupaClient
+ModSeg ..> SupaClient
+ModMgr ..> SupaClient
+ModPlant ..> SupaClient
+ModNotif ..> SupaClient
+ModEvid ..> SupaClient
+ModSegur ..> SupaClient
+ModReport ..> SupaClient
+ModDisplay ..> SupaClient
+ModOthers ..> SupaClient
+
+SupaClient ..> Database
+
+' ═══════════════════════════════════════
+' FLUJO DE DATOS (solicitud HTTP típica)
+' ═══════════════════════════════════════
+
+rectangle " " as spacer1
+
+
+
+' ═══════════════════════════════════════
+' DESPLIEGUE — VERCEL
+' ═══════════════════════════════════════
+
+node "☁️ Vercel" as Vercel {
+  rectangle "<b>Serverless Function</b>\nbackend/src/serverless.ts\nFastify → esbuild → serverless.cjs" as Serverless
+  rectangle "<b>Static Assets</b>\nVite build → dist/\nHTML · JS · CSS" as Static
+}
+
+Backend -[hidden]> Vercel
+
+Serverless ..> Backend : Envuelve la app
+Static ..> Frontend : Sirve la SPA
+Serverless ..> Database : Conexión directa
+
+' ═══════════════════════════════════════
+' LEYENDA
+' ═══════════════════════════════════════
+
+note as Legenda
+  **Stack principal**
+  Frontend: React 18 · React Router 7 · TanStack Query 5 · Axios
+           Radix UI · Tailwind v4 · shadcn/ui · Recharts · date-fns
+  Backend:  Fastify 5 · TypeScript · Zod · Supabase JS · bcryptjs
+  DB:       Supabase (PostgreSQL) con Row Level Security
+  Deploy:   Vercel (frontend + serverless backend)
+end note
+
+@enduml

@@ -959,7 +959,6 @@ export function NuevoServicioPage() {
                 </div>
               )}
             </div>
-          </div>
         ) : null}
 
         {/* ═══ NAVEGACIÓN ═══ */}
