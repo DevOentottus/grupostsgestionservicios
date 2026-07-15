@@ -6,7 +6,6 @@ import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { cn, formatMinutos } from "@/app/lib/utils";
 import {
   TrendingUp, CheckCircle2, Star,
-  Clock, Target, Zap, BarChart3, Eye, MessageCircle, FileText,
 } from "lucide-react";
 import { DateFilterCard } from "@/app/components/filters/DateFilterCard.js";
 
@@ -265,7 +264,7 @@ export function MiDesempenoPage() {
           {/* ============================================ */}
           {/* RESUMEN PERSONAL */}
           {/* ============================================ */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -273,7 +272,10 @@ export function MiDesempenoPage() {
                 </div>
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tareas completadas</p>
               </div>
-              <p className="text-3xl font-bold text-slate-800">{misDatos.tareas_completadas ?? 0}</p>
+              <p className="text-3xl font-bold text-slate-800">
+                {misDatos.tareas_completadas ?? 0}
+                <span className="text-lg text-slate-400 font-normal"> / {(misDatos.tareas_completadas ?? 0) + (misDatos.tareas_activas ?? 0)}</span>
+              </p>
               {periodComparison && (
                 <div className="flex items-center gap-2 mt-2 text-xs">
                   <span className="text-slate-400">{periodComparison.actual.tareas_completadas} en este período</span>
@@ -304,15 +306,6 @@ export function MiDesempenoPage() {
             </div>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-amber-600" />
-                </div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Tareas pendientes</p>
-              </div>
-              <p className="text-3xl font-bold text-amber-600">{misDatos.tareas_activas ?? 0}</p>
-            </div>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
                   <Star className="w-4 h-4 text-yellow-600" />
                 </div>
@@ -337,6 +330,116 @@ export function MiDesempenoPage() {
                 <p className="text-sm text-slate-400 mt-2">Sin evaluaciones</p>
               )}
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* ============================================ */}
+            {/* PROP. 3: RENDIMIENTO VS ÁREA */}
+            {/* ============================================ */}
+            <PropuestaSection
+              titulo="Rendimiento vs Área"
+              descripcion="Comparativa de tu rendimiento contra el promedio de tus compañeros"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="h-1.5 bg-indigo-600" />
+                  <div className="p-4">
+                    <p className="text-xs text-slate-500 mb-1">Servicios completados</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-bold text-slate-800">{misDatos.servicios_completados ?? 0}</span>
+                      <span className="text-xs text-slate-400">tú</span>
+                    </div>
+                    {areaBenchmark && (
+                      <div className="flex items-baseline gap-1.5 mt-1.5 pt-1.5 border-t border-slate-100">
+                        <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgServicios.toFixed(1)}</span>
+                        <span className="text-[10px] text-slate-400">prom. área ({areaBenchmark.totalColaboradores} colab.)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="h-1.5 bg-blue-600" />
+                  <div className="p-4">
+                    <p className="text-xs text-slate-500 mb-1">Tareas completadas</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-bold text-slate-800">{misDatos.tareas_completadas ?? 0}</span>
+                      <span className="text-xs text-slate-400">tú</span>
+                    </div>
+                    {areaBenchmark && (
+                      <div className="flex items-baseline gap-1.5 mt-1.5 pt-1.5 border-t border-slate-100">
+                        <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgTareas.toFixed(1)}</span>
+                        <span className="text-[10px] text-slate-400">prom. área</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="h-1.5 bg-yellow-600" />
+                  <div className="p-4">
+                    <p className="text-xs text-slate-500 mb-1">Calificación</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-bold text-slate-800">
+                        {misDatos.calificacion_promedio?.toFixed(1) ?? "—"}
+                      </span>
+                      <span className="text-xs text-slate-400">/5 · tú</span>
+                    </div>
+                    {areaBenchmark?.avgCalificacion != null && (
+                      <div className="flex items-baseline gap-1.5 mt-1.5 pt-1.5 border-t border-slate-100">
+                        <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgCalificacion.toFixed(1)}</span>
+                        <span className="text-[10px] text-slate-400">prom. área</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </PropuestaSection>
+
+            {/* ============================================ */}
+            {/* PROP. 4: SATISFACCIÓN Y MEJORA CONTINUA */}
+            {/* ============================================ */}
+            <PropuestaSection
+              titulo="Satisfacción y Mejora Continua"
+              descripcion="NPS, evaluación y feedback de clientes sobre tu servicio"
+            >
+              {/* Solo NPS — Servicios evaluados eliminado */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="h-1.5 bg-green-600" />
+                <div className="p-4">
+                  <p className="text-xs text-slate-500 mb-1">NPS · Recomendación del servicio</p>
+                  {miArea?.satisfaccion && miArea.satisfaccion.cantidad > 0 ? (
+                    <>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className={`text-3xl font-bold ${
+                          miArea.satisfaccion.nps > 0 ? "text-green-600" : miArea.satisfaccion.nps < 0 ? "text-red-600" : "text-slate-500"
+                        }`}>
+                          {miArea.satisfaccion.nps > 0 ? "+" : ""}{miArea.satisfaccion.nps}
+                        </span>
+                        <span className="text-sm text-slate-400">/ 100</span>
+                      </div>
+                      <div className="w-full h-2 rounded-full overflow-hidden flex mt-2">
+                        <div className="h-full bg-green-500" style={{ width: `${(miArea.satisfaccion.promotores / miArea.satisfaccion.cantidad) * 100}%` }} />
+                        <div className="h-full bg-yellow-400" style={{ width: `${(miArea.satisfaccion.pasivos / miArea.satisfaccion.cantidad) * 100}%` }} />
+                        <div className="h-full bg-red-500" style={{ width: `${(miArea.satisfaccion.detractores / miArea.satisfaccion.cantidad) * 100}%` }} />
+                      </div>
+                      <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                        <span className="text-green-600">{miArea.satisfaccion.promotores} prom.</span>
+                        <span className="text-yellow-600">{miArea.satisfaccion.pasivos} pas.</span>
+                        <span className="text-red-600">{miArea.satisfaccion.detractores} det.</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-2 italic">
+                        Basado en {miArea.satisfaccion.cantidad} evaluación{miArea.satisfaccion.cantidad !== 1 ? "es" : ""} del área
+                      </p>
+                      <InfoPopover
+                        formula="NPS = % promotores − % detractores (escala 0–10)"
+                        descripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
+                      />
+                    </>
+                  ) : (
+                    <p className="text-sm text-slate-400 mt-2">Sin datos suficientes</p>
+                  )}
+                </div>
+              </div>
+            </PropuestaSection>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -433,146 +536,7 @@ export function MiDesempenoPage() {
             </PropuestaSection>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* ============================================ */}
-            {/* PROP. 3: RENDIMIENTO VS ÁREA */}
-            {/* ============================================ */}
-            <PropuestaSection
-              titulo="Rendimiento vs Área"
-              descripcion="Comparativa de tu rendimiento contra el promedio de tus compañeros"
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="h-1.5 bg-indigo-600" />
-                  <div className="p-4">
-                    <p className="text-xs text-slate-500 mb-1">Servicios completados</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-slate-800">{misDatos.servicios_completados ?? 0}</span>
-                      <span className="text-xs text-slate-400">tú</span>
-                    </div>
-                    {areaBenchmark && (
-                      <div className="flex items-baseline gap-1.5 mt-1.5 pt-1.5 border-t border-slate-100">
-                        <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgServicios.toFixed(1)}</span>
-                        <span className="text-[10px] text-slate-400">prom. área ({areaBenchmark.totalColaboradores} colab.)</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="h-1.5 bg-blue-600" />
-                  <div className="p-4">
-                    <p className="text-xs text-slate-500 mb-1">Tareas completadas</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-slate-800">{misDatos.tareas_completadas ?? 0}</span>
-                      <span className="text-xs text-slate-400">tú</span>
-                    </div>
-                    {areaBenchmark && (
-                      <div className="flex items-baseline gap-1.5 mt-1.5 pt-1.5 border-t border-slate-100">
-                        <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgTareas.toFixed(1)}</span>
-                        <span className="text-[10px] text-slate-400">prom. área</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="h-1.5 bg-yellow-600" />
-                  <div className="p-4">
-                    <p className="text-xs text-slate-500 mb-1">Calificación</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-slate-800">
-                        {misDatos.calificacion_promedio?.toFixed(1) ?? "—"}
-                      </span>
-                      <span className="text-xs text-slate-400">/5 · tú</span>
-                    </div>
-                    {areaBenchmark?.avgCalificacion != null && (
-                      <div className="flex items-baseline gap-1.5 mt-1.5 pt-1.5 border-t border-slate-100">
-                        <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgCalificacion.toFixed(1)}</span>
-                        <span className="text-[10px] text-slate-400">prom. área</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </PropuestaSection>
 
-            {/* ============================================ */}
-            {/* PROP. 4: SATISFACCIÓN Y MEJORA CONTINUA */}
-            {/* ============================================ */}
-            <PropuestaSection
-              titulo="Satisfacción y Mejora Continua"
-              descripcion="NPS, evaluación y feedback de clientes sobre tu servicio"
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* NPS */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="h-1.5 bg-green-600" />
-                  <div className="p-4">
-                    <p className="text-xs text-slate-500 mb-1">NPS · Recomendación del servicio</p>
-                    {miArea?.satisfaccion && miArea.satisfaccion.cantidad > 0 ? (
-                      <>
-                        <div className="flex items-baseline gap-1.5">
-                          <span className={`text-3xl font-bold ${
-                            miArea.satisfaccion.nps > 0 ? "text-green-600" : miArea.satisfaccion.nps < 0 ? "text-red-600" : "text-slate-500"
-                          }`}>
-                            {miArea.satisfaccion.nps > 0 ? "+" : ""}{miArea.satisfaccion.nps}
-                          </span>
-                          <span className="text-sm text-slate-400">/ 100</span>
-                        </div>
-                        <div className="w-full h-2 rounded-full overflow-hidden flex mt-2">
-                          <div className="h-full bg-green-500" style={{ width: `${(miArea.satisfaccion.promotores / miArea.satisfaccion.cantidad) * 100}%` }} />
-                          <div className="h-full bg-yellow-400" style={{ width: `${(miArea.satisfaccion.pasivos / miArea.satisfaccion.cantidad) * 100}%` }} />
-                          <div className="h-full bg-red-500" style={{ width: `${(miArea.satisfaccion.detractores / miArea.satisfaccion.cantidad) * 100}%` }} />
-                        </div>
-                        <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                          <span className="text-green-600">{miArea.satisfaccion.promotores} prom.</span>
-                          <span className="text-yellow-600">{miArea.satisfaccion.pasivos} pas.</span>
-                          <span className="text-red-600">{miArea.satisfaccion.detractores} det.</span>
-                        </div>
-                        <p className="text-[10px] text-slate-400 mt-2 italic">
-                          Basado en {miArea.satisfaccion.cantidad} evaluación{miArea.satisfaccion.cantidad !== 1 ? "es" : ""} del área
-                        </p>
-                        <InfoPopover
-                          formula="NPS = % promotores − % detractores (escala 0–10)"
-                          descripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
-                        />
-                      </>
-                    ) : (
-                      <p className="text-sm text-slate-400 mt-2">Sin datos suficientes</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Servicios evaluados (contextual) */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                  <div className="h-1.5 bg-emerald-600" />
-                  <div className="p-4">
-                    <p className="text-xs text-slate-500 mb-1">Servicios evaluados por clientes</p>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-3xl font-bold text-slate-800">
-                        {misDatos.total_calificaciones ?? 0}
-                      </span>
-                      <span className="text-sm text-slate-400">
-                        de {misDatos.servicios_completados ?? 0} servicios
-                      </span>
-                    </div>
-                    {misDatos.servicios_completados > 0 && (
-                      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-2">
-                        <div
-                          className="h-full rounded-full bg-emerald-500"
-                          style={{ width: `${Math.min(((misDatos.total_calificaciones ?? 0) / misDatos.servicios_completados) * 100, 100)}%` }}
-                        />
-                      </div>
-                    )}
-                    <p className="text-[10px] text-slate-400 mt-1.5">
-                      {misDatos.servicios_completados > 0
-                        ? `${((misDatos.total_calificaciones ?? 0) / misDatos.servicios_completados * 100).toFixed(0)}% de servicios recibieron calificación`
-                        : "Sin servicios completados en el período"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </PropuestaSection>
-          </div>
 
           {/* ============================================ */}
           {/* SERVICIOS ASIGNADOS */}
