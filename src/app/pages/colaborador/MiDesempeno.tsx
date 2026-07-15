@@ -59,7 +59,7 @@ function GoalBar({ actual, meta }: { actual: number; meta: number }) {
 }
 
 function IndicadorCard({
-  titulo, valor, unidad, descripcion, color, formula,
+  titulo, valor, unidad, descripcion, color, formula, comparacion,
 }: {
   titulo: string;
   valor: string | number;
@@ -67,6 +67,7 @@ function IndicadorCard({
   descripcion: string;
   color: string;
   formula?: string;
+  comparacion?: React.ReactNode;
 }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
@@ -82,6 +83,11 @@ function IndicadorCard({
           <p className="text-gray-500 text-sm">{titulo}</p>
           {formula && <InfoPopover formula={formula} descripcion={descripcion} />}
         </div>
+        {comparacion && (
+          <div className="mt-2 pt-2 border-t border-slate-100">
+            {comparacion}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -451,15 +457,14 @@ export function MiDesempenoPage() {
                   unidad=""
                   descripcion="Promedio de tus servicios completados en el período actual"
                   color="bg-orange-600"
-
                   formula="Σ(tracking_fin − tracking_inicio) ÷ N° de servicios completados en el período"
+                  comparacion={periodComparison ? (
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span className="text-slate-400">Anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
+                      <TrendBadge variacion={periodComparison.variacion.tiempo} />
+                    </div>
+                  ) : undefined}
                 />
-                {periodComparison && (
-                  <div className="flex items-center gap-1.5 px-5 pb-2 -mt-2">
-                    <span className="text-[10px] text-slate-400">Anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
-                    <TrendBadge variacion={periodComparison.variacion.tiempo} />
-                  </div>
-                )}
                 <IndicadorCard
 
                   titulo="Servicios dentro del tiempo estimado"
