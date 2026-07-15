@@ -380,7 +380,7 @@ export function MiDesempenoPage() {
       {/* ═══════════════════════════════ */}
       {/* CONTENIDO PRINCIPAL            */}
       {/* ═══════════════════════════════ */}
-      <div className="space-y-6 px-6">
+      <div className="max-w-7xl mx-auto space-y-6 px-6">
 
       {/* ═══════════════════════════════ */}
       {/* LOADING STATE                   */}
