@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import jwt from "@fastify/jwt";
 import rateLimit from "@fastify/rate-limit";
+import fastifyStatic from "@fastify/static";
 
 import { config } from "@/core/config/index.js";
 import { errorHandler } from "@/core/middleware/error-handler.js";
@@ -28,6 +29,12 @@ import { ofertasController } from "@/modules/ofertas/ofertas.controller.js";
 import { notificacionesController } from "@/modules/notificaciones/notificaciones.controller.js";
 import { tiposServicioController } from "@/modules/tipos-servicio/tipos-servicio.controller.js";
 import { cleanupSeguridad } from "@/scripts/cleanup-seguridad.js";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export async function buildApp() {
   const app = Fastify({ logger: config.isDev });
@@ -96,6 +103,23 @@ export async function buildApp() {
   await app.register(ofertasController);
   await app.register(notificacionesController);
   await app.register(tiposServicioController);
+
+  // ── Frontend estático (Docker/producción) ────────────────
+  const publicDir = process.env.PUBLIC_DIR || join(__dirname, "..", "..", "..", "public");
+  if (fs.existsSync(publicDir)) {
+    await app.register(fastifyStatic, {
+      root: publicDir,
+      prefix: "/",
+      wildcard: false,
+    });
+
+    app.setNotFoundHandler(async (_request, reply) => {
+      if (_request.url.startsWith("/api")) {
+        return reply.status(404).send({ error: "Ruta no encontrada" });
+      }
+      return reply.sendFile("index.html");
+    });
+  }
 
   // ── Cleanup programado de seguridad (cada 24h) ────────────
   const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24h

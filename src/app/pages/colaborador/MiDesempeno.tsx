@@ -341,23 +341,23 @@ export function MiDesempenoPage() {
       {/* HERO HEADER - FULL WIDTH       */}
       {/* ═══════════════════════════════ */}
       <div className="bg-white shadow-sm">
-        <div className="bg-gradient-to-r from-emerald-600 to-emerald-700">
-          <div className="max-w-7xl mx-auto px-6 py-5">
-            <div className="flex items-center gap-4">
-            <div className="min-w-0">
-                <h1 className="text-xl font-bold text-white">Mi Desempeño</h1>
-                <p className="text-emerald-100 text-sm truncate">
-                  {user?.nombres || "Colaborador"}
-                  {miArea?.area?.nombre && <span> · {miArea.area.nombre}</span>}
-                </p>
-              </div>
-              {periodoLabel && (
-                <div className="ml-auto flex items-center gap-1.5 bg-white/10 rounded-xl px-2.5 py-1.5 text-emerald-50 text-xs shrink-0">
-                  <BarChart3 className="w-3.5 h-3.5 text-emerald-200 shrink-0" />
-                  <span className="min-w-0">{periodoLabel}</span>
-                </div>
-              )}
-            </div>
+        <div className="max-w-7xl mx-auto px-6 py-5">
+          <div className="bg-gray-300 text-gray-900 px-4 py-2.5 flex items-center gap-2 text-sm flex-wrap">
+            <span className="font-bold">Mi Desempeño</span>
+            <span className="opacity-40">·</span>
+            <span>{user?.nombres || "Colaborador"}</span>
+            {miArea?.area?.nombre && (
+              <>
+                <span className="opacity-40">·</span>
+                <span>{miArea.area.nombre}</span>
+              </>
+            )}
+            {periodoLabel && (
+              <>
+                <span className="opacity-40">·</span>
+                <span className="font-medium">{periodoLabel}</span>
+              </>
+            )}
           </div>
         </div>
 
