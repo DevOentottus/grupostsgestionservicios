@@ -411,22 +411,35 @@ export interface DashboardV2Response {
     prioridad: string;
   }[];
   period_comparison?: {
-    actual: {
-      servicios_completados: number;
-      tareas_completadas: number;
-      tiempo_promedio: number;
-    };
-    anterior: {
-      servicios_completados: number;
-      tareas_completadas: number;
-      tiempo_promedio: number;
-    };
+    actual: PeriodMetrics;
+    anterior: PeriodMetrics;
     variacion: {
       servicios: number;
       tareas: number;
       tiempo: number;
+      tiempo_por_tarea: number;
+      tracking_pct: number;
+      tareas_documentadas: number;
+      auditoria_pct: number;
+      a_tiempo_pct: number;
+      calificacion: number;
+      nps: number;
     };
   };
+}
+
+// -- Period metrics for dashboard comparison --
+export interface PeriodMetrics {
+  servicios_completados: number;
+  tareas_completadas: number;
+  tiempo_promedio: number;
+  tiempo_promedio_por_tarea: number;
+  servicios_con_tiempo_tracking_pct: number;
+  tareas_documentadas_conteo: number;
+  registros_completos_pct: number;
+  completados_dentro_tiempo_pct: number;
+  calificacion_promedio: number;
+  nps: number;
 }
 
 // -- Rendimiento del Sistema (admin) --

@@ -785,27 +785,29 @@ export async function seguimientoController(app: FastifyInstance) {
       const anteriorFin = compararHasta ?? new Date(fechaFin.getTime() - (fechaFin.getTime() - fechaInicio.getTime()));
 
       const getPeriodMetrics = async (inicio: Date, fin: Date) => {
-        // Servicios completados en el período
+        // -- Servicios del período --
         let svcQuery = supabase
           .from("servicios")
-          .select("servicio_id, servicio_estado")
+          .select("servicio_id, servicio_estado, servicio_tiempo_estimado")
           .gte("servicio_fecha_creacion", inicio.toISOString().split("T")[0])
           .lte("servicio_fecha_creacion", fin.toISOString().split("T")[0]);
 
         if (areaId) svcQuery = svcQuery.eq("area_id", areaId);
 
         const { data: svcs } = await svcQuery;
+        const allSvcIds = (svcs || []).map((s: any) => s.servicio_id);
         const completados = (svcs || []).filter((s: any) => s.servicio_estado === "completado");
-        const svcIds = completados.map((s: any) => s.servicio_id);
+        const svcIdsCompletados = completados.map((s: any) => s.servicio_id);
+        const totalSvc = allSvcIds.length;
 
-        // Tareas completadas de esos servicios
+        // -- Tareas completadas de servicios completados --
         let tareasQuery = supabase
           .from("tareas")
-          .select("tarea_id, tarea_tiempo_real, servicio_id")
+          .select("tarea_id, tarea_tiempo_real, servicio_id, tarea_fecha_completado, tarea_hora_completado, tarea_completado_por, tarea_estado")
           .eq("tarea_estado", "completado");
 
-        if (svcIds.length > 0) {
-          tareasQuery = tareasQuery.in("servicio_id", svcIds);
+        if (svcIdsCompletados.length > 0) {
+          tareasQuery = tareasQuery.in("servicio_id", svcIdsCompletados);
         }
         if (usuarioId) {
           tareasQuery = tareasQuery.eq("tarea_completado_por", usuarioId);
@@ -814,22 +816,115 @@ export async function seguimientoController(app: FastifyInstance) {
         const { data: tareas } = await tareasQuery;
         const tareasCount = tareas?.length || 0;
 
-        // Tiempo promedio (misma lógica que el período actual)
+        // -- Tiempo promedio (por servicio y por tarea) --
         const svcConTiempo = new Set<number>();
         let sumaTiempo = 0;
+        let tareasConTiempoCount = 0;
         for (const t of tareas || []) {
           if (t.tarea_tiempo_real != null && t.tarea_tiempo_real > 0) {
             sumaTiempo += t.tarea_tiempo_real;
             svcConTiempo.add(t.servicio_id);
+            tareasConTiempoCount++;
           }
         }
         const svcConTiempoCount = svcConTiempo.size;
         const tiempoPromedio = svcConTiempoCount > 0 ? Math.round(sumaTiempo / svcConTiempoCount) : 0;
+        const tiempoPromedioPorTarea = tareasConTiempoCount > 0 ? Math.round(sumaTiempo / tareasConTiempoCount) : 0;
+
+        // -- Tareas documentadas (fecha/hora/responsable) --
+        const tareasDoc = (tareas || []).filter((t: any) =>
+          t.tarea_fecha_completado && t.tarea_hora_completado && t.tarea_completado_por
+        ).length;
+
+        // -- Servicios con tiempo de ejecución en todas las tareas (tracking) --
+        let serviciosConTracking = 0;
+        if (allSvcIds.length > 0) {
+          const { data: tareasParaTracking } = await supabase
+            .from("tareas")
+            .select("tarea_id, servicio_id")
+            .in("servicio_id", allSvcIds);
+
+          const svcTareasMap = new Map<number, number[]>();
+          for (const t of tareasParaTracking || []) {
+            const arr = svcTareasMap.get(t.servicio_id) || [];
+            arr.push(t.tarea_id);
+            svcTareasMap.set(t.servicio_id, arr);
+          }
+
+          const todasTareaIds = [...svcTareasMap.values()].flat();
+          if (todasTareaIds.length > 0) {
+            const { data: tracking } = await supabase
+              .from("tiempo_tracking")
+              .select("tarea_id")
+              .in("tarea_id", todasTareaIds)
+              .not("tracking_inicio", "is", null)
+              .not("tracking_fin", "is", null);
+
+            const tareasConTracking = new Set((tracking || []).map((tt: any) => tt.tarea_id));
+            for (const [, tareaIds] of svcTareasMap) {
+              if (tareaIds.length > 0 && tareaIds.every((tid) => tareasConTracking.has(tid))) {
+                serviciosConTracking++;
+              }
+            }
+          }
+        }
+        const trackingPct = totalSvc > 0 ? Math.round((serviciosConTracking / totalSvc) * 100) : 0;
+
+        // -- Auditoría (trazabilidad completa) --
+        let svcConAuditoria = 0;
+        if (allSvcIds.length > 0) {
+          const { data: auditoria } = await supabase
+            .from("auditoria")
+            .select("auditoria_registro_id")
+            .eq("auditoria_tabla", "servicios")
+            .in("auditoria_registro_id", allSvcIds);
+          svcConAuditoria = new Set((auditoria || []).map((a: any) => a.auditoria_registro_id)).size;
+        }
+        const auditoriaPct = totalSvc > 0 ? Math.round((svcConAuditoria / totalSvc) * 100) : 0;
+
+        // -- Servicios completados dentro del tiempo estimado --
+        let dentroTiempo = 0;
+        for (const s of completados) {
+          if (s.servicio_tiempo_estimado) {
+            const tareasSvc = (tareas || []).filter((t: any) => t.servicio_id === s.servicio_id);
+            const sumaReal = tareasSvc.reduce((sum: number, t: any) => sum + (t.tarea_tiempo_real || 0), 0);
+            if (sumaReal > 0 && sumaReal <= s.servicio_tiempo_estimado) dentroTiempo++;
+          }
+        }
+        const aTiempoPct = completados.length > 0 ? Math.round((dentroTiempo / completados.length) * 100) : 0;
+
+        // -- Calificaciones y NPS del período --
+        let califPromedio = 0;
+        let nps = 0;
+        if (allSvcIds.length > 0) {
+          const { data: califs } = await supabase
+            .from("calificaciones")
+            .select("calificacion_puntaje")
+            .in("servicio_id", allSvcIds)
+            .gte("calificacion_fecha", inicio.toISOString().split("T")[0])
+            .lte("calificacion_fecha", fin.toISOString().split("T")[0]);
+
+          const total = califs?.length || 0;
+          if (total > 0) {
+            const suma = califs!.reduce((s: number, c: any) => s + c.calificacion_puntaje, 0);
+            califPromedio = Math.round((suma / total) * 10) / 10;
+            const promotores = califs!.filter((c: any) => c.calificacion_puntaje >= 4).length;
+            const detractores = califs!.filter((c: any) => c.calificacion_puntaje <= 2).length;
+            nps = Math.round(((promotores - detractores) / total) * 100);
+          }
+        }
 
         return {
           servicios_completados: completados.length,
           tareas_completadas: tareasCount,
           tiempo_promedio: tiempoPromedio,
+          tiempo_promedio_por_tarea: tiempoPromedioPorTarea,
+          servicios_con_tiempo_tracking_pct: trackingPct,
+          tareas_documentadas_conteo: tareasDoc,
+          registros_completos_pct: auditoriaPct,
+          completados_dentro_tiempo_pct: aTiempoPct,
+          calificacion_promedio: califPromedio,
+          nps,
         };
       };
 
@@ -848,6 +943,13 @@ export async function seguimientoController(app: FastifyInstance) {
           servicios: calcVariacion(actualMetrics.servicios_completados, anteriorMetrics.servicios_completados),
           tareas: calcVariacion(actualMetrics.tareas_completadas, anteriorMetrics.tareas_completadas),
           tiempo: calcVariacion(actualMetrics.tiempo_promedio, anteriorMetrics.tiempo_promedio),
+          tiempo_por_tarea: calcVariacion(actualMetrics.tiempo_promedio_por_tarea, anteriorMetrics.tiempo_promedio_por_tarea),
+          tracking_pct: calcVariacion(actualMetrics.servicios_con_tiempo_tracking_pct, anteriorMetrics.servicios_con_tiempo_tracking_pct),
+          tareas_documentadas: calcVariacion(actualMetrics.tareas_documentadas_conteo, anteriorMetrics.tareas_documentadas_conteo),
+          auditoria_pct: calcVariacion(actualMetrics.registros_completos_pct, anteriorMetrics.registros_completos_pct),
+          a_tiempo_pct: calcVariacion(actualMetrics.completados_dentro_tiempo_pct, anteriorMetrics.completados_dentro_tiempo_pct),
+          calificacion: calcVariacion(actualMetrics.calificacion_promedio, anteriorMetrics.calificacion_promedio),
+          nps: calcVariacion(actualMetrics.nps, anteriorMetrics.nps),
         },
       };
     }

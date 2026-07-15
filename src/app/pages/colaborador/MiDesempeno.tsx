@@ -271,6 +271,7 @@ export function MiDesempenoPage() {
           {/* RESUMEN PERSONAL */}
           {/* ============================================ */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* TAREAS COMPLETADAS */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -283,8 +284,8 @@ export function MiDesempenoPage() {
                 <span className="text-lg text-slate-400 font-normal"> / {(misDatos.tareas_completadas ?? 0) + (misDatos.tareas_activas ?? 0)}</span>
               </p>
               {periodComparison && (
-                <div className="flex items-center gap-2 mt-2 text-xs">
-                  <span className="text-slate-400">{periodComparison.actual.tareas_completadas} en este período</span>
+                <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
+                  <span className="text-slate-400">Anterior: {periodComparison.anterior.tareas_completadas}</span>
                   <TrendBadge variacion={periodComparison.variacion.tareas} />
                 </div>
               )}
@@ -298,6 +299,8 @@ export function MiDesempenoPage() {
                 <GoalBar actual={periodComparison.actual.tareas_completadas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} />
               )}
             </div>
+
+            {/* SERVICIOS COMPLETADOS */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
@@ -307,8 +310,8 @@ export function MiDesempenoPage() {
               </div>
               <p className="text-3xl font-bold text-indigo-600">{misDatos.servicios_completados ?? 0}</p>
               {periodComparison && (
-                <div className="flex items-center gap-2 mt-2 text-xs">
-                  <span className="text-slate-400">{periodComparison.actual.servicios_completados} en este período</span>
+                <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
+                  <span className="text-slate-400">Anterior: {periodComparison.anterior.servicios_completados}</span>
                   <TrendBadge variacion={periodComparison.variacion.servicios} />
                 </div>
               )}
@@ -322,6 +325,8 @@ export function MiDesempenoPage() {
                 <GoalBar actual={periodComparison.actual.servicios_completados} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} />
               )}
             </div>
+
+            {/* CALIFICACIÓN */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
@@ -347,6 +352,12 @@ export function MiDesempenoPage() {
               ) : (
                 <p className="text-sm text-slate-400 mt-2">Sin evaluaciones</p>
               )}
+              {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
+                <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
+                  <span className="text-slate-400">Anterior: {periodComparison.anterior.calificacion_promedio.toFixed(1)}</span>
+                  <TrendBadge variacion={periodComparison.variacion.calificacion} />
+                </div>
+              )}
               {areaBenchmark?.avgCalificacion != null && (
                 <div className="flex items-baseline gap-1.5 mt-2 pt-2 border-t border-slate-100">
                   <span className="text-sm font-semibold text-slate-500">{areaBenchmark.avgCalificacion.toFixed(1)}</span>
@@ -354,6 +365,7 @@ export function MiDesempenoPage() {
                 </div>
               )}
             </div>
+
             {/* NPS */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-3">
@@ -393,6 +405,12 @@ export function MiDesempenoPage() {
               ) : (
                 <p className="text-sm text-slate-400 mt-2">Sin datos suficientes</p>
               )}
+              {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
+                <div className="flex items-center gap-1.5 text-[10px] mt-2 pt-2 border-t border-slate-100">
+                  <span className="text-slate-400">Anterior: {periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</span>
+                  <TrendBadge variacion={periodComparison.variacion.nps} />
+                </div>
+              )}
             </div>
           </div>
 
@@ -412,8 +430,13 @@ export function MiDesempenoPage() {
                     unidad="%"
                     descripcion="N° servicios donde todas las tareas tienen hora inicio/fin"
                     color="bg-blue-600"
-
                     formula="Tiempo de ejecución: Tracking_final − Tracking_inicial"
+                    comparacion={periodComparison ? (
+                      <div className="flex items-center gap-1.5 text-[10px]">
+                        <span className="text-slate-400">Anterior: {periodComparison.anterior.servicios_con_tiempo_tracking_pct}%</span>
+                        <TrendBadge variacion={periodComparison.variacion.tracking_pct} />
+                      </div>
+                    ) : undefined}
                   />
                   <IndicadorCard
                     titulo="Tareas documentadas (fecha/hora/responsable)"
@@ -421,18 +444,27 @@ export function MiDesempenoPage() {
                     unidad="tareas"
                     descripcion="Tareas con fecha, hora completada y responsable"
                     color="bg-cyan-600"
-
                     formula="Conteo de tareas que tienen tarea_fecha_completado, tarea_hora_completado y tarea_completado_por en la tabla tareas"
+                    comparacion={periodComparison ? (
+                      <div className="flex items-center gap-1.5 text-[10px]">
+                        <span className="text-slate-400">Anterior: {periodComparison.anterior.tareas_documentadas_conteo}</span>
+                        <TrendBadge variacion={periodComparison.variacion.tareas_documentadas} />
+                      </div>
+                    ) : undefined}
                   />
                   <IndicadorCard
-
                     titulo="Servicios con trazabilidad completa"
                     valor={kpi!.registros_completos_pct ?? 0}
                     unidad="%"
                     descripcion="Servicios con historial de cambios completo"
                     color="bg-teal-600"
-
                     formula="(Servicios que tienen registros en la tabla auditoría ÷ Total de servicios) × 100"
+                    comparacion={periodComparison ? (
+                      <div className="flex items-center gap-1.5 text-[10px]">
+                        <span className="text-slate-400">Anterior: {periodComparison.anterior.registros_completos_pct}%</span>
+                        <TrendBadge variacion={periodComparison.variacion.auditoria_pct} />
+                      </div>
+                    ) : undefined}
                   />
                 </div>
               ) : (
@@ -451,7 +483,6 @@ export function MiDesempenoPage() {
             >
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <IndicadorCard
-
                   titulo="Tiempo promedio de servicios completados"
                   valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_min) : "—"}
                   unidad=""
@@ -466,24 +497,32 @@ export function MiDesempenoPage() {
                   ) : undefined}
                 />
                 <IndicadorCard
-
                   titulo="Servicios dentro del tiempo estimado"
                   valor={kpi?.completados_dentro_tiempo_pct ?? 0}
                   unidad="%"
                   descripcion="N° servicios cumplieron el tiempo estimado"
                   color="bg-green-600"
-
                   formula="(Servicios cuyo tiempo real total ≤ tiempo_estimado del servicio ÷ Total de servicios completados) × 100"
+                  comparacion={periodComparison ? (
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span className="text-slate-400">Anterior: {periodComparison.anterior.completados_dentro_tiempo_pct}%</span>
+                      <TrendBadge variacion={periodComparison.variacion.a_tiempo_pct} />
+                    </div>
+                  ) : undefined}
                 />
                 <IndicadorCard
-
                   titulo="Tiempo promedio por tarea"
                   valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_por_tarea != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_por_tarea) : "—"}
                   unidad=""
                   descripcion="Promedio de tiempo real por tarea completada en el período"
                   color="bg-purple-600"
-
                   formula="Σ(tarea_tiempo_real) ÷ N° de tareas completadas con tiempo en el período"
+                  comparacion={periodComparison ? (
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span className="text-slate-400">Anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio_por_tarea)}</span>
+                      <TrendBadge variacion={periodComparison.variacion.tiempo_por_tarea} />
+                    </div>
+                  ) : undefined}
                 />
               </div>
             </PropuestaSection>
