@@ -340,8 +340,8 @@ export function MiDesempenoPage() {
       {/* ═══════════════════════════════ */}
       {/* HERO HEADER - FULL WIDTH       */}
       {/* ═══════════════════════════════ */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-5">
+      <div className="bg-white shadow-sm -mx-4 md:-mx-6">
+        <div className="px-4 md:px-6 py-5">
           <div className="bg-gray-300 text-gray-900 px-4 py-2.5 flex items-center gap-2 text-sm flex-wrap">
             <span className="font-bold">Mi Desempeño</span>
             <span className="opacity-40">·</span>
@@ -363,7 +363,7 @@ export function MiDesempenoPage() {
 
         {/* Filtro de fechas dentro del hero */}
         {misDatos && (
-          <div className="max-w-7xl mx-auto px-6 pb-5">
+          <div className="px-4 md:px-6 pb-5">
             <DateFilterCard
               presets={presets}
               fechaInicio={fechaInicio}
@@ -380,7 +380,7 @@ export function MiDesempenoPage() {
       {/* ═══════════════════════════════ */}
       {/* CONTENIDO PRINCIPAL            */}
       {/* ═══════════════════════════════ */}
-      <div className="max-w-7xl mx-auto space-y-6 px-6">
+      <div className="space-y-6">
 
       {/* ═══════════════════════════════ */}
       {/* LOADING STATE                   */}
