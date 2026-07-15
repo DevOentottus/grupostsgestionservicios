@@ -557,14 +557,17 @@ export async function seguimientoController(app: FastifyInstance) {
     // -- Tiempo real desde tarea_tiempo_real (más confiable que tracking_fin - tracking_inicio) --
     const svcConTiempo = new Set<number>();
     let sumaTiempoReal = 0;
+    let tareasConTiempo = 0;
     for (const t of tareasCompletadasPeriodo || []) {
       if (t.tarea_tiempo_real != null && t.tarea_tiempo_real > 0) {
         sumaTiempoReal += t.tarea_tiempo_real;
         svcConTiempo.add(t.servicio_id);
+        tareasConTiempo++;
       }
     }
     const totalSvcConTiempo = svcConTiempo.size;
     const tiempoPromedioMin = totalSvcConTiempo > 0 ? Math.round(sumaTiempoReal / totalSvcConTiempo) : 0;
+    const tiempoPromedioPorTarea = tareasConTiempo > 0 ? Math.round(sumaTiempoReal / tareasConTiempo) : 0;
 
     // Si se especificó un usuario, recalcular solo con sus tareas
     let userTiempoPromedioMin: number | null = null;
@@ -1070,6 +1073,7 @@ export async function seguimientoController(app: FastifyInstance) {
           },
           eficiencia: {
             tiempo_promedio_min: userTiempoPromedioMin ?? tiempoPromedioMin,
+            tiempo_promedio_por_tarea: tiempoPromedioPorTarea,
             porcentaje_a_tiempo: porcentajeATiempo,
             cantidad_retrasos: retrasos,
           },

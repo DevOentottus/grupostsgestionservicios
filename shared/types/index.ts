@@ -362,6 +362,7 @@ export interface DashboardV2Response {
     };
     eficiencia: {
       tiempo_promedio_min: number;
+      tiempo_promedio_por_tarea: number;
       porcentaje_a_tiempo: number;
       cantidad_retrasos: number;
     };

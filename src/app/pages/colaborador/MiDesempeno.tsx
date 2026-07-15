@@ -472,13 +472,13 @@ export function MiDesempenoPage() {
                 />
                 <IndicadorCard
 
-                  titulo="Productividad personal"
-                  valor={productividadPersonal ?? 0}
-                  unidad="servicios"
-                  descripcion="Servicios completados en el período"
+                  titulo="Tiempo promedio por tarea"
+                  valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_por_tarea != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_por_tarea) : "—"}
+                  unidad=""
+                  descripcion="Promedio de tiempo real por tarea completada en el período"
                   color="bg-purple-600"
 
-                  formula="N° de servicios completados por el colaborador en el período seleccionado"
+                  formula="Σ(tarea_tiempo_real) ÷ N° de tareas completadas con tiempo en el período"
                 />
               </div>
             </PropuestaSection>
