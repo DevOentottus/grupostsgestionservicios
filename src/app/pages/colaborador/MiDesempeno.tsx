@@ -135,6 +135,7 @@ function KpiPrimarioCard({
   titulo,
   valor,
   unidad,
+  valorExtra,
   children,
 }: {
   icon: React.ElementType;
@@ -143,6 +144,7 @@ function KpiPrimarioCard({
   titulo: string;
   valor: React.ReactNode;
   unidad?: string;
+  valorExtra?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   return (
@@ -153,9 +155,10 @@ function KpiPrimarioCard({
             <Icon className={cn("w-5 h-5", iconColor)} />
           </div>
         </div>
-        <div className="flex items-baseline gap-1.5">
+        <div className="flex items-baseline gap-1.5 flex-wrap">
           <span className="text-4xl font-bold text-slate-900 tracking-tight">{valor}</span>
           {unidad && <span className="text-sm font-medium text-slate-500">{unidad}</span>}
+          {valorExtra && <span className="text-xs text-slate-500 ml-1">{valorExtra}</span>}
         </div>
         <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-slate-600">
           {titulo}
@@ -537,150 +540,128 @@ export function MiDesempenoPage() {
               </KpiPrimarioCard>
 
               {/* CALIFICACION */}
-              <KpiPrimarioCard
-                icon={Star}
-                iconBg="bg-amber-100"
-                iconColor="text-amber-600"
-                titulo="Calificación"
-                valor={
-                  (() => {
-                    const califVal = periodComparison
-                      ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
-                      : misDatos.calificacion_promedio;
-                    return califVal != null ? califVal.toFixed(1) : "—";
-                  })()
-                }
-                unidad={(() => {
-                  const califVal = periodComparison
-                    ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
-                    : misDatos.calificacion_promedio;
-                  return califVal != null ? "/ 5" : "";
-                })()}
-              >
-                {(() => {
-                  const califVal = periodComparison
-                    ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
-                    : misDatos.calificacion_promedio;
-                  const califCount = periodComparison
-                    ? periodComparison.actual.total_calificaciones
-                    : misDatos.total_calificaciones;
-                  return califVal != null ? (
-                    <div className="flex items-center gap-2 mt-1">
-                      <StarRating rating={califVal} />
-                      <span className="text-xs text-slate-500">{califCount} calificación{califCount !== 1 ? "es" : ""}</span>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500 mt-1">Sin evaluaciones</p>
-                  );
-                })()}
-                {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
-                  <>
-                    <DividerLabel label="Período anterior" />
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-600">{periodComparison.anterior.calificacion_promedio.toFixed(1)} / 5</span>
-                      <TrendBadge variacion={periodComparison.variacion.calificacion} size="xs" />
-                    </div>
-                  </>
-                )}
-                {areaBenchmark?.avgCalificacion != null && (
-                  <>
-                    <DividerLabel label="Promedio área" />
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-600">{areaBenchmark.avgCalificacion.toFixed(1)} / 5</span>
-                      <span className="text-xs text-slate-500">{areaBenchmark.totalColaboradores} colaboradores</span>
-                    </div>
-                  </>
-                )}
-                {(() => {
-                  const califVal = periodComparison
-                    ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
-                    : misDatos.calificacion_promedio;
-                  return califVal != null ? (
-                    <>
-                      <DividerLabel label="Progreso vs meta" />
-                      <GoalBar actual={califVal} meta={5} showMeta={false} />
-                    </>
-                  ) : null;
-                })()}
-              </KpiPrimarioCard>
+              {(() => {
+                const califVal = periodComparison
+                  ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
+                  : misDatos.calificacion_promedio;
+                const califCount = periodComparison
+                  ? periodComparison.actual.total_calificaciones
+                  : misDatos.total_calificaciones;
+                return (
+                  <KpiPrimarioCard
+                    icon={Star}
+                    iconBg="bg-amber-100"
+                    iconColor="text-amber-600"
+                    titulo="Calificación"
+                    valor={califVal != null ? califVal.toFixed(1) : "—"}
+                    unidad={califVal != null ? "/ 5" : ""}
+                    valorExtra={califVal != null ? (
+                      <>
+                        <StarRating rating={califVal} />
+                        <span className="text-slate-500 ml-1">{califCount} calificación{califCount !== 1 ? "es" : ""}</span>
+                      </>
+                    ) : (
+                      <span className="text-slate-500">Sin evaluaciones</span>
+                    )}
+                  >
+                    {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
+                      <>
+                        <DividerLabel label="Período anterior" />
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-slate-600">{periodComparison.anterior.calificacion_promedio.toFixed(1)} / 5</span>
+                          <TrendBadge variacion={periodComparison.variacion.calificacion} size="xs" />
+                        </div>
+                      </>
+                    )}
+                    {areaBenchmark?.avgCalificacion != null && (
+                      <>
+                        <DividerLabel label="Promedio área" />
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-slate-600">{areaBenchmark.avgCalificacion.toFixed(1)} / 5</span>
+                          <span className="text-xs text-slate-500">{areaBenchmark.totalColaboradores} colaboradores</span>
+                        </div>
+                      </>
+                    )}
+                    {califVal != null && (
+                      <>
+                        <DividerLabel label="Progreso vs meta" />
+                        <GoalBar actual={califVal} meta={5} showMeta={false} />
+                      </>
+                    )}
+                  </KpiPrimarioCard>
+                );
+              })()}
 
               {/* NPS */}
-              <KpiPrimarioCard
-                icon={ShieldCheck}
-                iconBg="bg-emerald-100"
-                iconColor="text-emerald-600"
-                titulo="NPS · Recomendación"
-                valor={
-                  (() => {
-                    const esPeriodo = periodComparison && periodComparison.actual.total_calificaciones > 0;
-                    const areaSat = miArea?.satisfaccion;
-                    const npsData = esPeriodo ? periodComparison!.actual : (areaSat && areaSat.cantidad > 0 ? areaSat : null);
-                    if (npsData) {
-                      const npsVal = npsData.nps;
-                      return npsVal > 0 ? "+" + npsVal : "" + npsVal;
-                    }
-                    return "—";
-                  })()
-                }
-                unidad="/ 100"
-              >
-                {(() => {
-                  const esPeriodo = periodComparison && periodComparison.actual.total_calificaciones > 0;
-                  const areaSat = miArea?.satisfaccion;
-                  const npsData = esPeriodo ? periodComparison!.actual : (areaSat && areaSat.cantidad > 0 ? areaSat : null);
-                  if (npsData) {
-                    const total = esPeriodo ? periodComparison!.actual.total_calificaciones : areaSat!.cantidad;
-                    const prom = npsData.promotores;
-                    const pas = npsData.pasivos;
-                    const det = npsData.detractores;
-                    return (
+              {(() => {
+                const esPeriodo = periodComparison && periodComparison.actual.total_calificaciones > 0;
+                const areaSat = miArea?.satisfaccion;
+                const npsData = esPeriodo ? periodComparison!.actual : (areaSat && areaSat.cantidad > 0 ? areaSat : null);
+                const npsVal = npsData ? npsData.nps : null;
+                const total = npsData
+                  ? esPeriodo ? periodComparison!.actual.total_calificaciones : areaSat!.cantidad
+                  : 0;
+                return (
+                  <KpiPrimarioCard
+                    icon={ShieldCheck}
+                    iconBg="bg-emerald-100"
+                    iconColor="text-emerald-600"
+                    titulo="NPS · Recomendación"
+                    valor={npsVal != null ? (npsVal > 0 ? "+" + npsVal : "" + npsVal) : "—"}
+                    unidad="/ 100"
+                    valorExtra={npsData ? (
+                      <span className="text-slate-500">
+                        · {total} evaluación{total !== 1 ? "es" : ""}
+                      </span>
+                    ) : undefined}
+                  >
+                    {npsData ? (
                       <>
-                        <div className="w-full h-2 rounded-full overflow-hidden flex mt-3">
-                          <div className="h-full bg-emerald-500" style={{ width: (prom / total) * 100 + "%" }} />
-                          <div className="h-full bg-amber-400" style={{ width: (pas / total) * 100 + "%" }} />
-                          <div className="h-full bg-red-500" style={{ width: (det / total) * 100 + "%" }} />
-                        </div>
-                        <div className="flex justify-between text-xs text-slate-500 mt-1">
-                          <span className="text-emerald-600">{prom} prom.</span>
-                          <span className="text-amber-600">{pas} neu.</span>
-                          <span className="text-red-600">{det} det.</span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1 italic">
-                          Basado en {total} evaluación{total !== 1 ? "es" : ""} del {esPeriodo ? "período" : "área"}
-                        </p>
+                        {(() => {
+                          const prom = npsData.promotores;
+                          const pas = npsData.pasivos;
+                          const det = npsData.detractores;
+                          return (
+                            <>
+                              <div className="w-full h-2 rounded-full overflow-hidden flex mt-3">
+                                <div className="h-full bg-emerald-500" style={{ width: (prom / total) * 100 + "%" }} />
+                                <div className="h-full bg-amber-400" style={{ width: (pas / total) * 100 + "%" }} />
+                                <div className="h-full bg-red-500" style={{ width: (det / total) * 100 + "%" }} />
+                              </div>
+                              <div className="flex justify-between text-xs text-slate-500 mt-1">
+                                <span className="text-emerald-600">{prom} prom.</span>
+                                <span className="text-amber-600">{pas} neu.</span>
+                                <span className="text-red-600">{det} det.</span>
+                              </div>
+                            </>
+                          );
+                        })()}
                         <InfoPopover
                           formula="NPS = % promotores − % detractores (escala 0–10)"
                           descripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
                         />
                       </>
-                    );
-                  }
-                  return <p className="text-xs text-slate-500 mt-1">Sin datos suficientes</p>;
-                })()}
-                {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
-                  <>
-                    <DividerLabel label="Período anterior" />
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-600">{periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</span>
-                      <TrendBadge variacion={periodComparison.variacion.nps} size="xs" />
-                    </div>
-                  </>
-                )}
-                {(() => {
-                  const esPeriodo = periodComparison && periodComparison.actual.total_calificaciones > 0;
-                  const areaSat = miArea?.satisfaccion;
-                  const npsData = esPeriodo ? periodComparison!.actual : (areaSat && areaSat.cantidad > 0 ? areaSat : null);
-                  if (npsData && npsData.nps > 0) {
-                    return (
+                    ) : (
+                      <p className="text-xs text-slate-500 mt-1">Sin datos suficientes</p>
+                    )}
+                    {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
+                      <>
+                        <DividerLabel label="Período anterior" />
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-slate-600">{periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</span>
+                          <TrendBadge variacion={periodComparison.variacion.nps} size="xs" />
+                        </div>
+                      </>
+                    )}
+                    {npsVal != null && npsVal > 0 && (
                       <>
                         <DividerLabel label="Progreso vs meta" />
-                        <GoalBar actual={npsData.nps} meta={100} showMeta={false} />
+                        <GoalBar actual={npsVal} meta={100} showMeta={false} />
                       </>
-                    );
-                  }
-                  return null;
-                })()}
-              </KpiPrimarioCard>
+                    )}
+                  </KpiPrimarioCard>
+                );
+              })()}
             </div>
           </section>
 
