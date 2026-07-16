@@ -834,13 +834,6 @@ export function NuevoServicioPage() {
                           <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">
                             {idx + 1}
                           </span>
-                          {t.obligatoria && (
-                            <svg className="w-3 h-3 shrink-0 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
-                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                              <path d="M7 11V7a5 5 0 0110 0v4" />
-                            </svg>
-                          )}
-
                           {editandoTarea === t.tempId ? (
                             <input
                               type="text"
