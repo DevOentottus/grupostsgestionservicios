@@ -549,30 +549,32 @@ export function PlantillasPage() {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-slate-800">
-          {esAdminSistema ? "Plantillas de proceso" : "Plantillas de área"}
-        </h2>
-        <div className="flex items-center gap-2">
-          {esAdminSistema && (
-            <select
-              value={filterArea}
-              onChange={(e) => setFilterArea(e.target.value ? Number(e.target.value) : "")}
-              className="px-3 py-2 rounded-lg text-sm border border-gray-200 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+      {/* Header gradiente */}
+      <div className="rounded-2xl bg-gradient-to-r from-blue-900 to-blue-700 px-6 py-5 text-white shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-lg font-bold text-white">
+            {esAdminSistema ? "Plantillas de proceso" : "Plantillas de área"}
+          </h1>
+          <div className="flex items-center gap-2">
+            {esAdminSistema && (
+              <select
+                value={filterArea}
+                onChange={(e) => setFilterArea(e.target.value ? Number(e.target.value) : "")}
+                className="rounded-xl border border-white/20 bg-white/15 px-3 py-2 text-sm text-white outline-none transition focus:border-white/40 focus:ring-2 focus:ring-white/20 [&>option]:bg-slate-800 [&>option]:text-white"
+              >
+                <option value="">Todas las áreas</option>
+                {(areas || []).map((a: any) => (
+                  <option key={a.id} value={a.id}>{a.nombre}</option>
+                ))}
+              </select>
+            )}
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-1.5 rounded-xl bg-yellow-400 px-4 py-2 text-sm font-bold text-blue-900 transition hover:bg-yellow-500"
             >
-              <option value="">Todas las áreas</option>
-              {(areas || []).map((a: any) => (
-                <option key={a.id} value={a.id}>{a.nombre}</option>
-              ))}
-            </select>
-          )}
-          <button
-            onClick={() => setShowCreate(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
-          >
-            + Nueva Plantilla
-          </button>
+              + Nueva Plantilla
+            </button>
+          </div>
         </div>
       </div>
 

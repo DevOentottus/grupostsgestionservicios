@@ -145,44 +145,46 @@ export function ServiciosPage() {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-gray-900 font-bold text-xl">Gestión de Servicios</h1>
-          <p className="text-gray-500 text-sm">
-            {activos.length} activos
-            {archivados.length > 0 && ` · ${archivados.length} archivados`}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {esAdminSistema && (
-            <button
-              onClick={() => {
-                const newVal = !defaultEvidencia;
-                setDefaultEvidencia(newVal);
-                localStorage.setItem("default_permite_evidencia", String(newVal));
-              }}
-              className={`hidden sm:flex items-center gap-2 border px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
-                defaultEvidencia
-                  ? "bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                  : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
-              }`}
-              title={`Mostrar evidencias por defecto: ${defaultEvidencia ? "activado" : "desactivado"}`}
-            >
-              <Camera className="w-4 h-4" />
-              <span className="hidden sm:inline">Evidencias</span>
-              <span className={`w-2.5 h-2.5 rounded-full ${defaultEvidencia ? "bg-green-500" : "bg-gray-300"}`} />
-            </button>
-          )}
-          {canCreate && (
-            <button
-              onClick={() => navigate("/servicios/nuevo")}
-              className="flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-bold transition"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Nuevo Servicio</span>
-            </button>
-          )}
+      {/* Header gradiente */}
+      <div className="rounded-2xl bg-gradient-to-r from-blue-900 to-blue-700 px-6 py-5 text-white shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-bold text-white">Gestión de Servicios</h1>
+            <p className="text-sm text-blue-200">
+              {activos.length} activos
+              {archivados.length > 0 && ` · ${archivados.length} archivados`}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {esAdminSistema && (
+              <button
+                onClick={() => {
+                  const newVal = !defaultEvidencia;
+                  setDefaultEvidencia(newVal);
+                  localStorage.setItem("default_permite_evidencia", String(newVal));
+                }}
+                className={`hidden sm:flex items-center gap-2 border px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+                  defaultEvidencia
+                    ? "border-white/30 bg-white/15 text-white hover:bg-white/20"
+                    : "border-white/20 bg-transparent text-blue-200 hover:bg-white/10"
+                }`}
+                title={`Mostrar evidencias por defecto: ${defaultEvidencia ? "activado" : "desactivado"}`}
+              >
+                <Camera className="w-4 h-4" />
+                <span className="hidden sm:inline">Evidencias</span>
+                <span className={`h-2.5 w-2.5 rounded-full ${defaultEvidencia ? "bg-green-400" : "bg-white/30"}`} />
+              </button>
+            )}
+            {canCreate && (
+              <button
+                onClick={() => navigate("/servicios/nuevo")}
+                className="flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-blue-900 px-3 sm:px-4 py-2.5 rounded-xl text-sm font-bold transition"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Nuevo Servicio</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
