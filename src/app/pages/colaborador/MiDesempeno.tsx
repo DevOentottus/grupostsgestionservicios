@@ -591,6 +591,17 @@ export function MiDesempenoPage() {
                     </div>
                   </>
                 )}
+                {(() => {
+                  const califVal = periodComparison
+                    ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
+                    : misDatos.calificacion_promedio;
+                  return califVal != null ? (
+                    <>
+                      <DividerLabel label="Progreso vs meta" />
+                      <GoalBar actual={califVal} meta={5} showMeta={false} />
+                    </>
+                  ) : null;
+                })()}
               </KpiPrimarioCard>
 
               {/* NPS */}
@@ -655,6 +666,20 @@ export function MiDesempenoPage() {
                     </div>
                   </>
                 )}
+                {(() => {
+                  const esPeriodo = periodComparison && periodComparison.actual.total_calificaciones > 0;
+                  const areaSat = miArea?.satisfaccion;
+                  const npsData = esPeriodo ? periodComparison!.actual : (areaSat && areaSat.cantidad > 0 ? areaSat : null);
+                  if (npsData && npsData.nps > 0) {
+                    return (
+                      <>
+                        <DividerLabel label="Progreso vs meta" />
+                        <GoalBar actual={npsData.nps} meta={100} showMeta={false} />
+                      </>
+                    );
+                  }
+                  return null;
+                })()}
               </KpiPrimarioCard>
             </div>
           </section>

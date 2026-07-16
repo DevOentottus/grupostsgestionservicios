@@ -7,6 +7,7 @@ interface FlowStep {
   orden: number;
   completada_at: string | null;
   tiempo_estimado: number | null;
+  tiempo_real_minutos: number | null;
   asignado_a_nombre?: string | null;
 }
 
@@ -20,15 +21,6 @@ function formatDuration(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
-}
-
-function calcularTiempoTranscurrido(completada_at: string | null, created_at?: string): number {
-  if (completada_at) {
-    return Math.floor(
-      (new Date(completada_at).getTime() - new Date(created_at || completada_at).getTime()) / 60000
-    );
-  }
-  return 0;
 }
 
 // -- Loading Skeleton --
@@ -95,9 +87,6 @@ export function ProcessFlow({ steps }: ProcessFlowProps) {
           {sortedSteps.map((step, index) => {
             const isCompleted = step.completada;
             const isLast = index === sortedSteps.length - 1;
-            const elapsedTime = step.completada_at
-              ? calcularTiempoTranscurrido(step.completada_at)
-              : 0;
 
             return (
               <div key={step.id} className="flex items-start">
@@ -150,9 +139,9 @@ export function ProcessFlow({ steps }: ProcessFlowProps) {
                         {formatFechaHora(step.completada_at)}
                       </p>
                     )}
-                    {isCompleted && elapsedTime > 0 && (
-                      <p className="text-[10px] text-slate-400">
-                        {formatDuration(elapsedTime)}
+                    {isCompleted && step.tiempo_real_minutos != null && (
+                      <p className="text-[10px] text-slate-500 mt-0.5 font-medium">
+                        ⏱ {formatDuration(step.tiempo_real_minutos)}
                       </p>
                     )}
                     {!isCompleted && step.tiempo_estimado && (

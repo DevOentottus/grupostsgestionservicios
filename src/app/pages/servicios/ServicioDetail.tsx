@@ -353,6 +353,7 @@ export function ServicioDetailPage() {
     orden: tarea.orden,
     completada_at: tarea.completada_at,
     tiempo_estimado: tarea.tiempo_estimado,
+    tiempo_real_minutos: tarea.tiempo_real_minutos ?? null,
     asignado_a_nombre: null,
   }));
 

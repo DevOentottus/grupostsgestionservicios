@@ -330,6 +330,7 @@ export function ServicioPublicoPage() {
     orden: t.orden,
     completada_at: t.completada_at,
     tiempo_estimado: t.tiempo_estimado,
+    tiempo_real_minutos: t.tiempo_real_minutos ?? null,
   }));
 
   return (
