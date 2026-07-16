@@ -424,6 +424,7 @@ export function MiAreaPage() {
                 { key: "en_progreso", label: "En Progreso", dot: "bg-blue-500" },
                 { key: "completado", label: "Completado", dot: "bg-green-500" },
                 { key: "bloqueado", label: "Bloqueado", dot: "bg-red-500" },
+                { key: "cancelado", label: "Cancelado", dot: "bg-gray-400" },
               ].map((btn) => {
                 const count = btn.key === "todos"
                   ? servicios.length
