@@ -54,6 +54,7 @@ export function MiAreaPage() {
   const [rankingSort, setRankingSort] = useState<"desc" | "asc">("desc");
   const [showInactivos, setShowInactivos] = useState(false);
   const [filtroEstado, setFiltroEstado] = useState<string>("todos");
+  const [filtroColaborador, setFiltroColaborador] = useState<number | "todos">("todos");
   const [busqueda, setBusqueda] = useState("");
 
   // Filtro de fechas
@@ -100,6 +101,7 @@ export function MiAreaPage() {
     if (!data?.servicios) return [];
     return data.servicios.filter((s) => {
       if (filtroEstado !== "todos" && s.estado !== filtroEstado) return false;
+      if (filtroColaborador !== "todos" && s.colaborador_id !== filtroColaborador) return false;
       if (busqueda.trim()) {
         const q = busqueda.trim().toLowerCase();
         return (
@@ -113,7 +115,7 @@ export function MiAreaPage() {
       }
       return true;
     });
-  }, [data?.servicios, filtroEstado, busqueda, fechaInicio, fechaFin]);
+  }, [data?.servicios, filtroEstado, filtroColaborador, busqueda, fechaInicio, fechaFin]);
 
   // Tiempo promedio de servicios completados en el período del filtro
   const tiempoPromedio = useMemo(() => {
@@ -451,8 +453,22 @@ export function MiAreaPage() {
               })}
             </div>
 
+            {/* Filtro por colaborador */}
+            <select
+              value={filtroColaborador}
+              onChange={(e) => setFiltroColaborador(e.target.value === "todos" ? "todos" : Number(e.target.value))}
+              className="px-3 py-2 rounded-xl text-sm border border-gray-200 bg-white outline-none focus:border-blue-500 transition min-w-[160px]"
+            >
+              <option value="todos">Todos los técnicos</option>
+              {colaboradoresOrdenados.map((col) => (
+                <option key={col.usuario_id} value={col.usuario_id}>
+                  {col.nombres} {col.apellidos}
+                </option>
+              ))}
+            </select>
+
             {/* Buscador */}
-            <div className="relative min-w-[200px]">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
