@@ -168,15 +168,6 @@ export function MiAreaPage() {
   const activos = colaboradores.filter((c) => c.activo !== false).length;
   const encargadoNombre = area.encargado_nombre || null;
 
-  // Área → tono de gris para la barra superior + contraste de texto
-  const AREA_THEME: Record<number, { bar: string; text: string }> = {
-    90: { bar: "bg-gray-300", text: "text-gray-900" },
-    92: { bar: "bg-gray-500", text: "text-white"     },
-    93: { bar: "bg-gray-700", text: "text-white"     },
-  };
-  const DEFAULT_THEME = { bar: "bg-gray-200", text: "text-gray-900" };
-  const theme = AREA_THEME[area.id] || DEFAULT_THEME;
-
   const estadoPieData = [
     { name: "Pendiente",    value: estado_counts.pendiente,   color: "#f59e0b" },
     { name: "En Progreso",  value: estado_counts.en_progreso, color: "#3b82f6" },
@@ -187,19 +178,20 @@ export function MiAreaPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header — barra con nombre, stats y encargado */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <div className={`${theme.bar} ${theme.text} px-4 py-2.5 flex items-center gap-2 text-sm flex-wrap`}>
-          <span className="font-bold">{area.nombre}</span>
-          <span className="opacity-40">·</span>
-          <span>{servicios.length} servicios</span>
-          <span className="opacity-40">·</span>
-          <span>{activos} colaboradores</span>
+      {/* Header — nombre, stats y encargado */}
+      <div className="rounded-2xl bg-gradient-to-r from-blue-900 to-blue-700 px-6 py-5 text-white shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-lg font-bold text-white">{area.nombre}</h1>
+            <span className="text-blue-200 text-sm">·</span>
+            <span className="text-blue-200 text-sm">{servicios.length} servicios</span>
+            <span className="text-blue-200 text-sm">·</span>
+            <span className="text-blue-200 text-sm">{activos} colaboradores</span>
+          </div>
           {encargadoNombre && (
-            <>
-              <span className="opacity-40">·</span>
-              <span>Encargado: {encargadoNombre}</span>
-            </>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-blue-200">Encargado: <strong className="text-white">{encargadoNombre}</strong></span>
+            </div>
           )}
         </div>
       </div>

@@ -338,25 +338,27 @@ export function MiDesempenoPage() {
   return (
     <>
       {/* ═══════════════════════════════ */}
-      {/* HERO HEADER                       */}
+      {/* HEADER GRADIENTE                 */}
       {/* ═══════════════════════════════ */}
-      <div className="py-5">
-        <div className="bg-gray-300 text-gray-900 px-4 py-2.5 flex items-center gap-2 text-sm flex-wrap rounded-xl">
-          <span className="font-bold">Mi Desempeño</span>
-          <span className="opacity-40">·</span>
-          <span>{user?.nombres || "Colaborador"}</span>
-          {miArea?.area?.nombre && (
-            <>
-              <span className="opacity-40">·</span>
-              <span>{miArea.area.nombre}</span>
-            </>
-          )}
-          {periodoLabel && (
-            <>
-              <span className="opacity-40">·</span>
-              <span className="font-medium">{periodoLabel}</span>
-            </>
-          )}
+      <div className="rounded-2xl bg-gradient-to-r from-blue-900 to-blue-700 px-6 py-5 text-white shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-lg font-bold text-white">Mi Desempeño</h1>
+            <span className="text-blue-200 text-sm">·</span>
+            <span className="text-blue-200 text-sm">{user?.nombres || "Colaborador"}</span>
+            {miArea?.area?.nombre && (
+              <>
+                <span className="text-blue-200 text-sm">·</span>
+                <span className="text-blue-200 text-sm">{miArea.area.nombre}</span>
+              </>
+            )}
+            {periodoLabel && (
+              <>
+                <span className="text-blue-200 text-sm">·</span>
+                <span className="text-blue-100 text-sm font-medium">{periodoLabel}</span>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
