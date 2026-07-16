@@ -148,8 +148,8 @@ export function ServiciosPage() {
       {/* Header gradiente */}
       <div className="rounded-2xl bg-gradient-to-r from-blue-900 to-blue-700 px-6 py-5 text-white shadow-sm">
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-bold text-white">Gestión de Servicios</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-lg font-bold text-white">Mis Servicios</h1>
             <p className="text-sm text-blue-200">
               {activos.length} activos
               {archivados.length > 0 && ` · ${archivados.length} archivados`}
