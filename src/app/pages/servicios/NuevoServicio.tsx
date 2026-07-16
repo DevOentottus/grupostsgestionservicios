@@ -746,7 +746,7 @@ export function NuevoServicioPage() {
                       </label>
                     ))}
                   </div>
-                )}
+                ) : null}
               </div>
             )}
 
@@ -958,6 +958,7 @@ export function NuevoServicioPage() {
               )}
             </div>
         ) : null}
+        
 
         {/* ═══ NAVEGACIÓN ═══ */}
         <div className="flex items-center justify-between gap-3 pt-3 pb-6">
