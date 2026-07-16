@@ -596,7 +596,7 @@ export function MiDesempenoPage() {
                         </div>
                         <div className="flex justify-between text-xs text-slate-500 mt-1">
                           <span className="text-emerald-600">{prom} prom.</span>
-                          <span className="text-amber-600">{pas} pas.</span>
+                          <span className="text-amber-600">{pas} neu.</span>
                           <span className="text-red-600">{det} det.</span>
                         </div>
                         <p className="text-xs text-slate-500 mt-1 italic">

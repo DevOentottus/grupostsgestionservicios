@@ -1,4 +1,4 @@
-import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PieChart as RechartsPie, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface PieChartDatum {
   name: string;
@@ -72,7 +72,7 @@ export function PieChartCard({ title, data }: PieChartProps) {
     <div className="bg-white rounded-xl shadow-sm border p-6">
       <h3 className="font-semibold text-slate-800 mb-4">{title}</h3>
       <div className="relative">
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={240}>
           <RechartsPie>
             <Pie
               data={chartData}
@@ -98,10 +98,6 @@ export function PieChartCard({ title, data }: PieChartProps) {
                 fontSize: "13px",
               }}
             />
-            <Legend
-              verticalAlign="bottom"
-              wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }}
-            />
           </RechartsPie>
         </ResponsiveContainer>
         {/* Total en el centro del donut */}
@@ -111,6 +107,20 @@ export function PieChartCard({ title, data }: PieChartProps) {
             <p className="text-xs text-slate-500">servicios</p>
           </div>
         </div>
+      </div>
+      {/* Divisor entre gráfico y leyenda */}
+      <hr className="-mx-6 mt-4 border-t border-slate-200" />
+      {/* Leyenda fuera del SVG */}
+      <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 pt-3 text-xs">
+        {chartData.map((entry) => (
+          <div key={entry.name} className="flex items-center gap-1.5">
+            <span
+              className="inline-block h-2.5 w-2.5 rounded-sm"
+              style={{ backgroundColor: entry.fill }}
+            />
+            <span className="text-slate-600">{entry.name}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

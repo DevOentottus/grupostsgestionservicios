@@ -321,7 +321,7 @@ export function MiAreaPage() {
                     </div>
                     <div className="flex justify-center gap-4 text-[10px] text-slate-400 mt-1">
                       <span>{data.satisfaccion.promotores} prom.</span>
-                      <span>{data.satisfaccion.pasivos} pas.</span>
+                      <span>{data.satisfaccion.pasivos} neu.</span>
                       <span>{data.satisfaccion.detractores} det.</span>
                     </div>
                   </>
