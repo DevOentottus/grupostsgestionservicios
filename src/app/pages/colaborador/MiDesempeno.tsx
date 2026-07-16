@@ -10,7 +10,6 @@ import {
   Minus,
   CheckCircle2,
   Star,
-  Target,
   ClipboardCheck,
   Timer,
   BarChart3,
@@ -60,16 +59,12 @@ function GoalBar({ actual, meta, showMeta = true }: { actual: number; meta: numb
   const pct = Math.min(Math.round((actual / meta) * 100), 100);
   const cumplida = actual >= meta;
   return (
-    <div className="mt-3">
+    <div>
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-          <Target className="w-3 h-3 text-slate-500" />
-          Progreso vs meta
+        <span className={cn("text-xs font-bold", cumplida ? "text-emerald-600" : "text-amber-600")}>
+          {pct}%
         </span>
         <div className="flex items-center gap-2">
-          <span className={cn("text-xs font-bold", cumplida ? "text-emerald-600" : "text-amber-600")}>
-            {pct}%
-          </span>
           {showMeta && (
             <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
               Meta: {meta}
@@ -93,6 +88,22 @@ function GoalBar({ actual, meta, showMeta = true }: { actual: number; meta: numb
 }
 
 /** Estrellas de calificacion */
+/** Divisor con etiqueta para secciones dentro de cards */
+function DividerLabel({ label }: { label: string }) {
+  return (
+    <div className="relative my-3">
+      <div className="absolute inset-0 flex items-center">
+        <div className="w-full border-t border-slate-200" />
+      </div>
+      <div className="relative flex justify-center">
+        <span className="bg-white px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          {label}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "xs" }) {
   const full = Math.floor(rating);
   const half = rating - full >= 0.5;
@@ -137,18 +148,18 @@ function KpiPrimarioCard({
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <div className="p-5">
-        <div className="flex items-start justify-between mb-3">
+        <div className="mb-4">
           <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", iconBg)}>
             <Icon className={cn("w-5 h-5", iconColor)} />
           </div>
-          <div className="text-xs font-medium text-slate-500 uppercase tracking-wider text-right leading-tight">
-            {titulo}
-          </div>
         </div>
         <div className="flex items-baseline gap-1.5">
-          <span className="text-3xl font-bold text-slate-900 tracking-tight">{valor}</span>
+          <span className="text-4xl font-bold text-slate-900 tracking-tight">{valor}</span>
           {unidad && <span className="text-sm font-medium text-slate-500">{unidad}</span>}
         </div>
+        <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-slate-600">
+          {titulo}
+        </p>
         {children}
       </div>
     </div>
@@ -466,19 +477,28 @@ export function MiDesempenoPage() {
                 valor={periodComparison ? periodComparison.actual.tareas_completadas : (misDatos.tareas_completadas ?? 0)}
               >
                 {periodComparison && (
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-                    <span className="text-xs text-slate-500">Período anterior: {periodComparison.anterior.tareas_completadas}</span>
-                    <TrendBadge variacion={periodComparison.variacion.tareas} size="xs" />
-                  </div>
+                  <>
+                    <DividerLabel label="Período anterior" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-600">{periodComparison.anterior.tareas_completadas}</span>
+                      <TrendBadge variacion={periodComparison.variacion.tareas} size="xs" />
+                    </div>
+                  </>
                 )}
                 {areaBenchmark && (
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <span className="text-xs font-semibold text-slate-500">{areaBenchmark.avgTareas.toFixed(1)}</span>
-                    <span className="text-xs text-slate-500">Promedio área:</span>
-                  </div>
+                  <>
+                    <DividerLabel label="Promedio área" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-600">{areaBenchmark.avgTareas.toFixed(1)}</span>
+                      <span className="text-xs text-slate-500">{areaBenchmark.totalColaboradores} colaboradores</span>
+                    </div>
+                  </>
                 )}
                 {periodComparison && (
-                  <GoalBar actual={periodComparison.actual.tareas_completadas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} />
+                  <>
+                    <DividerLabel label="Progreso vs meta" />
+                    <GoalBar actual={periodComparison.actual.tareas_completadas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} showMeta={false} />
+                  </>
                 )}
               </KpiPrimarioCard>
 
@@ -491,19 +511,28 @@ export function MiDesempenoPage() {
                 valor={periodComparison ? periodComparison.actual.servicios_completados : (misDatos.servicios_completados ?? 0)}
               >
                 {periodComparison && (
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-                    <span className="text-xs text-slate-500">Período anterior: {periodComparison.anterior.servicios_completados}</span>
-                    <TrendBadge variacion={periodComparison.variacion.servicios} size="xs" />
-                  </div>
+                  <>
+                    <DividerLabel label="Período anterior" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-600">{periodComparison.anterior.servicios_completados}</span>
+                      <TrendBadge variacion={periodComparison.variacion.servicios} size="xs" />
+                    </div>
+                  </>
                 )}
                 {areaBenchmark && (
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <span className="text-xs font-semibold text-slate-500">{areaBenchmark.avgServicios.toFixed(1)}</span>
-                    <span className="text-xs text-slate-500">Promedio área: ({areaBenchmark.totalColaboradores} colab.)</span>
-                  </div>
+                  <>
+                    <DividerLabel label="Promedio área" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-600">{areaBenchmark.avgServicios.toFixed(1)}</span>
+                      <span className="text-xs text-slate-500">{areaBenchmark.totalColaboradores} colaboradores</span>
+                    </div>
+                  </>
                 )}
                 {periodComparison && (
-                  <GoalBar actual={periodComparison.actual.servicios_completados} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} />
+                  <>
+                    <DividerLabel label="Progreso vs meta" />
+                    <GoalBar actual={periodComparison.actual.servicios_completados} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} showMeta={false} />
+                  </>
                 )}
               </KpiPrimarioCard>
 
@@ -545,16 +574,22 @@ export function MiDesempenoPage() {
                   );
                 })()}
                 {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-                    <span className="text-xs text-slate-500">Período anterior: {periodComparison.anterior.calificacion_promedio.toFixed(1)}</span>
-                    <TrendBadge variacion={periodComparison.variacion.calificacion} size="xs" />
-                  </div>
+                  <>
+                    <DividerLabel label="Período anterior" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-600">{periodComparison.anterior.calificacion_promedio.toFixed(1)} / 5</span>
+                      <TrendBadge variacion={periodComparison.variacion.calificacion} size="xs" />
+                    </div>
+                  </>
                 )}
                 {areaBenchmark?.avgCalificacion != null && (
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <span className="text-xs font-semibold text-slate-500">{areaBenchmark.avgCalificacion.toFixed(1)}</span>
-                    <span className="text-xs text-slate-500">Promedio área:</span>
-                  </div>
+                  <>
+                    <DividerLabel label="Promedio área" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-600">{areaBenchmark.avgCalificacion.toFixed(1)} / 5</span>
+                      <span className="text-xs text-slate-500">{areaBenchmark.totalColaboradores} colaboradores</span>
+                    </div>
+                  </>
                 )}
               </KpiPrimarioCard>
 
@@ -612,10 +647,13 @@ export function MiDesempenoPage() {
                   return <p className="text-xs text-slate-500 mt-1">Sin datos suficientes</p>;
                 })()}
                 {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-                    <span className="text-xs text-slate-500">Período anterior: {periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</span>
-                    <TrendBadge variacion={periodComparison.variacion.nps} size="xs" />
-                  </div>
+                  <>
+                    <DividerLabel label="Período anterior" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-600">{periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</span>
+                      <TrendBadge variacion={periodComparison.variacion.nps} size="xs" />
+                    </div>
+                  </>
                 )}
               </KpiPrimarioCard>
             </div>
