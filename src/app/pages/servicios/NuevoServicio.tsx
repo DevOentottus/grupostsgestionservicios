@@ -398,9 +398,9 @@ export function NuevoServicioPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5 px-4 pb-24 pt-4">
+    <div className="mx-auto max-w-full space-y-6 px-6 pb-28 pt-6">
       {/* ═══ HEADER CARD ═══ */}
-      <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex items-center gap-2">
             <button
@@ -425,7 +425,7 @@ export function NuevoServicioPage() {
       </div>
 
       {/* ═══ OPCIONES ═══ */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <CheckboxToggle
           checked={guiarEntrada}
           onChange={toggleGuiarEntrada}
@@ -436,7 +436,7 @@ export function NuevoServicioPage() {
 
       {/* ═══ INDICADOR DE PASOS ═══ */}
       {!guiarEntrada && (
-      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-5 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
       <div className="flex items-center justify-center gap-0">
         {STEPS.map((step, idx) => {
           const StepIcon = step.icon;
@@ -493,7 +493,7 @@ export function NuevoServicioPage() {
         )}
         {/* ─── PASO 1: CLIENTE (solo si guía INACTIVA) ─── */}
         {paso === 1 && !guiarEntrada && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className={sectionTitleClass}>
               <User className="w-4 h-4 text-blue-600" />
               Cliente
@@ -542,7 +542,7 @@ export function NuevoServicioPage() {
 
         {/* ─── PASO 2: EQUIPO Y ACCESORIOS (solo si guía INACTIVA) ─── */}
         {paso === 2 && !guiarEntrada && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className={sectionTitleClass}>
               <Monitor className="w-4 h-4 text-blue-600" />
               Equipo y accesorios
@@ -608,11 +608,11 @@ export function NuevoServicioPage() {
 
         {/* ─── PASO 3 (o único si guía activa): SERVICIO ─── */}
         {paso === 3 || (paso === 1 && guiarEntrada) ? (
-          <div className="grid gap-5 lg:grid-cols-[1.35fr_0.95fr]">
+          <div className="grid gap-6 lg:grid-cols-[1.35fr_0.95fr]">
             {/* ═══ LEFT COLUMN ═══ */}
-            <div className="space-y-5">
+            <div className="space-y-6">
               {/* Card: datos generales */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 className={sectionTitleClass}>
                   <Wrench className="w-4 h-4 text-blue-600" />
                   Servicio
@@ -685,7 +685,7 @@ export function NuevoServicioPage() {
               </div>
 
               {/* Card: reporte + diagnóstico */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>
@@ -748,7 +748,7 @@ export function NuevoServicioPage() {
               </div>
 
               {/* Card: descripción */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <InputField
                   label="Descripción del Servicio"
                   value={form.descripcion}
@@ -760,10 +760,10 @@ export function NuevoServicioPage() {
             </div>
 
             {/* ═══ RIGHT COLUMN ═══ */}
-            <div className="space-y-5">
+            <div className="space-y-6">
               {/* Card: fallas comunes */}
               {fallas && fallas.length > 0 && (
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                   <p className={labelClass}>Incluir fallas comunes</p>
                   <div className="mt-3 space-y-3">
                     <select
@@ -799,7 +799,7 @@ export function NuevoServicioPage() {
               )}
 
               {/* Card: plantilla */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <SelectField
                   label="Plantilla de Tareas"
                   value={form.id_plantilla_inicial}
@@ -814,7 +814,7 @@ export function NuevoServicioPage() {
 
               {/* Card: tareas */}
               {(guiarEntrada || form.id_plantilla_inicial || tareas.length > 0) && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
                   <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide flex items-center justify-between">
                     <span>Tareas del servicio</span>
                     <span className="text-slate-400 font-normal text-[10px]">{tareas.length} tareas</span>
