@@ -20,6 +20,33 @@ const DEFAULT_COLORS = [
   "#ec4899",
 ];
 
+/** Renderiza el valor numérico en el centroide de cada porción del donut. */
+function renderInlineLabel(props: any) {
+  const { cx, cy, midAngle, innerRadius, outerRadius, percent, value } = props;
+  // Ocultar etiquetas en porciones muy pequeñas (< 4%)
+  if (percent < 0.04) return null;
+
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.55;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="#fff"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontSize={12}
+      fontWeight={700}
+      style={{ textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}
+    >
+      {value}
+    </text>
+  );
+}
+
 export function PieChartCard({ title, data }: PieChartProps) {
   const hasData = data.some((d) => d.value > 0);
 
@@ -39,39 +66,52 @@ export function PieChartCard({ title, data }: PieChartProps) {
     fill: d.color || DEFAULT_COLORS[i % DEFAULT_COLORS.length],
   }));
 
+  const total = chartData.reduce((acc, d) => acc + d.value, 0);
+
   return (
     <div className="bg-white rounded-xl shadow-sm border p-6">
       <h3 className="font-semibold text-slate-800 mb-4">{title}</h3>
-      <ResponsiveContainer width="100%" height={280}>
-        <RechartsPie>
-          <Pie
-            data={chartData}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            outerRadius={90}
-            innerRadius={50}
-            paddingAngle={3}
-          >
-            {chartData.map((_entry, index) => (
-              <Cell key={`cell-${index}`} fill={chartData[index].fill} />
-            ))}
-          </Pie>
-          <Tooltip
-            formatter={(value, name) => [`${value}`, `${name}`]}
-            contentStyle={{
-              borderRadius: "8px",
-              border: "1px solid #e2e8f0",
-              fontSize: "13px",
-            }}
-          />
-          <Legend
-            verticalAlign="bottom"
-            wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }}
-          />
-        </RechartsPie>
-      </ResponsiveContainer>
+      <div className="relative">
+        <ResponsiveContainer width="100%" height={280}>
+          <RechartsPie>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={90}
+              innerRadius={50}
+              paddingAngle={3}
+              label={renderInlineLabel}
+              labelLine={false}
+            >
+              {chartData.map((_entry, index) => (
+                <Cell key={`cell-${index}`} fill={chartData[index].fill} />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(value, name) => [`${value}`, `${name}`]}
+              contentStyle={{
+                borderRadius: "8px",
+                border: "1px solid #e2e8f0",
+                fontSize: "13px",
+              }}
+            />
+            <Legend
+              verticalAlign="bottom"
+              wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }}
+            />
+          </RechartsPie>
+        </ResponsiveContainer>
+        {/* Total en el centro del donut */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-slate-800">{total}</p>
+            <p className="text-xs text-slate-500">servicios</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

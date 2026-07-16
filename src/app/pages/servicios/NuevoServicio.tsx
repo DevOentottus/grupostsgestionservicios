@@ -399,25 +399,25 @@ export function NuevoServicioPage() {
 
   return (
     <div className="mx-auto max-w-full space-y-6 px-6 pb-28 pt-6">
-      {/* ═══ HEADER CARD ═══ */}
-      <div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
+      {/* ═══ HEADER GRADIENTE ═══ */}
+      <div className="rounded-2xl bg-gradient-to-r from-blue-900 to-blue-700 px-6 py-5 text-white shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex items-center gap-2">
             <button
               onClick={() => navigate("/servicios")}
-              className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-50"
+              className="rounded-xl border border-white/20 p-2 text-white transition hover:bg-white/10"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div>
-              <h1 className="text-lg font-bold text-slate-900">Nuevo servicio técnico</h1>
-              <p className="text-sm text-slate-500">
+              <h1 className="text-lg font-bold text-white">Nuevo servicio técnico</h1>
+              <p className="text-sm text-blue-200">
                 Registrá el ingreso, diagnóstico y tareas iniciales del servicio.
               </p>
             </div>
           </div>
           <div className="sm:ml-auto">
-            <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+            <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-blue-100">
               {guiarEntrada ? "Guía rápida" : `Paso ${paso} de ${totalPasos}`}
             </span>
           </div>
