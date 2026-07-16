@@ -77,6 +77,7 @@ function PlantillaCreateModal({
   const [saving, setSaving] = useState(false);
 
   const esEncargadoColaborador = user?.rol === "encargado" || user?.rol === "colaborador";
+  const puedeGestionarObligatoria = user?.rol === "encargado" || user?.rol === "admin" || user?.rol === "sistema";
 
   useEffect(() => {
     if (!open) return;
@@ -311,12 +312,21 @@ function PlantillaCreateModal({
                   <button
                     type="button"
                     onClick={() => updateTarea(tarea.key, { obligatoria: !tarea.obligatoria })}
+                    disabled={!puedeGestionarObligatoria}
                     className={`p-1.5 rounded shrink-0 transition-colors ${
-                      tarea.obligatoria
-                        ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                        : "bg-slate-50 text-slate-300 hover:text-slate-400"
+                      !puedeGestionarObligatoria
+                        ? "bg-slate-50 text-slate-200 cursor-not-allowed"
+                        : tarea.obligatoria
+                          ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                          : "bg-slate-50 text-slate-300 hover:text-slate-400"
                     }`}
-                    title={tarea.obligatoria ? "Obligatoria (técnico no puede eliminarla)" : "Voluntaria"}
+                    title={
+                      !puedeGestionarObligatoria
+                        ? "Solo el encargado puede marcar tareas como obligatorias"
+                        : tarea.obligatoria
+                          ? "Obligatoria (técnico no puede eliminarla)"
+                          : "Voluntaria"
+                    }
                   >
                     <svg className="w-3.5 h-3.5" fill={tarea.obligatoria ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -380,6 +390,7 @@ export function PlantillasPage() {
 
   const esAdminSistema = user?.rol === "admin" || user?.rol === "sistema";
   const esEncargadoColaborador = user?.rol === "encargado" || user?.rol === "colaborador";
+  const puedeGestionarObligatoria = user?.rol === "encargado" || user?.rol === "admin" || user?.rol === "sistema";
 
   // Create modal
   const [showCreate, setShowCreate] = useState(false);
@@ -681,12 +692,21 @@ export function PlantillasPage() {
                           <button
                             type="button"
                             onClick={() => toggleEditTareaObligatoria(tarea.key)}
+                            disabled={!puedeGestionarObligatoria}
                             className={`p-1.5 rounded shrink-0 transition-colors ${
-                              tarea.obligatoria
-                                ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                                : "bg-slate-50 text-slate-300 hover:text-slate-400"
+                              !puedeGestionarObligatoria
+                                ? "bg-slate-50 text-slate-200 cursor-not-allowed"
+                                : tarea.obligatoria
+                                  ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                                  : "bg-slate-50 text-slate-300 hover:text-slate-400"
                             }`}
-                            title={tarea.obligatoria ? "Obligatoria (técnico no puede eliminarla)" : "Voluntaria"}
+                            title={
+                              !puedeGestionarObligatoria
+                                ? "Solo el encargado puede marcar tareas como obligatorias"
+                                : tarea.obligatoria
+                                  ? "Obligatoria (técnico no puede eliminarla)"
+                                  : "Voluntaria"
+                            }
                           >
                             <svg className="w-3.5 h-3.5" fill={tarea.obligatoria ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />

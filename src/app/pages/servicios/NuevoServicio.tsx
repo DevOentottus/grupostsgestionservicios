@@ -718,20 +718,18 @@ export function NuevoServicioPage() {
             {/* Fallas comunes — tipo + checkboxes */}
             {fallas && fallas.length > 0 && (
               <div className="border-t border-slate-100 pt-4 space-y-3">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Fallas comunes</p>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Incluir fallas comunes</p>
                 <select
                   value={tipoFallaFiltro}
                   onChange={(e) => setTipoFallaFiltro(e.target.value)}
                   className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 bg-white transition"
                 >
-                  <option value="">Todas las categorías</option>
+                  <option value="">Seleccioná un tipo de falla</option>
                   {tiposFalla.map((t) => (
                     <option key={t} value={t}>{t}</option>
                   ))}
                 </select>
-                {fallasFiltradas.length === 0 ? (
-                  <p className="text-sm text-slate-400">Seleccioná una categoría para ver fallas</p>
-                ) : (
+                {tipoFallaFiltro ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
                     {fallasFiltradas.map((f) => (
                       <label
