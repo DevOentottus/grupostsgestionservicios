@@ -191,7 +191,7 @@ function KpiPrimarioCard({
               <div className="min-w-0">
                 <p className="leading-tight flex items-center gap-1">
                   <span className="text-4xl font-bold text-slate-900 tracking-tight shrink-0">{col.valor}</span>
-                  <span className="text-[10px] text-slate-600 whitespace-pre-line leading-tight">{col.label}</span>
+                  <span className="text-[10px] text-slate-600 whitespace-pre-line leading-normal">{col.label}</span>
                 </p>
                 {col.variacion && (
                   <p className={cn(
