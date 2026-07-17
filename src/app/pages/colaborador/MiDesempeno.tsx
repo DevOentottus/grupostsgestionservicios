@@ -69,7 +69,7 @@ function GoalBarGradient({ actual, meta, fmt }: { actual: number; meta: number; 
       <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
         {/* Gradiente de fondo (full width) */}
         <div
-          className="absolute inset-0 opacity-70"
+          className="absolute inset-0 opacity-60"
           style={{
             background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)",
           }}
@@ -208,16 +208,15 @@ function KpiPrimarioCard({
                     {col.variacion.label ?? ""}
                   </p>
                 )}
+                {col.extra && (
+                  <p className="text-[12px] text-slate-600 mt-0.5">{col.extra}</p>
+                )}
               </div>
             </div>
           ))}
         </div>
 
         {children}
-
-        {columnas[0]?.extra && (
-          <p className="text-[12px] text-slate-600 mt-0.5">{columnas[0].extra}</p>
-        )}
       </div>
     </div>
   );
