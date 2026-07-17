@@ -181,6 +181,8 @@ function KpiPrimarioCard({
   titulo,
   columnas,
   children,
+  infoFormula,
+  infoDescripcion,
 }: {
   icon: React.ElementType;
   iconBg: string;
@@ -188,6 +190,8 @@ function KpiPrimarioCard({
   titulo: string;
   columnas: { valor: React.ReactNode; label: string; variacion?: { direction: "up" | "down" | "flat"; label?: string }; extra?: React.ReactNode }[];
   children?: React.ReactNode;
+  infoFormula?: string;
+  infoDescripcion?: string;
 }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
@@ -200,6 +204,7 @@ function KpiPrimarioCard({
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 leading-tight">
             {titulo}
           </p>
+          {infoFormula && <InfoPopover formula={infoFormula} descripcion={infoDescripcion ?? ""} />}
         </div>
 
         {/* Columnas de valores */}
@@ -563,6 +568,8 @@ export function MiDesempenoPage() {
                     iconBg="bg-blue-100"
                     iconColor="text-blue-600"
                     titulo="Tareas completadas"
+                    infoFormula="Tareas finalizadas en servicios completados del período"
+                    infoDescripcion="Cantidad de tareas marcadas como completadas en servicios finalizados"
                     columnas={[
                       { valor: curTareas, label: "Tus tareas\neste período" },
                       ...(periodComparison ? [{
@@ -594,6 +601,8 @@ export function MiDesempenoPage() {
                     iconBg="bg-indigo-100"
                     iconColor="text-indigo-600"
                     titulo="Servicios completados"
+                    infoFormula="Servicios finalizados en el período"
+                    infoDescripcion="Total de servicios cuyo estado es completado"
                     columnas={[
                       { valor: curServicios, label: "Tus servicios\neste período" },
                       ...(periodComparison ? [{
@@ -633,6 +642,8 @@ export function MiDesempenoPage() {
                         iconBg="bg-amber-100"
                         iconColor="text-amber-600"
                         titulo="Calificación"
+                        infoFormula="Promedio de puntuación 1–5 de servicios evaluados"
+                        infoDescripcion="Calificación promedio recibida de los clientes en los servicios completados"
                         columnas={[
                           { valor: califVal != null ? califVal.toFixed(1) : "—", label: "Tu calificación\neste período", extra: califVal != null ? `${califCount} / ${curServicios} evaluaciones` : undefined },
                           ...(periodComparison && periodComparison.anterior.calificacion_promedio > 0 ? [{
@@ -650,11 +661,6 @@ export function MiDesempenoPage() {
                           }] : []),
                         ]}
                       >
-                        {califVal != null && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <StarRating rating={califVal} />
-                          </div>
-                        )}
                         {califVal != null && (
                           <>
                             <DividerLabel label="Progreso vs meta" />
