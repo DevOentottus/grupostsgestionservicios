@@ -419,12 +419,12 @@ export function MiAreaPage() {
             {/* Botones de estado */}
             <div className="flex gap-2 min-w-max">
               {[
-                { key: "todos", label: "Todos", dot: "bg-blue-600" },
-                { key: "pendiente", label: "Pendiente", dot: "bg-yellow-500" },
-                { key: "en_progreso", label: "En Progreso", dot: "bg-blue-500" },
-                { key: "completado", label: "Completado", dot: "bg-green-500" },
-                { key: "bloqueado", label: "Bloqueado", dot: "bg-red-500" },
-                { key: "cancelado", label: "Cancelado", dot: "bg-gray-400" },
+                { key: "todos",       label: "Todos",       dot: "bg-blue-600",    activeBg: "bg-blue-100",   activeText: "text-blue-800" },
+                { key: "pendiente",   label: "Pendiente",   dot: "bg-yellow-500",  activeBg: "bg-yellow-100", activeText: "text-yellow-800" },
+                { key: "en_progreso", label: "En Progreso", dot: "bg-blue-500",    activeBg: "bg-blue-100",   activeText: "text-blue-800" },
+                { key: "completado",  label: "Completado",  dot: "bg-green-500",   activeBg: "bg-green-100",  activeText: "text-green-800" },
+                { key: "bloqueado",   label: "Bloqueado",   dot: "bg-red-500",     activeBg: "bg-red-100",    activeText: "text-red-800" },
+                { key: "cancelado",   label: "Cancelado",   dot: "bg-red-500",     activeBg: "bg-red-100",    activeText: "text-red-800" },
               ].map((btn) => {
                 const count = btn.key === "todos"
                   ? servicios.length
@@ -437,7 +437,7 @@ export function MiAreaPage() {
                     className={cn(
                       "px-3 md:px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 whitespace-nowrap",
                       activo
-                        ? "bg-yellow-400 text-blue-900"
+                        ? `${btn.activeBg} ${btn.activeText}`
                         : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
                     )}
                   >

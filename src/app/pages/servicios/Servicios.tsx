@@ -20,7 +20,7 @@ const statusConfig: Record<string, { bg: string; text: string; dot: string; bar:
   pendiente:   { bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500", bar: "bg-yellow-400" },
   en_progreso: { bg: "bg-blue-100",   text: "text-blue-800",   dot: "bg-blue-500",   bar: "bg-blue-600" },
   completado:  { bg: "bg-green-100",  text: "text-green-800",  dot: "bg-green-500",  bar: "bg-green-500" },
-  cancelado:   { bg: "bg-gray-100",   text: "text-gray-600",   dot: "bg-gray-400",   bar: "bg-gray-400" },
+  cancelado:   { bg: "bg-red-100",    text: "text-red-800",    dot: "bg-red-500",    bar: "bg-red-500" },
   bloqueado:   { bg: "bg-red-100",    text: "text-red-800",    dot: "bg-red-500",    bar: "bg-red-500" },
 };
 
@@ -32,7 +32,7 @@ const statusDisplay: Record<string, string> = {
   bloqueado: "Bloqueado",
 };
 
-const statusFilters = ["todos", "pendiente", "en_progreso", "completado", "bloqueado"];
+const statusFilters = ["todos", "pendiente", "en_progreso", "completado", "cancelado", "bloqueado"];
 
 export function ServiciosPage() {
   const navigate = useNavigate();
@@ -202,34 +202,45 @@ export function ServiciosPage() {
       {/* Filtros, búsqueda, archivados — todo en una línea scrollable */}
       <div className="overflow-x-auto -mx-4 md:mx-0">
         <div className="flex gap-2 px-4 md:px-0 min-w-max md:min-w-0 items-center">
-          {statusFilters.map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              className={cn(
-                "px-3 md:px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 whitespace-nowrap",
-                filterStatus === status
-                  ? "bg-yellow-400 text-blue-900"
-                  : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50",
-              )}
-            >
+          {statusFilters.map((status) => {
+            const activeStyles: Record<string, string> = {
+              todos: "bg-blue-100 text-blue-800",
+              pendiente: "bg-yellow-100 text-yellow-800",
+              en_progreso: "bg-blue-100 text-blue-800",
+              completado: "bg-green-100 text-green-800",
+              cancelado: "bg-red-100 text-red-800",
+              bloqueado: "bg-red-100 text-red-800",
+            };
+            return (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={cn(
+                  "px-3 md:px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 whitespace-nowrap",
+                  filterStatus === status
+                    ? activeStyles[status]
+                    : "bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50",
+                )}
+              >
+                <span className={cn(
+                  "w-2 h-2 rounded-full",
+                  status === "todos" && "bg-blue-600",
+                  status === "pendiente" && "bg-yellow-500",
+                  status === "en_progreso" && "bg-blue-500",
+                  status === "completado" && "bg-green-500",
+                  status === "cancelado" && "bg-red-500",
+                  status === "bloqueado" && "bg-red-500",
+                )} />
+                <span>{status === "todos" ? "Todos" : statusDisplay[status] || status}</span>
               <span className={cn(
-                "w-2 h-2 rounded-full",
-                status === "todos" && "bg-blue-600",
-                status === "pendiente" && "bg-yellow-500",
-                status === "en_progreso" && "bg-blue-500",
-                status === "completado" && "bg-green-500",
-                status === "bloqueado" && "bg-red-500",
-              )} />
-              <span>{status === "todos" ? "Todos" : statusDisplay[status] || status}</span>
-            <span className={cn(
-              "text-xs px-1.5 py-0.5 rounded-full",
-              filterStatus === status ? "bg-blue-900/20 text-blue-900" : "bg-gray-100 text-gray-500",
-            )}>
-              {statusCount(status)}
-            </span>
-          </button>
-        ))}
+                "text-xs px-1.5 py-0.5 rounded-full",
+                filterStatus === status ? "bg-blue-900/20 text-blue-900" : "bg-gray-100 text-gray-500",
+              )}>
+                {statusCount(status)}
+              </span>
+            </button>
+          );
+          })}
           {esAdminSistema && (
             <select
               value={filterArea}

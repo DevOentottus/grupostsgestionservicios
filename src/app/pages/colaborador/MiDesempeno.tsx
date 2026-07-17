@@ -53,6 +53,44 @@ function TrendBadge({ variacion, size = "sm" }: { variacion: number; size?: "sm"
   );
 }
 
+/** Barra de progreso con degradado rojo→amarillo→verde */
+function GoalBarGradient({ actual, meta, fmt }: { actual: number; meta: number; fmt?: (v: number) => string }) {
+  if (meta <= 0) return null;
+  const pct = Math.min(Math.round((actual / meta) * 100), 100);
+  const clamped = Math.min(Math.max(pct, 0), 100);
+  const f = fmt ?? ((v: number) => Number.isInteger(v) ? String(v) : v.toFixed(1));
+  const labelMid = f(meta / 2);
+  const labelMax = f(meta);
+  return (
+    <div className="mt-3">
+      {/* Marcas 0%, 50%, 100% con valor numérico */}
+      <div className="flex justify-between text-[9px] text-slate-400 mb-1 -mt-0.5">
+        <span>0 | 0%</span>
+        <span>{labelMid} | 50%</span>
+        <span>{labelMax} | 100%</span>
+      </div>
+      {/* Track */}
+      <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
+        {/* Relleno con degradado, recortado al % actual */}
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{
+            width: `${clamped}%`,
+            background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)",
+          }}
+        />
+        {/* Valor | % flotante dentro de la barra */}
+        <span
+          className="absolute top-1/2 -translate-y-1/2 text-[9px] font-bold text-white drop-shadow-sm pointer-events-none"
+          style={{ left: `${Math.max(clamped - 16, 2)}%` }}
+        >
+          {f(actual)} | {clamped}%
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /** Barra de progreso contra meta */
 function GoalBar({ actual, meta, showMeta = true }: { actual: number; meta: number; showMeta?: boolean }) {
   if (meta <= 0) return null;
@@ -134,8 +172,9 @@ function KpiPrimarioCard({
   iconColor,
   titulo,
   valor,
-  unidad,
-  valorExtra,
+  valorLabel,
+  valorArea,
+  valorAreaLabel,
   children,
 }: {
   icon: React.ElementType;
@@ -143,26 +182,42 @@ function KpiPrimarioCard({
   iconColor: string;
   titulo: string;
   valor: React.ReactNode;
-  unidad?: string;
-  valorExtra?: React.ReactNode;
+  valorLabel?: string;
+  valorArea?: React.ReactNode;
+  valorAreaLabel?: string;
   children?: React.ReactNode;
 }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <div className="p-5">
-        <div className="mb-4">
-          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", iconBg)}>
+        {/* Icono + título */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", iconBg)}>
             <Icon className={cn("w-5 h-5", iconColor)} />
           </div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 leading-tight">
+            {titulo}
+          </p>
         </div>
-        <div className="flex items-baseline gap-1.5 flex-wrap">
-          <span className="text-4xl font-bold text-slate-900 tracking-tight">{valor}</span>
-          {unidad && <span className="text-sm font-medium text-slate-500">{unidad}</span>}
-          {valorExtra && <span className="text-xs text-slate-500 ml-1">{valorExtra}</span>}
+
+        {/* Valores duales */}
+        <div className="flex items-start gap-6">
+          <div>
+            <span className="text-4xl font-bold text-slate-900 tracking-tight">{valor}</span>
+            {valorLabel && (
+              <p className="text-[10px] text-slate-500 mt-0.5">{valorLabel}</p>
+            )}
+          </div>
+          {valorArea != null && (
+            <div>
+              <span className="text-4xl font-bold text-slate-900 tracking-tight">{valorArea}</span>
+              {valorAreaLabel && (
+                <p className="text-[10px] text-slate-500 mt-0.5">{valorAreaLabel}</p>
+              )}
+            </div>
+          )}
         </div>
-        <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-slate-600">
-          {titulo}
-        </p>
+
         {children}
       </div>
     </div>
@@ -478,29 +533,26 @@ export function MiDesempenoPage() {
                 iconColor="text-blue-600"
                 titulo="Tareas completadas"
                 valor={periodComparison ? periodComparison.actual.tareas_completadas : (misDatos.tareas_completadas ?? 0)}
+                valorLabel="Tus tareas"
+                valorArea={areaBenchmark?.avgTareas?.toFixed(1)}
+                valorAreaLabel="Promedio área"
               >
                 {periodComparison && (
                   <>
-                    <DividerLabel label="Período anterior" />
+                    <DividerLabel label="Comparación período anterior" />
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-600">{periodComparison.anterior.tareas_completadas}</span>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-600">{periodComparison.anterior.tareas_completadas}</p>
+                        <p className="text-[10px] text-slate-500">Período anterior</p>
+                      </div>
                       <TrendBadge variacion={periodComparison.variacion.tareas} size="xs" />
-                    </div>
-                  </>
-                )}
-                {areaBenchmark && (
-                  <>
-                    <DividerLabel label="Promedio área" />
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-600">{areaBenchmark.avgTareas.toFixed(1)}</span>
-                      <span className="text-xs text-slate-500">{areaBenchmark.totalColaboradores} colaboradores</span>
                     </div>
                   </>
                 )}
                 {periodComparison && (
                   <>
                     <DividerLabel label="Progreso vs meta" />
-                    <GoalBar actual={periodComparison.actual.tareas_completadas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} showMeta={false} />
+                    <GoalBarGradient actual={periodComparison.actual.tareas_completadas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} />
                   </>
                 )}
               </KpiPrimarioCard>
@@ -512,29 +564,26 @@ export function MiDesempenoPage() {
                 iconColor="text-indigo-600"
                 titulo="Servicios completados"
                 valor={periodComparison ? periodComparison.actual.servicios_completados : (misDatos.servicios_completados ?? 0)}
+                valorLabel="Tus servicios"
+                valorArea={areaBenchmark?.avgServicios?.toFixed(1)}
+                valorAreaLabel="Promedio área"
               >
                 {periodComparison && (
                   <>
-                    <DividerLabel label="Período anterior" />
+                    <DividerLabel label="Comparación período anterior" />
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-600">{periodComparison.anterior.servicios_completados}</span>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-600">{periodComparison.anterior.servicios_completados}</p>
+                        <p className="text-[10px] text-slate-500">Período anterior</p>
+                      </div>
                       <TrendBadge variacion={periodComparison.variacion.servicios} size="xs" />
-                    </div>
-                  </>
-                )}
-                {areaBenchmark && (
-                  <>
-                    <DividerLabel label="Promedio área" />
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-600">{areaBenchmark.avgServicios.toFixed(1)}</span>
-                      <span className="text-xs text-slate-500">{areaBenchmark.totalColaboradores} colaboradores</span>
                     </div>
                   </>
                 )}
                 {periodComparison && (
                   <>
                     <DividerLabel label="Progreso vs meta" />
-                    <GoalBar actual={periodComparison.actual.servicios_completados} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} showMeta={false} />
+                    <GoalBarGradient actual={periodComparison.actual.servicios_completados} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} />
                   </>
                 )}
               </KpiPrimarioCard>
@@ -554,38 +603,32 @@ export function MiDesempenoPage() {
                     iconColor="text-amber-600"
                     titulo="Calificación"
                     valor={califVal != null ? califVal.toFixed(1) : "—"}
-                    unidad={califVal != null ? "/ 5" : ""}
-                    valorExtra={califVal != null ? (
-                      <>
-                        <StarRating rating={califVal} />
-                        <span className="text-slate-500 ml-1">{califCount} calificación{califCount !== 1 ? "es" : ""}</span>
-                      </>
-                    ) : (
-                      <span className="text-slate-500">Sin evaluaciones</span>
-                    )}
+                    valorLabel="Tu calificación"
+                    valorArea={areaBenchmark?.avgCalificacion?.toFixed(1)}
+                    valorAreaLabel="Promedio área"
                   >
+                    {califVal != null && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <StarRating rating={califVal} />
+                        <span className="text-xs text-slate-500">{califCount} calificación{califCount !== 1 ? "es" : ""}</span>
+                      </div>
+                    )}
                     {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
                       <>
-                        <DividerLabel label="Período anterior" />
+                        <DividerLabel label="Comparación período anterior" />
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-slate-600">{periodComparison.anterior.calificacion_promedio.toFixed(1)} / 5</span>
+                          <div>
+                            <p className="text-xs font-semibold text-slate-600">{periodComparison.anterior.calificacion_promedio.toFixed(1)} / 5</p>
+                            <p className="text-[10px] text-slate-500">Período anterior</p>
+                          </div>
                           <TrendBadge variacion={periodComparison.variacion.calificacion} size="xs" />
-                        </div>
-                      </>
-                    )}
-                    {areaBenchmark?.avgCalificacion != null && (
-                      <>
-                        <DividerLabel label="Promedio área" />
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-slate-600">{areaBenchmark.avgCalificacion.toFixed(1)} / 5</span>
-                          <span className="text-xs text-slate-500">{areaBenchmark.totalColaboradores} colaboradores</span>
                         </div>
                       </>
                     )}
                     {califVal != null && (
                       <>
                         <DividerLabel label="Progreso vs meta" />
-                        <GoalBar actual={califVal} meta={5} showMeta={false} />
+                        <GoalBarGradient actual={califVal} meta={5} fmt={(v) => v.toFixed(1)} />
                       </>
                     )}
                   </KpiPrimarioCard>
@@ -608,12 +651,7 @@ export function MiDesempenoPage() {
                     iconColor="text-emerald-600"
                     titulo="NPS · Recomendación"
                     valor={npsVal != null ? (npsVal > 0 ? "+" + npsVal : "" + npsVal) : "—"}
-                    unidad="/ 100"
-                    valorExtra={npsData ? (
-                      <span className="text-slate-500">
-                        · {total} evaluación{total !== 1 ? "es" : ""}
-                      </span>
-                    ) : undefined}
+                    valorLabel="Tu NPS"
                   >
                     {npsData ? (
                       <>
@@ -623,15 +661,16 @@ export function MiDesempenoPage() {
                           const det = npsData.detractores;
                           return (
                             <>
-                              <div className="w-full h-2 rounded-full overflow-hidden flex mt-3">
-                                <div className="h-full bg-emerald-500" style={{ width: (prom / total) * 100 + "%" }} />
-                                <div className="h-full bg-amber-400" style={{ width: (pas / total) * 100 + "%" }} />
-                                <div className="h-full bg-red-500" style={{ width: (det / total) * 100 + "%" }} />
-                              </div>
-                              <div className="flex justify-between text-xs text-slate-500 mt-1">
+                              <div className="flex items-center justify-between text-xs text-slate-500 mt-3">
                                 <span className="text-emerald-600">{prom} prom.</span>
                                 <span className="text-amber-600">{pas} neu.</span>
                                 <span className="text-red-600">{det} det.</span>
+                                <span className="text-slate-400">· {total} evals.</span>
+                              </div>
+                              <div className="w-full h-2 rounded-full overflow-hidden flex mt-1">
+                                <div className="h-full bg-emerald-500" style={{ width: (prom / total) * 100 + "%" }} />
+                                <div className="h-full bg-amber-400" style={{ width: (pas / total) * 100 + "%" }} />
+                                <div className="h-full bg-red-500" style={{ width: (det / total) * 100 + "%" }} />
                               </div>
                             </>
                           );
@@ -642,13 +681,16 @@ export function MiDesempenoPage() {
                         />
                       </>
                     ) : (
-                      <p className="text-xs text-slate-500 mt-1">Sin datos suficientes</p>
+                      <p className="text-xs text-slate-500 mt-2">Sin datos suficientes</p>
                     )}
                     {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
                       <>
-                        <DividerLabel label="Período anterior" />
+                        <DividerLabel label="Comparación período anterior" />
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-slate-600">{periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</span>
+                          <div>
+                            <p className="text-xs font-semibold text-slate-600">{periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</p>
+                            <p className="text-[10px] text-slate-500">Período anterior</p>
+                          </div>
                           <TrendBadge variacion={periodComparison.variacion.nps} size="xs" />
                         </div>
                       </>
@@ -656,7 +698,7 @@ export function MiDesempenoPage() {
                     {npsVal != null && npsVal > 0 && (
                       <>
                         <DividerLabel label="Progreso vs meta" />
-                        <GoalBar actual={npsVal} meta={100} showMeta={false} />
+                        <GoalBarGradient actual={npsVal} meta={100} fmt={(v) => v > 0 ? "+" + v : String(v)} />
                       </>
                     )}
                   </KpiPrimarioCard>
