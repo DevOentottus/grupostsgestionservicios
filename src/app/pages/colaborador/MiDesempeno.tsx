@@ -90,23 +90,6 @@ function GoalBar({ actual, meta, showMeta = true }: { actual: number; meta: numb
   );
 }
 
-/** Estrellas de calificacion */
-/** Divisor con etiqueta para secciones dentro de cards */
-function DividerLabel({ label }: { label: string }) {
-  return (
-    <div className="relative my-3">
-      <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-slate-200" />
-      </div>
-      <div className="relative flex justify-center">
-        <span className="bg-white px-2 text-[12px] font-semibold uppercase tracking-wider text-slate-600">
-          {label}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 /** Card principal para KPI primario — columnas de valores con tendencia */
 function KpiPrimarioCard({
   icon: Icon,
@@ -184,12 +167,12 @@ function KpiPrimarioCard({
                       <div className="absolute inset-0 opacity-60" style={{ background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)" }} />
                       <div className="h-full rounded-full transition-all duration-500 relative" style={{ width: `${clamped}%`, backgroundColor: barColor }}>
                         <span className="absolute top-1/2 -translate-y-1/2 text-[9px] font-bold text-white drop-shadow-sm pointer-events-none whitespace-nowrap" style={{ right: "4px" }}>
-                          Progreso: {f(barActual!)} | {clamped}%
+                          {f(barActual!)}
                         </span>
                       </div>
                     </div>
                     <p className="text-[11px] font-semibold text-slate-500 text-right mt-1">
-                      Meta: {f(barMeta)} | 100%
+                      {f(barActual!)} / {f(barMeta)} | {clamped}%
                     </p>
                   </div>
                 )}
@@ -543,7 +526,6 @@ export function MiDesempenoPage() {
                     barActual={periodComparison ? curTareas : undefined}
                     barMeta={periodComparison ? Math.round(periodComparison.anterior.tareas_completadas * 1.1) : undefined}
                   >
-                    {periodComparison && <DividerLabel label="Progreso vs meta" />}
                   </KpiPrimarioCard>
 
                   {/* SERVICIOS COMPLETADOS */}
@@ -573,7 +555,6 @@ export function MiDesempenoPage() {
                     barActual={periodComparison ? curServicios : undefined}
                     barMeta={periodComparison ? Math.round(periodComparison.anterior.servicios_completados * 1.1) : undefined}
                   >
-                    {periodComparison && <DividerLabel label="Progreso vs meta" />}
                   </KpiPrimarioCard>
 
                   {/* CALIFICACION */}
@@ -609,7 +590,6 @@ export function MiDesempenoPage() {
                         barMeta={califVal != null ? 5 : undefined}
                         barFmt={(v: number) => v.toFixed(1)}
                       >
-                        {califVal != null && <DividerLabel label="Progreso vs meta" />}
                       </KpiPrimarioCard>
                     );
                   })()}
