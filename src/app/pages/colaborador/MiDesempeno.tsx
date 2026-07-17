@@ -535,7 +535,7 @@ export function MiDesempenoPage() {
                 };
               };
               return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* TAREAS COMPLETADAS */}
                   <KpiPrimarioCard
                     icon={CheckCircle2}
@@ -663,7 +663,7 @@ export function MiDesempenoPage() {
                         infoFormula="NPS = % promotores − % detractores (escala 1–10)"
                         infoDescripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
                         columnas={[
-                          { valor: npsVal != null ? (npsVal > 0 ? "+" + npsVal : "" + npsVal) : "—", label: "Tu NPS\neste período", extra: npsData ? `${total} encuestas` : undefined },
+                          { valor: npsVal != null ? (npsVal > 0 ? "+" + npsVal : "" + npsVal) : "—", label: "Tu NPS\neste período", extra: npsData ? `${total} / ${curServicios} encuestas` : undefined },
                           ...(periodComparison && periodComparison.anterior.calificacion_promedio > 0 ? [{
                             valor: periodComparison.anterior.nps > 0 ? "+" + periodComparison.anterior.nps : String(periodComparison.anterior.nps),
                             label: "Período\nanterior",
