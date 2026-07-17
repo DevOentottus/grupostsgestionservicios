@@ -82,17 +82,17 @@ function GoalBarGradient({ actual, meta, fmt }: { actual: number; meta: number; 
       {/* Barra de meta (degradado completo) con marcas */}
       <div className="relative w-full h-3 bg-slate-100 rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full"
+          className="h-full rounded-full opacity-70"
           style={{
             width: "100%",
             background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)",
           }}
         />
-      </div>
-      <div className="flex justify-between text-[12px] text-slate-600">
-        <span>0 | 0%</span>
-        <span>{labelMid} | 50%</span>
-        <span>Meta: {labelMax} | 100%</span>
+        <div className="absolute inset-0 flex justify-between items-center px-2 text-[11px] font-semibold text-slate-800">
+          <span>0 | 0%</span>
+          <span>{labelMid} | 50%</span>
+          <span>Meta: {labelMax} | 100%</span>
+        </div>
       </div>
     </div>
   );
