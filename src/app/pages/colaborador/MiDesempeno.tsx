@@ -167,13 +167,10 @@ function KpiPrimarioCard({
                       <div className="absolute inset-0 opacity-60" style={{ background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)" }} />
                       <div className="h-full rounded-full transition-all duration-500 relative" style={{ width: `${clamped}%`, backgroundColor: barColor }}>
                         <span className="absolute top-1/2 -translate-y-1/2 text-[9px] font-bold text-white drop-shadow-sm pointer-events-none whitespace-nowrap" style={{ right: "4px" }}>
-                          {f(barActual!)}
+                          {f(barActual!)} / {f(barMeta)} | {clamped}%
                         </span>
                       </div>
                     </div>
-                    <p className="text-[11px] font-semibold text-slate-500 text-right mt-1">
-                      {f(barActual!)} / {f(barMeta)} | {clamped}%
-                    </p>
                   </div>
                 )}
               </div>
