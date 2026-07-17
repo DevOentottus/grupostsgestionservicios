@@ -196,6 +196,8 @@ function IndicadorCard({
   color,
   formula,
   comparacion,
+  barActual,
+  barMeta,
 }: {
   titulo: string;
   valor: string | number;
@@ -204,7 +206,13 @@ function IndicadorCard({
   color: string;
   formula?: string;
   comparacion?: React.ReactNode;
+  barActual?: number;
+  barMeta?: number;
 }) {
+  const clamped = barMeta && barMeta > 0 && barActual != null
+    ? Math.min(Math.max(Math.min(Math.round((barActual / barMeta) * 100), 100), 0), 100)
+    : 0;
+  const barColor = clamped <= 34 ? "#ef4444" : clamped <= 67 ? "#eab308" : "#22c55e";
   return (
     <div className="bg-white rounded-xl border border-slate-200/70 shadow-sm hover:shadow transition-shadow overflow-hidden">
       <div className={cn("h-1", color)} />
@@ -219,6 +227,21 @@ function IndicadorCard({
           <p className="text-xs text-slate-600 leading-tight">{titulo}</p>
           {formula && <InfoPopover formula={formula} descripcion={descripcion} />}
         </div>
+        {barMeta != null && barMeta > 0 && (
+          <div className="mt-1">
+            <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
+              <div className="absolute inset-0 opacity-60" style={{ background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)" }} />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-500 pointer-events-none">
+                Meta: {barMeta}
+              </span>
+              <div className="h-full rounded-full transition-all duration-500 relative flex items-center justify-end pr-1" style={{ width: `${clamped}%`, backgroundColor: barColor }}>
+                <span className="text-[9px] font-bold text-white drop-shadow-sm pointer-events-none whitespace-nowrap">
+                  {barActual} | {clamped}%
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
         {comparacion && (
           <div className="mt-2 pt-2 border-t border-slate-100">{comparacion}</div>
         )}
@@ -659,6 +682,8 @@ export function MiDesempenoPage() {
                     descripcion="Servicios donde todas las tareas tienen hora inicio/fin"
                     color="bg-blue-600"
                     formula="Tracking_final − Tracking_inicial"
+                    barActual={kpi!.servicios_con_tiempo_tracking_pct ?? 0}
+                    barMeta={100}
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-xs">
                         <span className="text-slate-600">Período anterior: {periodComparison.anterior.servicios_con_tiempo_tracking_pct}%</span>
@@ -687,6 +712,8 @@ export function MiDesempenoPage() {
                     descripcion="Servicios con historial de cambios completo"
                     color="bg-teal-600"
                     formula="(Servicios con auditoría ÷ Total) × 100"
+                    barActual={kpi!.registros_completos_pct ?? 0}
+                    barMeta={100}
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-xs">
                         <span className="text-slate-600">Período anterior: {periodComparison.anterior.registros_completos_pct}%</span>
@@ -730,6 +757,8 @@ export function MiDesempenoPage() {
                   descripcion="Servicios que cumplieron el tiempo estimado"
                   color="bg-green-600"
                   formula="(Servicios con tiempo real ≤ estimado ÷ Total completados) × 100"
+                  barActual={kpi?.completados_dentro_tiempo_pct ?? 0}
+                  barMeta={100}
                   comparacion={periodComparison ? (
                     <div className="flex items-center gap-1.5 text-xs">
                       <span className="text-slate-600">Período anterior: {periodComparison.anterior.completados_dentro_tiempo_pct}%</span>
