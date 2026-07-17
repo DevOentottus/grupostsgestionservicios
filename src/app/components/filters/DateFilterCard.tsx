@@ -11,7 +11,6 @@ interface DateFilterCardProps {
   presets: Preset[];
   fechaInicio: string;
   fechaFin: string;
-  periodoLabel: string;
   onFechaInicio: (val: string) => void;
   onFechaFin: (val: string) => void;
   onLabelChange: (label: string) => void;
@@ -21,7 +20,6 @@ export function DateFilterCard({
   presets,
   fechaInicio,
   fechaFin,
-  periodoLabel,
   onFechaInicio,
   onFechaFin,
   onLabelChange,
@@ -69,9 +67,6 @@ export function DateFilterCard({
           }}
           className="flex-1 sm:flex-none text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 min-w-0"
         />
-        {periodoLabel !== "Sin filtro" && (
-          <span className="text-[11px] text-slate-400 whitespace-nowrap shrink-0">{periodoLabel}</span>
-        )}
       </div>
     </div>
   );

@@ -420,7 +420,6 @@ export function MiDesempenoPage() {
             presets={presets}
             fechaInicio={fechaInicio}
             fechaFin={fechaFin}
-            periodoLabel={periodoLabel}
             onFechaInicio={(v) => setFechaInicio(v)}
             onFechaFin={(v) => setFechaFin(v)}
             onLabelChange={(l) => setPeriodoLabel(l)}
