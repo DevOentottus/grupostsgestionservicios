@@ -80,7 +80,7 @@ function GoalBarGradient({ actual, meta, fmt }: { actual: number; meta: number; 
         </span>
       </div>
       {/* Barra de meta (degradado completo) con marcas */}
-      <div className="relative w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+      <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
         <div
           className="h-full rounded-full opacity-70"
           style={{
