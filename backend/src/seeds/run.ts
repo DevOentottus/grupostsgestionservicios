@@ -808,6 +808,8 @@ async function seed() {
         servicio_id: srv5.servicio_id,
         cliente_id: srv5ClienteId,
         calificacion_puntaje: 5,
+        nps_score: 10,
+        nps_razon: "Excelente atención al cliente, muy recomendable.",
         calificacion_comentario:
           "Excelente servicio, muy profesionales y puntuales. Las cámaras funcionan perfectamente.",
         calificacion_sugerencia:

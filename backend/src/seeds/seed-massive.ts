@@ -528,6 +528,8 @@ async function seedMassive() {
         servicio_id: svc.servicio_id,
         cliente_id: svc.cliente_id,
         calificacion_puntaje: 3 + Math.floor(Math.random() * 3),
+        nps_score: 1 + Math.floor(Math.random() * 10),
+        nps_razon: pick(["Excelente atención", "Rápido y eficiente", "Cumplió expectativas", "Podría mejorar la comunicación", "Muy profesional", "", "", ""]),
         calificacion_comentario: pick(["Excelente servicio", "Buen trabajo", "Cumplió con lo esperado", "Podría mejorar", "Muy satisfecho"]),
         calificacion_sugerencia: pick(["", "", "Agregar más personal", "Mejorar tiempos de respuesta", "Más comunicación con el cliente"]),
         calificacion_fecha: daysAgo(Math.floor(Math.random() * 3)),

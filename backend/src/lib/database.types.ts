@@ -199,6 +199,8 @@ export type Database = {
           calificacion_puntaje: number
           calificacion_sugerencia: string | null
           cliente_id: number
+          nps_razon: string | null
+          nps_score: number | null
           servicio_id: number
         }
         Insert: {
@@ -210,6 +212,8 @@ export type Database = {
           calificacion_puntaje: number
           calificacion_sugerencia?: string | null
           cliente_id: number
+          nps_razon?: string | null
+          nps_score?: number | null
           servicio_id: number
         }
         Update: {
@@ -221,6 +225,8 @@ export type Database = {
           calificacion_puntaje?: number
           calificacion_sugerencia?: string | null
           cliente_id?: number
+          nps_razon?: string | null
+          nps_score?: number | null
           servicio_id?: number
         }
         Relationships: [

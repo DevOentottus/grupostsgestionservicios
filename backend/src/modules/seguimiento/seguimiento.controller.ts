@@ -18,6 +18,8 @@ export async function seguimientoController(app: FastifyInstance) {
     comentario: z.string().optional(),
     sugerencia: z.string().optional(),
     satisfaccion_visibilidad: z.number().int().min(1).max(5).optional(),
+    nps_score: z.number().int().min(1).max(10).optional(),
+    nps_razon: z.string().optional(),
   });
 
   // POST /api/servicios/:id/encuesta
@@ -50,6 +52,8 @@ export async function seguimientoController(app: FastifyInstance) {
       if (input.comentario != null) updates.calificacion_comentario = input.comentario || null;
       if (input.sugerencia != null) updates.calificacion_sugerencia = input.sugerencia || null;
       if (input.satisfaccion_visibilidad != null) updates.calificacion_observacion = String(input.satisfaccion_visibilidad);
+      if (input.nps_score != null) updates.nps_score = input.nps_score;
+      if (input.nps_razon != null) updates.nps_razon = input.nps_razon || null;
       if (Object.keys(updates).length === 0) throw new ValidationError("No hay campos para actualizar");
 
       const { data: updated } = await supabase
@@ -69,6 +73,8 @@ export async function seguimientoController(app: FastifyInstance) {
           calificacion_comentario: input.comentario || null,
           calificacion_sugerencia: input.sugerencia || null,
           calificacion_observacion: input.satisfaccion_visibilidad ? String(input.satisfaccion_visibilidad) : null,
+          nps_score: input.nps_score ?? null,
+          nps_razon: input.nps_razon || null,
           calificacion_fecha: now.toISOString().split("T")[0],
           calificacion_hora: now.toTimeString().split(" ")[0],
         })
@@ -86,6 +92,8 @@ export async function seguimientoController(app: FastifyInstance) {
             comentario: encuesta.calificacion_comentario,
             sugerencia: encuesta.calificacion_sugerencia,
             satisfaccion_visibilidad: encuesta.calificacion_observacion ? parseInt(encuesta.calificacion_observacion) : null,
+            nps_score: encuesta.nps_score,
+            nps_razon: encuesta.nps_razon,
             created_at: encuesta.calificacion_fecha,
           }
         : null,
@@ -111,6 +119,8 @@ export async function seguimientoController(app: FastifyInstance) {
             comentario: e.calificacion_comentario,
             sugerencia: e.calificacion_sugerencia,
             satisfaccion_visibilidad: e.calificacion_observacion ? parseInt(e.calificacion_observacion) : null,
+            nps_score: e.nps_score,
+            nps_razon: e.nps_razon,
             created_at: e.calificacion_fecha,
           }
         : null,
@@ -260,6 +270,8 @@ export async function seguimientoController(app: FastifyInstance) {
               comentario: califs[0].calificacion_comentario,
               sugerencia: califs[0].calificacion_sugerencia,
               satisfaccion_visibilidad: califs[0].calificacion_observacion ? parseInt(califs[0].calificacion_observacion) : null,
+              nps_score: califs[0].nps_score,
+              nps_razon: califs[0].nps_razon,
             }
           : null,
       },
@@ -345,6 +357,8 @@ export async function seguimientoController(app: FastifyInstance) {
       if (payload.comentario != null) updates.calificacion_comentario = payload.comentario || null;
       if (payload.sugerencia != null) updates.calificacion_sugerencia = payload.sugerencia || null;
       if (payload.satisfaccion_visibilidad != null) updates.calificacion_observacion = String(payload.satisfaccion_visibilidad);
+      if (payload.nps_score != null) updates.nps_score = payload.nps_score;
+      if (payload.nps_razon != null) updates.nps_razon = payload.nps_razon || null;
       if (Object.keys(updates).length === 0) throw new ValidationError("No hay campos para actualizar");
 
       const { data: updated } = await supabase
@@ -364,6 +378,8 @@ export async function seguimientoController(app: FastifyInstance) {
           calificacion_comentario: payload.comentario || null,
           calificacion_sugerencia: payload.sugerencia || null,
           calificacion_observacion: payload.satisfaccion_visibilidad ? String(payload.satisfaccion_visibilidad) : null,
+          nps_score: payload.nps_score ?? null,
+          nps_razon: payload.nps_razon || null,
           calificacion_fecha: now.toISOString().split("T")[0],
           calificacion_hora: now.toTimeString().split(" ")[0],
         })
@@ -381,6 +397,8 @@ export async function seguimientoController(app: FastifyInstance) {
             comentario: encuesta.calificacion_comentario,
             sugerencia: encuesta.calificacion_sugerencia,
             satisfaccion_visibilidad: encuesta.calificacion_observacion ? parseInt(encuesta.calificacion_observacion) : null,
+            nps_score: encuesta.nps_score,
+            nps_razon: encuesta.nps_razon,
             created_at: encuesta.calificacion_fecha,
           }
         : null,
@@ -947,18 +965,22 @@ export async function seguimientoController(app: FastifyInstance) {
         if (allSvcIds.length > 0) {
           const { data: califs } = await supabase
             .from("calificaciones")
-            .select("calificacion_puntaje")
+            .select("calificacion_puntaje, nps_score")
             .in("servicio_id", allSvcIds)
             .gte("calificacion_fecha", inicio.toISOString().split("T")[0])
             .lte("calificacion_fecha", fin.toISOString().split("T")[0]);
 
           totalCalificaciones = califs?.length || 0;
+          const toNpsCat = (c: { nps_score: number | null; calificacion_puntaje: number }) => {
+            if (c.nps_score != null) return c.nps_score >= 9 ? "promoter" : c.nps_score >= 7 ? "passive" : "detractor";
+            return c.calificacion_puntaje >= 4 ? "promoter" : c.calificacion_puntaje === 3 ? "passive" : "detractor";
+          };
           if (totalCalificaciones > 0) {
             const suma = califs!.reduce((s: number, c: any) => s + c.calificacion_puntaje, 0);
             califPromedio = Math.round((suma / totalCalificaciones) * 10) / 10;
-            promotores = califs!.filter((c: any) => c.calificacion_puntaje >= 4).length;
-            pasivos = califs!.filter((c: any) => c.calificacion_puntaje === 3).length;
-            detractores = califs!.filter((c: any) => c.calificacion_puntaje <= 2).length;
+            promotores = califs!.filter((c: any) => toNpsCat(c) === "promoter").length;
+            pasivos = califs!.filter((c: any) => toNpsCat(c) === "passive").length;
+            detractores = califs!.filter((c: any) => toNpsCat(c) === "detractor").length;
             nps = Math.round(((promotores - detractores) / totalCalificaciones) * 100);
           }
         }

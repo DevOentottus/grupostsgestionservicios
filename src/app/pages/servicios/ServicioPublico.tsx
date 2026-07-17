@@ -174,6 +174,8 @@ export function ServicioPublicoPage() {
   const [satisfaccionVisibilidad, setSatisfaccionVisibilidad] = useState(0);
   const [comentario, setComentario] = useState("");
   const [sugerencia, setSugerencia] = useState("");
+  const [npsScore, setNpsScore] = useState(0);
+  const [npsRazon, setNpsRazon] = useState("");
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
   const [evidencias, setEvidencias] = useState<(Evidencia & { comentarios?: EvidenciaComentario[] })[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -243,6 +245,8 @@ export function ServicioPublicoPage() {
       setSatisfaccionVisibilidad(data.encuesta.satisfaccion_visibilidad || 0);
       setComentario(data.encuesta.comentario || "");
       setSugerencia(data.encuesta.sugerencia || "");
+      setNpsScore(data.encuesta.nps_score || 0);
+      setNpsRazon(data.encuesta.nps_razon || "");
       setEncuestaYaEnviada(true);
     }
   }, [data]);
@@ -271,6 +275,8 @@ export function ServicioPublicoPage() {
         comentario: comentario || undefined,
         sugerencia: sugerencia || undefined,
         satisfaccion_visibilidad: satisfaccionVisibilidad || undefined,
+        nps_score: npsScore || undefined,
+        nps_razon: npsRazon || undefined,
       });
     },
     onSuccess: () => {
@@ -733,6 +739,59 @@ export function ServicioPublicoPage() {
                      "Excelente"}
                   </p>
                 )}
+              </div>
+
+              {/* NPS Score 1-10 */}
+              <div className="text-center">
+                <p className="text-sm text-gray-500 mb-3">
+                  En una escala del 1-10, ¿qué tan probable es que recomiendes{' '}
+                  <span className="font-semibold text-gray-700">nuestra empresa</span>
+                  {' '}a un amigo o colega?
+                </p>
+                <div className="flex justify-center gap-1">
+                  {[1,2,3,4,5,6,7,8,9,10].map((n) => {
+                    const selected = npsScore === n;
+                    const color = n <= 6 ? "red" : n <= 8 ? "amber" : "green";
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        disabled={encuestaYaEnviada}
+                        onClick={() => !encuestaYaEnviada && setNpsScore(n)}
+                        className={cn(
+                          "w-8 h-10 rounded-lg text-xs font-bold transition-all border-2",
+                          encuestaYaEnviada ? "cursor-default" : "cursor-pointer hover:scale-110",
+                          selected
+                            ? color === "red" ? "bg-red-500 border-red-500 text-white"
+                            : color === "amber" ? "bg-amber-400 border-amber-400 text-white"
+                            : "bg-emerald-500 border-emerald-500 text-white"
+                            : "bg-white border-gray-300 text-gray-500 hover:border-gray-400",
+                        )}
+                      >
+                        {n}
+                      </button>
+                    );
+                  })}
+                </div>
+                {npsScore > 0 && !encuestaYaEnviada && (
+                  <p className="text-[10px] text-gray-400 mt-1.5">
+                    {npsScore <= 6 ? "Detractor" : npsScore <= 8 ? "Neutral" : "Promotor"}
+                  </p>
+                )}
+              </div>
+
+              {/* Razón principal del NPS */}
+              <div>
+                <p className="text-sm text-gray-500 mb-2">¿Cuál es tu razón principal para asignar esa puntuación?</p>
+                <textarea
+                  value={npsRazon}
+                  onChange={(e) => setNpsRazon(e.target.value)}
+                  placeholder="Contanos brevemente el motivo de tu puntuación..."
+                  rows={2}
+                  disabled={encuestaYaEnviada}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm resize-none transition disabled:bg-gray-50 disabled:text-gray-400 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  maxLength={1000}
+                />
               </div>
 
               {/* Comentario */}

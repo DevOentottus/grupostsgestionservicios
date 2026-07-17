@@ -234,18 +234,22 @@ export async function managerController(app: FastifyInstance) {
       if (servicioIds.length > 0) {
         const { data: califs } = await supabase
           .from("calificaciones")
-          .select("calificacion_puntaje")
+          .select("calificacion_puntaje, nps_score")
           .in("servicio_id", servicioIds);
         const totalServicios = servicioIds.length;
         const totalEval = califs?.length || 0;
+        const toNpsCat = (c: { nps_score: number | null; calificacion_puntaje: number }) => {
+          if (c.nps_score != null) return c.nps_score >= 9 ? "promoter" : c.nps_score >= 7 ? "passive" : "detractor";
+          return c.calificacion_puntaje >= 4 ? "promoter" : c.calificacion_puntaje === 3 ? "passive" : "detractor";
+        };
         areaSatisfaccion.servicios_evaluados = totalEval;
         areaSatisfaccion.servicios_evaluados_pct = Math.round((totalEval / totalServicios) * 100);
         if (califs && califs.length > 0) {
           const total = califs.length;
           const suma = califs.reduce((acc: number, c: any) => acc + c.calificacion_puntaje, 0);
-          const promotores = califs.filter((c: any) => c.calificacion_puntaje >= 4).length;
-          const pasivos = califs.filter((c: any) => c.calificacion_puntaje === 3).length;
-          const detractores = califs.filter((c: any) => c.calificacion_puntaje <= 2).length;
+          const promotores = califs.filter((c: any) => toNpsCat(c) === "promoter").length;
+          const pasivos = califs.filter((c: any) => toNpsCat(c) === "passive").length;
+          const detractores = califs.filter((c: any) => toNpsCat(c) === "detractor").length;
           const positivas = califs.filter((c: any) => c.calificacion_puntaje >= 3).length;
           const negativas = califs.filter((c: any) => c.calificacion_puntaje < 3).length;
           areaSatisfaccion = {

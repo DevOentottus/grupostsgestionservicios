@@ -124,6 +124,8 @@ export interface Encuesta {
   comentario: string | null;
   sugerencia: string | null;
   satisfaccion_visibilidad: number | null;
+  nps_score: number | null;
+  nps_razon: string | null;
   created_at: string;
 }
 
