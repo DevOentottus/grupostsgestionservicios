@@ -29,7 +29,7 @@ function TrendBadge({ variacion, size = "sm" }: { variacion: number; size?: "sm"
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1 rounded-full font-semibold bg-slate-100 text-slate-500",
+          "inline-flex items-center gap-1 rounded-full font-semibold bg-slate-100 text-slate-600",
           size === "sm" ? "text-xs px-2.5 py-1" : "text-xs px-2 py-0.5",
         )}
       >
@@ -63,30 +63,34 @@ function GoalBarGradient({ actual, meta, fmt }: { actual: number; meta: number; 
   const labelMax = f(meta);
   const barColor = clamped <= 34 ? "#ef4444" : clamped <= 67 ? "#eab308" : "#22c55e";
   return (
-    <div className="mt-3">
-      {/* Marcas 0%, 50%, 100% con valor numérico */}
-      <div className="flex justify-between text-[9px] text-slate-400 mb-1 -mt-0.5">
-        <span>0 | 0%</span>
-        <span>{labelMid} | 50%</span>
-        <span>{labelMax} | 100%</span>
-      </div>
-      {/* Track */}
+    <div className="mt-3 space-y-1.5">
+      {/* Barra de progreso (color según rango) */}
       <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
-        {/* Relleno: color único según rango */}
         <div
           className="h-full rounded-full transition-all duration-500"
-          style={{
-            width: `${clamped}%`,
-            backgroundColor: barColor,
-          }}
+          style={{ width: `${clamped}%`, backgroundColor: barColor }}
         />
-        {/* Valor | % flotante dentro de la barra */}
         <span
           className="absolute top-1/2 -translate-y-1/2 text-[9px] font-bold text-white drop-shadow-sm pointer-events-none"
           style={{ left: `${Math.max(clamped - 16, 2)}%` }}
         >
           {f(actual)} | {clamped}%
         </span>
+      </div>
+      {/* Barra de meta (degradado completo) con marcas */}
+      <div className="relative w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: "100%",
+            background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)",
+          }}
+        />
+      </div>
+      <div className="flex justify-between text-[10px] text-slate-600">
+        <span>0 | 0%</span>
+        <span>{labelMid} | 50%</span>
+        <span>{labelMax} | 100%</span>
       </div>
     </div>
   );
@@ -105,7 +109,7 @@ function GoalBar({ actual, meta, showMeta = true }: { actual: number; meta: numb
         </span>
         <div className="flex items-center gap-2">
           {showMeta && (
-            <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+            <span className="text-xs text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
               Meta: {meta}
             </span>
           )}
@@ -135,7 +139,7 @@ function DividerLabel({ label }: { label: string }) {
         <div className="w-full border-t border-slate-200" />
       </div>
       <div className="relative flex justify-center">
-        <span className="bg-white px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+        <span className="bg-white px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
           {label}
         </span>
       </div>
@@ -166,26 +170,20 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "xs
   );
 }
 
-/** Card principal para KPI primario */
+/** Card principal para KPI primario — columnas de valores con tendencia */
 function KpiPrimarioCard({
   icon: Icon,
   iconBg,
   iconColor,
   titulo,
-  valor,
-  valorLabel,
-  valorArea,
-  valorAreaLabel,
+  columnas,
   children,
 }: {
   icon: React.ElementType;
   iconBg: string;
   iconColor: string;
   titulo: string;
-  valor: React.ReactNode;
-  valorLabel?: string;
-  valorArea?: React.ReactNode;
-  valorAreaLabel?: string;
+  columnas: { valor: React.ReactNode; label: string; variacion?: { direction: "up" | "down" | "flat"; label?: string } }[];
   children?: React.ReactNode;
 }) {
   return (
@@ -201,25 +199,32 @@ function KpiPrimarioCard({
           </p>
         </div>
 
-        {/* Valores duales */}
-        <div className="flex items-start gap-6">
-          <div>
-            <span className="text-4xl font-bold text-slate-900 tracking-tight">{valor}</span>
-            {valorLabel && (
-              <p className="text-[10px] text-slate-500 mt-0.5">{valorLabel}</p>
-            )}
-          </div>
-          {valorArea != null && (
-            <>
-              <span className="text-2xl font-light text-slate-300 self-center mt-1">|</span>
+        {/* Columnas de valores */}
+        <div className="flex items-start gap-4">
+          {columnas.map((col, i) => (
+            <div key={i} className="flex items-start gap-3">
+              {i > 0 && <span className="text-2xl font-light text-slate-300 self-center mt-1">|</span>}
               <div>
-                <span className="text-4xl font-bold text-slate-900 tracking-tight">{valorArea}</span>
-                {valorAreaLabel && (
-                  <p className="text-[10px] text-slate-500 mt-0.5">{valorAreaLabel}</p>
+                <span className="text-4xl font-bold text-slate-900 tracking-tight">{col.valor}</span>
+                <p className="text-[10px] text-slate-600 mt-0.5 leading-tight whitespace-pre-line">{col.label}</p>
+                {col.variacion && (
+                  <p className={cn(
+                    "inline-flex items-center gap-0.5 text-[10px] font-semibold mt-0.5",
+                    col.variacion.direction === "up" ? "text-emerald-600" : col.variacion.direction === "down" ? "text-red-600" : "text-slate-500",
+                  )}>
+                    {col.variacion.direction === "up" ? (
+                      <TrendingUp className="w-3 h-3" />
+                    ) : col.variacion.direction === "down" ? (
+                      <TrendingDown className="w-3 h-3" />
+                    ) : (
+                      <Minus className="w-3 h-3" />
+                    )}
+                    {col.variacion.label ?? ""}
+                  </p>
                 )}
               </div>
-            </>
-          )}
+            </div>
+          ))}
         </div>
 
         {children}
@@ -254,10 +259,10 @@ function IndicadorCard({
           <span className="text-2xl font-bold text-slate-900 tracking-tight">
             {typeof valor === "number" ? valor.toLocaleString() : valor}
           </span>
-          {unidad && <span className="text-xs font-medium text-slate-500">{unidad}</span>}
+          {unidad && <span className="text-xs font-medium text-slate-600">{unidad}</span>}
         </div>
         <div className="flex items-center gap-1">
-          <p className="text-xs text-slate-500 leading-tight">{titulo}</p>
+          <p className="text-xs text-slate-600 leading-tight">{titulo}</p>
           {formula && <InfoPopover formula={formula} descripcion={descripcion} />}
         </div>
         {comparacion && (
@@ -287,11 +292,11 @@ function Seccion({
       <div className="p-3 border-b border-slate-100">
         <div className="flex items-center gap-3">
           {Icon && (
-            <Icon className="w-4 h-4 text-slate-500 shrink-0" />
+            <Icon className="w-4 h-4 text-slate-600 shrink-0" />
           )}
           <div className="min-w-0">
             <h3 className="font-semibold text-slate-800 text-sm leading-tight">{titulo}</h3>
-            <p className="text-xs text-slate-500 mt-0.5 leading-tight">{descripcion}</p>
+            <p className="text-xs text-slate-600 mt-0.5 leading-tight">{descripcion}</p>
           </div>
         </div>
       </div>
@@ -465,7 +470,7 @@ export function MiDesempenoPage() {
               <div className="absolute inset-0 rounded-full border-4 border-emerald-100" />
               <div className="absolute inset-0 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
             </div>
-            <p className="text-slate-500 mt-4 text-sm font-medium">Preparando tu desempeño...</p>
+            <p className="text-slate-600 mt-4 text-sm font-medium">Preparando tu desempeño...</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 w-full">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="space-y-3">
@@ -489,7 +494,7 @@ export function MiDesempenoPage() {
               <TrendingDown className="w-7 h-7 text-red-500" />
             </div>
             <p className="text-red-600 font-semibold text-lg">Error al cargar tu desempeño</p>
-            <p className="text-sm text-slate-500 mt-1 mb-4">No pudimos obtener tus indicadores. Intentá de nuevo más tarde.</p>
+            <p className="text-sm text-slate-600 mt-1 mb-4">No pudimos obtener tus indicadores. Intentá de nuevo más tarde.</p>
             <button
               onClick={() => window.location.reload()}
               className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-medium text-slate-600 transition-colors"
@@ -507,10 +512,10 @@ export function MiDesempenoPage() {
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-8">
           <div className="flex flex-col items-center justify-center py-10">
             <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-              <User className="w-7 h-7 text-slate-500" />
+              <User className="w-7 h-7 text-slate-600" />
             </div>
             <p className="text-slate-600 font-semibold text-lg">Sin datos de desempeño</p>
-            <p className="text-sm text-slate-500 mt-1 max-w-md text-center">
+            <p className="text-sm text-slate-600 mt-1 max-w-md text-center">
               No encontramos información para tu usuario. Puede que no tengas un área asignada o que aún no haya registros.
             </p>
           </div>
@@ -525,202 +530,193 @@ export function MiDesempenoPage() {
           {/* --- SECCION 1: KPIS PRINCIPALES --- */}
           <section aria-label="Indicadores principales">
             <div className="flex items-center gap-2 mb-3">
-              <BarChart3 className="w-5 h-5 text-slate-500" />
+              <BarChart3 className="w-5 h-5 text-slate-600" />
               <h2 className="text-lg font-bold text-slate-800">Tus indicadores</h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* TAREAS COMPLETADAS */}
-              <KpiPrimarioCard
-                icon={CheckCircle2}
-                iconBg="bg-blue-100"
-                iconColor="text-blue-600"
-                titulo="Tareas completadas"
-                valor={periodComparison ? periodComparison.actual.tareas_completadas : (misDatos.tareas_completadas ?? 0)}
-                valorLabel="Tus tareas"
-                valorArea={areaBenchmark?.avgTareas?.toFixed(1)}
-                valorAreaLabel="Promedio área"
-              >
-                {periodComparison && (
-                  <>
-                    <DividerLabel label="Comparación período anterior" />
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-600">{periodComparison.anterior.tareas_completadas}</p>
-                        <p className="text-[10px] text-slate-500">Período anterior</p>
-                      </div>
-                      <div className="text-right">
-                        <TrendBadge variacion={periodComparison.variacion.tareas} size="xs" />
-                        <p className="text-[10px] text-slate-500 mt-0.5">Variación</p>
-                      </div>
-                    </div>
-                  </>
-                )}
-                {periodComparison && (
-                  <>
-                    <DividerLabel label="Progreso vs meta" />
-                    <GoalBarGradient actual={periodComparison.actual.tareas_completadas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} />
-                  </>
-                )}
-              </KpiPrimarioCard>
-
-              {/* SERVICIOS COMPLETADOS */}
-              <KpiPrimarioCard
-                icon={Layers}
-                iconBg="bg-indigo-100"
-                iconColor="text-indigo-600"
-                titulo="Servicios completados"
-                valor={periodComparison ? periodComparison.actual.servicios_completados : (misDatos.servicios_completados ?? 0)}
-                valorLabel="Tus servicios"
-                valorArea={areaBenchmark?.avgServicios?.toFixed(1)}
-                valorAreaLabel="Promedio área"
-              >
-                {periodComparison && (
-                  <>
-                    <DividerLabel label="Comparación período anterior" />
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-semibold text-slate-600">{periodComparison.anterior.servicios_completados}</p>
-                        <p className="text-[10px] text-slate-500">Período anterior</p>
-                      </div>
-                      <div className="text-right">
-                        <TrendBadge variacion={periodComparison.variacion.servicios} size="xs" />
-                        <p className="text-[10px] text-slate-500 mt-0.5">Variación</p>
-                      </div>
-                    </div>
-                  </>
-                )}
-                {periodComparison && (
-                  <>
-                    <DividerLabel label="Progreso vs meta" />
-                    <GoalBarGradient actual={periodComparison.actual.servicios_completados} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} />
-                  </>
-                )}
-              </KpiPrimarioCard>
-
-              {/* CALIFICACION */}
-              {(() => {
-                const califVal = periodComparison
-                  ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
-                  : misDatos.calificacion_promedio;
-                const califCount = periodComparison
-                  ? periodComparison.actual.total_calificaciones
-                  : misDatos.total_calificaciones;
-                return (
+            {(() => {
+              const curTareas = periodComparison ? periodComparison.actual.tareas_completadas : (misDatos.tareas_completadas ?? 0);
+              const curServicios = periodComparison ? periodComparison.actual.servicios_completados : (misDatos.servicios_completados ?? 0);
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* TAREAS COMPLETADAS */}
                   <KpiPrimarioCard
-                    icon={Star}
-                    iconBg="bg-amber-100"
-                    iconColor="text-amber-600"
-                    titulo="Calificación"
-                    valor={califVal != null ? califVal.toFixed(1) : "—"}
-                    valorLabel="Tu calificación"
-                    valorArea={areaBenchmark?.avgCalificacion?.toFixed(1)}
-                    valorAreaLabel="Promedio área"
+                    icon={CheckCircle2}
+                    iconBg="bg-blue-100"
+                    iconColor="text-blue-600"
+                    titulo="Tareas completadas"
+                    columnas={[
+                      { valor: curTareas, label: "Tus tareas\neste período" },
+                      ...(periodComparison ? [{
+                        valor: periodComparison.anterior.tareas_completadas,
+                        label: "Período\nanterior",
+                        variacion: {
+                          direction: (periodComparison.variacion.tareas ?? 0) >= 0 ? "up" as const : "down" as const,
+                          label: ((periodComparison.variacion.tareas ?? 0) >= 0 ? "+" : "") + (periodComparison.variacion.tareas ?? 0) + "%",
+                        },
+                      }] : []),
+                      ...(areaBenchmark?.avgTareas != null ? [{
+                        valor: areaBenchmark.avgTareas.toFixed(1),
+                        label: "Promedio\nárea",
+                        variacion: { direction: (curTareas >= areaBenchmark.avgTareas ? "up" as const : "down" as const) },
+                      }] : []),
+                    ]}
                   >
-                    {califVal != null && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <StarRating rating={califVal} />
-                        <span className="text-xs text-slate-500">{califCount} calificación{califCount !== 1 ? "es" : ""}</span>
-                      </div>
-                    )}
-                    {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
-                      <>
-                        <DividerLabel label="Comparación período anterior" />
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs font-semibold text-slate-600">{periodComparison.anterior.calificacion_promedio.toFixed(1)} / 5</p>
-                            <p className="text-[10px] text-slate-500">Período anterior</p>
-                          </div>
-                          <div className="text-right">
-                            <TrendBadge variacion={periodComparison.variacion.calificacion} size="xs" />
-                            <p className="text-[10px] text-slate-500 mt-0.5">Variación</p>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                    {califVal != null && (
+                    {periodComparison && (
                       <>
                         <DividerLabel label="Progreso vs meta" />
-                        <GoalBarGradient actual={califVal} meta={5} fmt={(v) => v.toFixed(1)} />
+                        <GoalBarGradient actual={curTareas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} />
                       </>
                     )}
                   </KpiPrimarioCard>
-                );
-              })()}
 
-              {/* NPS */}
-              {(() => {
-                const esPeriodo = periodComparison && periodComparison.actual.total_calificaciones > 0;
-                const areaSat = miArea?.satisfaccion;
-                const npsData = esPeriodo ? periodComparison!.actual : (areaSat && areaSat.cantidad > 0 ? areaSat : null);
-                const npsVal = npsData ? npsData.nps : null;
-                const total = npsData
-                  ? esPeriodo ? periodComparison!.actual.total_calificaciones : areaSat!.cantidad
-                  : 0;
-                return (
+                  {/* SERVICIOS COMPLETADOS */}
                   <KpiPrimarioCard
-                    icon={ShieldCheck}
-                    iconBg="bg-emerald-100"
-                    iconColor="text-emerald-600"
-                    titulo="NPS · Recomendación"
-                    valor={npsVal != null ? (npsVal > 0 ? "+" + npsVal : "" + npsVal) : "—"}
-                    valorLabel="Tu NPS"
+                    icon={Layers}
+                    iconBg="bg-indigo-100"
+                    iconColor="text-indigo-600"
+                    titulo="Servicios completados"
+                    columnas={[
+                      { valor: curServicios, label: "Tus servicios\neste período" },
+                      ...(periodComparison ? [{
+                        valor: periodComparison.anterior.servicios_completados,
+                        label: "Período\nanterior",
+                        variacion: {
+                          direction: (periodComparison.variacion.servicios ?? 0) >= 0 ? "up" as const : "down" as const,
+                          label: ((periodComparison.variacion.servicios ?? 0) >= 0 ? "+" : "") + (periodComparison.variacion.servicios ?? 0) + "%",
+                        },
+                      }] : []),
+                      ...(areaBenchmark?.avgServicios != null ? [{
+                        valor: areaBenchmark.avgServicios.toFixed(1),
+                        label: "Promedio\nárea",
+                        variacion: { direction: (curServicios >= areaBenchmark.avgServicios ? "up" as const : "down" as const) },
+                      }] : []),
+                    ]}
                   >
-                    {npsData ? (
-                      <>
-                        {(() => {
-                          const prom = npsData.promotores;
-                          const pas = npsData.pasivos;
-                          const det = npsData.detractores;
-                          return (
-                            <>
-                              <div className="flex items-center justify-between text-xs text-slate-500 mt-3">
-                                <span className="text-emerald-600">{prom} prom.</span>
-                                <span className="text-amber-600">{pas} neu.</span>
-                                <span className="text-red-600">{det} det.</span>
-                                <span className="text-slate-400">· {total} evals.</span>
-                              </div>
-                              <div className="w-full h-2 rounded-full overflow-hidden flex mt-1">
-                                <div className="h-full bg-emerald-500" style={{ width: (prom / total) * 100 + "%" }} />
-                                <div className="h-full bg-amber-400" style={{ width: (pas / total) * 100 + "%" }} />
-                                <div className="h-full bg-red-500" style={{ width: (det / total) * 100 + "%" }} />
-                              </div>
-                            </>
-                          );
-                        })()}
-                        <InfoPopover
-                          formula="NPS = % promotores − % detractores (escala 0–10)"
-                          descripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
-                        />
-                      </>
-                    ) : (
-                      <p className="text-xs text-slate-500 mt-2">Sin datos suficientes</p>
-                    )}
-                    {periodComparison && periodComparison.anterior.calificacion_promedio > 0 && (
-                      <>
-                        <DividerLabel label="Comparación período anterior" />
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-xs font-semibold text-slate-600">{periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</p>
-                            <p className="text-[10px] text-slate-500">Período anterior</p>
-                          </div>
-                          <div className="text-right">
-                            <TrendBadge variacion={periodComparison.variacion.nps} size="xs" />
-                            <p className="text-[10px] text-slate-500 mt-0.5">Variación</p>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                    {npsVal != null && npsVal > 0 && (
+                    {periodComparison && (
                       <>
                         <DividerLabel label="Progreso vs meta" />
-                        <GoalBarGradient actual={npsVal} meta={100} fmt={(v) => v > 0 ? "+" + v : String(v)} />
+                        <GoalBarGradient actual={curServicios} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} />
                       </>
                     )}
                   </KpiPrimarioCard>
-                );
-              })()}
-            </div>
+
+                  {/* CALIFICACION */}
+                  {(() => {
+                    const califVal = periodComparison
+                      ? (periodComparison.actual.calificacion_promedio > 0 ? periodComparison.actual.calificacion_promedio : null)
+                      : misDatos.calificacion_promedio;
+                    const califCount = periodComparison
+                      ? periodComparison.actual.total_calificaciones
+                      : misDatos.total_calificaciones;
+                    return (
+                      <KpiPrimarioCard
+                        icon={Star}
+                        iconBg="bg-amber-100"
+                        iconColor="text-amber-600"
+                        titulo="Calificación"
+                        columnas={[
+                          { valor: califVal != null ? califVal.toFixed(1) : "—", label: "Tu calificación\neste período" },
+                          ...(periodComparison && periodComparison.anterior.calificacion_promedio > 0 ? [{
+                            valor: periodComparison.anterior.calificacion_promedio.toFixed(1) + " / 5",
+                            label: "Período\nanterior",
+                            variacion: {
+                              direction: (periodComparison.variacion.calificacion ?? 0) >= 0 ? "up" as const : "down" as const,
+                              label: ((periodComparison.variacion.calificacion ?? 0) >= 0 ? "+" : "") + (periodComparison.variacion.calificacion ?? 0) + "%",
+                            },
+                          }] : []),
+                          ...(areaBenchmark?.avgCalificacion != null ? [{
+                            valor: areaBenchmark.avgCalificacion.toFixed(1),
+                            label: "Promedio\nárea",
+                            variacion: { direction: (califVal != null && califVal >= areaBenchmark.avgCalificacion ? "up" as const : "down" as const) },
+                          }] : []),
+                        ]}
+                      >
+                        {califVal != null && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <StarRating rating={califVal} />
+                            <span className="text-xs text-slate-600">{califCount} calificación{califCount !== 1 ? "es" : ""}</span>
+                          </div>
+                        )}
+                        {califVal != null && (
+                          <>
+                            <DividerLabel label="Progreso vs meta" />
+                            <GoalBarGradient actual={califVal} meta={5} fmt={(v) => v.toFixed(1)} />
+                          </>
+                        )}
+                      </KpiPrimarioCard>
+                    );
+                  })()}
+
+                  {/* NPS */}
+                  {(() => {
+                    const esPeriodo = periodComparison && periodComparison.actual.total_calificaciones > 0;
+                    const areaSat = miArea?.satisfaccion;
+                    const npsData = esPeriodo ? periodComparison!.actual : (areaSat && areaSat.cantidad > 0 ? areaSat : null);
+                    const npsVal = npsData ? npsData.nps : null;
+                    const total = npsData
+                      ? esPeriodo ? periodComparison!.actual.total_calificaciones : areaSat!.cantidad
+                      : 0;
+                    return (
+                      <KpiPrimarioCard
+                        icon={ShieldCheck}
+                        iconBg="bg-emerald-100"
+                        iconColor="text-emerald-600"
+                        titulo="NPS · Recomendación"
+                        columnas={[
+                          { valor: npsVal != null ? (npsVal > 0 ? "+" + npsVal : "" + npsVal) : "—", label: "Tu NPS\neste período" },
+                          ...(periodComparison && periodComparison.anterior.calificacion_promedio > 0 ? [{
+                            valor: periodComparison.anterior.nps > 0 ? "+" + periodComparison.anterior.nps : String(periodComparison.anterior.nps),
+                            label: "Período\nanterior",
+                            variacion: {
+                              direction: (periodComparison.variacion.nps ?? 0) >= 0 ? "up" as const : "down" as const,
+                              label: ((periodComparison.variacion.nps ?? 0) >= 0 ? "+" : "") + (periodComparison.variacion.nps ?? 0) + "%",
+                            },
+                          }] : []),
+                        ]}
+                      >
+                        {npsData ? (
+                          <>
+                            {(() => {
+                              const prom = npsData.promotores;
+                              const pas = npsData.pasivos;
+                              const det = npsData.detractores;
+                              return (
+                                <>
+                                  <div className="flex items-center justify-between text-xs text-slate-600 mt-3">
+                                    <span className="text-emerald-600">{prom} prom.</span>
+                                    <span className="text-amber-600">{pas} neu.</span>
+                                    <span className="text-red-600">{det} det.</span>
+                                    <span className="text-slate-600">· {total} evals.</span>
+                                  </div>
+                                  <div className="w-full h-2 rounded-full overflow-hidden flex mt-1">
+                                    <div className="h-full bg-emerald-500" style={{ width: (prom / total) * 100 + "%" }} />
+                                    <div className="h-full bg-amber-400" style={{ width: (pas / total) * 100 + "%" }} />
+                                    <div className="h-full bg-red-500" style={{ width: (det / total) * 100 + "%" }} />
+                                  </div>
+                                </>
+                              );
+                            })()}
+                            <InfoPopover
+                              formula="NPS = % promotores − % detractores (escala 0–10)"
+                              descripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
+                            />
+                          </>
+                        ) : (
+                          <p className="text-xs text-slate-600 mt-2">Sin datos suficientes</p>
+                        )}
+                        {npsVal != null && npsVal > 0 && (
+                          <>
+                            <DividerLabel label="Progreso vs meta" />
+                            <GoalBarGradient actual={npsVal} meta={100} fmt={(v) => v > 0 ? "+" + v : String(v)} />
+                          </>
+                        )}
+                      </KpiPrimarioCard>
+                    );
+                  })()}
+                </div>
+              );
+            })()}
           </section>
 
           {/* --- SECCION 2: TRAZABILIDAD Y EFICIENCIA --- */}
@@ -742,7 +738,7 @@ export function MiDesempenoPage() {
                     formula="Tracking_final − Tracking_inicial"
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-xs">
-                        <span className="text-slate-500">Período anterior: {periodComparison.anterior.servicios_con_tiempo_tracking_pct}%</span>
+                        <span className="text-slate-600">Período anterior: {periodComparison.anterior.servicios_con_tiempo_tracking_pct}%</span>
                         <TrendBadge variacion={periodComparison.variacion.tracking_pct} size="xs" />
                       </div>
                     ) : undefined}
@@ -756,7 +752,7 @@ export function MiDesempenoPage() {
                     formula="Conteo de tareas con fecha, hora y responsable"
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-xs">
-                        <span className="text-slate-500">Período anterior: {periodComparison.anterior.tareas_documentadas_conteo}</span>
+                        <span className="text-slate-600">Período anterior: {periodComparison.anterior.tareas_documentadas_conteo}</span>
                         <TrendBadge variacion={periodComparison.variacion.tareas_documentadas} size="xs" />
                       </div>
                     ) : undefined}
@@ -770,14 +766,14 @@ export function MiDesempenoPage() {
                     formula="(Servicios con auditoría ÷ Total) × 100"
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-xs">
-                        <span className="text-slate-500">Período anterior: {periodComparison.anterior.registros_completos_pct}%</span>
+                        <span className="text-slate-600">Período anterior: {periodComparison.anterior.registros_completos_pct}%</span>
                         <TrendBadge variacion={periodComparison.variacion.auditoria_pct} size="xs" />
                       </div>
                     ) : undefined}
                   />
                 </div>
               ) : (
-                <p className="text-sm text-slate-500 text-center py-4">
+                <p className="text-sm text-slate-600 text-center py-4">
                   Los indicadores de trazabilidad estarán disponibles cuando el administrador configure el módulo.
                 </p>
               )}
@@ -799,7 +795,7 @@ export function MiDesempenoPage() {
                   formula="Σ(tracking_fin − tracking_inicio) ÷ N° servicios completados"
                   comparacion={periodComparison ? (
                     <div className="flex items-center gap-1.5 text-xs">
-                      <span className="text-slate-500">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
+                      <span className="text-slate-600">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
                       <TrendBadge variacion={periodComparison.variacion.tiempo} size="xs" />
                     </div>
                   ) : undefined}
@@ -813,7 +809,7 @@ export function MiDesempenoPage() {
                   formula="(Servicios con tiempo real ≤ estimado ÷ Total completados) × 100"
                   comparacion={periodComparison ? (
                     <div className="flex items-center gap-1.5 text-xs">
-                      <span className="text-slate-500">Período anterior: {periodComparison.anterior.completados_dentro_tiempo_pct}%</span>
+                      <span className="text-slate-600">Período anterior: {periodComparison.anterior.completados_dentro_tiempo_pct}%</span>
                       <TrendBadge variacion={periodComparison.variacion.a_tiempo_pct} size="xs" />
                     </div>
                   ) : undefined}
@@ -827,7 +823,7 @@ export function MiDesempenoPage() {
                   formula="Σ(tarea_tiempo_real) ÷ N° tareas con tiempo"
                   comparacion={periodComparison ? (
                     <div className="flex items-center gap-1.5 text-xs">
-                      <span className="text-slate-500">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio_por_tarea)}</span>
+                      <span className="text-slate-600">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio_por_tarea)}</span>
                       <TrendBadge variacion={periodComparison.variacion.tiempo_por_tarea} size="xs" />
                     </div>
                   ) : undefined}
@@ -866,7 +862,7 @@ export function MiDesempenoPage() {
                         <span className={cn("w-2 h-2 rounded-full shrink-0", dot)} />
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-slate-800 truncate">{s.titulo || "Sin título"}</p>
-                          <p className="text-xs font-mono text-slate-500">{s.codigo || "—"}</p>
+                          <p className="text-xs font-mono text-slate-600">{s.codigo || "—"}</p>
                         </div>
                       </div>
                       <span className={cn("text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0", label)}>
