@@ -61,6 +61,7 @@ function GoalBarGradient({ actual, meta, fmt }: { actual: number; meta: number; 
   const f = fmt ?? ((v: number) => Number.isInteger(v) ? String(v) : v.toFixed(1));
   const labelMid = f(meta / 2);
   const labelMax = f(meta);
+  const barColor = clamped <= 34 ? "#ef4444" : clamped <= 67 ? "#eab308" : "#22c55e";
   return (
     <div className="mt-3">
       {/* Marcas 0%, 50%, 100% con valor numérico */}
@@ -71,12 +72,12 @@ function GoalBarGradient({ actual, meta, fmt }: { actual: number; meta: number; 
       </div>
       {/* Track */}
       <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
-        {/* Relleno con degradado, recortado al % actual */}
+        {/* Relleno: color único según rango */}
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{
             width: `${clamped}%`,
-            background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)",
+            backgroundColor: barColor,
           }}
         />
         {/* Valor | % flotante dentro de la barra */}
@@ -209,12 +210,15 @@ function KpiPrimarioCard({
             )}
           </div>
           {valorArea != null && (
-            <div>
-              <span className="text-4xl font-bold text-slate-900 tracking-tight">{valorArea}</span>
-              {valorAreaLabel && (
-                <p className="text-[10px] text-slate-500 mt-0.5">{valorAreaLabel}</p>
-              )}
-            </div>
+            <>
+              <span className="text-2xl font-light text-slate-300 self-center mt-1">|</span>
+              <div>
+                <span className="text-4xl font-bold text-slate-900 tracking-tight">{valorArea}</span>
+                {valorAreaLabel && (
+                  <p className="text-[10px] text-slate-500 mt-0.5">{valorAreaLabel}</p>
+                )}
+              </div>
+            </>
           )}
         </div>
 
@@ -545,7 +549,10 @@ export function MiDesempenoPage() {
                         <p className="text-xs font-semibold text-slate-600">{periodComparison.anterior.tareas_completadas}</p>
                         <p className="text-[10px] text-slate-500">Período anterior</p>
                       </div>
-                      <TrendBadge variacion={periodComparison.variacion.tareas} size="xs" />
+                      <div className="text-right">
+                        <TrendBadge variacion={periodComparison.variacion.tareas} size="xs" />
+                        <p className="text-[10px] text-slate-500 mt-0.5">Variación</p>
+                      </div>
                     </div>
                   </>
                 )}
@@ -576,7 +583,10 @@ export function MiDesempenoPage() {
                         <p className="text-xs font-semibold text-slate-600">{periodComparison.anterior.servicios_completados}</p>
                         <p className="text-[10px] text-slate-500">Período anterior</p>
                       </div>
-                      <TrendBadge variacion={periodComparison.variacion.servicios} size="xs" />
+                      <div className="text-right">
+                        <TrendBadge variacion={periodComparison.variacion.servicios} size="xs" />
+                        <p className="text-[10px] text-slate-500 mt-0.5">Variación</p>
+                      </div>
                     </div>
                   </>
                 )}
@@ -621,7 +631,10 @@ export function MiDesempenoPage() {
                             <p className="text-xs font-semibold text-slate-600">{periodComparison.anterior.calificacion_promedio.toFixed(1)} / 5</p>
                             <p className="text-[10px] text-slate-500">Período anterior</p>
                           </div>
-                          <TrendBadge variacion={periodComparison.variacion.calificacion} size="xs" />
+                          <div className="text-right">
+                            <TrendBadge variacion={periodComparison.variacion.calificacion} size="xs" />
+                            <p className="text-[10px] text-slate-500 mt-0.5">Variación</p>
+                          </div>
                         </div>
                       </>
                     )}
@@ -691,7 +704,10 @@ export function MiDesempenoPage() {
                             <p className="text-xs font-semibold text-slate-600">{periodComparison.anterior.nps > 0 ? "+" : ""}{periodComparison.anterior.nps}</p>
                             <p className="text-[10px] text-slate-500">Período anterior</p>
                           </div>
-                          <TrendBadge variacion={periodComparison.variacion.nps} size="xs" />
+                          <div className="text-right">
+                            <TrendBadge variacion={periodComparison.variacion.nps} size="xs" />
+                            <p className="text-[10px] text-slate-500 mt-0.5">Variación</p>
+                          </div>
                         </div>
                       </>
                     )}
