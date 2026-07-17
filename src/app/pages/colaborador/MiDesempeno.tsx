@@ -89,7 +89,7 @@ function GoalBarGradient({ actual, meta, fmt }: { actual: number; meta: number; 
           }}
         />
       </div>
-      <div className="flex justify-between text-[10px] text-slate-600">
+      <div className="flex justify-between text-[12px] text-slate-600">
         <span>0 | 0%</span>
         <span>{labelMid} | 50%</span>
         <span>{labelMax} | 100%</span>
@@ -141,7 +141,7 @@ function DividerLabel({ label }: { label: string }) {
         <div className="w-full border-t border-slate-200" />
       </div>
       <div className="relative flex justify-center">
-        <span className="bg-white px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+        <span className="bg-white px-2 text-[12px] font-semibold uppercase tracking-wider text-slate-600">
           {label}
         </span>
       </div>
@@ -191,11 +191,11 @@ function KpiPrimarioCard({
               <div className="min-w-0">
                 <p className="leading-tight flex items-center gap-1">
                   <span className="text-4xl font-bold text-slate-900 tracking-tight shrink-0">{col.valor}</span>
-                  <span className="text-[10px] text-slate-600 whitespace-pre-line leading-normal">{col.label}</span>
+                  <span className="text-[12px] text-slate-600 whitespace-pre-line leading-normal">{col.label}</span>
                 </p>
                 {col.variacion && (
                   <p className={cn(
-                    "inline-flex items-center gap-0.5 text-[10px] font-semibold mt-0.5",
+                    "inline-flex items-center gap-0.5 text-[12px] font-semibold mt-0.5",
                     col.variacion.direction === "up" ? "text-emerald-600" : col.variacion.direction === "down" ? "text-red-600" : "text-slate-500",
                   )}>
                     <span className="text-slate-500 mr-0.5">Variación:</span>
@@ -210,7 +210,7 @@ function KpiPrimarioCard({
                   </p>
                 )}
                 {col.extra && (
-                  <p className="text-[10px] text-slate-600 mt-0.5">{col.extra}</p>
+                  <p className="text-[12px] text-slate-600 mt-0.5">{col.extra}</p>
                 )}
               </div>
             </div>
