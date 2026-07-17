@@ -69,7 +69,9 @@ export function DateFilterCard({
           }}
           className="flex-1 sm:flex-none text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 min-w-0"
         />
-        <span className="text-[11px] text-slate-400 whitespace-nowrap shrink-0">{periodoLabel}</span>
+        {periodoLabel !== "Sin filtro" && (
+          <span className="text-[11px] text-slate-400 whitespace-nowrap shrink-0">{periodoLabel}</span>
+        )}
       </div>
     </div>
   );

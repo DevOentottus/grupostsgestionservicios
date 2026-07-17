@@ -92,7 +92,7 @@ function GoalBarGradient({ actual, meta, fmt }: { actual: number; meta: number; 
       <div className="flex justify-between text-[12px] text-slate-600">
         <span>0 | 0%</span>
         <span>{labelMid} | 50%</span>
-        <span>{labelMax} | 100%</span>
+        <span>Meta: {labelMax} | 100%</span>
       </div>
     </div>
   );
@@ -660,12 +660,12 @@ export function MiDesempenoPage() {
                         iconBg="bg-emerald-100"
                         iconColor="text-emerald-600"
                         titulo="NPS · Recomendación"
-                        infoFormula="NPS = % promotores − % detractores (escala 1–10)"
-                        infoDescripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
+                        infoFormula="((Respuestas totales - (Detractores + Pasivos)) / Respuestas totales) * 100"
+                        infoDescripcion="Promotores: calificación 9-10 · Pasivos: calificación 7-8 · Detractores: calificación 1-6"
                         columnas={[
-                          { valor: npsVal != null ? (npsVal > 0 ? "+" + npsVal : "" + npsVal) : "—", label: "Tu NPS\neste período", extra: npsData ? `${total} / ${curServicios} encuestas` : undefined },
+                          { valor: npsVal != null ? String(npsVal) : "—", label: "Tu NPS\neste período", extra: npsData ? `${total} / ${curServicios} encuestas` : undefined },
                           ...(periodComparison && periodComparison.anterior.calificacion_promedio > 0 ? [{
-                            valor: periodComparison.anterior.nps > 0 ? "+" + periodComparison.anterior.nps : String(periodComparison.anterior.nps),
+                            valor: String(periodComparison.anterior.nps),
                             label: "Período\nanterior",
                             variacion: {
                               direction: (periodComparison.variacion.nps ?? 0) >= 0 ? "up" as const : "down" as const,
@@ -673,7 +673,7 @@ export function MiDesempenoPage() {
                             },
                           }] : []),
                           ...(miArea?.satisfaccion && miArea.satisfaccion.nps != null ? [{
-                            valor: miArea.satisfaccion.nps > 0 ? "+" + miArea.satisfaccion.nps : String(miArea.satisfaccion.nps),
+                            valor: String(miArea.satisfaccion.nps),
                             label: "Promedio\nárea",
                             variacion: npsVal != null ? areaVariacion(npsVal, miArea.satisfaccion.nps) : { direction: "flat" as const, label: "—" },
                           }] : []),
