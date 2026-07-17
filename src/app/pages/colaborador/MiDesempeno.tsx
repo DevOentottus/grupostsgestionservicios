@@ -214,6 +214,7 @@ function KpiPrimarioCard({
                     "inline-flex items-center gap-0.5 text-[10px] font-semibold mt-0.5",
                     col.variacion.direction === "up" ? "text-emerald-600" : col.variacion.direction === "down" ? "text-red-600" : "text-slate-500",
                   )}>
+                    <span className="text-slate-500 mr-0.5">Variación:</span>
                     {col.variacion.direction === "up" ? (
                       <ArrowUp className="w-3 h-3" />
                     ) : col.variacion.direction === "down" ? (
@@ -628,7 +629,7 @@ export function MiDesempenoPage() {
                         columnas={[
                           { valor: califVal != null ? califVal.toFixed(1) : "—", label: "Tu calificación\neste período" },
                           ...(periodComparison && periodComparison.anterior.calificacion_promedio > 0 ? [{
-                            valor: periodComparison.anterior.calificacion_promedio.toFixed(1) + " / 5",
+                            valor: periodComparison.anterior.calificacion_promedio.toFixed(1),
                             label: "Período\nanterior",
                             variacion: {
                               direction: (periodComparison.variacion.calificacion ?? 0) >= 0 ? "up" as const : "down" as const,
@@ -645,7 +646,7 @@ export function MiDesempenoPage() {
                         {califVal != null && (
                           <div className="flex items-center gap-2 mt-2">
                             <StarRating rating={califVal} />
-                            <span className="text-xs text-slate-600">{califCount} calificación{califCount !== 1 ? "es" : ""}</span>
+                            <span className="text-xs text-slate-600">{califCount} / {curServicios} evaluaciones</span>
                           </div>
                         )}
                         {califVal != null && (
