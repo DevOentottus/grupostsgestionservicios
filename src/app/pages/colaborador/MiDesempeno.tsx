@@ -10,7 +10,6 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  X,
   CheckCircle2,
   Star,
   ClipboardCheck,
@@ -147,29 +146,6 @@ function DividerLabel({ label }: { label: string }) {
         </span>
       </div>
     </div>
-  );
-}
-
-function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "xs" }) {
-  const full = Math.floor(rating);
-  const half = rating - full >= 0.5;
-  const starSize = size === "sm" ? "w-4 h-4" : "w-3 h-3";
-  return (
-    <span className="inline-flex items-center gap-0.5" title={rating.toFixed(1) + " / 5"}>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Star
-          key={i}
-          className={cn(
-            starSize,
-            i <= full
-              ? "fill-amber-400 text-amber-400"
-              : i === full + 1 && half
-                ? "fill-amber-400/50 text-amber-400"
-                : "fill-slate-200 text-slate-200",
-          )}
-        />
-      ))}
-    </span>
   );
 }
 
@@ -341,8 +317,6 @@ export function MiDesempenoPage() {
   });
   const [fechaFin, setFechaFin] = useState(todayStr);
   const [periodoLabel, setPeriodoLabel] = useState("Este mes");
-  const [npsModalOpen, setNpsModalOpen] = useState(false);
-
   const setPeriodo = (label: string, inicio: Date | null, fin: Date | null) => {
     setFechaInicio(inicio ? inicio.toISOString().split("T")[0] : "");
     setFechaFin(fin ? fin.toISOString().split("T")[0] : "");
@@ -645,7 +619,7 @@ export function MiDesempenoPage() {
                         infoFormula="Promedio de puntuación 1–5 de servicios evaluados"
                         infoDescripcion="Calificación promedio recibida de los clientes en los servicios completados"
                         columnas={[
-                          { valor: califVal != null ? califVal.toFixed(1) : "—", label: "Tu calificación\neste período", extra: califVal != null ? `${califCount} / ${curServicios} evaluaciones` : undefined },
+                          { valor: califVal != null ? califVal.toFixed(1) : "—", label: "Tu calificación\neste período", extra: califVal != null ? `${califCount} / ${curServicios} encuestas` : undefined },
                           ...(periodComparison && periodComparison.anterior.calificacion_promedio > 0 ? [{
                             valor: periodComparison.anterior.calificacion_promedio.toFixed(1),
                             label: "Período\nanterior",
@@ -686,8 +660,10 @@ export function MiDesempenoPage() {
                         iconBg="bg-emerald-100"
                         iconColor="text-emerald-600"
                         titulo="NPS · Recomendación"
+                        infoFormula="NPS = % promotores − % detractores (escala 1–10)"
+                        infoDescripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
                         columnas={[
-                          { valor: npsVal != null ? (npsVal > 0 ? "+" + npsVal : "" + npsVal) : "—", label: "Tu NPS\neste período" },
+                          { valor: npsVal != null ? (npsVal > 0 ? "+" + npsVal : "" + npsVal) : "—", label: "Tu NPS\neste período", extra: npsData ? `${total} encuestas` : undefined },
                           ...(periodComparison && periodComparison.anterior.calificacion_promedio > 0 ? [{
                             valor: periodComparison.anterior.nps > 0 ? "+" + periodComparison.anterior.nps : String(periodComparison.anterior.nps),
                             label: "Período\nanterior",
@@ -703,20 +679,7 @@ export function MiDesempenoPage() {
                           }] : []),
                         ]}
                       >
-                        {npsData ? (
-                          <>
-                            <button
-                              onClick={() => setNpsModalOpen(true)}
-                              className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 mt-2 hover:text-emerald-700 transition-colors"
-                            >
-                              Ver detalle de NPS →
-                            </button>
-                            <InfoPopover
-                              formula="NPS = % promotores − % detractores (escala 1–10)"
-                              descripcion="¿Qué tan probable es que recomiendes este servicio técnico?"
-                            />
-                          </>
-                        ) : (
+                        {npsData ? null : (
                           <p className="text-xs text-slate-600 mt-2">Sin datos suficientes</p>
                         )}
                         {npsVal != null && npsVal > 0 && (
@@ -725,48 +688,6 @@ export function MiDesempenoPage() {
                             <GoalBarGradient actual={npsVal} meta={100} fmt={(v) => v > 0 ? "+" + v : String(v)} />
                           </>
                         )}
-
-                        {/* Floating modal con desglose NPS */}
-                        {npsModalOpen && npsData && (() => {
-                          const prom = npsData.promotores;
-                          const pas = npsData.pasivos;
-                          const det = npsData.detractores;
-                          return (
-                            <div
-                              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-                              onClick={() => setNpsModalOpen(false)}
-                            >
-                              <div
-                                className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <h4 className="text-sm font-bold text-slate-800">Desglose NPS</h4>
-                                  <button
-                                    onClick={() => setNpsModalOpen(false)}
-                                    className="p-1 rounded-lg hover:bg-slate-100 transition text-slate-400"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                                <div className="flex items-center justify-between text-xs text-slate-600">
-                                  <span className="text-emerald-600 font-semibold">{prom} prom.</span>
-                                  <span className="text-amber-600 font-semibold">{pas} neu.</span>
-                                  <span className="text-red-600 font-semibold">{det} det.</span>
-                                  <span className="text-slate-600">· {total} evals.</span>
-                                </div>
-                                <div className="w-full h-2.5 rounded-full overflow-hidden flex">
-                                  <div className="h-full bg-emerald-500 transition-all" style={{ width: total > 0 ? (prom / total) * 100 + "%" : "0%" }} />
-                                  <div className="h-full bg-amber-400 transition-all" style={{ width: total > 0 ? (pas / total) * 100 + "%" : "0%" }} />
-                                  <div className="h-full bg-red-500 transition-all" style={{ width: total > 0 ? (det / total) * 100 + "%" : "0%" }} />
-                                </div>
-                                <p className="text-[10px] text-slate-500 text-center">
-                                  {prom} promotores + {pas} neutros + {det} detractores = {total} evaluaciones
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })()}
                       </KpiPrimarioCard>
                     );
                   })()}
