@@ -202,13 +202,15 @@ function KpiPrimarioCard({
         </div>
 
         {/* Columnas de valores */}
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
           {columnas.map((col, i) => (
-            <div key={i} className="flex items-start gap-3">
-              {i > 0 && <span className="text-2xl font-light text-slate-300 self-center mt-1">|</span>}
-              <div>
-                <span className="text-4xl font-bold text-slate-900 tracking-tight">{col.valor}</span>
-                <p className="text-[10px] text-slate-600 mt-0.5 leading-tight whitespace-pre-line">{col.label}</p>
+            <div key={i} className="flex items-start gap-2 flex-1 min-w-0">
+              {i > 0 && <span className="text-2xl font-light text-slate-300 self-center mt-1 shrink-0">|</span>}
+              <div className="min-w-0">
+                <p className="leading-tight">
+                  <span className="text-4xl font-bold text-slate-900 tracking-tight">{col.valor}</span>
+                  <span className="text-[10px] text-slate-600 ml-1 whitespace-pre-line">{col.label}</span>
+                </p>
                 {col.variacion && (
                   <p className={cn(
                     "inline-flex items-center gap-0.5 text-[10px] font-semibold mt-0.5",
