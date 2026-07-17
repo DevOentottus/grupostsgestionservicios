@@ -258,7 +258,7 @@ export async function managerController(app: FastifyInstance) {
             promotores,
             pasivos,
             detractores,
-            nps: Math.round(((total - (detractores + pasivos)) / total) * 100),
+            nps: Math.round(((promotores - detractores) / total) * 100),
             servicios_evaluados: totalEval,
             servicios_evaluados_pct: Math.round((totalEval / totalServicios) * 100),
             calificaciones_positivas_pct: Math.round((positivas / total) * 100),

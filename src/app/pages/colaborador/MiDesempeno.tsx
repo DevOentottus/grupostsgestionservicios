@@ -660,7 +660,7 @@ export function MiDesempenoPage() {
                         iconBg="bg-emerald-100"
                         iconColor="text-emerald-600"
                         titulo="NPS · Recomendación"
-                        infoFormula="((Respuestas totales - (Detractores + Pasivos)) / Respuestas totales) * 100"
+                        infoFormula="NPS = % promotores − % detractores (escala −100 a +100)"
                         infoDescripcion="Promotores: calificación 9-10 · Pasivos: calificación 7-8 · Detractores: calificación 1-6"
                         columnas={[
                           { valor: npsVal != null ? String(npsVal) : "—", label: "Tu NPS\neste período", extra: npsData ? `${total} / ${curServicios} encuestas` : undefined },

@@ -981,7 +981,7 @@ export async function seguimientoController(app: FastifyInstance) {
             promotores = califs!.filter((c: any) => toNpsCat(c) === "promoter").length;
             pasivos = califs!.filter((c: any) => toNpsCat(c) === "passive").length;
             detractores = califs!.filter((c: any) => toNpsCat(c) === "detractor").length;
-            nps = Math.round(((totalCalificaciones - (detractores + pasivos)) / totalCalificaciones) * 100);
+            nps = Math.round(((promotores - detractores) / totalCalificaciones) * 100);
           }
         }
 
