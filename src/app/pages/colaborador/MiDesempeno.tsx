@@ -65,30 +65,29 @@ function GoalBarGradient({ actual, meta, fmt }: { actual: number; meta: number; 
   const labelMax = f(meta);
   const barColor = clamped <= 34 ? "#ef4444" : clamped <= 67 ? "#eab308" : "#22c55e";
   return (
-    <div className="mt-3 space-y-1.5">
-      {/* Barra de progreso (color según rango) */}
+    <div className="mt-3">
       <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
+        {/* Gradiente de fondo (full width) */}
         <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${clamped}%`, backgroundColor: barColor }}
-        />
-        <span
-          className="absolute top-1/2 -translate-y-1/2 text-[9px] font-bold text-white drop-shadow-sm pointer-events-none"
-          style={{ left: `${Math.max(clamped - 16, 2)}%` }}
-        >
-          {f(actual)} | {clamped}%
-        </span>
-      </div>
-      {/* Barra de meta (degradado completo) con marcas */}
-      <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
-        <div
-          className="h-full rounded-full opacity-70"
+          className="absolute inset-0 opacity-70"
           style={{
-            width: "100%",
             background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)",
           }}
         />
-        <div className="absolute inset-0 flex justify-between items-center px-2 text-[11px] font-semibold text-slate-800">
+        {/* Barra de progreso (overlay) */}
+        <div
+          className="h-full rounded-full transition-all duration-500 relative"
+          style={{ width: `${clamped}%`, backgroundColor: barColor }}
+        >
+          <span
+            className="absolute top-1/2 -translate-y-1/2 text-[9px] font-bold text-white drop-shadow-sm pointer-events-none"
+            style={{ right: "4px" }}
+          >
+            {f(actual)} | {clamped}%
+          </span>
+        </div>
+        {/* Etiquetas de referencia sobre el gradiente */}
+        <div className="absolute inset-0 flex justify-between items-center px-2 text-[11px] font-semibold text-slate-800 pointer-events-none">
           <span>0 | 0%</span>
           <span>{labelMid} | 50%</span>
           <span>Meta: {labelMax} | 100%</span>
@@ -209,15 +208,16 @@ function KpiPrimarioCard({
                     {col.variacion.label ?? ""}
                   </p>
                 )}
-                {col.extra && (
-                  <p className="text-[12px] text-slate-600 mt-0.5">{col.extra}</p>
-                )}
               </div>
             </div>
           ))}
         </div>
 
         {children}
+
+        {columnas[0]?.extra && (
+          <p className="text-[12px] text-slate-600 mt-0.5">{columnas[0].extra}</p>
+        )}
       </div>
     </div>
   );
