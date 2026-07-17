@@ -5,6 +5,8 @@ import { useDashboardWithComparison } from "@/api/queries/useDashboard.js";
 import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { cn, formatMinutos } from "@/app/lib/utils";
 import {
+  ArrowUp,
+  ArrowDown,
   TrendingUp,
   TrendingDown,
   Minus,
@@ -213,9 +215,9 @@ function KpiPrimarioCard({
                     col.variacion.direction === "up" ? "text-emerald-600" : col.variacion.direction === "down" ? "text-red-600" : "text-slate-500",
                   )}>
                     {col.variacion.direction === "up" ? (
-                      <TrendingUp className="w-3 h-3" />
+                      <ArrowUp className="w-3 h-3" />
                     ) : col.variacion.direction === "down" ? (
-                      <TrendingDown className="w-3 h-3" />
+                      <ArrowDown className="w-3 h-3" />
                     ) : (
                       <Minus className="w-3 h-3" />
                     )}
@@ -537,6 +539,14 @@ export function MiDesempenoPage() {
             {(() => {
               const curTareas = periodComparison ? periodComparison.actual.tareas_completadas : (misDatos.tareas_completadas ?? 0);
               const curServicios = periodComparison ? periodComparison.actual.servicios_completados : (misDatos.servicios_completados ?? 0);
+              const areaVariacion = (actual: number, ref: number) => {
+                if (ref <= 0) return { direction: "flat" as const, label: "—" };
+                const pct = Math.round(((actual - ref) / ref) * 100);
+                return {
+                  direction: (pct > 0 ? "up" : pct < 0 ? "down" : "flat") as "up" | "down" | "flat",
+                  label: (pct > 0 ? "+" : "") + pct + "%",
+                };
+              };
               return (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* TAREAS COMPLETADAS */}
@@ -558,7 +568,7 @@ export function MiDesempenoPage() {
                       ...(areaBenchmark?.avgTareas != null ? [{
                         valor: areaBenchmark.avgTareas.toFixed(1),
                         label: "Promedio\nárea",
-                        variacion: { direction: (curTareas >= areaBenchmark.avgTareas ? "up" as const : "down" as const) },
+                        variacion: areaVariacion(curTareas, areaBenchmark.avgTareas),
                       }] : []),
                     ]}
                   >
@@ -589,7 +599,7 @@ export function MiDesempenoPage() {
                       ...(areaBenchmark?.avgServicios != null ? [{
                         valor: areaBenchmark.avgServicios.toFixed(1),
                         label: "Promedio\nárea",
-                        variacion: { direction: (curServicios >= areaBenchmark.avgServicios ? "up" as const : "down" as const) },
+                        variacion: areaVariacion(curServicios, areaBenchmark.avgServicios),
                       }] : []),
                     ]}
                   >
@@ -628,7 +638,7 @@ export function MiDesempenoPage() {
                           ...(areaBenchmark?.avgCalificacion != null ? [{
                             valor: areaBenchmark.avgCalificacion.toFixed(1),
                             label: "Promedio\nárea",
-                            variacion: { direction: (califVal != null && califVal >= areaBenchmark.avgCalificacion ? "up" as const : "down" as const) },
+                            variacion: califVal != null ? areaVariacion(califVal, areaBenchmark.avgCalificacion) : { direction: "flat" as const, label: "—" },
                           }] : []),
                         ]}
                       >
