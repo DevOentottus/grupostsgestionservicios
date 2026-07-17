@@ -56,47 +56,6 @@ function TrendBadge({ variacion, size = "sm" }: { variacion: number; size?: "sm"
 }
 
 /** Barra de progreso con degradado rojo→amarillo→verde */
-function GoalBarGradient({ actual, meta, fmt }: { actual: number; meta: number; fmt?: (v: number) => string }) {
-  if (meta <= 0) return null;
-  const pct = Math.min(Math.round((actual / meta) * 100), 100);
-  const clamped = Math.min(Math.max(pct, 0), 100);
-  const f = fmt ?? ((v: number) => Number.isInteger(v) ? String(v) : v.toFixed(1));
-  const labelMid = f(meta / 2);
-  const labelMax = f(meta);
-  const barColor = clamped <= 34 ? "#ef4444" : clamped <= 67 ? "#eab308" : "#22c55e";
-  return (
-    <div className="mt-3">
-      <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
-        {/* Gradiente de fondo (full width) */}
-        <div
-          className="absolute inset-0 opacity-60"
-          style={{
-            background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)",
-          }}
-        />
-        {/* Barra de progreso (overlay) */}
-        <div
-          className="h-full rounded-full transition-all duration-500 relative"
-          style={{ width: `${clamped}%`, backgroundColor: barColor }}
-        >
-          <span
-            className="absolute top-1/2 -translate-y-1/2 text-[9px] font-bold text-white drop-shadow-sm pointer-events-none"
-            style={{ right: "4px" }}
-          >
-            {f(actual)} | {clamped}%
-          </span>
-        </div>
-        {/* Etiquetas de referencia sobre el gradiente */}
-        <div className="absolute inset-0 flex justify-between items-center px-2 text-[11px] font-semibold text-slate-800 pointer-events-none">
-          <span>0 | 0%</span>
-          <span>{labelMid} | 50%</span>
-          <span>Meta: {labelMax} | 100%</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /** Barra de progreso contra meta */
 function GoalBar({ actual, meta, showMeta = true }: { actual: number; meta: number; showMeta?: boolean }) {
   if (meta <= 0) return null;
@@ -158,6 +117,9 @@ function KpiPrimarioCard({
   children,
   infoFormula,
   infoDescripcion,
+  barActual,
+  barMeta,
+  barFmt,
 }: {
   icon: React.ElementType;
   iconBg: string;
@@ -167,7 +129,15 @@ function KpiPrimarioCard({
   children?: React.ReactNode;
   infoFormula?: string;
   infoDescripcion?: string;
+  barActual?: number;
+  barMeta?: number;
+  barFmt?: (v: number) => string;
 }) {
+  const f = barFmt ?? ((v: number) => Number.isInteger(v) ? String(v) : v.toFixed(1));
+  const clamped = barMeta && barMeta > 0 && barActual != null
+    ? Math.min(Math.max(Math.min(Math.round((barActual / barMeta) * 100), 100), 0), 100)
+    : 0;
+  const barColor = clamped <= 34 ? "#ef4444" : clamped <= 67 ? "#eab308" : "#22c55e";
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <div className="p-5">
@@ -187,7 +157,7 @@ function KpiPrimarioCard({
           {columnas.map((col, i) => (
             <div key={i} className="flex items-start gap-2 flex-1 min-w-0">
               {i > 0 && <span className="text-2xl font-light text-slate-300 self-center mt-1 shrink-0">|</span>}
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="leading-tight flex items-center gap-1">
                   <span className="text-4xl font-bold text-slate-900 tracking-tight shrink-0">{col.valor}</span>
                   <span className="text-[12px] text-slate-600 whitespace-pre-line leading-normal">{col.label}</span>
@@ -210,6 +180,21 @@ function KpiPrimarioCard({
                 )}
                 {col.extra && (
                   <p className="text-[12px] text-slate-600 mt-0.5">{col.extra}</p>
+                )}
+                {i === 0 && barMeta != null && barMeta > 0 && (
+                  <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden mt-3">
+                    <div className="absolute inset-0 opacity-60" style={{ background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)" }} />
+                    <div className="h-full rounded-full transition-all duration-500 relative" style={{ width: `${clamped}%`, backgroundColor: barColor }}>
+                      <span className="absolute top-1/2 -translate-y-1/2 text-[9px] font-bold text-white drop-shadow-sm pointer-events-none" style={{ right: "4px" }}>
+                        {f(barActual!)} | {clamped}%
+                      </span>
+                    </div>
+                    <div className="absolute inset-0 flex justify-between items-center px-2 text-[11px] font-semibold text-slate-500 pointer-events-none">
+                      <span>0 | 0%</span>
+                      <span>{f(barMeta / 2)} | 50%</span>
+                      <span>Meta: {f(barMeta)} | 100%</span>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -559,13 +544,10 @@ export function MiDesempenoPage() {
                         variacion: areaVariacion(curTareas, areaBenchmark.avgTareas),
                       }] : []),
                     ]}
+                    barActual={periodComparison ? curTareas : undefined}
+                    barMeta={periodComparison ? Math.round(periodComparison.anterior.tareas_completadas * 1.1) : undefined}
                   >
-                    {periodComparison && (
-                      <>
-                        <DividerLabel label="Progreso vs meta" />
-                        <GoalBarGradient actual={curTareas} meta={Math.round(periodComparison.anterior.tareas_completadas * 1.1)} />
-                      </>
-                    )}
+                    {periodComparison && <DividerLabel label="Progreso vs meta" />}
                   </KpiPrimarioCard>
 
                   {/* SERVICIOS COMPLETADOS */}
@@ -592,13 +574,10 @@ export function MiDesempenoPage() {
                         variacion: areaVariacion(curServicios, areaBenchmark.avgServicios),
                       }] : []),
                     ]}
+                    barActual={periodComparison ? curServicios : undefined}
+                    barMeta={periodComparison ? Math.round(periodComparison.anterior.servicios_completados * 1.1) : undefined}
                   >
-                    {periodComparison && (
-                      <>
-                        <DividerLabel label="Progreso vs meta" />
-                        <GoalBarGradient actual={curServicios} meta={Math.round(periodComparison.anterior.servicios_completados * 1.1)} />
-                      </>
-                    )}
+                    {periodComparison && <DividerLabel label="Progreso vs meta" />}
                   </KpiPrimarioCard>
 
                   {/* CALIFICACION */}
@@ -633,13 +612,11 @@ export function MiDesempenoPage() {
                             variacion: califVal != null ? areaVariacion(califVal, areaBenchmark.avgCalificacion) : { direction: "flat" as const, label: "—" },
                           }] : []),
                         ]}
+                        barActual={califVal != null ? califVal : undefined}
+                        barMeta={califVal != null ? 5 : undefined}
+                        barFmt={(v: number) => v.toFixed(1)}
                       >
-                        {califVal != null && (
-                          <>
-                            <DividerLabel label="Progreso vs meta" />
-                            <GoalBarGradient actual={califVal} meta={5} fmt={(v) => v.toFixed(1)} />
-                          </>
-                        )}
+                        {califVal != null && <DividerLabel label="Progreso vs meta" />}
                       </KpiPrimarioCard>
                     );
                   })()}
@@ -677,15 +654,12 @@ export function MiDesempenoPage() {
                             variacion: npsVal != null ? areaVariacion(npsVal, miArea.satisfaccion.nps) : { direction: "flat" as const, label: "—" },
                           }] : []),
                         ]}
+                        barActual={npsVal != null && npsVal > 0 ? npsVal : undefined}
+                        barMeta={npsVal != null && npsVal > 0 ? 100 : undefined}
+                        barFmt={(v: number) => v > 0 ? "+" + v : String(v)}
                       >
                         {npsData ? null : (
                           <p className="text-xs text-slate-600 mt-2">Sin datos suficientes</p>
-                        )}
-                        {npsVal != null && npsVal > 0 && (
-                          <>
-                            <DividerLabel label="Progreso vs meta" />
-                            <GoalBarGradient actual={npsVal} meta={100} fmt={(v) => v > 0 ? "+" + v : String(v)} />
-                          </>
                         )}
                       </KpiPrimarioCard>
                     );
