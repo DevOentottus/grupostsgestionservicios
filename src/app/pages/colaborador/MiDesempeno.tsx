@@ -165,9 +165,12 @@ function KpiPrimarioCard({
                   <div className="mt-3">
                     <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
                       <div className="absolute inset-0 opacity-60" style={{ background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)" }} />
-                      <div className="h-full rounded-full transition-all duration-500 relative" style={{ width: `${clamped}%`, backgroundColor: barColor }}>
-                        <span className="absolute top-1/2 -translate-y-1/2 text-[9px] font-bold text-white drop-shadow-sm pointer-events-none whitespace-nowrap" style={{ right: "4px" }}>
-                          {f(barActual!)} / {f(barMeta)} | {clamped}%
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-500 pointer-events-none z-10">
+                        {f(barMeta)}
+                      </span>
+                      <div className="h-full rounded-full transition-all duration-500 relative flex items-center justify-end pr-1" style={{ width: `${clamped}%`, backgroundColor: barColor }}>
+                        <span className="text-[9px] font-bold text-white drop-shadow-sm pointer-events-none whitespace-nowrap">
+                          Valor en este periodo | {clamped}%
                         </span>
                       </div>
                     </div>
@@ -505,7 +508,7 @@ export function MiDesempenoPage() {
                     infoFormula="Tareas finalizadas en servicios completados del período"
                     infoDescripcion="Cantidad de tareas marcadas como completadas en servicios finalizados"
                     columnas={[
-                      { valor: curTareas, label: "Tus tareas\neste período" },
+                      { valor: curTareas, label: "Este periodo" },
                       ...(periodComparison ? [{
                         valor: periodComparison.anterior.tareas_completadas,
                         label: "Período\nanterior",
@@ -534,7 +537,7 @@ export function MiDesempenoPage() {
                     infoFormula="Servicios finalizados en el período"
                     infoDescripcion="Total de servicios cuyo estado es completado"
                     columnas={[
-                      { valor: curServicios, label: "Tus servicios\neste período" },
+                      { valor: curServicios, label: "Este periodo" },
                       ...(periodComparison ? [{
                         valor: periodComparison.anterior.servicios_completados,
                         label: "Período\nanterior",
@@ -568,7 +571,7 @@ export function MiDesempenoPage() {
                         infoFormula="Promedio de puntuación 1–5 de servicios evaluados"
                         infoDescripcion="Calificación promedio recibida de los clientes en los servicios completados"
                         columnas={[
-                          { valor: califVal != null ? califVal.toFixed(1) : "—", label: "Tu calificación\neste período" },
+                          { valor: califVal != null ? califVal.toFixed(1) : "—", label: "Este periodo" },
                           ...(periodComparison && periodComparison.anterior.calificacion_promedio > 0 ? [{
                             valor: periodComparison.anterior.calificacion_promedio.toFixed(1),
                             label: "Período\nanterior",
@@ -609,7 +612,7 @@ export function MiDesempenoPage() {
                         infoFormula="NPS = % promotores − % detractores (escala −100 a +100)"
                         infoDescripcion="Promotores: calificación 9-10 · Pasivos: calificación 7-8 · Detractores: calificación 1-6"
                         columnas={[
-                          { valor: npsVal != null ? String(npsVal) : "—", label: "Tu NPS\neste período" },
+                          { valor: npsVal != null ? String(npsVal) : "—", label: "Este periodo" },
                           ...(periodComparison && periodComparison.anterior.calificacion_promedio > 0 ? [{
                             valor: String(periodComparison.anterior.nps),
                             label: "Período\nanterior",
