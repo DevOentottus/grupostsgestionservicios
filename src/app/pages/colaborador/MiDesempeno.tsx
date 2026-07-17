@@ -165,7 +165,7 @@ function KpiPrimarioCard({
                   <div className="mt-3">
                     <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
                       <div className="absolute inset-0 opacity-60" style={{ background: "linear-gradient(to right, #ef4444, #eab308, #22c55e)" }} />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-500 pointer-events-none z-10">
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-slate-500 pointer-events-none">
                         Meta: {f(barMeta)}
                       </span>
                       <div className="h-full rounded-full transition-all duration-500 relative flex items-center justify-end pr-1" style={{ width: `${clamped}%`, backgroundColor: barColor }}>
