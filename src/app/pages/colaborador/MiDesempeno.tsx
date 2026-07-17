@@ -207,9 +207,9 @@ function KpiPrimarioCard({
             <div key={i} className="flex items-start gap-2 flex-1 min-w-0">
               {i > 0 && <span className="text-2xl font-light text-slate-300 self-center mt-1 shrink-0">|</span>}
               <div className="min-w-0">
-                <p className="leading-tight">
-                  <span className="text-4xl font-bold text-slate-900 tracking-tight">{col.valor}</span>
-                  <span className="text-[10px] text-slate-600 ml-1 whitespace-pre-line">{col.label}</span>
+                <p className="leading-tight flex items-center gap-1">
+                  <span className="text-4xl font-bold text-slate-900 tracking-tight shrink-0">{col.valor}</span>
+                  <span className="text-[10px] text-slate-600 whitespace-pre-line leading-tight">{col.label}</span>
                 </p>
                 {col.variacion && (
                   <p className={cn(
@@ -685,6 +685,11 @@ export function MiDesempenoPage() {
                               direction: (periodComparison.variacion.nps ?? 0) >= 0 ? "up" as const : "down" as const,
                               label: ((periodComparison.variacion.nps ?? 0) >= 0 ? "+" : "") + (periodComparison.variacion.nps ?? 0) + "%",
                             },
+                          }] : []),
+                          ...(miArea?.satisfaccion && miArea.satisfaccion.nps != null ? [{
+                            valor: miArea.satisfaccion.nps > 0 ? "+" + miArea.satisfaccion.nps : String(miArea.satisfaccion.nps),
+                            label: "Promedio\nárea",
+                            variacion: npsVal != null ? areaVariacion(npsVal, miArea.satisfaccion.nps) : { direction: "flat" as const, label: "—" },
                           }] : []),
                         ]}
                       >
