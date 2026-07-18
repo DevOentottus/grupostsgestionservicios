@@ -368,7 +368,7 @@ export async function reportesController(app: FastifyInstance) {
   // -- GET /api/reportes/exportar/:tipo/:formato --
   app.get(
     "/api/reportes/exportar/:tipo/:formato",
-    { preHandler: [requireRoles("admin", "encargado")] },
+    { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async (request, reply) => {
       const user = request.user as {
         user_id: number;
@@ -402,13 +402,20 @@ export async function reportesController(app: FastifyInstance) {
       let rows: string[][];
 
       if (tipo === "colaborador") {
-        title = "Reporte de Colaboradores";
-        headers = ["Colaborador", "Tareas Completadas", "Tiempo Promedio (min)", "Eficiencia (%)"];
+        title = "Reporte de Desempeño";
 
-        const { data: tareasData } = await supabase
+        // Determinar qué usuario_id usar: si es colaborador, solo suyo; si es admin/encargado, el filtro o todos
+        const filterUserId = query.usuario_id
+          ? parseInt(query.usuario_id)
+          : user.rol === "colaborador"
+            ? user.user_id
+            : undefined;
+
+        let tareasQuery = supabase
           .from("tareas")
           .select(`
             tarea_completado_por,
+            tarea_tiempo_real,
             usuarios!tareas_tarea_completado_por_fkey (
               usuario_nombres,
               usuario_apellido_paterno
@@ -418,7 +425,13 @@ export async function reportesController(app: FastifyInstance) {
           .gte("tarea_fecha_completado", fechaInicio.toISOString().split("T")[0])
           .lte("tarea_fecha_completado", fechaFin.toISOString().split("T")[0]);
 
-        const grouped: Record<number, { nombre: string; count: number }> = {};
+        if (filterUserId) {
+          tareasQuery = tareasQuery.eq("tarea_completado_por", filterUserId);
+        }
+
+        const { data: tareasData } = await tareasQuery;
+
+        const grouped: Record<number, { nombre: string; count: number; tiempoTotal: number }> = {};
         for (const t of tareasData || []) {
           const id = t.tarea_completado_por;
           if (!id) continue;
@@ -427,17 +440,36 @@ export async function reportesController(app: FastifyInstance) {
             grouped[id] = {
               nombre: `${u?.usuario_nombres || ""} ${u?.usuario_apellido_paterno || ""}`.trim(),
               count: 0,
+              tiempoTotal: 0,
             };
           }
           grouped[id].count++;
+          grouped[id].tiempoTotal += t.tarea_tiempo_real ?? 0;
         }
 
-        rows = Object.entries(grouped).map(([id, data]) => [
-          data.nombre || `Usuario #${id}`,
-          String(data.count),
-          "--",
-          "--",
-        ]);
+        if (filterUserId) {
+          // Reporte individual: filas detalladas
+          headers = ["Métrica", "Valor"];
+          const ud = grouped[filterUserId];
+          const nombre = ud?.nombre || `Usuario #${filterUserId}`;
+          const completadas = ud?.count ?? 0;
+          const tiempoPromedio = completadas > 0 && ud?.tiempoTotal
+            ? Math.round(ud.tiempoTotal / completadas)
+            : 0;
+          rows = [
+            ["Colaborador", nombre],
+            ["Periodo", `${fechaInicio.toISOString().split("T")[0]} — ${fechaFin.toISOString().split("T")[0]}`],
+            ["Tareas Completadas", String(completadas)],
+            ["Tiempo Promedio (min)", String(tiempoPromedio)],
+          ];
+        } else {
+          // Reporte general (admin/encargado): tabla de todos
+          headers = ["Colaborador", "Tareas Completadas", "Tiempo Promedio (min)"];
+          rows = Object.entries(grouped).map(([id, d]) => {
+            const prom = d.count > 0 ? Math.round(d.tiempoTotal / d.count) : 0;
+            return [d.nombre || `Usuario #${id}`, String(d.count), String(prom)];
+          });
+        }
       } else {
         title = "Reporte por Área";
         headers = ["Área", "Total Servicios", "Completados", "Productividad (%)"];

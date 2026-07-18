@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
@@ -6,6 +6,7 @@ import { useMiArea } from "@/api/queries/useManager.js";
 import { useDashboardWithComparison } from "@/api/queries/useDashboard.js";
 import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { cn, formatMinutos } from "@/app/lib/utils";
+import { jsPDF } from "jspdf";
 import {
   CheckCircle2,
   Star,
@@ -26,8 +27,31 @@ import {
  * COMPONENTES INTERNOS
  * ───────────────────────────────────────────── */
 
-/** Badge de tendencia con fondo tintado */
-function TrendBadge({ variacion, size = "sm" }: { variacion: number; size?: "sm" | "xs" }) {
+/** Calcula variación porcentual entre dos valores */
+function calcVariacion(actual: number | null | undefined, anterior: number | null | undefined): number | null {
+  if (actual == null || anterior == null) return null;
+  if (anterior === 0) return actual > 0 ? 999 : actual < 0 ? -999 : null;
+  return Math.round(((actual - anterior) / Math.abs(anterior)) * 100);
+}
+
+/** Badge de tendencia con fondo tintado.
+ *  Si se pasan actual+anterior se calcula la variación internamente (sobreescribe `variacion`). */
+function TrendBadge({ variacion: overrideVariacion, actual, anterior, size = "sm" }: {
+  variacion?: number;
+  actual?: number | null;
+  anterior?: number | null;
+  size?: "sm" | "xs";
+}) {
+  let variacion: number | null;
+  if (actual != null && anterior != null) {
+    variacion = calcVariacion(actual, anterior);
+  } else if (overrideVariacion != null) {
+    variacion = overrideVariacion;
+  } else {
+    variacion = null;
+  }
+  if (variacion == null) return null;
+
   if (variacion === 0) {
     return (
       <span
@@ -40,12 +64,13 @@ function TrendBadge({ variacion, size = "sm" }: { variacion: number; size?: "sm"
       </span>
     );
   }
+  const over100 = Math.abs(variacion) > 100;
   const up = variacion > 0;
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-full font-semibold",
-        up ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
+        over100 ? "bg-blue-50 text-blue-700" : up ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700",
         size === "sm" ? "text-xs px-2.5 py-1" : "text-xs px-2 py-0.5",
       )}
       aria-label={up ? "Subio " + Math.abs(variacion) + "% respecto al periodo anterior" : "Bajo " + Math.abs(variacion) + "% respecto al periodo anterior"}
@@ -89,6 +114,158 @@ function GoalBar({ actual, meta, showMeta = true }: { actual: number; meta: numb
       </div>
     </div>
   );
+}
+
+/* ─────────────────────────────────────────────
+ * GENERADOR DE PDF (frontend con jsPDF)
+ * ───────────────────────────────────────────── */
+function generarPDFReporte({
+  usuarioId, nombreUsuario, fechaInicio, fechaFin,
+  dashboard, kpi, periodComparison, misDatos,
+}: {
+  usuarioId: number | undefined;
+  nombreUsuario: string;
+  fechaInicio: string | null;
+  fechaFin: string | null;
+  dashboard: any;
+  kpi: any;
+  periodComparison: any;
+  misDatos: any;
+}) {
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  const pgW = 210;
+  const left = 15;
+  let y = 15;
+  const ln = 7;
+
+  function text(t: string, sz = 10, bold = false) {
+    doc.setFontSize(sz);
+    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.text(t, left, y);
+    y += sz * 0.35 + 1;
+  }
+
+  function kv(key: string, val: string | number) {
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text(key + ": ", left, y);
+    const kw = doc.getTextWidth(key + ": ");
+    doc.setFont("helvetica", "normal");
+    doc.text(String(val), left + kw, y);
+    y += ln;
+  }
+
+  function section(title: string) {
+    y += 2;
+    doc.setFillColor(37, 99, 235);
+    doc.rect(left, y, pgW - 2 * left, 7, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text(title, left + 2, y + 5);
+    doc.setTextColor(0, 0, 0);
+    y += 11;
+  }
+
+  // --- TÍTULO ---
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("Reporte de Desempe\u00F1o Individual", left, y);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(100);
+  y += 5;
+  const periodo = [fechaInicio || "—", fechaFin || "—"].join(" — ");
+  doc.text("Periodo: " + periodo, left, y);
+  doc.text("Generado: " + new Date().toLocaleDateString("es-PE"), left + 90, y);
+  doc.setTextColor(0);
+  y += 8;
+
+  // Datos generales del colaborador
+  kv("Colaborador", nombreUsuario);
+
+  // --- KPI PRINCIPALES ---
+  section("Indicadores Principales");
+
+  const curTareas = periodComparison?.actual?.tareas_completadas ?? misDatos?.tareas_completadas ?? 0;
+  const curServicios = periodComparison?.actual?.servicios_completados ?? misDatos?.servicios_completados ?? 0;
+  const curCalif = periodComparison?.actual?.calificacion_promedio ?? kpi?.calificacion_promedio ?? 0;
+  const curEficiencia = periodComparison?.actual?.eficiencia_pct ?? dashboard?.indicadores?.eficiencia?.eficiencia_pct ?? 0;
+
+  kv("Tareas completadas", String(curTareas));
+  kv("Servicios completados", String(curServicios));
+  kv("Calificaci\u00F3n promedio", curCalif > 0 ? curCalif.toFixed(1) + " / 5" : "—");
+  kv("Eficiencia", curEficiencia > 0 ? String(Math.round(curEficiencia)) + "%" : "—");
+
+  if (periodComparison) {
+    section("Comparaci\u00F3n vs Periodo Anterior");
+    kv("Tareas (anterior)", String(periodComparison.anterior?.tareas_completadas ?? 0));
+    kv("Servicios (anterior)", String(periodComparison.anterior?.servicios_completados ?? 0));
+    kv("Calificaci\u00F3n (anterior)", periodComparison.anterior?.calificacion_promedio > 0
+      ? periodComparison.anterior.calificacion_promedio.toFixed(1) + " / 5" : "—");
+  }
+
+  // --- EFICIENCIA ---
+  const tpServicio = dashboard?.indicadores?.eficiencia?.tiempo_promedio_min;
+  const tpAnt = periodComparison?.anterior?.tiempo_promedio;
+  const dentroTiempo = kpi?.completados_dentro_tiempo_pct;
+  const dentroTiempoAnt = periodComparison?.anterior?.completados_dentro_tiempo_pct;
+  const tpPorTarea = dashboard?.indicadores?.eficiencia?.tiempo_promedio_por_tarea;
+  const tpPorTareaAnt = periodComparison?.anterior?.tiempo_promedio_por_tarea;
+
+  section("Eficiencia Operativa");
+  if (tpServicio != null) kv("Tiempo promedio por servicio", formatMinutos(tpServicio));
+  if (tpAnt) kv("  → Periodo anterior", formatMinutos(tpAnt));
+  if (dentroTiempo != null) kv("Dentro del tiempo estimado", String(Math.round(dentroTiempo)) + "%");
+  if (dentroTiempoAnt != null) kv("  → Periodo anterior", String(Math.round(dentroTiempoAnt)) + "%");
+  if (tpPorTarea != null) kv("Tiempo promedio por tarea", formatMinutos(tpPorTarea));
+  if (tpPorTareaAnt) kv("  → Periodo anterior", formatMinutos(tpPorTareaAnt));
+
+  // --- TRAZABILIDAD ---
+  const trackPct = kpi?.servicios_con_tiempo_tracking_pct;
+  const docs = kpi?.tareas_documentadas_conteo;
+  const audit = kpi?.registros_completos_pct;
+
+  if (trackPct != null || docs != null || audit != null) {
+    section("Trazabilidad y Control");
+    if (trackPct != null) kv("Servicios con tracking", String(Math.round(trackPct)) + "%");
+    if (docs != null) kv("Tareas documentadas", String(docs));
+    if (audit != null) kv("Trazabilidad completa", String(Math.round(audit)) + "%");
+  }
+
+  // --- SERVICIOS ATRAZADOS ---
+  const retrasos = periodComparison?.actual?.retrasos ?? dashboard?.indicadores?.eficiencia?.cantidad_retrasos ?? 0;
+  const completados = dashboard?.completados ?? 0;
+  if (completados > 0) {
+    section("Servicios");
+    kv("Total servicios", String(dashboard?.total_servicios ?? 0));
+    kv("Completados", String(completados));
+    kv("Atrasados", String(retrasos));
+    if (periodComparison?.anterior?.retrasos != null) {
+      kv("  → Periodo anterior", String(periodComparison.anterior.retrasos));
+    }
+  }
+
+  // --- PENDIENTES / EN PROGRESO ---
+  if (periodComparison) {
+    section("Estado de Servicios");
+    kv("Pendientes (actual)", String(periodComparison.actual?.pendientes ?? 0));
+    kv("Pendientes (anterior)", String(periodComparison.anterior?.pendientes ?? 0));
+    kv("En progreso (actual)", String(periodComparison.actual?.en_progreso ?? 0));
+    kv("En progreso (anterior)", String(periodComparison.anterior?.en_progreso ?? 0));
+  }
+
+  // --- FOOTER ---
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(150);
+    doc.text("STS — Sistema de Gestión de Servicios", left, 292);
+    doc.text("Pág. " + i + " de " + pageCount, pgW - left, 292, { align: "right" });
+  }
+
+  doc.save("reporte-desempeno-" + (usuarioId ?? "colaborador") + ".pdf");
 }
 
 /** Card principal para KPI primario — columnas de valores con tendencia */
@@ -493,36 +670,16 @@ export function MiDesempenoPage() {
               </div>
             </div>
             <button
-              onClick={async () => {
-                const base = import.meta.env.VITE_API_URL || "";
-                const token = sessionStorage.getItem("auth_token");
-                const params = new URLSearchParams();
-                if (fechaInicio) params.set("fecha_inicio", fechaInicio);
-                if (fechaFin) params.set("fecha_fin", fechaFin);
-                if (usuarioId) params.set("usuario_id", String(usuarioId));
-                try {
-                  const res = await fetch(`${base}/api/reportes/exportar/colaborador/pdf?${params.toString()}`, {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
-                  });
-                  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
-                  const blob = await res.blob();
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `reporte-${usuarioId}-${Date.now()}.pdf`;
-                  document.body.appendChild(a);
-                  a.click();
-                  setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                  }, 3000);
-                } catch (err: any) {
-                  console.error("Error al descargar PDF:", err);
-                  // fallback: abrir en nueva ventana como intento
-                  const win = window.open(`${base}/api/reportes/exportar/colaborador/pdf?${params.toString()}`, "_blank");
-                  if (win) win.focus();
-                }
-              }}
+              onClick={() => generarPDFReporte({
+                usuarioId,
+                nombreUsuario: misDatos?.nombres ? `${misDatos.nombres} ${misDatos.apellidos || ""}`.trim() : `Usuario #${usuarioId}`,
+                fechaInicio,
+                fechaFin,
+                dashboard,
+                kpi,
+                periodComparison,
+                misDatos,
+              })}
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
             >
               <FileText className="w-4 h-4" />
@@ -947,50 +1104,50 @@ export function MiDesempenoPage() {
               descripcion="Métricas de tiempo, cumplimiento y productividad"
             >
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <IndicadorCard
-                  titulo="Tiempo promedio por servicio"
-                  valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_min) : "—"}
-                  unidad=""
-                  descripcion="Promedio de tiempo por servicio completado"
-                  color="bg-orange-600"
-                  formula="Σ(tracking_fin − tracking_inicio) ÷ N° servicios completados"
-                  comparacion={periodComparison ? (
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <span className="text-slate-600">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
-                      <TrendBadge variacion={periodComparison.variacion.tiempo} size="xs" />
-                    </div>
-                  ) : undefined}
-                />
-                <IndicadorCard
-                  titulo="Dentro del tiempo estimado"
-                  valor={kpi?.completados_dentro_tiempo_pct ?? 0}
-                  unidad="%"
-                  descripcion="Servicios que cumplieron el tiempo estimado"
-                  color="bg-green-600"
-                  formula="(Servicios con tiempo real ≤ estimado ÷ Total completados) × 100"
-                  barActual={kpi?.completados_dentro_tiempo_pct ?? 0}
-                  barMeta={100}
-                  comparacion={periodComparison ? (
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <span className="text-slate-600">Período anterior: {periodComparison.anterior.completados_dentro_tiempo_pct}%</span>
-                      <TrendBadge variacion={periodComparison.variacion.a_tiempo_pct} size="xs" />
-                    </div>
-                  ) : undefined}
-                />
-                <IndicadorCard
-                  titulo="Tiempo promedio por tarea"
-                  valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_por_tarea != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_por_tarea) : "—"}
-                  unidad=""
-                  descripcion="Promedio de tiempo por tarea completada"
-                  color="bg-purple-600"
-                  formula="Σ(tarea_tiempo_real) ÷ N° tareas con tiempo"
-                  comparacion={periodComparison ? (
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <span className="text-slate-600">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio_por_tarea)}</span>
-                      <TrendBadge variacion={periodComparison.variacion.tiempo_por_tarea} size="xs" />
-                    </div>
-                  ) : undefined}
-                />
+                  <IndicadorCard
+                    titulo="Tiempo promedio por servicio"
+                    valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_min) : "—"}
+                    unidad=""
+                    descripcion="Promedio de tiempo por servicio completado"
+                    color="bg-orange-600"
+                    formula="Σ(tracking_fin − tracking_inicio) ÷ N° servicios completados"
+                    comparacion={periodComparison ? (
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <span className="text-slate-600">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
+                        <TrendBadge actual={dashboard?.indicadores?.eficiencia?.tiempo_promedio_min} anterior={periodComparison.anterior.tiempo_promedio} size="xs" />
+                      </div>
+                    ) : undefined}
+                  />
+                  <IndicadorCard
+                    titulo="Dentro del tiempo estimado"
+                    valor={kpi?.completados_dentro_tiempo_pct ?? 0}
+                    unidad="%"
+                    descripcion="Servicios que cumplieron el tiempo estimado"
+                    color="bg-green-600"
+                    formula="(Servicios con tiempo real ≤ estimado ÷ Total completados) × 100"
+                    barActual={kpi?.completados_dentro_tiempo_pct ?? 0}
+                    barMeta={100}
+                    comparacion={periodComparison ? (
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <span className="text-slate-600">Período anterior: {periodComparison.anterior.completados_dentro_tiempo_pct}%</span>
+                        <TrendBadge actual={kpi?.completados_dentro_tiempo_pct} anterior={periodComparison.anterior.completados_dentro_tiempo_pct} size="xs" />
+                      </div>
+                    ) : undefined}
+                  />
+                  <IndicadorCard
+                    titulo="Tiempo promedio por tarea"
+                    valor={dashboard?.indicadores?.eficiencia?.tiempo_promedio_por_tarea != null ? formatMinutos(dashboard.indicadores.eficiencia.tiempo_promedio_por_tarea) : "—"}
+                    unidad=""
+                    descripcion="Promedio de tiempo por tarea completada"
+                    color="bg-purple-600"
+                    formula="Σ(tarea_tiempo_real) ÷ N° tareas con tiempo"
+                    comparacion={periodComparison ? (
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <span className="text-slate-600">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio_por_tarea)}</span>
+                        <TrendBadge actual={dashboard?.indicadores?.eficiencia?.tiempo_promedio_por_tarea} anterior={periodComparison.anterior.tiempo_promedio_por_tarea} size="xs" />
+                      </div>
+                    ) : undefined}
+                  />
               </div>
             </Seccion>
           </div>
