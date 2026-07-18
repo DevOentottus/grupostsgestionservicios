@@ -1055,7 +1055,7 @@ export function MiDesempenoPage() {
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-xs">
                         <span className="text-slate-600">Período anterior: {periodComparison.anterior.servicios_con_tiempo_tracking_pct}%</span>
-                        <TrendBadge variacion={periodComparison.variacion.tracking_pct} size="xs" />
+                        <TrendBadge actual={kpi!.servicios_con_tiempo_tracking_pct} anterior={periodComparison.anterior.servicios_con_tiempo_tracking_pct} size="xs" />
                       </div>
                     ) : undefined}
                   />
@@ -1069,7 +1069,7 @@ export function MiDesempenoPage() {
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-xs">
                         <span className="text-slate-600">Período anterior: {periodComparison.anterior.tareas_documentadas_conteo}</span>
-                        <TrendBadge variacion={periodComparison.variacion.tareas_documentadas} size="xs" />
+                        <TrendBadge actual={kpi!.tareas_documentadas_conteo} anterior={periodComparison.anterior.tareas_documentadas_conteo} size="xs" />
                       </div>
                     ) : undefined}
                   />
@@ -1085,7 +1085,7 @@ export function MiDesempenoPage() {
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-xs">
                         <span className="text-slate-600">Período anterior: {periodComparison.anterior.registros_completos_pct}%</span>
-                        <TrendBadge variacion={periodComparison.variacion.auditoria_pct} size="xs" />
+                        <TrendBadge actual={kpi!.registros_completos_pct} anterior={periodComparison.anterior.registros_completos_pct} size="xs" />
                       </div>
                     ) : undefined}
                   />
