@@ -776,12 +776,10 @@ export function MiDesempenoPage() {
                         barFmt={(v: number) => v > 0 ? "+" + v : String(v)}
                       >
                         {npsData ? (
-                          esPeriodo ? (
-                            <div className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100 space-y-0.5">
-                              <p>🟢 Promotores: {periodComparison.actual.promotores} de {total} ({total > 0 ? Math.round((periodComparison.actual.promotores / total) * 100) : 0}%)</p>
-                              <p>🟡 Pasivos: {periodComparison.actual.pasivos} de {total} ({total > 0 ? Math.round((periodComparison.actual.pasivos / total) * 100) : 0}%)</p>
-                              <p>🔴 Detractores: {periodComparison.actual.detractores} de {total} ({total > 0 ? Math.round((periodComparison.actual.detractores / total) * 100) : 0}%)</p>
-                            </div>
+                          esPeriodo && dashboard && (dashboard?.completados ?? 0) > 0 ? (
+                            <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
+                              {periodComparison.actual.total_calificaciones} de {dashboard.completados} servicios evaluados ({Math.round((periodComparison.actual.total_calificaciones / dashboard.completados) * 100)}%)
+                            </p>
                           ) : null
                         ) : (
                           <p className="text-xs text-slate-600 mt-2">Sin datos suficientes</p>
