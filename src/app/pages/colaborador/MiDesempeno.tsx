@@ -18,6 +18,9 @@ import {
   ShieldCheck,
   Layers,
   User,
+  Clock,
+  AlertTriangle,
+  Activity,
 } from "lucide-react";
 import { DateFilterCard } from "@/app/components/filters/DateFilterCard.js";
 
@@ -145,10 +148,13 @@ function KpiPrimarioCard({
                   <span className="text-4xl font-bold text-slate-900 tracking-tight shrink-0">{col.valor}</span>
                   <span className="text-[12px] text-slate-600 whitespace-pre-line leading-normal">{col.label}</span>
                 </p>
-                {col.variacion && (
+                {col.variacion && (() => {
+                  const pctNum = col.variacion.label ? parseInt(col.variacion.label.replace(/[^0-9-]/g, "")) : 0;
+                  const over100 = Math.abs(pctNum) > 100;
+                  return (
                   <p className={cn(
                     "inline-flex items-center gap-0.5 text-[12px] font-semibold mt-0.5",
-                    col.variacion.direction === "up" ? "text-emerald-600" : col.variacion.direction === "down" ? "text-red-600" : "text-slate-500",
+                    over100 ? "text-blue-600" : col.variacion.direction === "up" ? "text-emerald-600" : col.variacion.direction === "down" ? "text-red-600" : "text-slate-500",
                   )}>
                     <span className="text-slate-500 mr-0.5">Variación:</span>
                     {col.variacion.direction === "up" ? (
@@ -160,7 +166,8 @@ function KpiPrimarioCard({
                     )}
                     {col.variacion.label ?? ""}
                   </p>
-                )}
+                  );
+                })()}
                 {i === 0 && barMeta != null && barMeta > 0 && (
                   <div className="mt-1">
                     <div className="relative w-full h-4 bg-slate-100 rounded-full overflow-hidden">
@@ -502,6 +509,51 @@ export function MiDesempenoPage() {
       {/* ═══════════════════════════════ */}
       {!isLoading && !isError && misDatos && (
         <>
+          {/* --- SECCION 0: ESTADO DE SERVICIOS --- */}
+          {dashboard && (
+            <section aria-label="Estado de servicios" className="mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Activity className="w-5 h-5 text-slate-600" />
+                <h2 className="text-lg font-bold text-slate-800">Estado de servicios</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <KpiPrimarioCard
+                  icon={Clock}
+                  iconBg="bg-orange-100"
+                  iconColor="text-orange-600"
+                  titulo="Servicios pendientes"
+                  infoFormula="Servicios que aún no han iniciado"
+                  infoDescripcion="Total de servicios en estado pendiente en el período"
+                  columnas={[
+                    { valor: dashboard?.graficos?.estado_servicios?.pendiente ?? 0, label: "Sin iniciar" },
+                  ]}
+                />
+                <KpiPrimarioCard
+                  icon={Timer}
+                  iconBg="bg-blue-100"
+                  iconColor="text-blue-600"
+                  titulo="Servicios en progreso"
+                  infoFormula="Servicios actualmente en ejecución"
+                  infoDescripcion="Total de servicios en estado en_progreso"
+                  columnas={[
+                    { valor: dashboard?.graficos?.estado_servicios?.en_progreso ?? 0, label: "En curso" },
+                  ]}
+                />
+                <KpiPrimarioCard
+                  icon={AlertTriangle}
+                  iconBg="bg-red-100"
+                  iconColor="text-red-600"
+                  titulo="Servicios atrasados"
+                  infoFormula="Servicios completados fuera del tiempo estimado"
+                  infoDescripcion="Servicios cuyo tiempo real superó el tiempo estimado según tracking"
+                  columnas={[
+                    { valor: dashboard?.indicadores?.eficiencia?.cantidad_retrasos ?? 0, label: "Fuera de tiempo" },
+                  ]}
+                />
+              </div>
+            </section>
+          )}
+
           {/* --- SECCION 1: KPIS PRINCIPALES --- */}
           <section aria-label="Indicadores principales">
             <div className="flex items-center gap-2 mb-3">
@@ -613,6 +665,16 @@ export function MiDesempenoPage() {
                         barMeta={califVal != null ? 5 : undefined}
                         barFmt={(v: number) => v.toFixed(1)}
                       >
+                        {dashboard && periodComparison && periodComparison.actual.total_calificaciones > 0 && (() => {
+                          const evaluados = periodComparison.actual.total_calificaciones;
+                          const completados = dashboard.completados ?? 0;
+                          if (completados === 0) return null;
+                          return (
+                            <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
+                              {evaluados} de {completados} servicios evaluados ({Math.round((evaluados / completados) * 100)}%)
+                            </p>
+                          );
+                        })()}
                       </KpiPrimarioCard>
                     );
                   })()}
