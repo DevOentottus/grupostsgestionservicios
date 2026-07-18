@@ -120,10 +120,14 @@ function KpiPrimarioCard({
   barFmt?: (v: number) => string;
 }) {
   const f = barFmt ?? ((v: number) => Number.isInteger(v) ? String(v) : v.toFixed(1));
-  const clamped = barMeta && barMeta > 0 && barActual != null
-    ? Math.min(Math.max(Math.min(Math.round((barActual / barMeta) * 100), 100), 0), 100)
+  const clamped = barMeta != null && barActual != null
+    ? barMeta > 0
+      ? Math.min(Math.max(Math.min(Math.round((barActual / barMeta) * 100), 100), 0), 100)
+      : 100
     : 0;
-  const barColor = clamped <= 34 ? "#ef4444" : clamped <= 67 ? "#eab308" : "#22c55e";
+  const barColor = barMeta === 0 && barActual != null && barActual > 0
+    ? "#ef4444"
+    : clamped <= 34 ? "#ef4444" : clamped <= 67 ? "#eab308" : "#22c55e";
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <div className="p-5">
@@ -543,7 +547,7 @@ export function MiDesempenoPage() {
                     }] : []),
                   ]}
                   barActual={periodComparison ? periodComparison.actual.pendientes : undefined}
-                  barMeta={periodComparison ? Math.max(periodComparison.anterior.pendientes, 1) : undefined}
+                  barMeta={0}
                 />
                 <KpiPrimarioCard
                   icon={Timer}
@@ -564,7 +568,7 @@ export function MiDesempenoPage() {
                     }] : []),
                   ]}
                   barActual={periodComparison ? periodComparison.actual.en_progreso : undefined}
-                  barMeta={periodComparison ? Math.max(periodComparison.anterior.en_progreso, 1) : undefined}
+                  barMeta={0}
                 />
                 <KpiPrimarioCard
                   icon={AlertTriangle}
@@ -585,7 +589,7 @@ export function MiDesempenoPage() {
                     }] : []),
                   ]}
                   barActual={periodComparison ? periodComparison.actual.retrasos : undefined}
-                  barMeta={periodComparison ? Math.max(periodComparison.anterior.retrasos, 1) : undefined}
+                  barMeta={0}
                 />
               </div>
             </section>
