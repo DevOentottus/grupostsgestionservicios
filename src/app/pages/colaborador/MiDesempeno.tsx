@@ -4,15 +4,9 @@ import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 
 import { useDashboardWithComparison } from "@/api/queries/useDashboard.js";
-import { useExportarReporte } from "@/api/queries/useReportes.js";
 import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { cn, formatMinutos } from "@/app/lib/utils";
 import {
-  ArrowUp,
-  ArrowDown,
-  TrendingUp,
-  TrendingDown,
-  Minus,
   CheckCircle2,
   Star,
   ClipboardCheck,
@@ -42,7 +36,7 @@ function TrendBadge({ variacion, size = "sm" }: { variacion: number; size?: "sm"
           size === "sm" ? "text-xs px-2.5 py-1" : "text-xs px-2 py-0.5",
         )}
       >
-        <Minus className={size === "sm" ? "w-3 h-3" : "w-2.5 h-2.5"} /> 0%
+        — 0%
       </span>
     );
   }
@@ -56,7 +50,7 @@ function TrendBadge({ variacion, size = "sm" }: { variacion: number; size?: "sm"
       )}
       aria-label={up ? "Subio " + Math.abs(variacion) + "% respecto al periodo anterior" : "Bajo " + Math.abs(variacion) + "% respecto al periodo anterior"}
     >
-      {up ? <TrendingUp className={size === "sm" ? "w-3 h-3" : "w-2.5 h-2.5"} /> : <TrendingDown className={size === "sm" ? "w-3 h-3" : "w-2.5 h-2.5"} />}
+      {up ? "↑" : "↓"}
       {Math.abs(variacion)}%
     </span>
   );
@@ -166,11 +160,11 @@ function KpiPrimarioCard({
                   )}>
                     <span className="text-slate-500 mr-0.5">Variación:</span>
                     {col.variacion.direction === "up" ? (
-                      <ArrowUp className="w-3 h-3" />
+                      "↑"
                     ) : col.variacion.direction === "down" ? (
-                      <ArrowDown className="w-3 h-3" />
+                      "↓"
                     ) : (
-                      <Minus className="w-3 h-3" />
+                      "—"
                     )}
                     {col.variacion.label ?? ""}
                   </p>
@@ -311,7 +305,6 @@ export function MiDesempenoPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { data: miArea, isLoading: areaLoading, isError: areaError } = useMiArea();
-  const exportarReporte = useExportarReporte();
 
   // Soporte para ver desempeño de otro usuario (manager/admin viendo a un colaborador)
   const targetUserIdStr = searchParams.get("usuario_id");
@@ -500,11 +493,36 @@ export function MiDesempenoPage() {
               </div>
             </div>
             <button
-              onClick={() => exportarReporte("colaborador", "pdf", {
-                fecha_inicio: fechaInicio || undefined,
-                fecha_fin: fechaFin || undefined,
-                usuario_id: usuarioId,
-              })}
+              onClick={async () => {
+                const base = import.meta.env.VITE_API_URL || "";
+                const token = sessionStorage.getItem("auth_token");
+                const params = new URLSearchParams();
+                if (fechaInicio) params.set("fecha_inicio", fechaInicio);
+                if (fechaFin) params.set("fecha_fin", fechaFin);
+                if (usuarioId) params.set("usuario_id", String(usuarioId));
+                try {
+                  const res = await fetch(`${base}/api/reportes/exportar/colaborador/pdf?${params.toString()}`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                  });
+                  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+                  const blob = await res.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `reporte-${usuarioId}-${Date.now()}.pdf`;
+                  document.body.appendChild(a);
+                  a.click();
+                  setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  }, 3000);
+                } catch (err: any) {
+                  console.error("Error al descargar PDF:", err);
+                  // fallback: abrir en nueva ventana como intento
+                  const win = window.open(`${base}/api/reportes/exportar/colaborador/pdf?${params.toString()}`, "_blank");
+                  if (win) win.focus();
+                }
+              }}
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
             >
               <FileText className="w-4 h-4" />
@@ -550,7 +568,7 @@ export function MiDesempenoPage() {
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-8">
           <div className="flex flex-col items-center justify-center py-10">
             <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4">
-              <TrendingDown className="w-7 h-7 text-red-500" />
+              <AlertTriangle className="w-7 h-7 text-red-500" />
             </div>
             <p className="text-red-600 font-semibold text-lg">Error al cargar tu desempeño</p>
             <p className="text-sm text-slate-600 mt-1 mb-4">No pudimos obtener tus indicadores. Intentá de nuevo más tarde.</p>
