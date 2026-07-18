@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
+
 import { useDashboardWithComparison } from "@/api/queries/useDashboard.js";
 import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { cn, formatMinutos } from "@/app/lib/utils";
@@ -23,8 +24,8 @@ import {
   AlertTriangle,
   Activity,
   ArrowLeft,
+  FileText,
 } from "lucide-react";
-import { DateFilterCard } from "@/app/components/filters/DateFilterCard.js";
 
 /* ─────────────────────────────────────────────
  * COMPONENTES INTERNOS
@@ -458,17 +459,73 @@ export function MiDesempenoPage() {
         </div>
       </div>
 
-      {/* Filtro de fechas */}
+      {/* Header con filtros y export PDF */}
       {misDatos && (
-        <div className="pb-5">
-          <DateFilterCard
-            presets={presets}
-            fechaInicio={fechaInicio}
-            fechaFin={fechaFin}
-            onFechaInicio={(v) => setFechaInicio(v)}
-            onFechaFin={(v) => setFechaFin(v)}
-            onLabelChange={(l) => setPeriodoLabel(l)}
-          />
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-5">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="bg-white rounded-xl border border-slate-200 p-3 flex flex-wrap items-center gap-x-2 gap-y-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-calendar-days w-4 h-4 text-slate-400 shrink-0" aria-hidden="true"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path><path d="M8 14h.01"></path><path d="M12 14h.01"></path><path d="M16 14h.01"></path><path d="M8 18h.01"></path><path d="M12 18h.01"></path><path d="M16 18h.01"></path></svg>
+              <div className="flex flex-wrap gap-1.5">
+                {presets.map((p) => (
+                  <button
+                    key={p.label}
+                    onClick={p.action}
+                    className={cn(
+                      "text-xs px-3 py-1.5 rounded-lg font-medium transition-colors",
+                      p.active
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                <input
+                  type="date"
+                  value={fechaInicio}
+                  onChange={(e) => { setFechaInicio(e.target.value); setPeriodoLabel("Personalizado"); }}
+                  className="flex-1 sm:flex-none text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 min-w-0"
+                />
+                <span className="text-xs text-slate-400 shrink-0">→</span>
+                <input
+                  type="date"
+                  value={fechaFin}
+                  onChange={(e) => { setFechaFin(e.target.value); setPeriodoLabel("Personalizado"); }}
+                  className="flex-1 sm:flex-none text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-blue-500 min-w-0"
+                />
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                const base = import.meta.env.VITE_API_URL || "";
+                const params = new URLSearchParams();
+                if (fechaInicio) params.set("fecha_inicio", fechaInicio);
+                if (fechaFin) params.set("fecha_fin", fechaFin);
+                if (usuarioId) params.set("usuario_id", String(usuarioId));
+                try {
+                  const res = await fetch(`${base}/api/reportes/exportar/colaborador/pdf?${params.toString()}`);
+                  if (!res.ok) throw new Error("Error al generar el PDF");
+                  const blob = await res.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `reporte-desempeno-${usuarioId}.pdf`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                } catch (err) {
+                  console.error("Error al descargar PDF:", err);
+                }
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Exportar PDF
+            </button>
+          </div>
         </div>
       )}
 
