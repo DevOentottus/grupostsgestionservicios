@@ -784,48 +784,6 @@ export function MiDesempenoPage() {
             </Seccion>
           </div>
 
-          {/* --- SECCION 3: SERVICIOS ASIGNADOS --- */}
-          {misDatos.servicios_asignados && misDatos.servicios_asignados.length > 0 && (
-            <Seccion
-              icon={Layers}
-              titulo="Servicios asignados"
-              descripcion={misDatos.servicios_asignados.length + " servicio" + (misDatos.servicios_asignados.length !== 1 ? "s" : "") + " a tu nombre"}
-            >
-              <div className="space-y-1">
-                {misDatos.servicios_asignados.map((s: any) => {
-                  const estadoColor: Record<string, string> = {
-                    completado: "bg-emerald-100 text-emerald-700",
-                    en_progreso: "bg-blue-100 text-blue-700",
-                    pendiente: "bg-amber-100 text-amber-700",
-                  };
-                  const estadoDot: Record<string, string> = {
-                    completado: "bg-emerald-500",
-                    en_progreso: "bg-blue-500",
-                    pendiente: "bg-amber-500",
-                  };
-                  const label = estadoColor[s.estado] || "bg-slate-100 text-slate-600";
-                  const dot = estadoDot[s.estado] || "bg-slate-400";
-                  return (
-                    <div
-                      key={s.id}
-                      className="flex items-center justify-between px-4 py-2.5 rounded-xl hover:bg-slate-50 transition-colors group cursor-default"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className={cn("w-2 h-2 rounded-full shrink-0", dot)} />
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-slate-800 truncate">{s.titulo || "Sin título"}</p>
-                          <p className="text-xs font-mono text-slate-600">{s.codigo || "—"}</p>
-                        </div>
-                      </div>
-                      <span className={cn("text-xs px-2.5 py-0.5 rounded-full font-medium shrink-0", label)}>
-                        {s.estado || "—"}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </Seccion>
-          )}
         </>
       )}
     </div>

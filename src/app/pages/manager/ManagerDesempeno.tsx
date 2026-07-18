@@ -4,7 +4,8 @@ import { useDashboard } from "@/api/queries/useDashboard.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import { useAuth } from "@/lib/auth.js";
 import { InfoPopover } from "@/app/components/ui/info-popover.js";
-import { formatMinutos } from "@/app/lib/utils";
+import { DateFilterCard } from "@/app/components/filters/DateFilterCard.js";
+import { formatMinutos, cn } from "@/app/lib/utils";
 import {
   TrendingUp, Clock, Target, CheckCircle2, Search, Calendar,
   User, Star, BarChart3, Eye, MessageCircle, FileText, Zap,
@@ -111,6 +112,7 @@ export function ManagerDesempenoPage() {
 
   const today = new Date();
   const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const todayStr = today.toISOString().split("T")[0];
 
   const [colaboradorId, setColaboradorId] = useState<string>("");
   const [fechaInicio, setFechaInicio] = useState(
@@ -119,6 +121,21 @@ export function ManagerDesempenoPage() {
   const [fechaFin, setFechaFin] = useState(
     today.toISOString().split("T")[0]
   );
+  const [periodoLabel, setPeriodoLabel] = useState("Este mes");
+
+  const setPeriodo = (label: string, inicio: Date | null, fin: Date | null) => {
+    setFechaInicio(inicio ? inicio.toISOString().split("T")[0] : "");
+    setFechaFin(fin ? fin.toISOString().split("T")[0] : "");
+    setPeriodoLabel(label);
+  };
+
+  const presets = [
+    { label: "Sin filtro", active: periodoLabel === "Sin filtro", action: () => setPeriodo("Sin filtro", null, null) },
+    { label: "Hoy", active: periodoLabel === "Hoy", action: () => { const h = new Date(); setPeriodo("Hoy", h, h); } },
+    { label: "Esta semana", active: periodoLabel === "Esta semana", action: () => { const hoy = new Date(); const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1)); setPeriodo("Esta semana", lunes, hoy); } },
+    { label: "Este mes", active: periodoLabel === "Este mes", action: () => { const hoy = new Date(); const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1); setPeriodo("Este mes", inicio, hoy); } },
+    { label: "Este año", active: periodoLabel === "Este año", action: () => { const hoy = new Date(); const inicio = new Date(hoy.getFullYear(), 0, 1); setPeriodo("Este año", inicio, hoy); } },
+  ];
 
   // Colaboradores del área (encargado) o todos los colaboradores (sistema/admin)
   const colaboradores = useMemo(() => {
@@ -201,30 +218,14 @@ export function ManagerDesempenoPage() {
               ))}
             </select>
           </div>
-          <div>
-            <label className="text-xs font-medium text-slate-500 block mb-1.5 flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              Desde
-            </label>
-            <input
-              type="date"
-              value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
-              className="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-slate-500 block mb-1.5 flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              Hasta
-            </label>
-            <input
-              type="date"
-              value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
-              className="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            />
-          </div>
+          <DateFilterCard
+            presets={presets}
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+            onFechaInicio={(v) => setFechaInicio(v)}
+            onFechaFin={(v) => setFechaFin(v)}
+            onLabelChange={(l) => setPeriodoLabel(l)}
+          />
           {colaboradorId && (
             <button
               onClick={() => {
@@ -240,6 +241,68 @@ export function ManagerDesempenoPage() {
               <FileText className="w-4 h-4" />
               Exportar PDF
             </button>
+          )}
+        </div>
+      </div>
+
+      {/* Colaboradores del área */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-white">
+          <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
+            <User className="w-4 h-4 text-slate-500" />
+            Colaboradores del área
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">{colaboradores.length} colaboradores</p>
+        </div>
+        <div className="p-4">
+          {colaboradores.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-4">No hay colaboradores en esta área</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {colaboradores.map((col) => {
+                const c = miArea?.colaboradores?.find((x: any) => x.usuario_id === col.usuario_id);
+                return (
+                  <div
+                    key={col.usuario_id}
+                    className={cn(
+                      "bg-white rounded-xl border p-4 transition-all",
+                      colaboradorId === String(col.usuario_id)
+                        ? "border-blue-400 ring-1 ring-blue-400/30"
+                        : "border-slate-200 hover:border-blue-200"
+                    )}
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                        <span className="text-sm font-bold text-blue-700">
+                          {col.nombres.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-slate-800 truncate">{col.nombres}</p>
+                        <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                          <span>{c?.servicios_completados ?? 0} servicios</span>
+                          <span>·</span>
+                          <span>{c?.tareas_completadas ?? 0} tareas</span>
+                        </div>
+                      </div>
+                    </div>
+                    {c?.calificacion_promedio != null && (
+                      <div className="flex items-center gap-1.5 mb-3 text-xs text-slate-600">
+                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                        <span className="font-medium">{c.calificacion_promedio.toFixed(1)}</span>
+                        <span className="text-slate-400">/ 5</span>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setColaboradorId(String(col.usuario_id))}
+                      className="w-full text-xs font-semibold text-center py-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                    >
+                      Ver desempeño →
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
