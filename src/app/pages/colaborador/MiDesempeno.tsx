@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 
 import { useDashboardWithComparison } from "@/api/queries/useDashboard.js";
+import { useExportarReporte } from "@/api/queries/useReportes.js";
 import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { cn, formatMinutos } from "@/app/lib/utils";
 import {
@@ -310,6 +311,7 @@ export function MiDesempenoPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { data: miArea, isLoading: areaLoading, isError: areaError } = useMiArea();
+  const exportarReporte = useExportarReporte();
 
   // Soporte para ver desempeño de otro usuario (manager/admin viendo a un colaborador)
   const targetUserIdStr = searchParams.get("usuario_id");
@@ -498,28 +500,11 @@ export function MiDesempenoPage() {
               </div>
             </div>
             <button
-              onClick={async () => {
-                const base = import.meta.env.VITE_API_URL || "";
-                const params = new URLSearchParams();
-                if (fechaInicio) params.set("fecha_inicio", fechaInicio);
-                if (fechaFin) params.set("fecha_fin", fechaFin);
-                if (usuarioId) params.set("usuario_id", String(usuarioId));
-                try {
-                  const res = await fetch(`${base}/api/reportes/exportar/colaborador/pdf?${params.toString()}`);
-                  if (!res.ok) throw new Error("Error al generar el PDF");
-                  const blob = await res.blob();
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `reporte-desempeno-${usuarioId}.pdf`;
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  URL.revokeObjectURL(url);
-                } catch (err) {
-                  console.error("Error al descargar PDF:", err);
-                }
-              }}
+              onClick={() => exportarReporte("colaborador", "pdf", {
+                fecha_inicio: fechaInicio || undefined,
+                fecha_fin: fechaFin || undefined,
+                usuario_id: usuarioId,
+              })}
               className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
             >
               <FileText className="w-4 h-4" />
