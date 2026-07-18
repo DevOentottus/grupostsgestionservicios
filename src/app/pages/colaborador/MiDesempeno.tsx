@@ -416,7 +416,14 @@ export function MiDesempenoPage() {
             {periodoLabel && (
               <>
                 <span className="text-blue-200 text-sm">·</span>
-                <span className="text-blue-100 text-sm font-medium">{periodoLabel}</span>
+                <span className="text-blue-100 text-sm font-medium">
+                  {periodoLabel}
+                  {(periodoLabel === "Sin filtro" || periodoLabel === "Hoy") && (
+                    <span className="text-blue-200 ml-1.5 font-normal">
+                      {new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                </span>
               </>
             )}
           </div>
@@ -522,22 +529,42 @@ export function MiDesempenoPage() {
                   iconBg="bg-orange-100"
                   iconColor="text-orange-600"
                   titulo="Servicios pendientes"
-                  infoFormula="Servicios que aún no han iniciado"
-                  infoDescripcion="Total de servicios en estado pendiente en el período"
+                  infoFormula="Servicios que aún no han iniciado en el período"
+                  infoDescripcion="Total de servicios en estado pendiente"
                   columnas={[
-                    { valor: dashboard?.graficos?.estado_servicios?.pendiente ?? 0, label: "Sin iniciar" },
+                    { valor: periodComparison ? periodComparison.actual.pendientes : (dashboard?.graficos?.estado_servicios?.pendiente ?? 0), label: "Este periodo" },
+                    ...(periodComparison ? [{
+                      valor: periodComparison.anterior.pendientes,
+                      label: "Período\nanterior",
+                      variacion: {
+                        direction: (periodComparison.variacion.pendientes ?? 0) >= 0 ? "up" as const : "down" as const,
+                        label: ((periodComparison.variacion.pendientes ?? 0) >= 0 ? "+" : "") + (periodComparison.variacion.pendientes ?? 0) + "%",
+                      },
+                    }] : []),
                   ]}
+                  barActual={periodComparison ? periodComparison.actual.pendientes : undefined}
+                  barMeta={periodComparison ? Math.max(periodComparison.anterior.pendientes, 1) : undefined}
                 />
                 <KpiPrimarioCard
                   icon={Timer}
                   iconBg="bg-blue-100"
                   iconColor="text-blue-600"
                   titulo="Servicios en progreso"
-                  infoFormula="Servicios actualmente en ejecución"
+                  infoFormula="Servicios actualmente en ejecución en el período"
                   infoDescripcion="Total de servicios en estado en_progreso"
                   columnas={[
-                    { valor: dashboard?.graficos?.estado_servicios?.en_progreso ?? 0, label: "En curso" },
+                    { valor: periodComparison ? periodComparison.actual.en_progreso : (dashboard?.graficos?.estado_servicios?.en_progreso ?? 0), label: "Este periodo" },
+                    ...(periodComparison ? [{
+                      valor: periodComparison.anterior.en_progreso,
+                      label: "Período\nanterior",
+                      variacion: {
+                        direction: (periodComparison.variacion.en_progreso ?? 0) >= 0 ? "up" as const : "down" as const,
+                        label: ((periodComparison.variacion.en_progreso ?? 0) >= 0 ? "+" : "") + (periodComparison.variacion.en_progreso ?? 0) + "%",
+                      },
+                    }] : []),
                   ]}
+                  barActual={periodComparison ? periodComparison.actual.en_progreso : undefined}
+                  barMeta={periodComparison ? Math.max(periodComparison.anterior.en_progreso, 1) : undefined}
                 />
                 <KpiPrimarioCard
                   icon={AlertTriangle}
@@ -545,10 +572,20 @@ export function MiDesempenoPage() {
                   iconColor="text-red-600"
                   titulo="Servicios atrasados"
                   infoFormula="Servicios completados fuera del tiempo estimado"
-                  infoDescripcion="Servicios cuyo tiempo real superó el tiempo estimado según tracking"
+                  infoDescripcion="Servicios cuyo tiempo real superó el estimado"
                   columnas={[
-                    { valor: dashboard?.indicadores?.eficiencia?.cantidad_retrasos ?? 0, label: "Fuera de tiempo" },
+                    { valor: periodComparison ? periodComparison.actual.retrasos : (dashboard?.indicadores?.eficiencia?.cantidad_retrasos ?? 0), label: "Este periodo" },
+                    ...(periodComparison ? [{
+                      valor: periodComparison.anterior.retrasos,
+                      label: "Período\nanterior",
+                      variacion: {
+                        direction: (periodComparison.variacion.retrasos ?? 0) >= 0 ? "up" as const : "down" as const,
+                        label: ((periodComparison.variacion.retrasos ?? 0) >= 0 ? "+" : "") + (periodComparison.variacion.retrasos ?? 0) + "%",
+                      },
+                    }] : []),
                   ]}
+                  barActual={periodComparison ? periodComparison.actual.retrasos : undefined}
+                  barMeta={periodComparison ? Math.max(periodComparison.anterior.retrasos, 1) : undefined}
                 />
               </div>
             </section>

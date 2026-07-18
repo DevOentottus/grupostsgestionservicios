@@ -932,6 +932,20 @@ export async function seguimientoController(app: FastifyInstance) {
           tareasActivas = pend?.length || 0;
         }
 
+        // -- Pendientes y en_progreso del período --
+        let pendientes = 0;
+        let enProgreso = 0;
+        if (allSvcIds.length > 0) {
+          const { data: allEstados } = await supabase
+            .from("servicios")
+            .select("servicio_estado")
+            .in("servicio_id", allSvcIds);
+          for (const s of allEstados || []) {
+            if (s.servicio_estado === "pendiente") pendientes++;
+            else if (s.servicio_estado === "en_progreso") enProgreso++;
+          }
+        }
+
         // -- Auditoría (trazabilidad completa) --
         let svcConAuditoria = 0;
         if (allSvcIds.length > 0) {
@@ -946,11 +960,13 @@ export async function seguimientoController(app: FastifyInstance) {
 
         // -- Servicios completados dentro del tiempo estimado --
         let dentroTiempo = 0;
+        let retrasos = 0;
         for (const s of completados) {
           if (s.servicio_tiempo_estimado) {
             const tareasSvc = (tareas || []).filter((t: any) => t.servicio_id === s.servicio_id);
             const sumaReal = tareasSvc.reduce((sum: number, t: any) => sum + (t.tarea_tiempo_real || 0), 0);
             if (sumaReal > 0 && sumaReal <= s.servicio_tiempo_estimado) dentroTiempo++;
+            else if (sumaReal > 0 && sumaReal > s.servicio_tiempo_estimado) retrasos++;
           }
         }
         const aTiempoPct = completados.length > 0 ? Math.round((dentroTiempo / completados.length) * 100) : 0;
@@ -989,6 +1005,9 @@ export async function seguimientoController(app: FastifyInstance) {
           servicios_completados: completados.length,
           tareas_completadas: tareasCount,
           tareas_activas: tareasActivas,
+          pendientes,
+          en_progreso,
+          retrasos,
           tiempo_promedio: tiempoPromedio,
           tiempo_promedio_por_tarea: tiempoPromedioPorTarea,
           servicios_con_tiempo_tracking_pct: trackingPct,
@@ -1026,6 +1045,9 @@ export async function seguimientoController(app: FastifyInstance) {
           a_tiempo_pct: calcVariacion(actualMetrics.completados_dentro_tiempo_pct, anteriorMetrics.completados_dentro_tiempo_pct),
           calificacion: calcVariacion(actualMetrics.calificacion_promedio, anteriorMetrics.calificacion_promedio),
           nps: calcVariacion(actualMetrics.nps, anteriorMetrics.nps),
+          pendientes: calcVariacion(actualMetrics.pendientes, anteriorMetrics.pendientes),
+          en_progreso: calcVariacion(actualMetrics.en_progreso, anteriorMetrics.en_progreso),
+          retrasos: actualMetrics.retrasos - anteriorMetrics.retrasos,
         },
       };
     }
