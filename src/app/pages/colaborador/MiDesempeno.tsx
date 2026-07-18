@@ -548,7 +548,13 @@ export function MiDesempenoPage() {
                   ]}
                   barActual={periodComparison ? periodComparison.actual.pendientes : undefined}
                   barMeta={0}
-                />
+                >
+                  {dashboard && periodComparison && dashboard?.total_servicios > 0 && (
+                    <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
+                      {periodComparison.actual.pendientes} de {dashboard.total_servicios} servicios ({Math.round((periodComparison.actual.pendientes / dashboard.total_servicios) * 100)}%)
+                    </p>
+                  )}
+                </KpiPrimarioCard>
                 <KpiPrimarioCard
                   icon={Timer}
                   iconBg="bg-blue-100"
@@ -569,7 +575,13 @@ export function MiDesempenoPage() {
                   ]}
                   barActual={periodComparison ? periodComparison.actual.en_progreso : undefined}
                   barMeta={0}
-                />
+                >
+                  {dashboard && periodComparison && dashboard?.total_servicios > 0 && (
+                    <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
+                      {periodComparison.actual.en_progreso} de {dashboard.total_servicios} servicios ({Math.round((periodComparison.actual.en_progreso / dashboard.total_servicios) * 100)}%)
+                    </p>
+                  )}
+                </KpiPrimarioCard>
                 <KpiPrimarioCard
                   icon={AlertTriangle}
                   iconBg="bg-red-100"
@@ -590,7 +602,13 @@ export function MiDesempenoPage() {
                   ]}
                   barActual={periodComparison ? periodComparison.actual.retrasos : undefined}
                   barMeta={0}
-                />
+                >
+                  {dashboard && periodComparison && (dashboard?.completados ?? 0) > 0 && (
+                    <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
+                      {periodComparison.actual.retrasos} de {dashboard.completados} servicios completados ({Math.round((periodComparison.actual.retrasos / dashboard.completados) * 100)}%)
+                    </p>
+                  )}
+                </KpiPrimarioCard>
               </div>
             </section>
           )}
@@ -757,7 +775,15 @@ export function MiDesempenoPage() {
                         barMeta={npsVal != null && npsVal > 0 ? 100 : undefined}
                         barFmt={(v: number) => v > 0 ? "+" + v : String(v)}
                       >
-                        {npsData ? null : (
+                        {npsData ? (
+                          esPeriodo ? (
+                            <div className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100 space-y-0.5">
+                              <p>🟢 Promotores: {periodComparison.actual.promotores} de {total} ({total > 0 ? Math.round((periodComparison.actual.promotores / total) * 100) : 0}%)</p>
+                              <p>🟡 Pasivos: {periodComparison.actual.pasivos} de {total} ({total > 0 ? Math.round((periodComparison.actual.pasivos / total) * 100) : 0}%)</p>
+                              <p>🔴 Detractores: {periodComparison.actual.detractores} de {total} ({total > 0 ? Math.round((periodComparison.actual.detractores / total) * 100) : 0}%)</p>
+                            </div>
+                          ) : null
+                        ) : (
                           <p className="text-xs text-slate-600 mt-2">Sin datos suficientes</p>
                         )}
                       </KpiPrimarioCard>
