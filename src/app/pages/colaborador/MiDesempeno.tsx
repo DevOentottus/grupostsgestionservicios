@@ -549,9 +549,9 @@ export function MiDesempenoPage() {
                   barActual={periodComparison ? periodComparison.actual.pendientes : undefined}
                   barMeta={0}
                 >
-                  {dashboard && periodComparison && dashboard?.total_servicios > 0 && (
+                  {dashboard && periodComparison && (dashboard?.total_servicios ?? 0) > 0 && (
                     <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
-                      {periodComparison.actual.pendientes} de {dashboard.total_servicios} servicios ({Math.round((periodComparison.actual.pendientes / dashboard.total_servicios) * 100)}%)
+                      {periodComparison.actual.pendientes} de {dashboard.total_servicios ?? 0} servicios ({Math.round((periodComparison.actual.pendientes / (dashboard.total_servicios ?? 0)) * 100)}%)
                     </p>
                   )}
                 </KpiPrimarioCard>
@@ -576,9 +576,9 @@ export function MiDesempenoPage() {
                   barActual={periodComparison ? periodComparison.actual.en_progreso : undefined}
                   barMeta={0}
                 >
-                  {dashboard && periodComparison && dashboard?.total_servicios > 0 && (
+                  {dashboard && periodComparison && (dashboard?.total_servicios ?? 0) > 0 && (
                     <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
-                      {periodComparison.actual.en_progreso} de {dashboard.total_servicios} servicios ({Math.round((periodComparison.actual.en_progreso / dashboard.total_servicios) * 100)}%)
+                      {periodComparison.actual.en_progreso} de {dashboard.total_servicios ?? 0} servicios ({Math.round((periodComparison.actual.en_progreso / (dashboard.total_servicios ?? 0)) * 100)}%)
                     </p>
                   )}
                 </KpiPrimarioCard>
@@ -605,7 +605,7 @@ export function MiDesempenoPage() {
                 >
                   {dashboard && periodComparison && (dashboard?.completados ?? 0) > 0 && (
                     <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
-                      {periodComparison.actual.retrasos} de {dashboard.completados} servicios completados ({Math.round((periodComparison.actual.retrasos / dashboard.completados) * 100)}%)
+                      {periodComparison.actual.retrasos} de {dashboard.completados ?? 0} servicios completados ({Math.round((periodComparison.actual.retrasos / (dashboard.completados ?? 0)) * 100)}%)
                     </p>
                   )}
                 </KpiPrimarioCard>
@@ -778,7 +778,7 @@ export function MiDesempenoPage() {
                         {npsData ? (
                           esPeriodo && dashboard && (dashboard?.completados ?? 0) > 0 ? (
                             <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
-                              {periodComparison.actual.total_calificaciones} de {dashboard.completados} servicios evaluados ({Math.round((periodComparison.actual.total_calificaciones / dashboard.completados) * 100)}%)
+                              {periodComparison.actual.total_calificaciones} de {dashboard.completados ?? 0} servicios evaluados ({Math.round((periodComparison.actual.total_calificaciones / (dashboard.completados ?? 0)) * 100)}%)
                             </p>
                           ) : null
                         ) : (

@@ -427,6 +427,9 @@ export interface DashboardV2Response {
       a_tiempo_pct: number;
       calificacion: number;
       nps: number;
+      pendientes: number;
+      en_progreso: number;
+      retrasos: number;
     };
   };
 }
@@ -436,6 +439,9 @@ export interface PeriodMetrics {
   servicios_completados: number;
   tareas_completadas: number;
   tareas_activas: number;
+  pendientes: number;
+  en_progreso: number;
+  retrasos: number;
   tiempo_promedio: number;
   tiempo_promedio_por_tarea: number;
   servicios_con_tiempo_tracking_pct: number;

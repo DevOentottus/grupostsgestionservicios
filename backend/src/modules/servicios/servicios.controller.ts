@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { supabase, type TablesUpdate } from "@/lib/supabase.js";
 import { NotFoundError, ValidationError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
+import { checkSessionNotRevoked } from "@/core/middleware/session.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
 
@@ -1033,6 +1034,8 @@ export async function serviciosController(app: FastifyInstance) {
           try {
             const decoded = await app.jwt.verify(token);
             (request as any).user = decoded;
+            // Verificar que la sesión no haya sido revocada
+            await checkSessionNotRevoked(request);
           } catch {
             throw new ValidationError("Token inválido o expirado");
           }

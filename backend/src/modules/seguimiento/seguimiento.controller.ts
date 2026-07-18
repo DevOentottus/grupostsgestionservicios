@@ -14,7 +14,7 @@ export async function seguimientoController(app: FastifyInstance) {
   // ----------------------------------
 
   const encuestaSchema = z.object({
-    calificacion: z.number().int().min(0).max(5).optional(),
+    calificacion: z.number().int().min(1).max(5).optional(),
     comentario: z.string().optional(),
     sugerencia: z.string().optional(),
     satisfaccion_visibilidad: z.number().int().min(1).max(5).optional(),
@@ -309,7 +309,20 @@ export async function seguimientoController(app: FastifyInstance) {
         .select("cliente_dni")
         .eq("cliente_id", s.cliente_id)
         .limit(1);
-      if (clientes?.[0] && clientes[0].cliente_dni === dni) dniValido = true;
+      const clienteDniActual = clientes?.[0]?.cliente_dni;
+
+      if (!clienteDniActual) {
+        // El cliente existe pero no tiene DNI registrado → aceptar cualquier DNI
+        // y actualizar el registro con el DNI que el cliente declara
+        dniValido = true;
+        clienteIdParaInsert = s.cliente_id;
+        await supabase
+          .from("clientes")
+          .update({ cliente_dni: dni })
+          .eq("cliente_id", s.cliente_id);
+      } else if (clienteDniActual === dni) {
+        dniValido = true;
+      }
     }
 
     // Fallback: validar contra el campo desnormalizado servicios.cliente_dni
@@ -604,10 +617,9 @@ export async function seguimientoController(app: FastifyInstance) {
       }
     }
 
-    // -- Retrasos (tarea con tiempo estimado vs real) --
-
-    // -- Retrasos (tarea con tiempo estimado vs real) --
-    // Usamos servicio_tiempo_estimado como referencia vs diff tracking
+    // -- Retrasos (servicio completado con tiempo real vs estimado) --
+    // Usamos tarea_tiempo_real (acumulado de tracking) igual que getPeriodMetrics,
+    // en vez de calcular por sesión de tracking individual que da resultados inconsistentes.
     let retrasos = 0;
     let dentroTiempo = 0;
     const svcTiempoMap: Record<number, number> = {};
@@ -616,26 +628,23 @@ export async function seguimientoController(app: FastifyInstance) {
         svcTiempoMap[s.servicio_id] = s.servicio_tiempo_estimado;
       }
     }
-    // Necesitamos trackingData para comparar real vs estimado
-    const tareaIdsInPeriodo = (tareasCompletadasPeriodo || []).map((t: any) => t.tarea_id);
-    if (tareaIdsInPeriodo.length > 0) {
-      const { data: trackingData } = await supabase
-        .from("tiempo_tracking")
-        .select("tarea_id, tracking_inicio, tracking_fin")
-        .in("tarea_id", tareaIdsInPeriodo);
-      for (const tr of trackingData || []) {
-        const tarea = (tareasCompletadasPeriodo || []).find((t) => t.tarea_id === tr.tarea_id);
-        if (!tarea || !tr.tracking_fin || !tr.tracking_inicio) continue;
-        const realMin = Math.floor(
-          (new Date(tr.tracking_fin).getTime() - new Date(tr.tracking_inicio).getTime()) / 60000
-        );
-        const estimado = svcTiempoMap[tarea.servicio_id] || 0;
-        if (realMin > 0 && estimado > 0) {
-          if (realMin <= estimado) {
-            dentroTiempo++;
-          } else {
-            retrasos++;
-          }
+    // Agrupar tareas completadas por servicio y sumar tarea_tiempo_real
+    const realPorServicio: Record<number, number> = {};
+    for (const tarea of tareasCompletadasPeriodo || []) {
+      const svcId = tarea.servicio_id;
+      if (!svcId) continue;
+      if (tarea.tarea_tiempo_real != null && tarea.tarea_tiempo_real > 0) {
+        realPorServicio[svcId] = (realPorServicio[svcId] || 0) + tarea.tarea_tiempo_real;
+      }
+    }
+    for (const [svcIdStr, sumaReal] of Object.entries(realPorServicio)) {
+      const svcId = parseInt(svcIdStr);
+      const estimado = svcTiempoMap[svcId] || 0;
+      if (estimado > 0) {
+        if (sumaReal <= estimado) {
+          dentroTiempo++;
+        } else {
+          retrasos++;
         }
       }
     }
