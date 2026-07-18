@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDesempeno, useMiArea } from "@/api/queries/useManager.js";
 import { useDashboard } from "@/api/queries/useDashboard.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
@@ -106,6 +107,7 @@ function EficienciaGauge({ valor }: { valor: number }) {
 
 export function ManagerDesempenoPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const esSupervisor = user?.rol === "sistema" || user?.rol === "admin";
   const { data: miArea } = useMiArea();
   const { data: todosUsuarios } = useUsuarios();
@@ -294,7 +296,7 @@ export function ManagerDesempenoPage() {
                       </div>
                     )}
                     <button
-                      onClick={() => setColaboradorId(String(col.usuario_id))}
+                      onClick={() => navigate(`/midesempeno?usuario_id=${col.usuario_id}`)}
                       className="w-full text-xs font-semibold text-center py-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
                     >
                       Ver desempeño →

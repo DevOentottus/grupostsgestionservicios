@@ -60,7 +60,7 @@ export default function App() {
           } />
           <Route path="miarea" element={<MiAreaPage />} />
           <Route path="midesempeno" element={
-            <RequireRole roles={["colaborador", "encargado"]}>
+            <RequireRole roles={["colaborador", "encargado", "admin", "sistema"]}>
               <MiDesempenoPage />
             </RequireRole>
           } />

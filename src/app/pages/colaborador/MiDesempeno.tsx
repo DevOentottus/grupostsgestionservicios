@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
 import { useMiArea } from "@/api/queries/useManager.js";
 import { useDashboardWithComparison } from "@/api/queries/useDashboard.js";
@@ -21,6 +22,7 @@ import {
   Clock,
   AlertTriangle,
   Activity,
+  ArrowLeft,
 } from "lucide-react";
 import { DateFilterCard } from "@/app/components/filters/DateFilterCard.js";
 
@@ -304,7 +306,22 @@ function Skeleton({ className }: { className?: string }) {
 
 export function MiDesempenoPage() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { data: miArea, isLoading: areaLoading, isError: areaError } = useMiArea();
+
+  // Soporte para ver desempeño de otro usuario (manager/admin viendo a un colaborador)
+  const targetUserIdStr = searchParams.get("usuario_id");
+  const targetUserId = targetUserIdStr ? parseInt(targetUserIdStr, 10) : undefined;
+  const esAdminOREncargado = user?.rol === "admin" || user?.rol === "sistema" || user?.rol === "encargado";
+  const usuarioId = targetUserId && esAdminOREncargado ? targetUserId : user?.id;
+
+  // Buscar nombre del colaborador objetivo (si es distinto al logueado)
+  const nombreColaborador = useMemo(() => {
+    if (!targetUserId || !esAdminOREncargado || !miArea?.colaboradores) return null;
+    const c = miArea.colaboradores.find((col: any) => col.usuario_id === targetUserId);
+    return c?.nombres ?? `Usuario #${targetUserId}`;
+  }, [targetUserId, esAdminOREncargado, miArea?.colaboradores]);
 
   // Filtro de fechas
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
@@ -359,17 +376,17 @@ export function MiDesempenoPage() {
   const { data: dashboard, isLoading: dashLoading, isError: dashError } = useDashboardWithComparison({
     fecha_inicio: fechaInicio,
     fecha_fin: fechaFin,
-    usuario_id: user?.id,
+    usuario_id: usuarioId,
   });
 
   const isLoading = areaLoading && dashLoading;
   const isError = areaError || dashError;
 
-  // Datos del colaborador logueado
+  // Datos del colaborador a visualizar
   const misDatos = useMemo(() => {
     if (!miArea?.colaboradores) return null;
-    return miArea.colaboradores.find((c: any) => c.usuario_id === user?.id) || null;
-  }, [miArea, user?.id]);
+    return miArea.colaboradores.find((c: any) => c.usuario_id === usuarioId) || null;
+  }, [miArea, usuarioId]);
 
   // Indicadores desde dashboard
   const kpi = dashboard?.kpi;
@@ -379,7 +396,7 @@ export function MiDesempenoPage() {
   // Benchmarking contra el area
   const areaBenchmark = useMemo(() => {
     if (!miArea?.colaboradores) return null;
-    const otros = miArea.colaboradores.filter((c: any) => c.usuario_id !== user?.id);
+    const otros = miArea.colaboradores.filter((c: any) => c.usuario_id !== usuarioId);
     if (otros.length === 0) return null;
     const sumVal = (key: string) => otros.reduce((s: number, c: any) => s + (c[key] ?? 0), 0);
     const avg = (key: string) => sumVal(key) / otros.length;
@@ -394,7 +411,7 @@ export function MiDesempenoPage() {
       avgTareas: avg("tareas_completadas"),
       totalColaboradores: otros.length,
     };
-  }, [miArea, user?.id]);
+  }, [miArea, usuarioId]);
 
   /* ──────────────────────────────────────────
    * RENDER
@@ -408,7 +425,14 @@ export function MiDesempenoPage() {
       <div className="mb-5 rounded-2xl bg-gradient-to-r from-blue-900 to-blue-700 px-6 py-5 text-white shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-lg font-bold text-white">Mi Desempeño</h1>
+            {nombreColaborador && (
+              <button onClick={() => navigate("/manager/desempeno")} className="text-blue-200 hover:text-white transition-colors" title="Volver a gestión de desempeño">
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            )}
+            <h1 className="text-lg font-bold text-white">
+              {nombreColaborador ? `Desempeño de ${nombreColaborador}` : "Mi Desempeño"}
+            </h1>
             <span className="text-blue-200 text-sm">·</span>
             <span className="text-blue-200 text-sm">{user?.nombres || "Colaborador"}</span>
             {miArea?.area?.nombre && (
