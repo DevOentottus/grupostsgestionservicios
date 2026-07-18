@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDistribucion } from "@/api/queries/useManager.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import { useAuth } from "@/lib/auth.js";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import type { ManagerDistribucionItem } from "@shared/index.js";
 
 export function ManagerDistribucionPage() {
@@ -47,8 +48,14 @@ export function ManagerDistribucionPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">
+        <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
           Distribución de Tareas
+          <InfoPopover
+            variant="info"
+            formula="Lista de tareas pendientes por colaborador, con tiempo estimado y fecha de creación."
+            descripcion="Vista general de la carga de trabajo actual. Ayuda a identificar sobrecarga o distribución desigual."
+            tip="Usá el filtro por colaborador para ver las tareas de una persona específica. Hacé clic en una tarea para ir al detalle del servicio."
+          />
         </h2>
         <p className="text-sm text-slate-500">
           {tareas.length} tareas pendientes en tu área

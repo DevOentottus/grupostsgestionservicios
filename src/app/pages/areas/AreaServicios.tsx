@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { areasApi } from "@/api/client.js";
 import type { AreaServiciosResponse, Servicio } from "@shared/index.js";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 
 const ESTADOS = [
   { value: "", label: "Todos" },
@@ -88,8 +89,14 @@ export function AreaServiciosPage() {
       <button onClick={() => navigate("/areas")} className="text-sm text-blue-600 hover:underline mb-1">
         ← Áreas
       </button>
-      <div>
+      <div className="flex items-center gap-2">
         <h2 className="text-2xl font-bold text-slate-800">{area.nombre}</h2>
+        <InfoPopover
+          variant="info"
+          formula="Servicios filtrados por área específica, con opciones de gestión y seguimiento."
+          descripcion="Cada área tiene sus propios servicios. Podés filtrar, buscar y gestionar desde esta vista."
+          tip="Usá los filtros para encontrar servicios rápidamente. El estado del servicio determina las acciones disponibles."
+        />
         <p className="text-sm text-slate-500">
           {data.servicios.length} servicios · Tiempo promedio:{" "}
           {tiempo_promedio > 0 ? `${Math.round(tiempo_promedio)} min` : "--"}

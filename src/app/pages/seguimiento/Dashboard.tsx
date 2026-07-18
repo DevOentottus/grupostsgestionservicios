@@ -32,6 +32,7 @@ import {
   Cell,
 } from "recharts";
 import { cn, formatMinutos } from "@/app/lib/utils";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import type { DashboardFilters, DashboardV2Response } from "@shared/index.js";
 
 // -- Helpers --
@@ -445,9 +446,32 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
               <div className={`w-8 h-8 rounded-lg ${group.iconBg} flex items-center justify-center`}>
                 <GroupIcon className={`w-4 h-4 ${group.iconColor}`} />
               </div>
-              <div>
+              <div className="flex items-center gap-1.5">
                 <p className="text-gray-800 text-sm" style={{ fontWeight: 700 }}>{group.title}</p>
-                <p className="text-gray-400 text-xs">Indicadores de rendimiento</p>
+                {group.title === "Productividad" && (
+                  <InfoPopover
+                    variant="formula"
+                    formula="Servicios/tareas completados en el período seleccionado, dividido entre colaboradores activos."
+                    descripcion="Mide el volumen de trabajo completado. A mayor número, mayor productividad del equipo."
+                    tip="Compará este valor contra períodos anteriores para detectar tendencias. Una caída sostenida puede indicar sobrecarga o problemas de proceso."
+                  />
+                )}
+                {group.title === "Eficiencia" && (
+                  <InfoPopover
+                    variant="formula"
+                    formula="Tiempo real de tareas (tracking) acumulado ÷ N° de tareas/servicios completados."
+                    descripcion="Evalúa qué tan rápido se completan los servicios. Menor tiempo promedio indica mayor eficiencia operativa."
+                    tip="El % a tiempo ideal debe estar sobre el 90%. Valores bajo 70% requieren revisión de procesos y asignación de recursos."
+                  />
+                )}
+                {group.title === "Satisfacción" && (
+                  <InfoPopover
+                    variant="formula"
+                    formula="Sumatoria de calificaciones (1–5) ÷ Total de servicios evaluados × 100"
+                    descripcion="Mide la percepción del cliente sobre la calidad del servicio. Una calificación ≥ 4.0 se considera satisfactoria."
+                    tip="Fomentá que los clientes evalúen después de cada servicio. Entre más evaluaciones, más representativa es la métrica."
+                  />
+                )}
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

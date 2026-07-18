@@ -314,7 +314,7 @@ function KpiPrimarioCard({
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 leading-tight">
             {titulo}
           </p>
-          {infoFormula && <InfoPopover formula={infoFormula} descripcion={infoDescripcion ?? ""} />}
+          {infoFormula && <InfoPopover variant="formula" formula={infoFormula} descripcion={infoDescripcion ?? ""} />}
         </div>
 
         {/* Columnas de valores */}
@@ -381,6 +381,7 @@ function IndicadorCard({
   descripcion,
   color,
   formula,
+  tip,
   comparacion,
   barActual,
   barMeta,
@@ -391,6 +392,7 @@ function IndicadorCard({
   descripcion: string;
   color: string;
   formula?: string;
+  tip?: string;
   comparacion?: React.ReactNode;
   barActual?: number;
   barMeta?: number;
@@ -411,7 +413,7 @@ function IndicadorCard({
         </div>
         <div className="flex items-center gap-1">
           <p className="text-xs text-slate-600 leading-tight">{titulo}</p>
-          {formula && <InfoPopover formula={formula} descripcion={descripcion} />}
+          {formula && <InfoPopover variant="formula" formula={formula} descripcion={descripcion} tip={tip} />}
         </div>
         {barMeta != null && barMeta > 0 && (
           <div className="mt-1">
@@ -1050,6 +1052,7 @@ export function MiDesempenoPage() {
                     descripcion="Servicios donde todas las tareas tienen hora inicio/fin"
                     color="bg-blue-600"
                     formula="Tracking_final − Tracking_inicial"
+                    tip="El tracking de tiempo es fundamental para medir eficiencia. Sin tracking, los indicadores de tiempo mostrarán datos incompletos."
                     barActual={kpi!.servicios_con_tiempo_tracking_pct ?? 0}
                     barMeta={100}
                     comparacion={periodComparison ? (
@@ -1065,7 +1068,8 @@ export function MiDesempenoPage() {
                     unidad="tareas"
                     descripcion="Tareas con fecha, hora completada y responsable"
                     color="bg-cyan-600"
-                    formula="Conteo de tareas con fecha, hora y responsable"
+                    formula="Conteo de tareas con registro completo de fecha, hora y responsable"
+                    tip="Cada tarea debería tener su hora de inicio y fin registrada. Sin documentación, la información de trazabilidad es incompleta."
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-xs">
                         <span className="text-slate-600">Período anterior: {periodComparison.anterior.tareas_documentadas_conteo}</span>
@@ -1080,6 +1084,7 @@ export function MiDesempenoPage() {
                     descripcion="Servicios con historial de cambios completo"
                     color="bg-teal-600"
                     formula="(Servicios con auditoría ÷ Total) × 100"
+                    tip="La trazabilidad completa incluye registro de cambios, tracking de tiempo y evidencias. Un alto % de trazabilidad facilita auditorías."
                     barActual={kpi!.registros_completos_pct ?? 0}
                     barMeta={100}
                     comparacion={periodComparison ? (
@@ -1111,6 +1116,7 @@ export function MiDesempenoPage() {
                     descripcion="Promedio de tiempo por servicio completado"
                     color="bg-orange-600"
                     formula="Σ(tracking_fin − tracking_inicio) ÷ N° servicios completados"
+                    tip="Servicios más rápidos que el promedio del área indican buena eficiencia. Si es muy alto, revisá si hay cuellos de botella en tareas específicas."
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-xs">
                         <span className="text-slate-600">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio)}</span>
@@ -1125,6 +1131,7 @@ export function MiDesempenoPage() {
                     descripcion="Servicios que cumplieron el tiempo estimado"
                     color="bg-green-600"
                     formula="(Servicios con tiempo real ≤ estimado ÷ Total completados) × 100"
+                    tip="El ideal es ≥ 90%. Si estás por debajo del 70%, revisá la estimación de tiempos o identificá qué tareas están tomando más de lo previsto."
                     barActual={kpi?.completados_dentro_tiempo_pct ?? 0}
                     barMeta={100}
                     comparacion={periodComparison ? (
@@ -1141,6 +1148,7 @@ export function MiDesempenoPage() {
                     descripcion="Promedio de tiempo por tarea completada"
                     color="bg-purple-600"
                     formula="Σ(tarea_tiempo_real) ÷ N° tareas con tiempo"
+                    tip="Tareas más cortas (15-30 min) suelen ser actividades operativas. Tareas largas (+2h) probablemente son análisis o desarrollos. Compará con tu promedio histórico."
                     comparacion={periodComparison ? (
                       <div className="flex items-center gap-1.5 text-xs">
                         <span className="text-slate-600">Período anterior: {formatMinutos(periodComparison.anterior.tiempo_promedio_por_tarea)}</span>

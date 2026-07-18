@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { cn, formatMinutos } from "@/app/lib/utils";
 import QRCode from "qrcode";
 import {
-  Archive, ArrowLeft, CheckCircle2, Clock, MessageSquare,
+  Archive, ArrowLeft, BarChart3, CheckCircle2, Clock, MessageSquare,
   Send, AlertTriangle, Plus, X,
   Pencil, MessageCircle, Mic, Info,
   Save, Camera, Share2, Play, Lock, LockOpen, RotateCcw, ChevronUp, ChevronDown, FileText,
@@ -29,6 +29,7 @@ import type { Tarea } from "@shared/index.js";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/app/components/ui/dialog.js";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 
 // -- Public URL (configurable via env) --
 const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL || "https://serviciolocalsts.vercel.app";
@@ -55,6 +56,7 @@ function compartirWhatsApp(codigo: string, titulo: string) {
 // -- Tab Definitions --
 const TABS = [
   { id: "tareas", label: "Tareas", icon: CheckCircle2 },
+  { id: "metricas", label: "Métricas", icon: BarChart3 },
   { id: "comentarios", label: "Comentarios", icon: MessageSquare },
   { id: "evidencias", label: "Evidencias", icon: Camera },
 ] as const;
@@ -197,6 +199,12 @@ function EvidenciasTabContent({ servicioId, tareas, userRol, userId, tecnicoId, 
         <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
           <Camera className="w-4 h-4 text-slate-400" />
           Evidencias subidas
+          <InfoPopover
+            variant="info"
+            formula="Cada tarea puede tener una o más evidencias adjuntas (fotos, archivos, grabaciones de audio)."
+            descripcion="Las evidencias documentan el trabajo realizado y son necesarias para completar tareas que lo requieran."
+            tip="Las evidencias se organizan por tarea. Subí fotos del antes/después para mejor documentación."
+          />
           {evidencias && (
             <span className="text-xs font-normal text-slate-400">({evidencias.length})</span>
           )}
@@ -218,6 +226,110 @@ function EvidenciasTabContent({ servicioId, tareas, userRol, userId, tecnicoId, 
             colaboradorPuedeEditar={colaboradorPuedeEditar}
           />
         )}
+      </div>
+    </div>
+  );
+}
+
+// -- MetricasTab: indicadores de desempeño del servicio --
+function MetricasTabContent({ tareas, servicio }: { tareas: Tarea[]; servicio: any }) {
+  const tareasSorted = [...tareas].sort((a, b) => a.orden - b.orden);
+  const completadas = tareasSorted.filter((t) => t.completada);
+  const conTracking = tareasSorted.filter((t) => t.tiempo_real_minutos != null);
+  const conEstimado = completadas.filter((t) => t.tiempo_estimado != null && t.tiempo_real_minutos != null);
+  const totalTiempo = conTracking.reduce((s, t) => s + (t.tiempo_real_minutos ?? 0), 0);
+  const promTiempo = completadas.length > 0 ? Math.round(totalTiempo / completadas.length) : 0;
+  const eficienciaPct = conEstimado.length > 0
+    ? Math.round(conEstimado.reduce((s, t) => s + ((t.tiempo_estimado! - t.tiempo_real_minutos!) / t.tiempo_estimado!) * 100, 0) / conEstimado.length)
+    : null;
+
+  // Agrupar tiempo por completador
+  const porColaborador: Record<number, { nombre: string; tiempo: number; tareas: number }> = {};
+  for (const t of completadas) {
+    if (t.completada_por && t.tiempo_real_minutos) {
+      if (!porColaborador[t.completada_por]) {
+        porColaborador[t.completada_por] = { nombre: `#${t.completada_por}`, tiempo: 0, tareas: 0 };
+      }
+      porColaborador[t.completada_por].tiempo += t.tiempo_real_minutos;
+      porColaborador[t.completada_por].tareas++;
+    }
+  }
+
+  // Tiempo de vida del servicio
+  const vidaTexto = servicio?.created_at ? (() => {
+    try {
+      const inicio = new Date(`${servicio.created_at}T${servicio.hora_creacion || "00:00:00"}`);
+      const fin = servicio.fecha_fin ? new Date(`${servicio.fecha_fin}T${servicio.hora_fin || "00:00:00"}`) : new Date();
+      const diff = fin.getTime() - inicio.getTime();
+      if (diff < 0) return "—";
+      const mins = Math.floor(diff / 60000);
+      const hrs = Math.floor(mins / 60);
+      const days = Math.floor(hrs / 24);
+      const parts: string[] = [];
+      if (days > 0) parts.push(`${days}d`);
+      if (hrs % 24 > 0) parts.push(`${hrs % 24}h`);
+      if (mins % 60 > 0) parts.push(`${mins % 60}m`);
+      return parts.length > 0 ? parts.join(" ") : "< 1m";
+    } catch { return "—"; }
+  })() : "—";
+
+  const metricas = [
+    { label: "Tareas completadas", valor: `${completadas.length} / ${tareasSorted.length}`, unidad: "", color: "text-green-600" },
+    { label: "Progreso", valor: `${tareasSorted.length > 0 ? Math.round((completadas.length / tareasSorted.length) * 100) : 0}%`, unidad: "", color: "text-blue-600" },
+    { label: "Tiempo total (tracking)", valor: formatMinutos(totalTiempo), unidad: "", color: "text-purple-600" },
+    { label: "Promedio por tarea", valor: completadas.length > 0 ? formatMinutos(promTiempo) : "—", unidad: "", color: "text-orange-600" },
+    { label: "Eficiencia vs estimado", valor: eficienciaPct != null ? `${eficienciaPct >= 0 ? "+" : ""}${eficienciaPct}%` : "—", unidad: "", color: eficienciaPct != null && eficienciaPct >= 0 ? "text-emerald-600" : "text-red-600" },
+    { label: "Cobertura tracking", valor: tareasSorted.length > 0 ? `${Math.round((conTracking.length / tareasSorted.length) * 100)}%` : "—", unidad: "", color: "text-cyan-600" },
+    { label: "Ciclo de vida", valor: vidaTexto, unidad: "", color: "text-slate-600" },
+  ];
+
+  return (
+    <div className="space-y-5">
+      {/* Cuadrícula de métricas */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {metricas.map((m) => (
+          <div key={m.label} className="bg-white rounded-xl border border-slate-200/70 p-4">
+            <p className={`text-lg font-bold ${m.color} tabular-nums`}>
+              {m.valor}
+              {m.unidad && <span className="text-xs font-normal text-slate-400 ml-1">{m.unidad}</span>}
+            </p>
+            <p className="text-[11px] text-slate-500 mt-1">{m.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Tiempo por colaborador */}
+      {Object.keys(porColaborador).length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200/70 p-4">
+          <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-3">Tiempo por colaborador</h4>
+          <div className="space-y-2">
+            {Object.entries(porColaborador).map(([userId, data]) => (
+              <div key={userId} className="flex items-center justify-between text-sm">
+                <span className="text-slate-600">{data.nombre}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-400">{data.tareas} tareas</span>
+                  <span className="font-medium text-slate-800 tabular-nums">{formatMinutos(data.tiempo)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* InfoPopovers de ayuda */}
+      <div className="flex flex-wrap gap-2">
+        <InfoPopover
+          variant="formula"
+          formula="Eficiencia = (tiempo_estimado − tiempo_real) / tiempo_estimado × 100. Positivo = completado antes del estimado."
+          descripcion="Mide si las tareas se completaron dentro del tiempo estimado. Un valor positivo indica ahorro de tiempo."
+          tip="Valores negativos consistentes sugieren que los tiempos estimados deben ajustarse a la realidad."
+        />
+        <InfoPopover
+          variant="tip"
+          formula="Cobertura de tracking = tareas con tiempo_real registrado / total tareas × 100."
+          descripcion="Indica qué porcentaje de tareas tienen registro de tiempo. Idealmente debería ser 100%."
+          tip="Sin tracking de tiempo, las métricas de eficiencia no son representativas. Activá el tracking en cada tarea."
+        />
       </div>
     </div>
   );
@@ -584,6 +696,15 @@ export function ServicioDetailPage() {
 
         {/* Card body */}
         <div className={cn("p-4 md:p-6 transition-colors", HEADER_BG[servicio.estado] || "bg-white")}>
+          <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-1">
+            Información del Servicio
+            <InfoPopover
+              variant="info"
+              formula="Datos principales del servicio: código, título, estado, prioridad y fechas."
+              descripcion="El estado del servicio determina las acciones disponibles (editar, asignar, completar)."
+              tip="Los servicios en estado 'bloqueado' necesitan revisión antes de continuar. Usá los comentarios para documentar el motivo."
+            />
+          </h3>
           <div className="flex justify-between gap-6">
             {/* Left: title + description */}
             <div className="flex-1 min-w-0">
@@ -716,6 +837,12 @@ export function ServicioDetailPage() {
                   <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
                     <Mic className="w-3.5 h-3.5" />
                     Situación Inicial del Cliente
+                    <InfoPopover
+                      variant="info"
+                      formula="Datos del cliente asociado a este servicio."
+                      descripcion="El cliente puede evaluar el servicio al finalizar. Su calificación impacta en los indicadores de satisfacción."
+                      tip="Mantené los datos de contacto actualizados para facilitar la comunicación con el cliente."
+                    />
                   </h4>
                   {servicio.cliente_reporte && (
                     <p className="text-sm text-gray-700 bg-slate-50 rounded-xl p-3 border border-slate-100">{servicio.cliente_reporte}</p>
@@ -829,6 +956,12 @@ export function ServicioDetailPage() {
               <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-gray-400" />
                 Tareas
+                <InfoPopover
+                  variant="formula"
+                  formula="Cada servicio tiene una o más tareas. Las tareas pueden tener tiempo estimado y evidencias adjuntas."
+                  descripcion="Completar todas las tareas es necesario para finalizar el servicio."
+                  tip="Las tareas obligatorias deben completarse sí o sí. Las opcionales pueden saltarse si no aplican."
+                />
                 {totalTareas > 0 && (
                   <span className="text-xs font-normal text-gray-400">
                     {completadasCount}/{totalTareas}
@@ -1076,6 +1209,11 @@ export function ServicioDetailPage() {
             )}
 
           </div>
+        )}
+
+        {/* MÉTRICAS TAB */}
+        {activeTab === "metricas" && (
+          <MetricasTabContent tareas={tareas || []} servicio={servicio} />
         )}
 
         {/* COMENTARIOS TAB */}

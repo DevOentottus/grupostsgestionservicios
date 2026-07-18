@@ -5,6 +5,7 @@ import { useReporteColaborador, useReporteArea, useExportarReporte } from "@/api
 import { useMiArea } from "@/api/queries/useManager.js";
 import { usuariosApi, areasApi } from "@/api/client.js";
 import { cn, formatMinutos } from "@/app/lib/utils";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import type { Usuario, Area } from "@shared/index.js";
 import { useAuth } from "@/lib/auth.js";
 import {
@@ -124,7 +125,15 @@ export function ReportesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>Reportes</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Visualiza y exporta reportes de rendimiento</p>
+          <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1">
+            Visualiza y exporta reportes de rendimiento
+            <InfoPopover
+              variant="info"
+              formula="Reportes de rendimiento por colaborador o por área, con datos de servicios completados, tareas y eficiencia."
+              descripcion="Seleccioná la pestaña 'Colaborador' o 'Área' para ver los datos correspondientes al período elegido."
+              tip="Usá los filtros de fecha para acotar el período. Los reportes se pueden exportar a PDF o Excel desde el botón 'Exportar'."
+            />
+          </p>
         </div>
       </div>
 

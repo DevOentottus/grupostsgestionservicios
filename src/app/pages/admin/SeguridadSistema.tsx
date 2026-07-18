@@ -42,6 +42,7 @@ import {
 } from "@/api/queries/useSeguridad.js";
 import { auditoriaApi } from "@/api/client.js";
 import { cn } from "@/app/lib/utils";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { ConfirmDialog } from "@/app/components/ConfirmDialog.js";
 import type {
   SeguridadResumen,
@@ -285,7 +286,15 @@ export function SeguridadSistemaPage() {
               <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>
                 {statsCounts.intentos}
               </p>
-              <p className="text-gray-500 text-sm">Intentos fallidos (24h)</p>
+              <p className="text-gray-500 text-sm flex items-center gap-1">
+                Intentos fallidos (24h)
+                <InfoPopover
+                  variant="warning"
+                  formula="Cantidad de inicios de sesión fallidos en las últimas 24 horas."
+                  descripcion="Múltiples intentos fallidos desde una misma IP pueden indicar un ataque de fuerza bruta."
+                  tip="Si ves más de 10 intentos de un mismo usuario o IP, considerá bloquear temporalmente la cuenta."
+                />
+              </p>
             </div>
           </div>
         </div>
@@ -298,7 +307,15 @@ export function SeguridadSistemaPage() {
               <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>
                 {statsCounts.sesiones}
               </p>
-              <p className="text-gray-500 text-sm">Sesiones activas</p>
+              <p className="text-gray-500 text-sm flex items-center gap-1">
+                Sesiones activas
+                <InfoPopover
+                  variant="info"
+                  formula="Usuarios con sesión JWT válida actualmente en el sistema."
+                  descripcion="Cada sesión representa un usuario autenticado. Sesiones múltiples desde distintas ubicaciones pueden ser sospechosas."
+                  tip="Podés revocar sesiones individuales desde la pestaña 'Sesiones'. Es recomendable después de un cambio de contraseña."
+                />
+              </p>
             </div>
           </div>
         </div>
@@ -311,7 +328,15 @@ export function SeguridadSistemaPage() {
               <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>
                 {statsCounts.alertas}
               </p>
-              <p className="text-gray-500 text-sm">Alertas sospechosas</p>
+              <p className="text-gray-500 text-sm flex items-center gap-1">
+                Alertas sospechosas
+                <InfoPopover
+                  variant="mejora"
+                  formula="Actividades marcadas como sospechosas por el motor de seguridad del sistema."
+                  descripcion="Incluye accesos desde ubicaciones no habituales, horarios anómalos, y múltiples intentos fallidos consecutivos."
+                  tip="Revisá estas alertas periódicamente. Una alerta aislada suele ser un falso positivo; varias alertas del mismo usuario requieren acción."
+                />
+              </p>
             </div>
           </div>
         </div>

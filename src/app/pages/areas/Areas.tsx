@@ -17,6 +17,7 @@ import {
   MapPin, Users, ClipboardList, CheckCircle2, Clock, AlertTriangle,
   Plus, Edit2, Trash2, X, ChevronRight, ArrowLeft,
 } from "lucide-react";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 
 export function AreasPage() {
   const { user } = useAuth();
@@ -136,7 +137,15 @@ export function AreasPage() {
               Volver a áreas
             </button>
           ) : null}
-          <h1 className="text-gray-900 font-bold">Áreas de Servicio</h1>
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            Áreas
+            <InfoPopover
+              variant="info"
+              formula="Las áreas agrupan colaboradores y servicios. Cada encargado supervisa un área específica."
+              descripcion="Desde aquí podés crear, editar y gestionar las áreas del sistema."
+              tip="Creá áreas por especialidad (Soporte Técnico, Ventas, etc.) para una mejor distribución de servicios y reportes."
+            />
+          </h1>
           <p className="text-gray-500 text-sm">{visibleAreas.length} áreas registradas</p>
         </div>
 

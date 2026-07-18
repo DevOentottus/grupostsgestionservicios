@@ -4,6 +4,7 @@ import { useMiArea } from "@/api/queries/useManager.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import { useAuth } from "@/lib/auth.js";
 import { cn } from "@/app/lib/utils";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import {
   TrendingUp, User, Star,
 } from "lucide-react";
@@ -42,8 +43,14 @@ export function ManagerDesempenoPage() {
           <h2 className="text-xl font-bold text-slate-800">
             Desempeño de Colaborador
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 flex items-center gap-1">
             Evaluá el rendimiento de los colaboradores de tu área
+            <InfoPopover
+              variant="info"
+              formula="Lista de colaboradores con indicadores de servicios completados y tareas activas."
+              descripcion="Cada tarjeta muestra el nombre del colaborador, cantidad de servicios completados y tareas activas."
+              tip="Hacé clic en 'Ver desempeño →' para acceder al detalle completo de KPIs, tendencias y comparativas de cada colaborador."
+            />
           </p>
         </div>
       </div>
@@ -54,6 +61,12 @@ export function ManagerDesempenoPage() {
           <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
             <User className="w-4 h-4 text-slate-500" />
             Colaboradores del área
+            <InfoPopover
+              variant="info"
+              formula="Cada tarjeta muestra servicios completados, tareas activas y calificación promedio del colaborador."
+              descripcion="Los datos reflejan el período actual de evaluación. Los valores se actualizan en tiempo real según el avance de servicios."
+              tip="Usá 'Ver desempeño →' para acceder al dashboard completo con KPIs detallados, tendencias y comparativas contra el promedio del área."
+            />
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">{colaboradores.length} colaboradores</p>
         </div>

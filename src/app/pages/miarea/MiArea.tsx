@@ -9,6 +9,7 @@ import {
 import { cn } from "@/app/lib/utils";
 import { PieChartCard } from "@/app/components/charts/PieChart.js";
 import { DateFilterCard } from "@/app/components/filters/DateFilterCard.js";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 
 const statusConfig: Record<string, { bg: string; text: string; dot: string; bar: string }> = {
   pendiente:   { bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500", bar: "bg-yellow-400" },
@@ -185,6 +186,12 @@ export function MiAreaPage() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-lg font-bold text-white">{area.nombre}</h1>
+            <InfoPopover
+              variant="info"
+              formula="Panel de tu área con información de colaboradores, servicios y métricas generales."
+              descripcion="Vista general del área a tu cargo. Incluye colaboradores, servicios activos e indicadores de rendimiento."
+              tip="Usá esta vista para monitorear el avance general. Los indicadores se actualizan en tiempo real."
+            />
             <span className="text-blue-200 text-sm">·</span>
             <span className="text-blue-200 text-sm">{servicios.length} servicios</span>
             <span className="text-blue-200 text-sm">·</span>

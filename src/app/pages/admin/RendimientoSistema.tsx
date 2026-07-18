@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/lib/auth.js";
 import { useRendimiento } from "@/api/queries/useRendimiento.js";
 import { cn } from "@/app/lib/utils";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import type { RendimientoResponse } from "@shared/index.js";
 
 // -- Helpers --
@@ -325,8 +326,32 @@ function KPITab({ data }: { data: RendimientoResponse }) {
               <div className={`w-8 h-8 rounded-lg ${g.iconBg} flex items-center justify-center`}>
                 <GIcon className={`w-4 h-4 ${g.iconColor}`} />
               </div>
-              <div>
+              <div className="flex items-center gap-1.5">
                 <p className="text-gray-800 text-sm" style={{ fontWeight: 700 }}>{g.title}</p>
+                {g.title === "Servicios" && (
+                  <InfoPopover
+                    variant="info"
+                    formula="Distribución de todos los servicios del sistema según su estado actual."
+                    descripcion="Servicios completados, en progreso, pendientes y bloqueados en el período seleccionado."
+                    tip="Una alta proporción de bloqueados indica cuellos de botella. Revisá asignación de recursos si los pendientes crecen."
+                  />
+                )}
+                {g.title === "Tareas" && (
+                  <InfoPopover
+                    variant="info"
+                    formula="Tareas completadas vs pendientes. Tasa de completación = (completadas ÷ total) × 100."
+                    descripcion="Cantidad de tareas finalizadas y pendientes, más el porcentaje general de avance."
+                    tip="La tasa de completación debería estar sobre 70% para equipos saludables. Menos de 50% requiere intervención."
+                  />
+                )}
+                {g.title === "Tiempos" && (
+                  <InfoPopover
+                    variant="info"
+                    formula="Σ(tiempo_real de tareas completadas) ÷ N° de servicios completados."
+                    descripcion="Tiempo promedio que toma completar un servicio, desde su creación hasta finalización."
+                    tip="Monitoreá este valor semanalmente. Incrementos repentinos pueden indicar servicios más complejos o problemas de proceso."
+                  />
+                )}
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
