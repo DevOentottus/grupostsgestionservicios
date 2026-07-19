@@ -8,6 +8,9 @@ import {
 } from "@/api/queries/useServicios.js";
 
 import { useCrearPlantilla } from "@/api/queries/usePlantillas.js";
+import {
+  useTiemposServicio, useIniciarTiempo, useFinalizarTiempo,
+} from "@/api/queries/useSeguimiento.js";
 import { CommentsTab } from "./components/CommentsTab.js";
 import { ProcessFlow } from "@/app/components/flow/ProcessFlow.js";
 import { useEvidencias } from "@/api/queries/useEvidencias.js";
@@ -370,6 +373,11 @@ export function ServicioDetailPage() {
   const crearPlantilla = useCrearPlantilla();
   const reordenarTareas = useReordenarTareas();
 
+  // -- Cronómetro por tarea (RF-31) --
+  const { data: tiemposServicio } = useTiemposServicio(servicioId);
+  const iniciarTiempo = useIniciarTiempo();
+  const finalizarTiempo = useFinalizarTiempo();
+
   const [nuevaTarea, setNuevaTarea] = useState("");
   const [editTareaId, setEditTareaId] = useState<number | null>(null);
   const [editTareaTitle, setEditTareaTitle] = useState("");
@@ -457,6 +465,41 @@ export function ServicioDetailPage() {
   const handleDeleteConfirm = () => {
     if (deleteTarget) { eliminarTarea.mutate(deleteTarget.id); setDeleteTarget(null); }
   };
+
+  // Mapa tarea_id → tracking info desde /tiempos endpoint
+  const trackingPorTarea = useMemo(() => {
+    const map: Record<number, {
+      tracking_activo: boolean;
+      tracking_id: number | null;
+      tracking_inicio: string | null;
+      tracking_pausa: string | null;
+    }> = {};
+    if (tiemposServicio) {
+      for (const t of tiemposServicio) {
+        map[t.tarea_id] = t;
+      }
+    }
+    return map;
+  }, [tiemposServicio]);
+
+  // Estado local para elapsed time en tiempo real
+  const [elapsedMap, setElapsedMap] = useState<Record<number, number>>({});
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!tiemposServicio) return;
+      const next: Record<number, number> = {};
+      let changed = false;
+      for (const t of tiemposServicio) {
+        if (t.tracking_activo && t.tracking_inicio) {
+          const diff = Math.floor((Date.now() - new Date(t.tracking_inicio).getTime()) / 1000);
+          next[t.tarea_id] = diff;
+          changed = true;
+        }
+      }
+      if (changed) setElapsedMap(next);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [tiemposServicio]);
 
   const flowSteps = tareasSorted.map((tarea) => ({
     id: tarea.id,
@@ -1171,6 +1214,15 @@ export function ServicioDetailPage() {
                                 {TIPO_TAREA_CONFIG[tarea.tipo].label}
                               </span>
                             )}
+                            {tarea.requiere_evidencia && (
+                              <span
+                                className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 flex items-center gap-1"
+                                title="Requiere evidencia fotográfica antes de completar"
+                              >
+                                <FileText className="w-2.5 h-2.5" />
+                                Evidencia
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
                             {tarea.tiempo_estimado && <span>{tarea.tiempo_estimado} min</span>}
@@ -1179,8 +1231,47 @@ export function ServicioDetailPage() {
                         </div>
                       )}
 
-                      {/* Edit + Delete — solo admin o asignado */}
-                {puedeEditarMetadata && (
+                      {/* Cronómetro por tarea (RF-31) */}
+                      {!tarea.completada && soloAsignado && (() => {
+                        const trackInfo = trackingPorTarea[tarea.id];
+                        const isTracking = trackInfo?.tracking_activo;
+                        const elapsed = elapsedMap[tarea.id];
+                        if (isTracking) {
+                          return (
+                            <div className="flex items-center gap-1 flex-shrink-0 mr-1">
+                              <span className="text-xs font-mono tabular-nums text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded-md min-w-[50px] text-center">
+                                {elapsed != null
+                                  ? `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}`
+                                  : "--:--"}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  const info = trackingPorTarea[tarea.id];
+                                  if (info?.tracking_id) {
+                                    finalizarTiempo.mutateAsync(info.tracking_id);
+                                  }
+                                }}
+                                disabled={finalizarTiempo.isPending}
+                                className="p-1 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition text-xs"
+                                title="Detener cronómetro"
+                              >
+                                ⏹
+                              </button>
+                            </div>
+                          );
+                        }
+                        return (
+                          <button
+                            onClick={() => iniciarTiempo.mutateAsync(tarea.id)}
+                            disabled={iniciarTiempo.isPending}
+                            className="p-1 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition text-xs"
+                            title="Iniciar cronómetro"
+                          >
+                            ⏱
+                          </button>
+                        );
+                      })()}
+                      {puedeEditarMetadata && (
                         <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 max-md:opacity-100 transition-opacity">
                           {!isEditing && !tarea.completada && (
                             <button

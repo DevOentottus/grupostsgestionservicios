@@ -485,6 +485,7 @@ export async function serviciosController(app: FastifyInstance) {
       created_at: t.tarea_fecha_creacion,
       has_active_tracking: false, // tiempo_tracking no existe en Supabase
       tiempo_real_minutos: t.tarea_tiempo_real,
+      requiere_evidencia: t.tarea_requiere_evidencia ?? false,
     }));
 
     return { data: rows };
@@ -653,16 +654,53 @@ export async function serviciosController(app: FastifyInstance) {
       }
     }
 
-    // Finalizar tracking activo si existe
-    await supabase
+    // Finalizar tracking activo si existe y acumular tiempo real
+    const { data: activeTrack } = await supabase
       .from("tiempo_tracking")
-      .update({
-        tracking_fin: now.toISOString(),
-        tracking_pausa: null,
-      })
+      .select("tracking_id, tracking_inicio")
       .eq("tarea_id", tareaId)
       .eq("usuario_id", user.user_id)
-      .is("tracking_fin", null);
+      .is("tracking_fin", null)
+      .limit(1);
+
+    if (activeTrack?.length) {
+      const track = activeTrack[0];
+      const inicio = new Date(track.tracking_inicio).getTime();
+      const fin = now.getTime();
+      const minutos = Math.round((fin - inicio) / 60000);
+
+      // Finalizar tracking activo
+      await supabase
+        .from("tiempo_tracking")
+        .update({
+          tracking_fin: now.toISOString(),
+          tracking_pausa: null,
+        })
+        .eq("tracking_id", track.tracking_id);
+
+      // Acumular tiempo real en la tarea
+      if (minutos > 0) {
+        const { data: tareaActual } = await supabase
+          .from("tareas")
+          .select("tarea_tiempo_real")
+          .eq("tarea_id", tareaId)
+          .limit(1);
+
+        const tiempoExistente = tareaActual?.[0]?.tarea_tiempo_real || 0;
+        await supabase
+          .from("tareas")
+          .update({ tarea_tiempo_real: tiempoExistente + minutos })
+          .eq("tarea_id", tareaId);
+      }
+    } else {
+      // No había tracking activo, igual aseguramos consistencia
+      await supabase
+        .from("tiempo_tracking")
+        .update({ tracking_fin: now.toISOString(), tracking_pausa: null })
+        .eq("tarea_id", tareaId)
+        .eq("usuario_id", user.user_id)
+        .is("tracking_fin", null);
+    }
 
     const { data: updatedTareas } = await supabase
       .from("tareas")

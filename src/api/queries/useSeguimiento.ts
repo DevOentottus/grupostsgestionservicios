@@ -10,6 +10,7 @@ export function useIniciarTiempo() {
     mutationFn: (tareaId: number) => seguimientoApi.iniciarTiempo(tareaId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tiempo"] });
+      qc.invalidateQueries({ queryKey: ["tiempos-servicio"] });
       toast.success("Cronómetro iniciado");
     },
   });
@@ -32,6 +33,8 @@ export function useFinalizarTiempo() {
     mutationFn: (id: number) => seguimientoApi.finalizarTiempo(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tiempo"] });
+      qc.invalidateQueries({ queryKey: ["tiempos-servicio"] });
+      qc.invalidateQueries({ queryKey: ["tareas"] });
       toast.success("Tiempo registrado");
     },
   });

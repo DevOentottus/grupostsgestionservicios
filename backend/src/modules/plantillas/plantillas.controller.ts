@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { supabase, type TablesUpdate } from "@/lib/supabase.js";
-import { NotFoundError, ValidationError } from "@/core/errors/index.js";
+import { NotFoundError, ValidationError, ForbiddenError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
@@ -172,14 +172,17 @@ export async function plantillasController(app: FastifyInstance) {
     { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async (request, reply) => {
       const input = crearPlantillaSchema.parse(request.body);
-      const authUser = request.user as { user_id: number };
+      const authUser = request.user as { user_id: number; rol: string };
+
+      // 🔐 Colaborador no puede asignar área ni marcar tareas obligatorias
+      const esColaborador = authUser.rol === "colaborador";
 
       const { data: newPlantillas, error } = await supabase
         .from("plantillas")
         .insert({
           plantilla_nombre: input.nombre,
           plantilla_descripcion: input.descripcion ?? null,
-          area_id: input.area_id ?? null,
+          area_id: esColaborador ? null : (input.area_id ?? null),
           plantilla_activa: true,
           plantilla_fecha_creacion: new Date().toISOString().split("T")[0],
         })
@@ -195,9 +198,10 @@ export async function plantillasController(app: FastifyInstance) {
           plantilla_id: plantilla.plantilla_id,
           plantillatarea_titulo: t.titulo,
           plantillatarea_orden: t.sort_order ?? i,
-          plantillatarea_obligatoria: t.obligatoria ?? false,
+          plantillatarea_obligatoria: esColaborador ? false : (t.obligatoria ?? false),
         }));
-        await supabase.from("plantillatareas").insert(tareasToInsert);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await supabase.from("plantillatareas").insert(tareasToInsert as any);
       }
 
       await auditLog(null, authUser.user_id, "CREATE", "plantilla", plantilla.plantilla_id, {
@@ -240,8 +244,9 @@ export async function plantillasController(app: FastifyInstance) {
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const input = actualizarPlantillaSchema.parse(request.body);
-      const authUser = request.user as { user_id: number };
+      const authUser = request.user as { user_id: number; rol: string };
       const plantillaId = parseInt(id);
+      const esColaborador = authUser.rol === "colaborador";
 
       const { data: existing } = await supabase
         .from("plantillas")
@@ -251,10 +256,15 @@ export async function plantillasController(app: FastifyInstance) {
 
       if (!existing?.length) throw new NotFoundError("Plantilla no encontrada");
 
+      // 🔐 Colaborador no puede cambiar el área de una plantilla
+      if (esColaborador && input.area_id !== undefined) {
+        throw new ForbiddenError("No puedes cambiar el área de la plantilla");
+      }
+
       const updateData: TablesUpdate<"plantillas"> = {};
       if (input.nombre !== undefined) updateData.plantilla_nombre = input.nombre;
       if (input.descripcion !== undefined) updateData.plantilla_descripcion = input.descripcion;
-      if (input.area_id !== undefined) updateData.area_id = input.area_id;
+      if (input.area_id !== undefined && !esColaborador) updateData.area_id = input.area_id;
 
       if (Object.keys(updateData).length > 0) {
         await supabase
@@ -274,11 +284,12 @@ export async function plantillasController(app: FastifyInstance) {
           plantilla_id: plantillaId,
           plantillatarea_titulo: t.titulo,
           plantillatarea_orden: t.sort_order ?? i,
-          plantillatarea_obligatoria: t.obligatoria ?? false,
+          plantillatarea_obligatoria: esColaborador ? false : (t.obligatoria ?? false),
         }));
 
         if (tareasToInsert.length > 0) {
-          await supabase.from("plantillatareas").insert(tareasToInsert);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await supabase.from("plantillatareas").insert(tareasToInsert as any);
         }
       }
 

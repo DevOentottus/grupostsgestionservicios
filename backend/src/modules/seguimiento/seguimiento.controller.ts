@@ -441,6 +441,12 @@ export async function seguimientoController(app: FastifyInstance) {
     const usuarioId = query.usuario_id ? parseInt(query.usuario_id) : null;
     const compararPeriodo = query.comparar_periodo === "true";
 
+    // 🔐 Seguridad: si es colaborador, solo puede ver sus propios datos
+    const authUser = request.user as { user_id: number; rol: string };
+    if (usuarioId && usuarioId !== authUser.user_id && authUser.rol === "colaborador") {
+      throw new ForbiddenError("No puedes ver el desempeño de otros colaboradores");
+    }
+
     const fechaInicio = desde ? new Date(desde) : null;
     const fechaFin = hasta ? new Date(hasta) : null;
 

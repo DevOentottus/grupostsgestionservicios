@@ -91,6 +91,7 @@ export function useCompletarTarea() {
     mutationFn: (id: number) => serviciosApi.completarTarea(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tareas"] });
+      qc.invalidateQueries({ queryKey: ["tiempos-servicio"] });
       toast.success("Tarea completada");
     },
   });
