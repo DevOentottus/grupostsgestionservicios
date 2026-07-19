@@ -353,6 +353,7 @@ export function ServicioDetailPage() {
   const esEncargado = user?.rol === "encargado";
   const puedeModificar = esAdmin || esAsignado || esEncargado;
   const soloAsignado = esAdmin || esAsignado;
+  const puedeEjecutar = esAsignado; // solo el técnico asignado completa tareas y usa cronómetro
 
   const editarServicio = useEditarServicio();
   const [editando, setEditando] = useState<"titulo" | "descripcion" | null>(null);
@@ -1155,11 +1156,11 @@ export function ServicioDetailPage() {
                             }
                           }
                         }}
-                        disabled={tarea.completada || prevIncompleta || !soloAsignado || isBloqueado || isCancelado}
+                        disabled={tarea.completada || prevIncompleta || !puedeEjecutar || isBloqueado || isCancelado}
                         title={
                           tarea.completada ? "Tarea completada" :
                           prevIncompleta ? "Completá la tarea anterior primero" :
-                          !soloAsignado ? "Solo el técnico asignado puede completar tareas" :
+                          !puedeEjecutar ? "Solo el técnico asignado puede completar tareas" :
                           isBloqueado ? "Servicio bloqueado" :
                           isCancelado ? "Servicio cancelado" : undefined
                         }
@@ -1167,13 +1168,13 @@ export function ServicioDetailPage() {
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition",
                           tarea.completada
                             ? "bg-green-500 border-green-500 cursor-not-allowed"
-                            : prevIncompleta || !soloAsignado || isBloqueado || isCancelado
+                            : prevIncompleta || !puedeEjecutar || isBloqueado || isCancelado
                             ? "border-gray-200 bg-gray-50 cursor-not-allowed"
                             : "border-gray-300 hover:border-blue-500",
                         )}
                       >
                         {tarea.completada && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
-                        {!tarea.completada && !soloAsignado && <Lock className="w-2.5 h-2.5 text-gray-300" />}
+                        {!tarea.completada && !puedeEjecutar && <Lock className="w-2.5 h-2.5 text-gray-300" />}
                         {!tarea.completada && isBloqueado && <Lock className="w-2.5 h-2.5 text-red-300" />}
                         {!tarea.completada && isCancelado && <X className="w-2.5 h-2.5 text-gray-400" />}
                       </button>
@@ -1232,7 +1233,7 @@ export function ServicioDetailPage() {
                       )}
 
                       {/* Cronómetro por tarea (RF-31) */}
-                      {!tarea.completada && soloAsignado && (() => {
+                      {!tarea.completada && puedeEjecutar && (() => {
                         const trackInfo = trackingPorTarea[tarea.id];
                         const isTracking = trackInfo?.tracking_activo;
                         const elapsed = elapsedMap[tarea.id];
