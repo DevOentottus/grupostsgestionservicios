@@ -262,6 +262,14 @@ export async function serviciosController(app: FastifyInstance) {
       }
     }
 
+    const authUser = request.user as { user_id: number; rol: string; area_id: number | null };
+
+    // Auto-asignación: encargado siempre se asigna el servicio
+    let tecnicoPrincipalId = input.colaborador_id ?? null;
+    if (authUser.rol === "encargado") {
+      tecnicoPrincipalId = authUser.user_id;
+    }
+
     const now = new Date();
     const codigo = "SRV" + [
       now.getFullYear(),
@@ -280,7 +288,7 @@ export async function serviciosController(app: FastifyInstance) {
         servicio_estado: "pendiente",
         servicio_tiempo_estimado: tiempoEstimado,
         area_id: input.area_id ?? null,
-        tecnico_principal_id: input.colaborador_id ?? null,
+        tecnico_principal_id: tecnicoPrincipalId,
         tipo_servicio_id: tipoServicioId,
         cliente_dni: input.cliente_dni || null,
         cliente_apellido_paterno: input.cliente_apellido_paterno || null,
@@ -307,11 +315,57 @@ export async function serviciosController(app: FastifyInstance) {
     const servicio = newServicios?.[0];
     if (!servicio) throw new Error("No se pudo crear el servicio");
 
-    const authUser = request.user as { user_id: number };
     await auditLog(null, authUser.user_id, "CREATE", "servicio", servicio.servicio_id, {
       codigo,
       titulo: input.titulo,
     });
+
+    // ── Notificación automática: nuevo servicio creado ──
+    const notifTitulo = "Nuevo servicio creado";
+    const clienteNombre = [input.cliente_nombres || input.cliente_nombre, input.cliente_apellido_paterno, input.cliente_apellido_materno].filter(Boolean).join(" ") || "Sin cliente";
+    const notifMensaje = `Servicio "${input.titulo}" — Cliente: ${clienteNombre}`;
+    const notifCreatedAt = now.toISOString();
+
+    try {
+      const destinatarios = new Set<number>();
+
+      // Técnico asignado
+      if (tecnicoPrincipalId) destinatarios.add(tecnicoPrincipalId);
+
+      // Encargado del área
+      if (input.area_id) {
+        const { data: area } = await supabase
+          .from("areas")
+          .select("area_encargado_id")
+          .eq("area_id", input.area_id)
+          .single();
+        if (area?.area_encargado_id) destinatarios.add(area.area_encargado_id);
+      }
+
+      // Todos los admins
+      const { data: admins } = await supabase
+        .from("usuarios")
+        .select("usuario_id")
+        .eq("usuario_rol", "admin")
+        .eq("usuario_activo", true);
+      for (const a of admins || []) destinatarios.add(a.usuario_id);
+
+      // Quitar el creador
+      destinatarios.delete(authUser.user_id);
+
+      for (const uid of destinatarios) {
+        await supabase.from("notificaciones").insert({
+          usuario_id: uid,
+          titulo: notifTitulo,
+          mensaje: notifMensaje,
+          tipo: "servicio",
+          referencia_id: servicio.servicio_id,
+          created_at: notifCreatedAt,
+        });
+      }
+    } catch {
+      // No bloquear la creación si falla la notificación
+    }
 
     return reply.status(201).send({ data: mapServicio(servicio) });
   });

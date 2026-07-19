@@ -432,55 +432,8 @@ export function NuevoServicioPage() {
         </div>
       </div>
 
-      {/* ═══ INDICADOR DE PASOS ═══ */}
-      {!guiarEntrada && (
-      <div className="rounded-2xl border border-slate-200 bg-white px-6 py-6 shadow-sm">
-      <div className="flex items-center justify-center gap-0">
-        {STEPS.map((step, idx) => {
-          const StepIcon = step.icon;
-          const activo = paso === step.id;
-          const completado = paso > step.id;
-          return (
-            <div key={step.id} className="flex items-center">
-              <div className="flex items-center gap-1.5">
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
-                    activo
-                      ? "bg-blue-900 text-white"
-                      : completado
-                        ? "bg-green-100 text-green-700"
-                        : "bg-slate-100 text-slate-400"
-                  }`}
-                >
-                  {completado ? <CheckSquare className="w-3.5 h-3.5" /> : <StepIcon className="w-3.5 h-3.5" />}
-                </div>
-                <span className={`text-[11px] font-medium hidden sm:inline ${
-                  activo ? "text-blue-900" : completado ? "text-green-700" : "text-slate-400"
-                }`}>
-                  {step.label}
-                </span>
-              </div>
-              {idx < 2 && (
-                <div className={`w-6 sm:w-10 h-px mx-1.5 ${
-                  completado ? "bg-green-300" : "bg-slate-200"
-                }`} />
-              )}
-            </div>
-          );
-        })}
-      </div>
-      </div>
-      )}
-
-      {/* ═══ FORMULARIO POR PASO ═══ */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (paso === totalPasos) handleSubmit();
-          else irAlSiguiente();
-        }}
-        className="space-y-5"
-      >
+      {/* ═══ FORMULARIO ═══ */}
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-5">
         {/* ═══ ERROR BANNER ═══ */}
         {Object.keys(errors).length > 0 && (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
@@ -489,534 +442,300 @@ export function NuevoServicioPage() {
             </p>
           </div>
         )}
-        {/* ─── PASO 1: CLIENTE (solo si guía INACTIVA) ─── */}
-        {paso === 1 && !guiarEntrada && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className={sectionTitleClass}>
-              <User className="w-4 h-4 text-blue-600" />
-              Cliente
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-              <InputField
-                label="DNI"
-                value={form.cliente_dni}
-                onChange={(v) => set("cliente_dni", v.replace(/\D/g, ""))}
-                placeholder="12345678"
-                required
-                error={errors.cliente_dni}
-              />
-              <InputField
-                label="Teléfono"
-                value={form.cliente_telefono}
-                onChange={(v) => set("cliente_telefono", v.replace(/\D/g, ""))}
-                placeholder="999888777"
-                required
-                error={errors.cliente_telefono}
-              />
-              <InputField
-                label="Apellido Paterno"
-                value={form.cliente_apellido_paterno}
-                onChange={(v) => set("cliente_apellido_paterno", v)}
-                required
-                error={errors.cliente_apellido_paterno}
-              />
-              <InputField
-                label="Apellido Materno"
-                value={form.cliente_apellido_materno}
-                onChange={(v) => set("cliente_apellido_materno", v)}
-              />
-              <div className="sm:col-span-2">
+
+        {/* ═══ SECCIÓN 1: SERVICIO Y SITUACIÓN INICIAL ═══ */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className={sectionTitleClass}>
+            <Wrench className="w-4 h-4 text-blue-600" />
+            Servicio y situación inicial del servicio
+          </h2>
+          <div className="mt-4 space-y-4">
+            <InputField
+              label="Nombre del Servicio"
+              value={form.titulo}
+              onChange={(v) => set("titulo", v)}
+              required
+              error={errors.titulo}
+              placeholder="Ej: Reparación de pantalla, Instalación de software..."
+            />
+
+            {guiarEntrada && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <InputField
-                  label="Nombres"
-                  value={form.cliente_nombres}
-                  onChange={(v) => set("cliente_nombres", v)}
+                  label="Código de servicio"
+                  value={form.codigo_servicio}
+                  onChange={(v) => set("codigo_servicio", v.toUpperCase())}
+                  placeholder="SRV20260617120000"
                   required
-                  error={errors.cliente_nombres}
+                  error={errors.codigo_servicio}
+                />
+                <InputField
+                  label="DNI Cliente"
+                  value={form.cliente_dni}
+                  onChange={(v) => set("cliente_dni", v.replace(/\D/g, ""))}
+                  placeholder="12345678"
+                  required
+                  error={errors.cliente_dni}
                 />
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* ─── PASO 2: EQUIPO Y ACCESORIOS (solo si guía INACTIVA) ─── */}
-        {paso === 2 && !guiarEntrada && (
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className={sectionTitleClass}>
-              <Monitor className="w-4 h-4 text-blue-600" />
-              Equipo y accesorios
-            </h2>
-
-            <div className="space-y-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Equipo</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-2">
-                  <InputField
-                    label="Descripción"
-                    value={form.descripcion_equipo}
-                    onChange={(v) => set("descripcion_equipo", v)}
-                    placeholder="Ej: Laptop HP Pavilion, Router TP-Link..."
-                    required
-                    error={errors.descripcion_equipo}
-                  />
-                </div>
-                <InputField
-                  label="N° de Serie"
-                  value={form.serie_equipo}
-                  onChange={(v) => set("serie_equipo", v)}
-                  placeholder="SN-12345-ABC"
+            {!autoAsignar && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <SelectField
+                  label="Área"
+                  value={form.area_id}
+                  onChange={(v) => set("area_id", v)}
+                  options={(areas || []).map((a: any) => ({
+                    value: String(a.id),
+                    label: a.nombre,
+                  }))}
+                  placeholder="Sin área"
                   required
-                  error={errors.serie_equipo}
+                  error={errors.area_id}
                 />
-                <div className="sm:col-span-3">
-                  <InputField
-                    label="Detalles"
-                    value={form.detalles_equipo}
-                    onChange={(v) => set("detalles_equipo", v)}
-                    rows={1}
-                    placeholder="Color, marca, modelo, estado físico..."
-                  />
-                </div>
+                <SelectField
+                  label="Técnico"
+                  value={form.colaborador_id}
+                  onChange={(v) => set("colaborador_id", v)}
+                  options={tecnicos.map((t: Usuario) => ({
+                    value: String(t.id),
+                    label: `${t.nombres} ${t.apellidos || ""}`.trim(),
+                  }))}
+                  placeholder="Seleccionar técnico..."
+                  required
+                />
+                {errors.colaborador_id && (
+                  <p className="text-xs text-red-500 mt-1 col-span-2">{errors.colaborador_id}</p>
+                )}
               </div>
-            </div>
+            )}
 
             <hr className="border-slate-100" />
 
-            <div className="space-y-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Accesorios</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <InputField
-                  label="Descripción"
-                  value={form.descripcion_accesorio}
-                  onChange={(v) => set("descripcion_accesorio", v)}
-                  placeholder="Ej: Cargador, mouse, cable HDMI..."
-                  required
-                  error={errors.descripcion_accesorio}
+            {/* Situación Inicial */}
+            <div>
+              <label className={labelClass}>
+                Situación Inicial del Servicio {!form.servicio_audio_cliente && <span className="text-red-400">*</span>}
+              </label>
+              <div className="flex items-start gap-2">
+                <textarea
+                  value={form.cliente_reporte}
+                  onChange={(e) => set("cliente_reporte", e.target.value)}
+                  className={`${inputClass} resize-none flex-1`}
+                  rows={2}
+                  placeholder="¿Qué reportó el cliente?"
                 />
-                <InputField
-                  label="Detalles"
-                  value={form.detalles_accesorio}
-                  onChange={(v) => set("detalles_accesorio", v)}
-                  rows={1}
-                  placeholder="Cantidad, estado, observaciones..."
+                <AudioRecorder
+                  label="Audio"
+                  existingUrl={form.servicio_audio_cliente || null}
+                  onAudioUploaded={(url) => set("servicio_audio_cliente", url)}
+                  onAudioRemoved={() => set("servicio_audio_cliente", "")}
+                  className="flex-shrink-0"
                 />
               </div>
+              {errors.cliente_reporte && <p className="text-xs text-red-500 mt-1">{errors.cliente_reporte}</p>}
+            </div>
+
+            {/* Diagnóstico Inicial (debajo) */}
+            <div>
+              <label className={labelClass}>
+                Diagnóstico Inicial {!form.servicio_audio_diagnostico && <span className="text-red-400">*</span>}
+              </label>
+              <div className="flex items-start gap-2">
+                <textarea
+                  value={form.diagnostico_inicial}
+                  onChange={(e) => set("diagnostico_inicial", e.target.value)}
+                  className={`${inputClass} resize-none flex-1`}
+                  rows={2}
+                  placeholder="Primera impresión técnica"
+                />
+                <AudioRecorder
+                  label="Audio"
+                  existingUrl={form.servicio_audio_diagnostico || null}
+                  onAudioUploaded={(url) => set("servicio_audio_diagnostico", url)}
+                  onAudioRemoved={() => set("servicio_audio_diagnostico", "")}
+                  className="flex-shrink-0"
+                />
+              </div>
+              {errors.diagnostico_inicial && <p className="text-xs text-red-500 mt-1">{errors.diagnostico_inicial}</p>}
             </div>
           </div>
-        )}
+        </div>
 
-        {/* ─── PASO 3 (o único si guía activa): SERVICIO ─── */}
-        {paso === 3 || (paso === 1 && guiarEntrada) ? (
-          <div className="grid gap-6 lg:grid-cols-[1.35fr_0.95fr]">
-            {/* ═══ LEFT COLUMN ═══ */}
-            <div className="space-y-6">
-              {/* Card: datos generales */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className={sectionTitleClass}>
-                  <Wrench className="w-4 h-4 text-blue-600" />
-                  Servicio
-                </h2>
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2">
-                    <InputField
-                      label="Nombre del Servicio"
-                      value={form.titulo}
-                      onChange={(v) => set("titulo", v)}
-                      required
-                      error={errors.titulo}
-                      placeholder="Ej: Reparación de pantalla, Instalación de software..."
-                    />
-                  </div>
+        {/* ═══ SECCIÓN 2: DESCRIPCIÓN DEL SERVICIO CON FALLAS COMUNES ═══ */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className={sectionTitleClass}>
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            Descripción del servicio con Incluir fallas comunes
+          </h2>
+          <div className="mt-4 space-y-4">
+            <InputField
+              label="Descripción del Servicio"
+              value={form.descripcion}
+              onChange={(v) => set("descripcion", v)}
+              rows={2}
+              placeholder="Detalles adicionales del trabajo a realizar..."
+            />
 
-                  {/* Código y DNI en guía de entrada */}
-                  {guiarEntrada && (
-                    <>
-                      <InputField
-                        label="Código de servicio"
-                        value={form.codigo_servicio}
-                        onChange={(v) => set("codigo_servicio", v.toUpperCase())}
-                        placeholder="SRV20260617120000"
-                        required
-                        error={errors.codigo_servicio}
-                      />
-                      <InputField
-                        label="DNI Cliente"
-                        value={form.cliente_dni}
-                        onChange={(v) => set("cliente_dni", v.replace(/\D/g, ""))}
-                        placeholder="12345678"
-                        required
-                        error={errors.cliente_dni}
-                      />
-                    </>
-                  )}
-
-                  {!autoAsignar && (
-                    <>
-                      <SelectField
-                        label="Área"
-                        value={form.area_id}
-                        onChange={(v) => set("area_id", v)}
-                        options={(areas || []).map((a: any) => ({
-                          value: String(a.id),
-                          label: a.nombre,
-                        }))}
-                        placeholder="Sin área"
-                        required
-                        error={errors.area_id}
-                      />
-                      <SelectField
-                        label="Técnico"
-                        value={form.colaborador_id}
-                        onChange={(v) => set("colaborador_id", v)}
-                        options={tecnicos.map((t: Usuario) => ({
-                          value: String(t.id),
-                          label: `${t.nombres} ${t.apellidos || ""}`.trim(),
-                        }))}
-                        placeholder="Seleccionar técnico..."
-                        required
-                      />
-                      {errors.colaborador_id && (
-                        <p className="text-xs text-red-500 mt-1 col-span-2">{errors.colaborador_id}</p>
-                      )}
-                    </>
-                  )}
+            {/* Alerta redacción */}
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+              <div className="flex items-start gap-2 text-sm">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" />
+                <div>
+                  <p className="font-medium text-amber-800">Redacción para el cliente</p>
+                  <p className="text-amber-700 mt-0.5 leading-relaxed text-xs">
+                    Evitá tecnicismos. Esta descripción la verá el cliente al dar seguimiento a su servicio.
+                  </p>
                 </div>
-              </div>
-
-              {/* Card: reporte + diagnóstico */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className={labelClass}>
-                      Situación Inicial del Servicio {!form.servicio_audio_cliente && <span className="text-red-400">*</span>}
-                    </label>
-                    <div className="space-y-2">
-                      <textarea
-                        value={form.cliente_reporte}
-                        onChange={(e) => set("cliente_reporte", e.target.value)}
-                        className={`${inputClass} resize-none`}
-                        rows={2}
-                        placeholder="¿Qué reportó el cliente?"
-                      />
-                      <AudioRecorder
-                        label="Audio"
-                        existingUrl={form.servicio_audio_cliente || null}
-                        onAudioUploaded={(url) => set("servicio_audio_cliente", url)}
-                        onAudioRemoved={() => set("servicio_audio_cliente", "")}
-                        className="w-full"
-                      />
-                    </div>
-                    {errors.cliente_reporte && <p className="text-xs text-red-500 mt-1">{errors.cliente_reporte}</p>}
-                  </div>
-                  <div>
-                    <label className={labelClass}>
-                      Diagnóstico Inicial {!form.servicio_audio_diagnostico && <span className="text-red-400">*</span>}
-                    </label>
-                    <div className="space-y-2">
-                      <textarea
-                        value={form.diagnostico_inicial}
-                        onChange={(e) => set("diagnostico_inicial", e.target.value)}
-                        className={`${inputClass} resize-none`}
-                        rows={2}
-                        placeholder="Primera impresión técnica"
-                      />
-                      <AudioRecorder
-                        label="Audio"
-                        existingUrl={form.servicio_audio_diagnostico || null}
-                        onAudioUploaded={(url) => set("servicio_audio_diagnostico", url)}
-                        onAudioRemoved={() => set("servicio_audio_diagnostico", "")}
-                        className="w-full"
-                      />
-                    </div>
-                    {errors.diagnostico_inicial && <p className="text-xs text-red-500 mt-1">{errors.diagnostico_inicial}</p>}
-                  </div>
-                </div>
-              </div>
-
-              {/* Alerta redacción para el cliente */}
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                <div className="flex items-start gap-2 text-sm">
-                  <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" />
-                  <div>
-                    <p className="font-medium text-amber-800">Redacción para el cliente</p>
-                    <p className="text-amber-700 mt-0.5 leading-relaxed">
-                      Evitá tecnicismos demasiado estrictos. Esta descripción la verá el cliente al dar seguimiento a su servicio.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card: descripción */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <InputField
-                  label="Descripción del Servicio"
-                  value={form.descripcion}
-                  onChange={(v) => set("descripcion", v)}
-                  rows={2}
-                  placeholder="Detalles adicionales del trabajo a realizar..."
-                />
               </div>
             </div>
 
-            {/* ═══ RIGHT COLUMN ═══ */}
-            <div className="space-y-6">
-              {/* Card: fallas comunes */}
-              {fallas && fallas.length > 0 && (
-                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <p className={labelClass}>Incluir fallas comunes</p>
-                  <div className="mt-3 space-y-3">
-                    <select
-                      value={tipoFallaFiltro}
-                      onChange={(e) => setTipoFallaFiltro(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                    >
-                      <option value="">Seleccioná un tipo de falla</option>
-                      {tiposFalla.map((t) => (
-                        <option key={t} value={t}>{t}</option>
+            {/* Fallas comunes */}
+            {fallas && fallas.length > 0 && (
+              <div>
+                <p className={labelClass}>Incluir fallas comunes</p>
+                <div className="mt-2 space-y-3">
+                  <select
+                    value={tipoFallaFiltro}
+                    onChange={(e) => setTipoFallaFiltro(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  >
+                    <option value="">Seleccioná un tipo de falla</option>
+                    {tiposFalla.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                  {tipoFallaFiltro ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
+                      {fallasFiltradas.map((f) => (
+                        <label
+                          key={f.id}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer transition"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={fallasSeleccionadas.has(f.id)}
+                            onChange={() => toggleFalla(f.id, f.nombre)}
+                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-slate-700">{f.nombre}</span>
+                        </label>
                       ))}
-                    </select>
-                    {tipoFallaFiltro ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
-                        {fallasFiltradas.map((f) => (
-                          <label
-                            key={f.id}
-                            className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 cursor-pointer transition"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={fallasSeleccionadas.has(f.id)}
-                              onChange={() => toggleFalla(f.id, f.nombre)}
-                              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-slate-700">{f.nombre}</span>
-                          </label>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
+                    </div>
+                  ) : null}
                 </div>
-              )}
-
-              {/* Card: plantilla */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <SelectField
-                  label="Plantilla de Tareas"
-                  value={form.id_plantilla_inicial}
-                  onChange={(v) => set("id_plantilla_inicial", v)}
-                  options={plantillasFiltradas.map((p: any) => ({
-                    value: String(p.id),
-                    label: `${p.nombre} (${p.tareas_count || 0} tareas)`,
-                  }))}
-                  placeholder="Sin plantilla"
-                />
               </div>
+            )}
+          </div>
+        </div>
 
-              {/* Card: tareas */}
-              {(guiarEntrada || form.id_plantilla_inicial || tareas.length > 0) && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide flex items-center justify-between">
-                    <span>Tareas del servicio</span>
-                    <span className="text-slate-400 font-normal text-[10px]">{tareas.length} tareas</span>
-                  </p>
+        {/* ═══ SECCIÓN 3: PLANTILLAS DE TAREAS CON TAREAS DEL SERVICIO ═══ */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className={sectionTitleClass}>
+            <FileText className="w-4 h-4 text-blue-600" />
+            Plantillas de tareas con tareas del servicio
+          </h2>
+          <div className="mt-4 space-y-4">
+            <SelectField
+              label="Plantilla de Tareas"
+              value={form.id_plantilla_inicial}
+              onChange={(v) => set("id_plantilla_inicial", v)}
+              options={plantillasFiltradas.map((p: any) => ({
+                value: String(p.id),
+                label: `${p.nombre} (${p.tareas_count || 0} tareas)`,
+              }))}
+              placeholder="Sin plantilla"
+            />
 
-                  <div className="mt-3 space-y-2">
-                    {tareas.length === 0 ? (
-                      <p className="text-sm text-slate-400 italic">Agregá tareas para este servicio</p>
-                    ) : (
-                      <div className="space-y-1">
-                        {tareas.map((t, idx) => (
-                          <div
-                            key={t.tempId}
-                            className="flex items-center gap-1 bg-white rounded-lg border border-slate-200 px-2 py-1.5 text-sm group"
-                          >
-                            {/* Reorder arrows (before order number) */}
-                            <div className="flex flex-col items-center gap-0.5 mr-0.5">
-                              {idx > 0 && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setTareas((prev) => {
-                                      const arr = [...prev];
-                                      [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
-                                      return arr;
-                                    })
-                                  }
-                                  className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"
-                                  title="Subir"
-                                >
-                                  <ChevronUp className="w-3 h-3" />
-                                </button>
-                              )}
-                              {idx < tareas.length - 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setTareas((prev) => {
-                                      const arr = [...prev];
-                                      [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
-                                      return arr;
-                                    })
-                                  }
-                                  className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"
-                                  title="Bajar"
-                                >
-                                  <ChevronDown className="w-3 h-3" />
-                                </button>
-                              )}
-                            </div>
+            {(guiarEntrada || form.id_plantilla_inicial || tareas.length > 0) && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide flex items-center justify-between">
+                  <span>Tareas del servicio</span>
+                  <span className="text-slate-400 font-normal text-[10px]">{tareas.length} tareas</span>
+                </p>
 
-                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">
-                              {idx + 1}
-                            </span>
-                            {editandoTarea === t.tempId ? (
-                              <input
-                                type="text"
-                                value={editText}
-                                onChange={(e) => setEditText(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    setTareas((prev) =>
-                                      prev.map((x) =>
-                                        x.tempId === t.tempId ? { ...x, titulo: editText.trim() || x.titulo } : x
-                                      )
-                                    );
-                                    setEditandoTarea(null);
-                                  }
-                                  if (e.key === "Escape") setEditandoTarea(null);
-                                }}
-                                onBlur={() => {
-                                  setTareas((prev) =>
-                                    prev.map((x) =>
-                                      x.tempId === t.tempId ? { ...x, titulo: editText.trim() || x.titulo } : x
-                                    )
-                                  );
-                                  setEditandoTarea(null);
-                                }}
-                                className="flex-1 border border-blue-300 rounded-lg px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-200"
-                                ref={(el) => {
-                                  if (el && editandoTarea === t.tempId)
-                                    setTimeout(() => el.focus({ preventScroll: true }), 0);
-                                }}
-                              />
-                            ) : (
-                              <span
-                                className="flex-1 text-gray-700 cursor-pointer hover:text-blue-700 transition"
-                                onClick={() => {
-                                  setEditText(t.titulo);
-                                  setEditandoTarea(t.tempId);
-                                }}
-                              >
-                                {t.titulo}
-                              </span>
+                <div className="mt-3 space-y-2">
+                  {tareas.length === 0 ? (
+                    <p className="text-sm text-slate-400 italic">Agregá tareas para este servicio</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {tareas.map((t, idx) => (
+                        <div
+                          key={t.tempId}
+                          className="flex items-center gap-1 bg-white rounded-lg border border-slate-200 px-2 py-1.5 text-sm group"
+                        >
+                          <div className="flex flex-col items-center gap-0.5 mr-0.5">
+                            {idx > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setTareas((prev) => { const arr = [...prev]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; return arr; })}
+                                className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"
+                                title="Subir"
+                              ><ChevronUp className="w-3 h-3" /></button>
                             )}
-
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                            {idx < tareas.length - 1 && (
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setEditText(t.titulo);
-                                  setEditandoTarea(t.tempId);
-                                }}
-                                className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600"
-                                title="Editar"
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                            {t.obligatoria ? (
-                              <span className="ml-auto flex items-center gap-1 text-amber-500 text-[10px] font-medium shrink-0" title="Tarea obligatoria de la plantilla">
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                  <path d="M7 11V7a5 5 0 0110 0v4" />
-                                </svg>
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setTareas((prev) => prev.filter((x) => x.tempId !== t.tempId))
-                                }
-                                className="ml-auto p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 shrink-0"
-                                title="Eliminar tarea"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
+                                onClick={() => setTareas((prev) => { const arr = [...prev]; [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]; return arr; })}
+                                className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"
+                                title="Bajar"
+                              ><ChevronDown className="w-3 h-3" /></button>
                             )}
                           </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Barra agregar tarea */}
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={nuevaTareaTexto}
-                        onChange={(e) => setNuevaTareaTexto(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            const txt = nuevaTareaTexto.trim();
-                            if (txt) {
-                              setTareas((prev) => [...prev, { tempId: --nextTempId.current, titulo: txt }]);
-                              setNuevaTareaTexto("");
-                            }
-                          }
-                        }}
-                        placeholder="Escribí una tarea nueva..."
-                        className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 bg-white"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const txt = nuevaTareaTexto.trim();
-                          if (txt) {
-                            setTareas((prev) => [...prev, { tempId: --nextTempId.current, titulo: txt }]);
-                            setNuevaTareaTexto("");
-                          }
-                        }}
-                        disabled={!nuevaTareaTexto.trim()}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-blue-900 hover:bg-blue-800 disabled:bg-slate-300 text-white rounded-lg text-sm font-semibold transition"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Agregar
-                      </button>
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">{idx + 1}</span>
+                          {editandoTarea === t.tempId ? (
+                            <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === "Enter") { setTareas((prev) => prev.map((x) => x.tempId === t.tempId ? { ...x, titulo: editText.trim() || x.titulo } : x)); setEditandoTarea(null); } if (e.key === "Escape") setEditandoTarea(null); }}
+                              onBlur={() => { setTareas((prev) => prev.map((x) => x.tempId === t.tempId ? { ...x, titulo: editText.trim() || x.titulo } : x)); setEditandoTarea(null); }}
+                              className="flex-1 border border-blue-300 rounded-lg px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                              ref={(el) => { if (el && editandoTarea === t.tempId) setTimeout(() => el.focus({ preventScroll: true }), 0); }}
+                            />
+                          ) : (
+                            <span className="flex-1 text-gray-700 cursor-pointer hover:text-blue-700 transition" onClick={() => { setEditText(t.titulo); setEditandoTarea(t.tempId); }}>
+                              {t.titulo}
+                            </span>
+                          )}
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                            <button type="button" onClick={() => { setEditText(t.titulo); setEditandoTarea(t.tempId); }} className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600" title="Editar"><Pencil className="w-3.5 h-3.5" /></button>
+                          </div>
+                          {t.obligatoria ? (
+                            <span className="ml-auto flex items-center gap-1 text-amber-500 text-[10px] font-medium shrink-0" title="Tarea obligatoria">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
+                            </span>
+                          ) : (
+                            <button type="button" onClick={() => setTareas((prev) => prev.filter((x) => x.tempId !== t.tempId))} className="ml-auto p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500 shrink-0" title="Eliminar"><X className="w-3.5 h-3.5" /></button>
+                          )}
+                        </div>
+                      ))}
                     </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input type="text" value={nuevaTareaTexto} onChange={(e) => setNuevaTareaTexto(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") { const txt = nuevaTareaTexto.trim(); if (txt) { setTareas((prev) => [...prev, { tempId: --nextTempId.current, titulo: txt }]); setNuevaTareaTexto(""); } }}}
+                      placeholder="Escribí una tarea nueva..."
+                      className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 bg-white"
+                    />
+                    <button type="button" onClick={() => { const txt = nuevaTareaTexto.trim(); if (txt) { setTareas((prev) => [...prev, { tempId: --nextTempId.current, titulo: txt }]); setNuevaTareaTexto(""); }}} disabled={!nuevaTareaTexto.trim()}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-blue-900 hover:bg-blue-800 disabled:bg-slate-300 text-white rounded-lg text-sm font-semibold transition"
+                    ><Plus className="w-4 h-4" /> Agregar</button>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-        ) : null}
-        
+        </div>
 
-        {/* ═══ NAVEGACIÓN ═══ */}
-        <div className="sticky bottom-0 z-10 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur">
+        {/* ═══ BOTÓN CREAR SERVICIO ═══ */}
+        <div className="flex justify-end">
           <button
-            type="button"
-            onClick={guiarEntrada ? () => navigate("/servicios") : paso > 1 ? irAlAnterior : () => navigate("/servicios")}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition"
+            type="submit"
+            disabled={crearServicio.isPending}
+            className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-6 py-3 rounded-xl text-sm font-semibold transition disabled:opacity-50 shadow-sm"
           >
-            <ChevronLeft className="w-4 h-4" />
-            {guiarEntrada ? "Cancelar" : paso > 1 ? "Anterior" : "Cancelar"}
+            <Save className="w-4 h-4" />
+            {crearServicio.isPending ? "Guardando..." : "Crear Servicio"}
           </button>
-
-          {paso < totalPasos ? (
-            <button
-              type="submit"
-              className="flex items-center gap-1.5 bg-blue-900 hover:bg-blue-800 text-white px-5 py-2 rounded-xl text-sm font-semibold transition"
-            >
-              Siguiente
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={crearServicio.isPending}
-              className="flex items-center gap-2 bg-blue-900 hover:bg-blue-800 text-white px-5 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-50"
-            >
-              <Save className="w-4 h-4" />
-              {crearServicio.isPending ? "Guardando..." : "Crear Servicio"}
-            </button>
-          )}
         </div>
       </form>
     </div>
