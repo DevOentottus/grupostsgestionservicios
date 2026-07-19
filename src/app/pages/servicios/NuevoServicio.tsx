@@ -9,8 +9,8 @@ import { useFallasComunes } from "@/api/queries/useTiposServicio.js";
 import { AudioRecorder } from "@/app/components/AudioRecorder.js";
 import type { Usuario } from "@shared/index.js";
 import {
-  ArrowLeft, User, Monitor, Wrench, CheckSquare, Square, Camera,
-  ChevronRight, ChevronLeft, Save, Plus, X, ChevronUp, ChevronDown, Pencil, Mic, AlertTriangle, FileText,
+  Wrench, CheckSquare, Square,
+  Save, Plus, X, ChevronUp, ChevronDown, Pencil, Mic, AlertTriangle, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -133,13 +133,6 @@ const CheckboxToggle = memo(function CheckboxToggle({
   );
 });
 
-// --- Steps ---
-const STEPS = [
-  { id: 1, label: "Cliente", icon: User },
-  { id: 2, label: "Equipo y accesorios", icon: Monitor },
-  { id: 3, label: "Servicio", icon: Wrench },
-];
-
 export function NuevoServicioPage() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
@@ -181,16 +174,6 @@ export function NuevoServicioPage() {
     return stored !== null ? stored === "true" : true;
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [paso, setPaso] = useState(1);
-
-  // Resetear paso al activar/desactivar guía
-  const toggleGuiarEntrada = (v: boolean) => {
-    setGuiarEntrada(v);
-    if (v) setPaso(3);
-    else setPaso(1);
-  };
-
-  const totalPasos = 3; // siempre 3 pasos en el stepper
 
   useEffect(() => {
     if (autoAsignar && currentUser?.area_id) {
@@ -297,47 +280,24 @@ export function NuevoServicioPage() {
     }
   }, [plantillaDetalle]);
 
-  // -- Validación por paso --
-  const validarPaso = (step: number): boolean => {
+  // -- Validación de todos los campos visibles --
+  const validarFormulario = (): boolean => {
     const errs: Record<string, string> = {};
-    if (step === 1 && !guiarEntrada) {
-      if (!form.cliente_dni.trim()) errs.cliente_dni = "Requerido";
-      if (!form.cliente_apellido_paterno.trim()) errs.cliente_apellido_paterno = "Requerido";
-      if (!form.cliente_nombres.trim()) errs.cliente_nombres = "Requerido";
-      if (!form.cliente_telefono.trim()) errs.cliente_telefono = "Requerido";
-    }
-    if (step === 2 && !guiarEntrada) {
-      if (!form.descripcion_equipo.trim()) errs.descripcion_equipo = "Requerido";
-      if (!form.serie_equipo.trim()) errs.serie_equipo = "Requerido";
-      if (!form.descripcion_accesorio.trim()) errs.descripcion_accesorio = "Requerido";
-    }
-    if (step === 3 || (step === 1 && guiarEntrada)) {
-      if (!form.titulo.trim()) errs.titulo = "Requerido";
-      if (!autoAsignar && !form.colaborador_id) errs.colaborador_id = "Requerido";
-      if (guiarEntrada && !form.cliente_dni.trim()) errs.cliente_dni = "Requerido";
-      if (guiarEntrada && !form.codigo_servicio.trim()) errs.codigo_servicio = "Requerido";
-      if (!autoAsignar && !form.area_id) errs.area_id = "Requerido";
-      if (!form.cliente_reporte.trim() && !form.servicio_audio_cliente) errs.cliente_reporte = "Requerido";
-      if (!form.diagnostico_inicial.trim() && !form.servicio_audio_diagnostico) errs.diagnostico_inicial = "Requerido";
-    }
+    if (!form.titulo.trim()) errs.titulo = "Requerido";
+    if (guiarEntrada && !form.cliente_dni.trim()) errs.cliente_dni = "Requerido";
+    if (guiarEntrada && !form.codigo_servicio.trim()) errs.codigo_servicio = "Requerido";
+    if (!autoAsignar && !form.colaborador_id) errs.colaborador_id = "Requerido";
+    if (!autoAsignar && !form.area_id) errs.area_id = "Requerido";
+    if (!form.cliente_reporte.trim() && !form.servicio_audio_cliente) errs.cliente_reporte = "Requerido";
+    if (!form.diagnostico_inicial.trim() && !form.servicio_audio_diagnostico) errs.diagnostico_inicial = "Requerido";
     setErrors(errs);
     const ok = Object.keys(errs).length === 0;
     if (!ok) toast.error("Completá todos los campos requeridos");
     return ok;
   };
 
-  const irAlSiguiente = () => {
-    if (!validarPaso(paso)) return;
-    const maxPaso = guiarEntrada ? 2 : 3;
-    if (paso < maxPaso) setPaso((p) => p + 1);
-  };
-
-  const irAlAnterior = () => {
-    if (paso > 1) setPaso((p) => p - 1);
-  };
-
   const handleSubmit = async () => {
-    if (!validarPaso(paso)) return;
+    if (!validarFormulario()) return;
 
     const payload: Record<string, unknown> = {
       titulo: form.titulo.trim(),
@@ -392,42 +352,23 @@ export function NuevoServicioPage() {
     }
   };
 
-  // -- Mapear paso visible --
-  function pasoVisible(): number {
-    if (guiarEntrada && paso === 2) return 3; // skip paso 2
-    return paso;
-  }
-
   return (
     <div className="mx-auto max-w-full space-y-6 px-6 pb-28 pt-6">
-      {/* ═══ HEADER GRADIENTE ═══ */}
+      {/* ═══ HEADER ═══ */}
       <div className="rounded-2xl bg-gradient-to-r from-blue-900 to-blue-700 px-6 py-5 text-white shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate("/servicios")}
-              className="rounded-xl border border-white/20 p-2 text-white transition hover:bg-white/10"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-            <div>
-              <h1 className="text-lg font-bold text-white">Nuevo servicio técnico</h1>
-              <p className="text-sm text-blue-200">
-                Registrá el ingreso, diagnóstico y tareas iniciales del servicio.
-              </p>
-            </div>
-          </div>
-          <div className="sm:ml-auto">
-            <span className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-blue-100">
-              {guiarEntrada ? "Guía rápida" : `Paso ${paso} de ${totalPasos}`}
-            </span>
+        <div className="flex items-center gap-2">
+          <div>
+            <h1 className="text-lg font-bold text-white">Nuevo servicio técnico</h1>
+            <p className="text-sm text-blue-200">
+              Registrá el ingreso, diagnóstico y tareas iniciales del servicio.
+            </p>
           </div>
         </div>
         <div className="mt-4">
           <CheckboxToggle
             checked={guiarEntrada}
-            onChange={toggleGuiarEntrada}
-            label="Continuar guía de ingreso"
+            onChange={setGuiarEntrada}
+            label="Seguir guía de entrada"
           />
         </div>
       </div>
