@@ -10,7 +10,7 @@ import { AudioRecorder } from "@/app/components/AudioRecorder.js";
 import type { Usuario } from "@shared/index.js";
 import {
   ArrowLeft, User, Monitor, Wrench, CheckSquare, Square, Camera,
-  ChevronRight, ChevronLeft, Save, Plus, X, ChevronUp, ChevronDown, Pencil, Mic, AlertTriangle,
+  ChevronRight, ChevronLeft, Save, Plus, X, ChevronUp, ChevronDown, Pencil, Mic, AlertTriangle, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 
