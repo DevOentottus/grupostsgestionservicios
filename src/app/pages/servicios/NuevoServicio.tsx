@@ -427,8 +427,7 @@ export function NuevoServicioPage() {
           <CheckboxToggle
             checked={guiarEntrada}
             onChange={toggleGuiarEntrada}
-            label="Simplificar datos del cliente y del equipo"
-            description="Al activar esta opción se ocultan los campos detallados y podés registrar el servicio directamente con una plantilla de tareas."
+            label="Continuar guía de ingreso"
           />
         </div>
       </div>
