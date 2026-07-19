@@ -400,7 +400,7 @@ export function MiAreaPage() {
                           <StarRating rating={col.calificacion_promedio} />
                         )}
                         <div className="text-right shrink-0">
-                          <p className="text-xs font-bold text-slate-500">({col.servicios_completados || 0})</p>
+                          <p className="text-xs font-bold text-slate-500" title={`${col.servicios_completados || 0} servicios completados`}>({col.total_calificaciones || 0})</p>
                         </div>
                       </div>
                     );
