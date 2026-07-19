@@ -183,10 +183,11 @@ export function NuevoServicioPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [paso, setPaso] = useState(1);
 
-  // Resetear paso si se activa guía desde pasos avanzados
+  // Resetear paso al activar/desactivar guía
   const toggleGuiarEntrada = (v: boolean) => {
     setGuiarEntrada(v);
     if (v) setPaso(3);
+    else setPaso(1);
   };
 
   const totalPasos = 3; // siempre 3 pasos en el stepper
@@ -422,16 +423,14 @@ export function NuevoServicioPage() {
             </span>
           </div>
         </div>
-      </div>
-
-      {/* ═══ OPCIONES ═══ */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <CheckboxToggle
-          checked={guiarEntrada}
-          onChange={toggleGuiarEntrada}
-          label="Continuar guía de entrada"
-          description="Al activar esta opción se ocultan los campos de Equipo y Accesorios, y se muestra la lista de tareas de la plantilla seleccionada."
-        />
+        <div className="mt-4">
+          <CheckboxToggle
+            checked={guiarEntrada}
+            onChange={toggleGuiarEntrada}
+            label="Simplificar datos del cliente y del equipo"
+            description="Al activar esta opción se ocultan los campos detallados y podés registrar el servicio directamente con una plantilla de tareas."
+          />
+        </div>
       </div>
 
       {/* ═══ INDICADOR DE PASOS ═══ */}
