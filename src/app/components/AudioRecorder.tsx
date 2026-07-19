@@ -4,7 +4,7 @@ import { audioApi } from "@/api/client.js";
 
 interface AudioRecorderProps {
   /** Texto que describe el propósito (ej: "Reporte del cliente", "Diagnóstico") */
-  label: string;
+  label?: string;
   /** URL de audio existente (en modo edición) */
   existingUrl?: string | null;
   /** Se llama cuando el audio se sube exitosamente */
@@ -163,9 +163,7 @@ export function AudioRecorder({
   if (existingUrl && !audioUrl && !recording) {
     return (
       <div className={className}>
-        <span className="block text-sm font-medium text-slate-700 mb-1.5">
-          {label}
-        </span>
+        {label && <span className="block text-sm font-medium text-slate-700 mb-1.5">{label}</span>}
         <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-2">
           <audio src={existingUrl} controls className="flex-1 h-10" preload="metadata" />
           {onAudioRemoved && !disabled && (
@@ -185,18 +183,20 @@ export function AudioRecorder({
 
   return (
     <div className={className}>
-      <span className="block text-sm font-medium text-slate-700 mb-1.5">
-        {label}
-        {onAudioRemoved && existingUrl && !disabled && (
-          <button
-            type="button"
-            onClick={onAudioRemoved}
-            className="ml-2 text-xs text-red-500 hover:text-red-700"
-          >
-            Eliminar
-          </button>
-        )}
-      </span>
+      {label && (
+        <span className="block text-sm font-medium text-slate-700 mb-1.5">
+          {label}
+          {onAudioRemoved && existingUrl && !disabled && (
+            <button
+              type="button"
+              onClick={onAudioRemoved}
+              className="ml-2 text-xs text-red-500 hover:text-red-700"
+            >
+              Eliminar
+            </button>
+          )}
+        </span>
+      )}
 
       <div className="bg-white rounded-xl border border-slate-200 p-3 space-y-3">
         {/* Estado de grabación */}

@@ -245,21 +245,28 @@ export function NuevoServicioPage() {
 
   const toggleFalla = (fallaId: number, nombre: string) => {
     const yaSeleccionada = fallasSeleccionadas.has(fallaId);
-    setFallasSeleccionadas((prev) => {
-      const next = new Set(prev);
-      if (yaSeleccionada) next.delete(fallaId);
-      else next.add(fallaId);
-      return next;
-    });
+    const nuevasSeleccionadas = new Set(fallasSeleccionadas);
+    if (yaSeleccionada) nuevasSeleccionadas.delete(fallaId);
+    else nuevasSeleccionadas.add(fallaId);
+    setFallasSeleccionadas(nuevasSeleccionadas);
+
+    // Reconstruir descripción con todas las fallas seleccionadas
     setForm((p) => {
-      const current = p.diagnostico_inicial.trim();
-      if (yaSeleccionada) {
-        const lines = current.split("\n").filter((l) => l.trim() !== `- ${nombre}`);
-        return { ...p, diagnostico_inicial: lines.join("\n") };
-      } else {
-        const texto = `- ${nombre}`;
-        return { ...p, diagnostico_inicial: current ? `${current}\n${texto}` : texto };
+      const current = p.descripcion.trim();
+      // Remover sección "Fallas:" existente
+      const idx = current.lastIndexOf("\nFallas:");
+      const baseText = idx >= 0 ? current.substring(0, idx).trim() : current;
+
+      const nombres = (fallas || [])
+        .filter((f: any) => nuevasSeleccionadas.has(f.id))
+        .map((f: any) => `- ${f.nombre}`)
+        .join("\n");
+
+      if (!nombres) {
+        return { ...p, descripcion: baseText };
       }
+      const texto = `Fallas:\n${nombres}`;
+      return { ...p, descripcion: baseText ? `${baseText}\n${texto}` : texto };
     });
   };
 
@@ -442,7 +449,7 @@ export function NuevoServicioPage() {
         <label className={labelClass}>Situación Inicial {!form.servicio_audio_cliente && <span className="text-red-400">*</span>}</label>
         <div className="flex items-start gap-2">
           <textarea value={form.cliente_reporte} onChange={(e) => set("cliente_reporte", e.target.value)} className={`${inputClass} resize-none flex-1`} rows={2} placeholder="¿Qué reportó el cliente?" />
-          <AudioRecorder label="Audio" existingUrl={form.servicio_audio_cliente || null} onAudioUploaded={(url) => set("servicio_audio_cliente", url)} onAudioRemoved={() => set("servicio_audio_cliente", "")} className="flex-shrink-0" />
+          <AudioRecorder existingUrl={form.servicio_audio_cliente || null} onAudioUploaded={(url) => set("servicio_audio_cliente", url)} onAudioRemoved={() => set("servicio_audio_cliente", "")} className="flex-shrink-0" />
         </div>
         {errors.cliente_reporte && <p className="text-xs text-red-500 mt-1">{errors.cliente_reporte}</p>}
       </div>
@@ -450,7 +457,7 @@ export function NuevoServicioPage() {
         <label className={labelClass}>Diagnóstico Inicial {!form.servicio_audio_diagnostico && <span className="text-red-400">*</span>}</label>
         <div className="flex items-start gap-2">
           <textarea value={form.diagnostico_inicial} onChange={(e) => set("diagnostico_inicial", e.target.value)} className={`${inputClass} resize-none flex-1`} rows={2} placeholder="Primera impresión técnica" />
-          <AudioRecorder label="Audio" existingUrl={form.servicio_audio_diagnostico || null} onAudioUploaded={(url) => set("servicio_audio_diagnostico", url)} onAudioRemoved={() => set("servicio_audio_diagnostico", "")} className="flex-shrink-0" />
+          <AudioRecorder existingUrl={form.servicio_audio_diagnostico || null} onAudioUploaded={(url) => set("servicio_audio_diagnostico", url)} onAudioRemoved={() => set("servicio_audio_diagnostico", "")} className="flex-shrink-0" />
         </div>
         {errors.diagnostico_inicial && <p className="text-xs text-red-500 mt-1">{errors.diagnostico_inicial}</p>}
       </div>
@@ -543,7 +550,7 @@ export function NuevoServicioPage() {
                     <label className={labelClass}>Situación Inicial {!form.servicio_audio_cliente && <span className="text-red-400">*</span>}</label>
                     <div className="flex items-start gap-2">
                       <textarea value={form.cliente_reporte} onChange={(e) => set("cliente_reporte", e.target.value)} className={`${inputClass} resize-none flex-1`} rows={2} placeholder="¿Qué reportó el cliente?" />
-                      <AudioRecorder label="Audio" existingUrl={form.servicio_audio_cliente || null} onAudioUploaded={(url) => set("servicio_audio_cliente", url)} onAudioRemoved={() => set("servicio_audio_cliente", "")} className="flex-shrink-0" />
+                      <AudioRecorder existingUrl={form.servicio_audio_cliente || null} onAudioUploaded={(url) => set("servicio_audio_cliente", url)} onAudioRemoved={() => set("servicio_audio_cliente", "")} className="flex-shrink-0" />
                     </div>
                     {errors.cliente_reporte && <p className="text-xs text-red-500 mt-1">{errors.cliente_reporte}</p>}
                   </div>
@@ -551,7 +558,7 @@ export function NuevoServicioPage() {
                     <label className={labelClass}>Diagnóstico Inicial {!form.servicio_audio_diagnostico && <span className="text-red-400">*</span>}</label>
                     <div className="flex items-start gap-2">
                       <textarea value={form.diagnostico_inicial} onChange={(e) => set("diagnostico_inicial", e.target.value)} className={`${inputClass} resize-none flex-1`} rows={2} placeholder="Primera impresión técnica" />
-                      <AudioRecorder label="Audio" existingUrl={form.servicio_audio_diagnostico || null} onAudioUploaded={(url) => set("servicio_audio_diagnostico", url)} onAudioRemoved={() => set("servicio_audio_diagnostico", "")} className="flex-shrink-0" />
+                      <AudioRecorder existingUrl={form.servicio_audio_diagnostico || null} onAudioUploaded={(url) => set("servicio_audio_diagnostico", url)} onAudioRemoved={() => set("servicio_audio_diagnostico", "")} className="flex-shrink-0" />
                     </div>
                     {errors.diagnostico_inicial && <p className="text-xs text-red-500 mt-1">{errors.diagnostico_inicial}</p>}
                   </div>
@@ -560,7 +567,7 @@ export function NuevoServicioPage() {
 
               {/* COLUMNA 2: Descripción + fallas comunes */}
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-min">
-                <h2 className={sectionTitleClass}><AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" /> Descripción y fallas comunes</h2>
+                <h2 className={sectionTitleClass}><AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" /> Descripción del servicio</h2>
                 <div className="mt-4 space-y-3">
                   <InputField label="Descripción del Servicio" value={form.descripcion} onChange={(v) => set("descripcion", v)} rows={3} placeholder="Detalles adicionales del trabajo a realizar..." />
                   <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
@@ -569,8 +576,8 @@ export function NuevoServicioPage() {
                   </div>
                   {fallas && fallas.length > 0 && (
                     <div>
-                      <p className={labelClass}>Incluir fallas comunes</p>
-                      <select value={tipoFallaFiltro} onChange={(e) => setTipoFallaFiltro(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 mb-2">
+                      <p className="text-xs font-semibold text-slate-700">Incluir fallas comunes</p>
+                      <select value={tipoFallaFiltro} onChange={(e) => setTipoFallaFiltro(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 mt-2 mb-2">
                         <option value="">Seleccioná un tipo de falla</option>
                         {tiposFalla.map((t) => <option key={t} value={t}>{t}</option>)}
                       </select>
