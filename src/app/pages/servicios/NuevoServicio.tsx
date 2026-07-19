@@ -259,7 +259,7 @@ export function NuevoServicioPage() {
 
       const nombres = (fallas || [])
         .filter((f: any) => nuevasSeleccionadas.has(f.id))
-        .map((f: any) => `- ${f.nombre}`)
+        .map((f: any) => f.nombre)
         .join("\n");
 
       if (!nombres) {

@@ -502,6 +502,20 @@ export function ServicioDetailPage() {
     return () => clearInterval(interval);
   }, [tiemposServicio]);
 
+  // Cronómetro en vivo del servicio (desde fecha_inicio)
+  const [servicioElapsed, setServicioElapsed] = useState(0);
+  useEffect(() => {
+    if (!isEnProgreso || !servicio?.fecha_inicio) {
+      setServicioElapsed(0);
+      return;
+    }
+    const inicio = new Date(servicio.fecha_inicio).getTime();
+    const interval = setInterval(() => {
+      setServicioElapsed(Math.max(0, Math.floor((Date.now() - inicio) / 1000)));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isEnProgreso, servicio?.fecha_inicio]);
+
   const flowSteps = tareasSorted.map((tarea) => ({
     id: tarea.id,
     titulo: tarea.titulo,
@@ -867,7 +881,13 @@ export function ServicioDetailPage() {
               <div className="bg-white/60 backdrop-blur rounded-xl border border-gray-200/60 px-4 py-3 min-w-[130px]">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Tiempo del servicio</p>
                 <p className="text-lg font-bold text-gray-900 tabular-nums leading-tight mt-0.5">
-                  {totalTiempoRealMin > 0 ? formatMinutos(totalTiempoRealMin) : "—"}
+                  {isEnProgreso && servicioElapsed > 0 ? (
+                    <span className="text-blue-700">
+                      {Math.floor(servicioElapsed / 3600)}:{String(Math.floor((servicioElapsed % 3600) / 60)).padStart(2, "0")}:{String(servicioElapsed % 60).padStart(2, "0")}
+                    </span>
+                  ) : totalTiempoRealMin > 0 ? (
+                    formatMinutos(totalTiempoRealMin)
+                  ) : "—"}
                 </p>
               </div>
             </div>
@@ -1261,16 +1281,7 @@ export function ServicioDetailPage() {
                             </div>
                           );
                         }
-                        return (
-                          <button
-                            onClick={() => iniciarTiempo.mutateAsync(tarea.id)}
-                            disabled={iniciarTiempo.isPending}
-                            className="p-1 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition text-xs"
-                            title="Iniciar cronómetro"
-                          >
-                            ⏱
-                          </button>
-                        );
+                        return null;
                       })()}
                       {puedeEditarMetadata && (
                         <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 max-md:opacity-100 transition-opacity">
