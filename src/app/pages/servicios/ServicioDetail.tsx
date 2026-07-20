@@ -53,7 +53,7 @@ function compartirWhatsApp(codigo: string, titulo: string) {
     "Solo necesita ingresar su DNI para validar su identidad.",
   ].join("\n");
   const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-  window.open(url, "_blank", "noopener,noreferrer");
+  window.location.href = url;
 }
 
 // -- Tab Definitions --
@@ -1224,7 +1224,7 @@ export function ServicioDetailPage() {
                                 tarea.completada ? "line-through text-gray-500" : "text-gray-800",
                                 tarea.completada || prevIncompleta ? "cursor-not-allowed" : "cursor-pointer",
                               )}
-                              onClick={tarea.completada || prevIncompleta || !puedeModificar ? undefined : () => handleStartTitleEdit(tarea)}
+                              onClick={tarea.completada || prevIncompleta || !puedeModificar || tarea.obligatoria ? undefined : () => handleStartTitleEdit(tarea)}
                               style={{ fontWeight: tarea.completada ? 400 : 500 }}
                             >
                               {tarea.titulo}
@@ -1285,7 +1285,7 @@ export function ServicioDetailPage() {
                       })()}
                       {puedeEditarMetadata && (
                         <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 max-md:opacity-100 transition-opacity">
-                          {!isEditing && !tarea.completada && (
+                          {!isEditing && !tarea.completada && !tarea.obligatoria && (
                             <button
                               onClick={() => handleStartTitleEdit(tarea)}
                               className="p-1.5 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-300 transition"
@@ -1294,7 +1294,7 @@ export function ServicioDetailPage() {
                               <Pencil className="w-3 h-3" />
                             </button>
                           )}
-                          {!tarea.completada && (
+                          {!tarea.completada && !tarea.obligatoria && (
                             <button
                               onClick={() => handleDeleteClick(tarea)}
                               className="p-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-300 transition"

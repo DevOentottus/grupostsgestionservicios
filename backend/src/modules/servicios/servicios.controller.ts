@@ -45,6 +45,7 @@ const servicioUpdateSchema = z.object({
 const tareaSchema = z.object({
   titulo: z.string().min(1),
   descripcion: z.string().optional(),
+  obligatoria: z.boolean().optional(),
 });
 
 // -- Helpers de autorización y orden --
@@ -540,6 +541,7 @@ export async function serviciosController(app: FastifyInstance) {
       has_active_tracking: false, // tiempo_tracking no existe en Supabase
       tiempo_real_minutos: t.tarea_tiempo_real,
       requiere_evidencia: t.tarea_requiere_evidencia ?? false,
+      obligatoria: t.tarea_obligatoria ?? false,
     }));
 
     return { data: rows };
@@ -573,6 +575,7 @@ export async function serviciosController(app: FastifyInstance) {
         tarea_titulo: input.titulo,
         tarea_orden: nuevoOrden,
         tarea_estado: "pendiente",
+        tarea_obligatoria: input.obligatoria ?? false,
         tarea_fecha_creacion: now.toISOString().split("T")[0],
         tarea_hora_creacion: now.toTimeString().split(" ")[0],
       })
@@ -607,11 +610,16 @@ export async function serviciosController(app: FastifyInstance) {
 
     const { data: taskData } = await supabase
       .from("tareas")
-      .select("servicio_id")
+      .select("servicio_id, tarea_obligatoria")
       .eq("tarea_id", tareaId)
       .limit(1);
     if (!taskData?.length) throw new NotFoundError("Tarea no encontrada");
     await verificarPermisoModificar(taskData[0].servicio_id, user);
+
+    // 🔐 Tareas obligatorias no se pueden editar
+    if (taskData[0].tarea_obligatoria && input.titulo !== undefined) {
+      throw new ValidationError("No se puede editar una tarea obligatoria");
+    }
 
     const updateData: TablesUpdate<"tareas"> = {};
     if (input.titulo !== undefined) updateData.tarea_titulo = input.titulo;
@@ -644,12 +652,16 @@ export async function serviciosController(app: FastifyInstance) {
     // Obtener datos para auditoría antes de borrar
     const { data: tareas } = await supabase
       .from("tareas")
-      .select("tarea_id, tarea_titulo, servicio_id")
+      .select("tarea_id, tarea_titulo, servicio_id, tarea_obligatoria")
       .eq("tarea_id", tareaId)
       .limit(1);
 
     const tarea = tareas?.[0];
     if (tarea) {
+      // 🔐 Tareas obligatorias no se pueden eliminar
+      if (tarea.tarea_obligatoria) {
+        throw new ValidationError("No se puede eliminar una tarea obligatoria");
+      }
       await verificarPermisoModificar(tarea.servicio_id, user);
       // Eliminar comentarios de tarea primero
       await supabase.from("tareacomentarios").delete().eq("tarea_id", tareaId);

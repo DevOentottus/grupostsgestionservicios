@@ -89,6 +89,7 @@ export interface Tarea {
   asignado_a: number | null;
   has_active_tracking?: boolean;
   requiere_evidencia?: boolean;
+  obligatoria?: boolean;
   tiempo_real_minutos: number | null;
   created_at: string;
 }

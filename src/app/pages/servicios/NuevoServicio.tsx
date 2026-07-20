@@ -387,7 +387,7 @@ export function NuevoServicioPage() {
 
       if (tareas.length > 0) {
         for (const t of tareas) {
-          await crearTarea.mutateAsync({ servicioId, data: { titulo: t.titulo } });
+          await crearTarea.mutateAsync({ servicioId, data: { titulo: t.titulo, obligatoria: t.obligatoria ?? false } });
         }
       }
 
