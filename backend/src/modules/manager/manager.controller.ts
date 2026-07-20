@@ -240,8 +240,13 @@ export async function managerController(app: FastifyInstance) {
         })
       );
 
-      // Calificación promedio del área
-      const servicioIds = (serviciosData || []).map((s: any) => s.servicio_id);
+      // Calificación promedio del área — solo servicios de colaboradores actuales
+      const colaboradorSvcIds = [...new Set(
+        (colaboradores || []).flatMap((c: any) =>
+          (c.servicios_asignados || []).map((s: any) => s.id)
+        )
+      )];
+      const servicioIds = colaboradorSvcIds.length > 0 ? colaboradorSvcIds : (serviciosData || []).map((s: any) => s.servicio_id);
       let areaSatisfaccion = { 
         promedio: 0, cantidad: 0, promotores: 0, pasivos: 0, detractores: 0, nps: 0,
         servicios_evaluados: 0, servicios_evaluados_pct: 0,
