@@ -156,9 +156,8 @@ export async function managerController(app: FastifyInstance) {
             .map((t: any) => t.servicio_id)
             .filter(Boolean))] as number[];
 
-          // Unir ambos sets de servicios
+          // Servicios donde es técnico principal (ya filtrados por fecha)
           const principalIds = (servComoPrincipal || []).map((s: any) => s.servicio_id);
-          const todosSvcIds = [...new Set([...principalIds, ...svcIdsDeTareas])];
 
           // Obtener datos completos de los servicios donde participó
           let servFinalList: any[] = servComoPrincipal || [];
@@ -183,6 +182,9 @@ export async function managerController(app: FastifyInstance) {
               }
             }
           }
+
+          // Reconstruir IDs SOLO de los servicios que pasaron el filtro de fecha
+          const todosSvcIds = [...new Set(servFinalList.map((s: any) => s.servicio_id))];
 
           const serviciosCompletados = servFinalList.filter(
             (s: any) => s.servicio_estado === "completado"
