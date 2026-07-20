@@ -46,11 +46,11 @@ function descargarReportePDF(servicioId: number) {
 function compartirWhatsApp(codigo: string, titulo: string) {
   const serviceUrl = `${PUBLIC_URL}/public/servicio/${codigo}`;
   const mensaje = [
-    `Hola! Podés ver el estado de tu servicio *${codigo}* - *${titulo}* acá:`,
+    `Estimado cliente, puede ver el estado de su servicio *${codigo}* - *${titulo}* acá:`,
     "",
     serviceUrl,
     "",
-    "Solo necesitás ingresar tu DNI para validar tu identidad.",
+    "Solo necesita ingresar su DNI para validar su identidad.",
   ].join("\n");
   const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank", "noopener,noreferrer");
