@@ -118,18 +118,11 @@ export function MiAreaPage() {
     });
   }, [data?.servicios, filtroEstado, filtroColaborador, busqueda, fechaInicio, fechaFin]);
 
-  // Tiempo promedio de servicios completados en el período del filtro
+  // Tiempo promedio de servicios completados (dentro de los filtros activos)
   const tiempoPromedio = useMemo(() => {
-    if (!data?.servicios) return null;
-    const completados = data.servicios.filter((s) => {
+    const completados = serviciosFiltrados.filter((s) => {
       if (s.estado !== "completado") return false;
       if (!s.tiempo_total_minutos || s.tiempo_total_minutos <= 0) return false;
-      if (fechaInicio && fechaFin) {
-        // Usar fecha_fin (fecha de completado) para filtrar
-        const d = (s.fecha_fin ?? "").split("T")[0];
-        if (!d) return false;
-        if (d < fechaInicio || d > fechaFin) return false;
-      }
       return true;
     });
     if (completados.length === 0) return null;
@@ -138,7 +131,20 @@ export function MiAreaPage() {
     const h = Math.floor(avgMin / 60);
     const m = Math.round(avgMin % 60);
     return { texto: `${h}h ${m}min`, count: completados.length };
-  }, [data?.servicios, fechaInicio, fechaFin]);
+  }, [serviciosFiltrados]);
+
+  // Estado del pie chart computado desde servicios filtrados (debe ir antes de early returns)
+  const estadoPieData = useMemo(() => {
+    if (!serviciosFiltrados.length) return [];
+    const contar = (est: string) => serviciosFiltrados.filter((s) => s.estado === est).length;
+    return [
+      { name: "Pendiente",    value: contar("pendiente"),    color: "#f59e0b" },
+      { name: "En Progreso",  value: contar("en_progreso"),  color: "#3b82f6" },
+      { name: "Completado",   value: contar("completado"),   color: "#22c55e" },
+      { name: "Bloqueado",    value: contar("bloqueado"),    color: "#ef4444" },
+      { name: "Cancelado",    value: contar("cancelado"),    color: "#8b5cf6" },
+    ];
+  }, [serviciosFiltrados]);
 
   if (isLoading) {
     return (
@@ -170,17 +176,6 @@ export function MiAreaPage() {
   const { area, colaboradores } = data;
   const activos = colaboradores.filter((c) => c.activo !== false).length;
   const encargadoNombre = area.encargado_nombre || null;
-
-  const estadoPieData = useMemo(() => {
-    const contar = (est: string) => serviciosFiltrados.filter((s) => s.estado === est).length;
-    return [
-      { name: "Pendiente",    value: contar("pendiente"),    color: "#f59e0b" },
-      { name: "En Progreso",  value: contar("en_progreso"),  color: "#3b82f6" },
-      { name: "Completado",   value: contar("completado"),   color: "#22c55e" },
-      { name: "Bloqueado",    value: contar("bloqueado"),    color: "#ef4444" },
-      { name: "Cancelado",    value: contar("cancelado"),    color: "#8b5cf6" },
-    ];
-  }, [serviciosFiltrados]);
 
   return (
     <div className="space-y-6">
