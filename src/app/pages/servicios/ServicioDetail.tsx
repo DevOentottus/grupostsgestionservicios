@@ -35,7 +35,7 @@ import {
 import { InfoPopover } from "@/app/components/ui/info-popover.js";
 
 // -- Public URL (configurable via env) --
-const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL || "https://serviciolocalsts.vercel.app";
+const PUBLIC_URL = import.meta.env.VITE_PUBLIC_URL || "https://grupostsgestionservicios.vercel.app";
 
 function descargarReportePDF(servicioId: number) {
   const token = sessionStorage.getItem("auth_token");

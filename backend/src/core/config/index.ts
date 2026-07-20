@@ -22,7 +22,7 @@ export const config = {
   },
 
   cors: {
-    origin: process.env.CORS_ORIGIN || "https://serviciolocalsts.vercel.app",
+    origin: process.env.CORS_ORIGIN || "https://grupostsgestionservicios.vercel.app",
   },
 
   vapid: {
