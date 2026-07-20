@@ -103,16 +103,16 @@ export function MiAreaPage() {
     return data.servicios.filter((s) => {
       if (filtroEstado !== "todos" && s.estado !== filtroEstado) return false;
       if (filtroColaborador !== "todos" && s.colaborador_id !== filtroColaborador) return false;
+      if (fechaInicio && fechaFin) {
+        const d = (s.created_at ?? "").split("T")[0];
+        if (d < fechaInicio || d > fechaFin) return false;
+      }
       if (busqueda.trim()) {
         const q = busqueda.trim().toLowerCase();
         return (
           s.codigo?.toLowerCase().includes(q) ||
           s.titulo?.toLowerCase().includes(q)
         );
-      }
-      if (fechaInicio && fechaFin) {
-        const d = (s.created_at ?? "").split("T")[0];
-        if (d < fechaInicio || d > fechaFin) return false;
       }
       return true;
     });
@@ -167,17 +167,20 @@ export function MiAreaPage() {
     );
   }
 
-  const { area, servicios, estado_counts, colaboradores } = data;
+  const { area, colaboradores } = data;
   const activos = colaboradores.filter((c) => c.activo !== false).length;
   const encargadoNombre = area.encargado_nombre || null;
 
-  const estadoPieData = [
-    { name: "Pendiente",    value: estado_counts.pendiente,   color: "#f59e0b" },
-    { name: "En Progreso",  value: estado_counts.en_progreso, color: "#3b82f6" },
-    { name: "Completado",   value: estado_counts.completado,  color: "#22c55e" },
-    { name: "Bloqueado",    value: estado_counts.bloqueado,   color: "#ef4444" },
-    { name: "Cancelado",    value: estado_counts.cancelado,   color: "#8b5cf6" },
-  ];
+  const estadoPieData = useMemo(() => {
+    const contar = (est: string) => serviciosFiltrados.filter((s) => s.estado === est).length;
+    return [
+      { name: "Pendiente",    value: contar("pendiente"),    color: "#f59e0b" },
+      { name: "En Progreso",  value: contar("en_progreso"),  color: "#3b82f6" },
+      { name: "Completado",   value: contar("completado"),   color: "#22c55e" },
+      { name: "Bloqueado",    value: contar("bloqueado"),    color: "#ef4444" },
+      { name: "Cancelado",    value: contar("cancelado"),    color: "#8b5cf6" },
+    ];
+  }, [serviciosFiltrados]);
 
   return (
     <div className="space-y-6">
@@ -193,7 +196,7 @@ export function MiAreaPage() {
               tip="Usá esta vista para monitorear el avance general. Los indicadores se actualizan en tiempo real."
             />
             <span className="text-blue-200 text-sm">·</span>
-            <span className="text-blue-200 text-sm">{servicios.length} servicios</span>
+            <span className="text-blue-200 text-sm">{serviciosFiltrados.length} servicios</span>
             <span className="text-blue-200 text-sm">·</span>
             <span className="text-blue-200 text-sm">{activos} colaboradores</span>
           </div>
@@ -433,8 +436,8 @@ export function MiAreaPage() {
                 { key: "cancelado",   label: "Cancelado",   dot: "bg-red-500",     activeBg: "bg-red-100",    activeText: "text-red-800" },
               ].map((btn) => {
                 const count = btn.key === "todos"
-                  ? servicios.length
-                  : (estado_counts as any)[btn.key] ?? 0;
+                  ? serviciosFiltrados.length
+                  : serviciosFiltrados.filter((s) => s.estado === btn.key).length;
                 const activo = filtroEstado === btn.key;
                 return (
                   <button
