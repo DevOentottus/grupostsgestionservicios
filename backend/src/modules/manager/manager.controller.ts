@@ -130,7 +130,7 @@ export async function managerController(app: FastifyInstance) {
           const colId = u.usuario_id || a.colaborador_id;
 
           // Servicios donde es técnico principal
-          const { data: servComoPrincipal } = await supabase
+          let svcPrincipalQuery = supabase
             .from("servicios")
             .select(`
               servicio_id,
@@ -140,6 +140,9 @@ export async function managerController(app: FastifyInstance) {
             `)
             .eq("tecnico_principal_id", colId)
             .eq("area_id", areaId);
+          if (query.fecha_inicio) svcPrincipalQuery = svcPrincipalQuery.gte("servicio_fecha_creacion", query.fecha_inicio);
+          if (query.fecha_fin) svcPrincipalQuery = svcPrincipalQuery.lte("servicio_fecha_creacion", query.fecha_fin);
+          const { data: servComoPrincipal } = await svcPrincipalQuery;
 
           // Tareas completadas por este colaborador
           const { data: tareasComp } = await supabase
@@ -162,7 +165,7 @@ export async function managerController(app: FastifyInstance) {
           if (svcIdsDeTareas.length > 0) {
             const idsFaltantes = svcIdsDeTareas.filter((id) => !principalIds.includes(id));
             if (idsFaltantes.length > 0) {
-              const { data: servExtra } = await supabase
+              let servExtraQuery = supabase
                 .from("servicios")
                 .select(`
                   servicio_id,
@@ -172,6 +175,9 @@ export async function managerController(app: FastifyInstance) {
                 `)
                 .in("servicio_id", idsFaltantes)
                 .eq("area_id", areaId);
+              if (query.fecha_inicio) servExtraQuery = servExtraQuery.gte("servicio_fecha_creacion", query.fecha_inicio);
+              if (query.fecha_fin) servExtraQuery = servExtraQuery.lte("servicio_fecha_creacion", query.fecha_fin);
+              const { data: servExtra } = await servExtraQuery;
               if (servExtra?.length) {
                 servFinalList = [...servFinalList, ...servExtra];
               }
