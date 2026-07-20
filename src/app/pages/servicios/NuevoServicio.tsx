@@ -684,10 +684,12 @@ const PlantillaYSeccion3 = memo(function PlantillaYSeccion3({
                 <div className="space-y-1">
                   {tareas.map((t, idx) => (
                     <div key={t.tempId} className="flex items-center gap-1 bg-white rounded-lg border border-slate-200 px-2 py-1.5 text-sm group">
-                      <div className="flex flex-col items-center gap-0.5 mr-0.5">
-                        {idx > 0 && <button type="button" onClick={() => setTareas((prev: any[]) => { const arr = [...prev]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; return arr; })} className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"><ChevronUp className="w-3 h-3" /></button>}
-                        {idx < tareas.length - 1 && <button type="button" onClick={() => setTareas((prev: any[]) => { const arr = [...prev]; [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]; return arr; })} className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"><ChevronDown className="w-3 h-3" /></button>}
-                      </div>
+                      {!t.obligatoria && (
+                        <div className="flex flex-col items-center gap-0.5 mr-0.5">
+                          {idx > 0 && <button type="button" onClick={() => setTareas((prev: any[]) => { const arr = [...prev]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; return arr; })} className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"><ChevronUp className="w-3 h-3" /></button>}
+                          {idx < tareas.length - 1 && <button type="button" onClick={() => setTareas((prev: any[]) => { const arr = [...prev]; [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]; return arr; })} className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"><ChevronDown className="w-3 h-3" /></button>}
+                        </div>
+                      )}
                       <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold">{idx + 1}</span>
                       {editandoTarea === t.tempId ? (
                         <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)}
@@ -696,11 +698,13 @@ const PlantillaYSeccion3 = memo(function PlantillaYSeccion3({
                           className="flex-1 border border-blue-300 rounded-lg px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-200"
                           ref={(el) => { if (el && editandoTarea === t.tempId) setTimeout(() => el.focus({ preventScroll: true }), 0); }} />
                       ) : (
-                        <span className="flex-1 text-gray-700 cursor-pointer hover:text-blue-700 transition" onClick={() => { setEditText(t.titulo); setEditandoTarea(t.tempId); }}>{t.titulo}</span>
+                        <span className={`flex-1 text-gray-700 ${t.obligatoria ? "" : "cursor-pointer hover:text-blue-700 transition"}`} onClick={() => { if (!t.obligatoria) { setEditText(t.titulo); setEditandoTarea(t.tempId); } }}>{t.titulo}</span>
                       )}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                        <button type="button" onClick={() => { setEditText(t.titulo); setEditandoTarea(t.tempId); }} className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600"><Pencil className="w-3.5 h-3.5" /></button>
-                      </div>
+                      {!t.obligatoria && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                          <button type="button" onClick={() => { setEditText(t.titulo); setEditandoTarea(t.tempId); }} className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600"><Pencil className="w-3.5 h-3.5" /></button>
+                        </div>
+                      )}
                       {t.obligatoria ? (
                         <span className="ml-auto flex items-center gap-1 text-amber-500 text-[10px] font-medium shrink-0">
                           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
@@ -769,10 +773,12 @@ const PlantillaYSeccion3Columna = memo(function PlantillaYSeccion3Columna({
                 <div className="space-y-1">
                   {tareas.map((t, idx) => (
                     <div key={t.tempId} className="flex items-center gap-1 bg-white rounded-lg border border-slate-200 px-2 py-1.5 text-xs group">
-                      <div className="flex flex-col items-center gap-0.5 mr-0.5">
-                        {idx > 0 && <button type="button" onClick={() => setTareas((prev: any[]) => { const arr = [...prev]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; return arr; })} className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"><ChevronUp className="w-3 h-3" /></button>}
-                        {idx < tareas.length - 1 && <button type="button" onClick={() => setTareas((prev: any[]) => { const arr = [...prev]; [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]; return arr; })} className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"><ChevronDown className="w-3 h-3" /></button>}
-                      </div>
+                      {!t.obligatoria && (
+                        <div className="flex flex-col items-center gap-0.5 mr-0.5">
+                          {idx > 0 && <button type="button" onClick={() => setTareas((prev: any[]) => { const arr = [...prev]; [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; return arr; })} className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"><ChevronUp className="w-3 h-3" /></button>}
+                          {idx < tareas.length - 1 && <button type="button" onClick={() => setTareas((prev: any[]) => { const arr = [...prev]; [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]; return arr; })} className="p-0.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 leading-none"><ChevronDown className="w-3 h-3" /></button>}
+                        </div>
+                      )}
                       <span className="flex-shrink-0 w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[9px] font-bold">{idx + 1}</span>
                       {editandoTarea === t.tempId ? (
                         <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)}
@@ -780,11 +786,13 @@ const PlantillaYSeccion3Columna = memo(function PlantillaYSeccion3Columna({
                           onBlur={() => { setTareas((prev: any[]) => prev.map((x: any) => x.tempId === t.tempId ? { ...x, titulo: editText.trim() || x.titulo } : x)); setEditandoTarea(null); }}
                           className="flex-1 border border-blue-300 rounded-lg px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-200" />
                       ) : (
-                        <span className="flex-1 text-gray-700 cursor-pointer hover:text-blue-700 transition" onClick={() => { setEditText(t.titulo); setEditandoTarea(t.tempId); }}>{t.titulo}</span>
+                        <span className={`flex-1 text-gray-700 ${t.obligatoria ? "" : "cursor-pointer hover:text-blue-700 transition"}`} onClick={() => { if (!t.obligatoria) { setEditText(t.titulo); setEditandoTarea(t.tempId); } }}>{t.titulo}</span>
                       )}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                        <button type="button" onClick={() => { setEditText(t.titulo); setEditandoTarea(t.tempId); }} className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600"><Pencil className="w-3 h-3" /></button>
-                      </div>
+                      {!t.obligatoria && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                          <button type="button" onClick={() => { setEditText(t.titulo); setEditandoTarea(t.tempId); }} className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-blue-600"><Pencil className="w-3 h-3" /></button>
+                        </div>
+                      )}
                       {t.obligatoria ? (
                         <span className="ml-auto flex items-center gap-1 text-amber-500 shrink-0">
                           <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>

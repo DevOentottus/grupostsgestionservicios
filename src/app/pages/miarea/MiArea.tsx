@@ -15,7 +15,7 @@ const statusConfig: Record<string, { bg: string; text: string; dot: string; bar:
   pendiente:   { bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500", bar: "bg-yellow-400" },
   en_progreso: { bg: "bg-blue-100",   text: "text-blue-800",   dot: "bg-blue-500",   bar: "bg-blue-600" },
   completado:  { bg: "bg-green-100",  text: "text-green-800",  dot: "bg-green-500",  bar: "bg-green-500" },
-  cancelado:   { bg: "bg-gray-100",   text: "text-gray-600",   dot: "bg-gray-400",   bar: "bg-gray-400" },
+  cancelado:   { bg: "bg-purple-100", text: "text-purple-800", dot: "bg-purple-500", bar: "bg-purple-400" },
   bloqueado:   { bg: "bg-red-100",    text: "text-red-800",    dot: "bg-red-500",    bar: "bg-red-500" },
 };
 
@@ -431,7 +431,7 @@ export function MiAreaPage() {
                 { key: "en_progreso", label: "En Progreso", dot: "bg-blue-500",    activeBg: "bg-blue-100",   activeText: "text-blue-800" },
                 { key: "completado",  label: "Completado",  dot: "bg-green-500",   activeBg: "bg-green-100",  activeText: "text-green-800" },
                 { key: "bloqueado",   label: "Bloqueado",   dot: "bg-red-500",     activeBg: "bg-red-100",    activeText: "text-red-800" },
-                { key: "cancelado",   label: "Cancelado",   dot: "bg-red-500",     activeBg: "bg-red-100",    activeText: "text-red-800" },
+                { key: "cancelado",   label: "Cancelado",   dot: "bg-purple-500",     activeBg: "bg-purple-100",    activeText: "text-purple-800" },
               ].map((btn) => {
                 const count = btn.key === "todos"
                   ? serviciosFiltrados.length
