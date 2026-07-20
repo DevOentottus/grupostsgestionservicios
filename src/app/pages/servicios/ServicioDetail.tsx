@@ -1108,8 +1108,8 @@ export function ServicioDetailPage() {
                         tarea.completada ? "bg-green-50/30" : "hover:bg-gray-50",
                       )}
                     >
-                      {/* Reorder arrows — solo entre incompletas y solo admin/asignado */}
-                      {!tarea.completada && puedeModificar && (
+                      {/* Reorder arrows — solo entre incompletas, no obligatorias y solo admin/asignado */}
+                      {!tarea.completada && !tarea.obligatoria && puedeModificar && (
                         <div className="flex flex-col items-center gap-0.5 mr-1 flex-shrink-0">
                           {idx > 0 && !tareasSorted[idx - 1].completada && (
                             <button
@@ -1222,13 +1222,22 @@ export function ServicioDetailPage() {
                               className={cn(
                                 "text-sm",
                                 tarea.completada ? "line-through text-gray-500" : "text-gray-800",
-                                tarea.completada || prevIncompleta ? "cursor-not-allowed" : "cursor-pointer",
+                                tarea.completada || prevIncompleta || tarea.obligatoria ? "cursor-not-allowed" : "cursor-pointer",
                               )}
                               onClick={tarea.completada || prevIncompleta || !puedeModificar || tarea.obligatoria ? undefined : () => handleStartTitleEdit(tarea)}
                               style={{ fontWeight: tarea.completada ? 400 : 500 }}
                             >
                               {tarea.titulo}
                             </span>
+                            {tarea.obligatoria && (
+                              <span
+                                className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 flex items-center gap-1"
+                                title="Tarea obligatoria — no se puede editar ni eliminar"
+                              >
+                                <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
+                                Obligatoria
+                              </span>
+                            )}
                             {/* Type badge - Figma style (runtime field) */}
                             {tarea.tipo && TIPO_TAREA_CONFIG[tarea.tipo] && (
                               <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-medium", TIPO_TAREA_CONFIG[tarea.tipo].class)}>
