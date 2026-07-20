@@ -1024,7 +1024,7 @@ export function ServicioDetailPage() {
                   variant="formula"
                   formula="Cada servicio tiene una o más tareas. Las tareas pueden tener tiempo estimado y evidencias adjuntas."
                   descripcion="Completar todas las tareas es necesario para finalizar el servicio."
-                  tip="Las tareas obligatorias deben completarse sí o sí. Las opcionales pueden saltarse si no aplican."
+                  tip="Las tareas obligatorias deben completarse sí o sí."
                 />
                 {totalTareas > 0 && (
                   <span className="text-xs font-normal text-gray-400">

@@ -392,6 +392,24 @@ export function NuevoServicioPage() {
       }
 
       toast.success("Servicio creado con " + tareas.length + " tareas");
+
+      // ── Modo guía: enviar WhatsApp al cliente ──
+      if (guiarEntrada && form.cliente_telefono.trim()) {
+        const codigo = res.data.data.codigo || payload.codigo || "";
+        const titulo = res.data.data.titulo || form.titulo;
+        const publicUrl = import.meta.env.VITE_PUBLIC_URL || "https://grupostsgestionservicios.vercel.app";
+        const serviceUrl = `${publicUrl}/public/servicio/${codigo}`;
+        const mensaje = [
+          `Estimado cliente, puede ver el estado de su servicio *${codigo}* - *${titulo}* acá:`,
+          "",
+          serviceUrl,
+          "",
+          "Solo necesita ingresar su DNI para validar su identidad.",
+        ].join("\n");
+        const waUrl = `https://wa.me/${form.cliente_telefono.trim()}?text=${encodeURIComponent(mensaje)}`;
+        window.location.href = waUrl;
+      }
+
       navigate(`/servicios/${servicioId}`);
     } catch (err: any) {
       const serverErrors = err?.response?.data?.errors;
@@ -538,7 +556,10 @@ export function NuevoServicioPage() {
                 <div className="mt-4 space-y-3">
                   <InputField label="Nombre del Servicio" value={form.titulo} onChange={(v) => set("titulo", v)} required error={errors.titulo} placeholder="Ej: Reparación de pantalla..." />
                   <InputField label="Código de servicio" value={form.codigo_servicio} onChange={(v) => set("codigo_servicio", v.toUpperCase())} placeholder="SRV20260617120000" required error={errors.codigo_servicio} />
-                  <InputField label="DNI Cliente" value={form.cliente_dni} onChange={(v) => set("cliente_dni", v.replace(/\D/g, ""))} placeholder="12345678" required error={errors.cliente_dni} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <InputField label="DNI Cliente" value={form.cliente_dni} onChange={(v) => set("cliente_dni", v.replace(/\D/g, ""))} placeholder="12345678" required error={errors.cliente_dni} />
+                    <InputField label="Teléfono Cliente" value={form.cliente_telefono} onChange={(v) => set("cliente_telefono", v.replace(/\D/g, ""))} placeholder="987654321" />
+                  </div>
                   {!autoAsignar && (
                     <SelectField label="Área" value={form.area_id} onChange={(v) => set("area_id", v)} options={(areas || []).map((a: any) => ({ value: String(a.id), label: a.nombre }))} placeholder="Sin área" required error={errors.area_id} />
                   )}
