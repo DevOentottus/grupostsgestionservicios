@@ -6,11 +6,11 @@ import type {
   ManagerDesempenoResponse,
 } from "@shared/index.js";
 
-export function useMiArea(areaId?: number) {
+export function useMiArea(areaId?: number, params?: { fecha_inicio?: string; fecha_fin?: string }) {
   return useQuery({
-    queryKey: ["manager", "mi-area", areaId],
+    queryKey: ["manager", "mi-area", areaId, params],
     queryFn: async () => {
-      const r = await managerApi.miArea(areaId);
+      const r = await managerApi.miArea(areaId, params);
       return r.data.data as ManagerMiAreaResponse;
     },
   });

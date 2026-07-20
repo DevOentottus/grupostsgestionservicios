@@ -325,10 +325,13 @@ export const evidenciasPublicApi = {
 
 // -- Manager API --
 export const managerApi = {
-  miArea: (areaId?: number) =>
-    api.get("/manager/mi-area", {
-      params: areaId ? { area_id: areaId } : undefined,
-    }),
+  miArea: (areaId?: number, params?: { fecha_inicio?: string; fecha_fin?: string }) => {
+    const query: Record<string, string> = {};
+    if (areaId) query.area_id = String(areaId);
+    if (params?.fecha_inicio) query.fecha_inicio = params.fecha_inicio;
+    if (params?.fecha_fin) query.fecha_fin = params.fecha_fin;
+    return api.get("/manager/mi-area", { params: query });
+  },
   distribucion: (params?: { area_id?: number; colaborador_id?: number }) =>
     api.get("/manager/distribucion", { params }),
   desempeno: (

@@ -74,7 +74,10 @@ export function MiAreaPage() {
     { label: "Esta semana", active: periodoLabel === "Esta semana", action: () => { const hoy = new Date(); const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - (hoy.getDay() === 0 ? 6 : hoy.getDay() - 1)); setPeriodo("Esta semana", lunes, hoy); } },
     { label: "Este mes", active: periodoLabel === "Este mes", action: () => { const hoy = new Date(); const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1); setPeriodo("Este mes", inicio, hoy); } },
   ];
-  const { data, isLoading, isError } = useMiArea(user?.area_id ?? undefined);
+  const { data, isLoading, isError } = useMiArea(user?.area_id ?? undefined, {
+    fecha_inicio: fechaInicio || undefined,
+    fecha_fin: fechaFin || undefined,
+  });
 
   const serviciosPorEstado = useMemo(() => {
     if (!data?.servicios) return {};

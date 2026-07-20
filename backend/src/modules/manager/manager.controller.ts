@@ -18,7 +18,7 @@ export async function managerController(app: FastifyInstance) {
         rol: string;
         area_id: number | null;
       };
-      const query = request.query as { area_id?: string };
+      const query = request.query as { area_id?: string; fecha_inicio?: string; fecha_fin?: string };
 
       let areaId: number;
       if (user.rol === "admin" && query.area_id) {
@@ -39,11 +39,19 @@ export async function managerController(app: FastifyInstance) {
       const area = areas[0];
 
       // Servicios del área con información enriquecida
-      const { data: serviciosData } = await supabase
+      let svcQuery = supabase
         .from("servicios")
         .select("*")
-        .eq("area_id", areaId)
-        .order("servicio_id", { ascending: false });
+        .eq("area_id", areaId);
+
+      if (query.fecha_inicio) {
+        svcQuery = svcQuery.gte("servicio_fecha_creacion", query.fecha_inicio);
+      }
+      if (query.fecha_fin) {
+        svcQuery = svcQuery.lte("servicio_fecha_creacion", query.fecha_fin);
+      }
+
+      const { data: serviciosData } = await svcQuery.order("servicio_id", { ascending: false });
 
       // Cache nombres de colaboradores
       const colIds = (serviciosData || []).map((s: any) => s.tecnico_principal_id).filter(Boolean);
