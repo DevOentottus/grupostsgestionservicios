@@ -14,6 +14,7 @@ import {
 import { CommentsTab } from "./components/CommentsTab.js";
 import { ProcessFlow } from "@/app/components/flow/ProcessFlow.js";
 import { useEvidencias } from "@/api/queries/useEvidencias.js";
+import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import { EvidenceUploader } from "@/app/components/evidencias/EvidenceUploader.js";
 import { EvidenceViewer } from "@/app/components/evidencias/EvidenceViewer.js";
 import { ConfirmDialog } from "@/app/components/ConfirmDialog.js";
@@ -236,6 +237,8 @@ function EvidenciasTabContent({ servicioId, tareas, userRol, userId, tecnicoId, 
 
 // -- MetricasTab: indicadores de desempeño del servicio --
 function MetricasTabContent({ tareas, servicio }: { tareas: Tarea[]; servicio: any }) {
+  const { data: usuarios } = useUsuarios();
+
   const tareasSorted = [...tareas].sort((a, b) => a.orden - b.orden);
   const completadas = tareasSorted.filter((t) => t.completada);
   const conTracking = tareasSorted.filter((t) => t.tiempo_real_minutos != null);
@@ -246,12 +249,24 @@ function MetricasTabContent({ tareas, servicio }: { tareas: Tarea[]; servicio: a
     ? Math.round(conEstimado.reduce((s, t) => s + ((t.tiempo_estimado! - t.tiempo_real_minutos!) / t.tiempo_estimado!) * 100, 0) / conEstimado.length)
     : null;
 
+  // Resolver nombre de usuario por ID
+  const usuarioPorId = useMemo(() => {
+    const map: Record<number, string> = {};
+    if (usuarios) {
+      for (const u of usuarios) {
+        map[u.id] = `${u.nombres || ""} ${u.apellidos || ""}`.trim() || `#${u.id}`;
+      }
+    }
+    return map;
+  }, [usuarios]);
+
   // Agrupar tiempo por completador
   const porColaborador: Record<number, { nombre: string; tiempo: number; tareas: number }> = {};
   for (const t of completadas) {
     if (t.completada_por && t.tiempo_real_minutos) {
       if (!porColaborador[t.completada_por]) {
-        porColaborador[t.completada_por] = { nombre: `#${t.completada_por}`, tiempo: 0, tareas: 0 };
+        const nombre = usuarioPorId[t.completada_por] || `#${t.completada_por}`;
+        porColaborador[t.completada_por] = { nombre, tiempo: 0, tareas: 0 };
       }
       porColaborador[t.completada_por].tiempo += t.tiempo_real_minutos;
       porColaborador[t.completada_por].tareas++;
@@ -262,7 +277,10 @@ function MetricasTabContent({ tareas, servicio }: { tareas: Tarea[]; servicio: a
   const vidaTexto = servicio?.created_at ? (() => {
     try {
       const inicio = new Date(`${servicio.created_at}T${servicio.hora_creacion || "00:00:00"}`);
-      const fin = servicio.fecha_fin ? new Date(`${servicio.fecha_fin}T${servicio.hora_fin || "00:00:00"}`) : new Date();
+      const terminado = servicio.estado === "completado" || servicio.estado === "cancelado";
+      const fin = terminado && servicio.fecha_fin
+        ? new Date(`${servicio.fecha_fin}T${servicio.hora_fin || "00:00:00"}`)
+        : new Date();
       const diff = fin.getTime() - inicio.getTime();
       if (diff < 0) return "—";
       const mins = Math.floor(diff / 60000);
@@ -272,17 +290,20 @@ function MetricasTabContent({ tareas, servicio }: { tareas: Tarea[]; servicio: a
       if (days > 0) parts.push(`${days}d`);
       if (hrs % 24 > 0) parts.push(`${hrs % 24}h`);
       if (mins % 60 > 0) parts.push(`${mins % 60}m`);
-      return parts.length > 0 ? parts.join(" ") : "< 1m";
+      const tiempo = parts.length > 0 ? parts.join(" ") : "< 1m";
+      return terminado ? tiempo : `En curso · ${tiempo}`;
     } catch { return "—"; }
   })() : "—";
 
+  const progresoPct = tareasSorted.length > 0 ? Math.round((completadas.length / tareasSorted.length) * 100) : 0;
+  const coberturaPct = tareasSorted.length > 0 ? Math.round((conTracking.length / tareasSorted.length) * 100) : 0;
+
   const metricas = [
-    { label: "Tareas completadas", valor: `${completadas.length} / ${tareasSorted.length}`, unidad: "", color: "text-green-600" },
-    { label: "Progreso", valor: `${tareasSorted.length > 0 ? Math.round((completadas.length / tareasSorted.length) * 100) : 0}%`, unidad: "", color: "text-blue-600" },
+    { label: "Tareas", valor: `${completadas.length}/${tareasSorted.length} (${progresoPct}%)`, unidad: "", color: "text-green-600" },
     { label: "Tiempo total (tracking)", valor: formatMinutos(totalTiempo), unidad: "", color: "text-purple-600" },
     { label: "Promedio por tarea", valor: completadas.length > 0 ? formatMinutos(promTiempo) : "—", unidad: "", color: "text-orange-600" },
     { label: "Eficiencia vs estimado", valor: eficienciaPct != null ? `${eficienciaPct >= 0 ? "+" : ""}${eficienciaPct}%` : "—", unidad: "", color: eficienciaPct != null && eficienciaPct >= 0 ? "text-emerald-600" : "text-red-600" },
-    { label: "Cobertura tracking", valor: tareasSorted.length > 0 ? `${Math.round((conTracking.length / tareasSorted.length) * 100)}%` : "—", unidad: "", color: "text-cyan-600" },
+    ...(coberturaPct < 100 ? [{ label: "Cobertura tracking", valor: `${coberturaPct}%`, unidad: "", color: "text-cyan-600" as const }] : []),
     { label: "Ciclo de vida", valor: vidaTexto, unidad: "", color: "text-slate-600" },
   ];
 
@@ -327,12 +348,14 @@ function MetricasTabContent({ tareas, servicio }: { tareas: Tarea[]; servicio: a
           descripcion="Mide si las tareas se completaron dentro del tiempo estimado. Un valor positivo indica ahorro de tiempo."
           tip="Valores negativos consistentes sugieren que los tiempos estimados deben ajustarse a la realidad."
         />
-        <InfoPopover
-          variant="tip"
-          formula="Cobertura de tracking = tareas con tiempo_real registrado / total tareas × 100."
-          descripcion="Indica qué porcentaje de tareas tienen registro de tiempo. Idealmente debería ser 100%."
-          tip="Sin tracking de tiempo, las métricas de eficiencia no son representativas. Activá el tracking en cada tarea."
-        />
+        {coberturaPct < 100 && (
+          <InfoPopover
+            variant="tip"
+            formula="Cobertura de tracking = tareas con tiempo_real registrado / total tareas × 100."
+            descripcion="Indica qué porcentaje de tareas tienen registro de tiempo. Idealmente debería ser 100%."
+            tip="Sin tracking de tiempo, las métricas de eficiencia no son representativas. Activá el tracking en cada tarea."
+          />
+        )}
       </div>
     </div>
   );

@@ -275,6 +275,21 @@ export async function plantillasController(app: FastifyInstance) {
 
       // Si se enviaron tareas, reemplazar todas
       if (input.tareas !== undefined) {
+        // 🔐 Colaborador: preservar tareas obligatorias existentes
+        let obligatoriasExistentes: { titulo: string; orden: number }[] = [];
+        if (esColaborador) {
+          const { data: existentes } = await supabase
+            .from("plantillatareas")
+            .select("plantillatarea_titulo, plantillatarea_orden")
+            .eq("plantilla_id", plantillaId)
+            .eq("plantillatarea_obligatoria", true)
+            .order("plantillatarea_orden", { ascending: true });
+          obligatoriasExistentes = (existentes || []).map((t: any) => ({
+            titulo: t.plantillatarea_titulo,
+            orden: t.plantillatarea_orden,
+          }));
+        }
+
         await supabase
           .from("plantillatareas")
           .delete()
@@ -286,6 +301,19 @@ export async function plantillasController(app: FastifyInstance) {
           plantillatarea_orden: t.sort_order ?? i,
           plantillatarea_obligatoria: esColaborador ? false : (t.obligatoria ?? false),
         }));
+
+        // Colaborador: re-insertar obligatorias al final
+        if (esColaborador && obligatoriasExistentes.length > 0) {
+          const maxOrden = tareasToInsert.length;
+          for (let i = 0; i < obligatoriasExistentes.length; i++) {
+            tareasToInsert.push({
+              plantilla_id: plantillaId,
+              plantillatarea_titulo: obligatoriasExistentes[i].titulo,
+              plantillatarea_orden: maxOrden + i,
+              plantillatarea_obligatoria: true,
+            });
+          }
+        }
 
         if (tareasToInsert.length > 0) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -339,8 +367,13 @@ export async function plantillasController(app: FastifyInstance) {
     { preHandler: [requireRoles("admin", "encargado", "colaborador")] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const authUser = request.user as { user_id: number };
+      const authUser = request.user as { user_id: number; rol: string };
       const plantillaId = parseInt(id);
+
+      // 🔐 Colaborador no puede eliminar plantillas
+      if (authUser.rol === "colaborador") {
+        throw new ForbiddenError("No tienes permiso para eliminar plantillas");
+      }
 
       const { data: existing } = await supabase
         .from("plantillas")

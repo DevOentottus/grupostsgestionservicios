@@ -391,6 +391,7 @@ export function PlantillasPage() {
   const esAdminSistema = user?.rol === "admin" || user?.rol === "sistema";
   const esEncargadoColaborador = user?.rol === "encargado" || user?.rol === "colaborador";
   const puedeGestionarObligatoria = user?.rol === "encargado" || user?.rol === "admin" || user?.rol === "sistema";
+  const puedeEliminarPlantilla = user?.rol !== "colaborador";
 
   // Create modal
   const [showCreate, setShowCreate] = useState(false);
@@ -669,13 +670,15 @@ export function PlantillasPage() {
                           Sin tareas. Agregá al menos una.
                         </p>
                       )}
-                      {editTareas.map((tarea, index) => (
+                      {editTareas.map((tarea, index) => {
+                        const esObligatoriaBloqueada = tarea.obligatoria && !puedeGestionarObligatoria;
+                        return (
                         <div key={tarea.key} className="flex items-center gap-2">
                           <div className="flex flex-col gap-0.5">
                             <button
                               type="button"
                               onClick={() => moveEditTarea(index, "up")}
-                              disabled={index === 0}
+                              disabled={index === 0 || esObligatoriaBloqueada}
                               className="text-[10px] leading-none px-1 py-0.5 rounded bg-slate-100 text-slate-500 hover:bg-slate-200 disabled:opacity-30"
                               title="Subir"
                             >
@@ -684,7 +687,7 @@ export function PlantillasPage() {
                             <button
                               type="button"
                               onClick={() => moveEditTarea(index, "down")}
-                              disabled={index === editTareas.length - 1}
+                              disabled={index === editTareas.length - 1 || esObligatoriaBloqueada}
                               className="text-[10px] leading-none px-1 py-0.5 rounded bg-slate-100 text-slate-500 hover:bg-slate-200 disabled:opacity-30"
                               title="Bajar"
                             >
@@ -718,19 +721,22 @@ export function PlantillasPage() {
                           <input
                             value={tarea.titulo}
                             onChange={(e) => updateEditTarea(tarea.key, e.target.value)}
-                            className="flex-1 px-3 py-2 border rounded-lg text-sm"
+                            disabled={esObligatoriaBloqueada}
+                            className={`flex-1 px-3 py-2 border rounded-lg text-sm ${esObligatoriaBloqueada ? "bg-slate-100 text-slate-500 cursor-not-allowed" : ""}`}
                             placeholder={`Tarea ${index + 1}`}
                           />
-                          <button
-                            type="button"
-                            onClick={() => removeEditTarea(tarea.key)}
-                            className="text-xs px-2 py-2 rounded bg-red-50 text-red-500 hover:bg-red-100"
-                            title="Eliminar tarea"
-                          >
-                            ✕
-                          </button>
+                          {!esObligatoriaBloqueada && (
+                            <button
+                              type="button"
+                              onClick={() => removeEditTarea(tarea.key)}
+                              className="text-xs px-2 py-2 rounded bg-red-50 text-red-500 hover:bg-red-100"
+                              title="Eliminar tarea"
+                            >
+                              ✕
+                            </button>
+                          )}
                         </div>
-                      ))}
+                      );})}
                     </div>
                   </div>
 
@@ -752,16 +758,18 @@ export function PlantillasPage() {
                     >
                       {editSaving ? "Guardando..." : "Guardar"}
                     </button>
-                    <div className="ml-auto flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setDeleteId(p.id)}
-                        className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
-                        title="Eliminar permanentemente"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    {puedeEliminarPlantilla && (
+                      <div className="ml-auto flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setDeleteId(p.id)}
+                          className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
+                          title="Eliminar permanentemente"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -791,13 +799,15 @@ export function PlantillasPage() {
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => setDeleteId(p.id)}
-                        className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
-                        title="Eliminar permanentemente"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {puedeEliminarPlantilla && (
+                        <button
+                          onClick={() => setDeleteId(p.id)}
+                          className="p-1.5 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
+                          title="Eliminar permanentemente"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
