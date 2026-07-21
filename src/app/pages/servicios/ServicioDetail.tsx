@@ -631,45 +631,56 @@ export function ServicioDetailPage() {
               <Share2 className="w-3.5 h-3.5" />
               <span className="hidden md:inline">Compartir</span>
             </button>
+
+            {/* Modal compartir — mobile friendly, same on desktop */}
             {showCompartir && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowCompartir(false)} />
-                <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1.5 min-w-[220px]">
+              <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" onClick={() => setShowCompartir(false)}>
+                <div className="bg-white/80 backdrop-blur-md md:bg-white md:rounded-2xl md:shadow-xl md:border md:border-gray-200 w-full md:max-w-xs md:p-4 md:mx-4 rounded-t-2xl shadow-2xl pb-8 pt-4 px-4 md:pb-4 space-y-2 md:space-y-1" onClick={(e) => e.stopPropagation()}>
+                  {/* Handle bar (mobile) */}
+                  <div className="flex md:hidden justify-center mb-3">
+                    <div className="w-10 h-1 bg-gray-300 rounded-full" />
+                  </div>
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-2 md:hidden">
+                    <span className="text-sm font-semibold text-gray-800">Compartir servicio</span>
+                    <button onClick={() => setShowCompartir(false)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"><X className="w-5 h-5" /></button>
+                  </div>
                   <button
-                    onClick={() => {
-                      setShowCompartir(false);
-                      setQrModalOpen(true);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-800 hover:bg-blue-100 hover:text-blue-800 transition font-medium rounded-none"
+                    onClick={() => { setShowCompartir(false); setQrModalOpen(true); }}
+                    className="w-full flex items-center gap-4 px-4 py-4 md:py-3 text-sm text-gray-800 hover:bg-blue-50 active:bg-blue-100 transition rounded-xl md:rounded-lg"
                   >
-                    <span className="w-7 h-7 flex items-center justify-center bg-blue-100 rounded-lg text-blue-700 flex-shrink-0">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <span className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center bg-blue-100 rounded-xl md:rounded-lg text-blue-700 flex-shrink-0">
+                      <svg className="w-5 h-5 md:w-4 md:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                       </svg>
                     </span>
-                    <div className="flex items-baseline gap-1.5 min-w-0">
-                      <span className="font-medium whitespace-nowrap">Código QR</span>
-                      <span className="text-xs text-gray-400 truncate">· Escaneá para ver el estado</span>
+                    <div className="flex flex-col items-start">
+                      <span className="font-semibold text-base md:text-sm">Código QR</span>
+                      <span className="text-xs text-gray-400">Escaneá para ver el estado del servicio</span>
                     </div>
                   </button>
-                  <div className="border-t border-gray-100 mx-3" />
+                  <div className="border-t border-gray-100 md:border-transparent md:my-0.5" />
                   <button
-                    onClick={() => {
-                      setShowCompartir(false);
-                      compartirWhatsApp(servicio.codigo, servicio.titulo);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-800 hover:bg-green-100 hover:text-green-800 transition font-medium rounded-none"
+                    onClick={() => { setShowCompartir(false); compartirWhatsApp(servicio.codigo, servicio.titulo); }}
+                    className="w-full flex items-center gap-4 px-4 py-4 md:py-3 text-sm text-gray-800 hover:bg-green-50 active:bg-green-100 transition rounded-xl md:rounded-lg"
                   >
-                    <span className="w-7 h-7 flex items-center justify-center bg-green-100 rounded-lg text-green-700 flex-shrink-0">
-                      <MessageCircle className="w-4 h-4" />
+                    <span className="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center bg-green-100 rounded-xl md:rounded-lg text-green-700 flex-shrink-0">
+                      <MessageCircle className="w-5 h-5 md:w-4 md:h-4" />
                     </span>
-                    <div className="flex items-baseline gap-1.5 min-w-0">
-                      <span className="font-medium whitespace-nowrap">WhatsApp</span>
-                      <span className="text-xs text-gray-400 truncate">· Link precargado para el cliente</span>
+                    <div className="flex flex-col items-start">
+                      <span className="font-semibold text-base md:text-sm">WhatsApp</span>
+                      <span className="text-xs text-gray-400">Link precargado para el cliente</span>
                     </div>
+                  </button>
+                  {/* Cerrar (mobile) */}
+                  <button
+                    onClick={() => setShowCompartir(false)}
+                    className="w-full md:hidden mt-2 py-3 text-sm font-medium text-gray-500 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl transition"
+                  >
+                    Cerrar
                   </button>
                 </div>
-              </>
+              </div>
             )}
           </div>
           {/* Botón Reporte Técnico PDF */}
