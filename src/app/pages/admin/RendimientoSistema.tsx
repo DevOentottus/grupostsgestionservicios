@@ -146,10 +146,22 @@ export function RendimientoSistemaPage() {
 
 function SummaryCards({ data }: { data: RendimientoResponse }) {
   const cards = [
-    { label: "Visitas de clientes", value: data.visit_tracking.total_visitas, icon: Eye, color: "bg-purple-500" },
-    { label: "Tasa completación", value: `${Math.round(data.performance.tasa_completacion)}%`, icon: CheckCircle2, color: "bg-green-500" },
-    { label: "Calificación prom.", value: data.calificaciones.promedio_calificacion.toFixed(1), icon: Star, color: "bg-yellow-500", suffix: "/5" },
-    { label: "Tareas completadas", value: data.performance.tareas_completadas, icon: Zap, color: "bg-blue-500" },
+    { label: "Visitas de clientes", value: data.visit_tracking.total_visitas, icon: Eye, color: "bg-purple-500",
+      formula: "Cantidad total de accesos a enlaces públicos de seguimiento de servicios.",
+      descripcion: "Número de veces que los clientes accedieron al portal de seguimiento de sus servicios.",
+      tip: "Un número bajo de visitas puede indicar que los clientes no reciben el enlace o no lo usan." },
+    { label: "Tasa completación", value: `${Math.round(data.performance.tasa_completacion)}%`, icon: CheckCircle2, color: "bg-green-500",
+      formula: "Servicios completados ÷ Total de servicios × 100.",
+      descripcion: "Porcentaje de servicios que fueron completados exitosamente sobre el total registrado.",
+      tip: "Una tasa de completación baja (< 60%) puede indicar servicios abandonados o procesos ineficientes." },
+    { label: "Calificación prom.", value: data.calificaciones.promedio_calificacion.toFixed(1), icon: Star, color: "bg-yellow-500", suffix: "/5",
+      formula: "Sumatoria de calificaciones (1–5) ÷ Total de servicios evaluados.",
+      descripcion: "Promedio global de satisfacción del cliente. ≥ 4.0 se considera bueno.",
+      tip: "El promedio puede estar sesgado si hay pocas evaluaciones. Revisá también la tasa de respuesta." },
+    { label: "Tareas completadas", value: data.performance.tareas_completadas, icon: Zap, color: "bg-blue-500",
+      formula: "Sumatoria de todas las tareas marcadas como completadas en el sistema.",
+      descripcion: "Cantidad total de tareas completadas, sin importar el estado del servicio al que pertenecen.",
+      tip: "Correlacioná este valor con los servicios completados para calcular el promedio de tareas por servicio." },
   ];
 
   return (
@@ -162,10 +174,13 @@ function SummaryCards({ data }: { data: RendimientoResponse }) {
               <div className={`w-12 h-12 rounded-xl ${c.color} flex items-center justify-center`}>
                 <Icon className="w-6 h-6 text-white" />
               </div>
-              <div>
-                <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>
-                  {c.value}{c.suffix || ""}
-                </p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-1">
+                  <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>
+                    {c.value}{c.suffix || ""}
+                  </p>
+                  <InfoPopover variant="formula" formula={c.formula!} descripcion={c.descripcion} tip={c.tip} side="top" />
+                </div>
                 <p className="text-gray-500 text-sm">{c.label}</p>
               </div>
             </div>
@@ -386,11 +401,19 @@ function CalificacionesTab({ data }: { data: RendimientoResponse }) {
             <div className="w-12 h-12 rounded-xl bg-yellow-500 flex items-center justify-center">
               <Star className="w-6 h-6 text-white" />
             </div>
-            <div>
-              <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>
-                {c.promedio_calificacion.toFixed(1)}
-                <span className="text-base text-gray-400 ml-1">/5</span>
-              </p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>
+                  {c.promedio_calificacion.toFixed(1)}
+                  <span className="text-base text-gray-400 ml-1">/5</span>
+                </p>
+                <InfoPopover
+                  variant="formula"
+                  formula="Sumatoria de calificaciones (1–5) ÷ Total de servicios evaluados."
+                  descripcion="Promedio global de satisfacción del cliente en todos los servicios."
+                  tip="Monitoreá este valor mensualmente. Una tendencia a la baja requiere acción correctiva."
+                />
+              </div>
               <p className="text-gray-500 text-sm">Calificación promedio</p>
             </div>
           </div>
@@ -400,8 +423,16 @@ function CalificacionesTab({ data }: { data: RendimientoResponse }) {
             <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center">
               <BarChart3 className="w-6 h-6 text-white" />
             </div>
-            <div>
-              <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>{c.total_calificaciones}</p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>{c.total_calificaciones}</p>
+                <InfoPopover
+                  variant="info"
+                  formula="Cantidad total de servicios que recibieron una calificación del cliente."
+                  descripcion="Número absoluto de evaluaciones recibidas. Una base baja resta representatividad al promedio."
+                  tip="Fomentá que los clientes evalúen después de cada servicio completado para aumentar la muestra."
+                />
+              </div>
               <p className="text-gray-500 text-sm">Total calificaciones</p>
             </div>
           </div>
@@ -411,8 +442,16 @@ function CalificacionesTab({ data }: { data: RendimientoResponse }) {
             <div className="w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-white" />
             </div>
-            <div>
-              <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>{Math.round(data.sistema.tasa_servicios_con_calificacion)}%</p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>{Math.round(data.sistema.tasa_servicios_con_calificacion)}%</p>
+                <InfoPopover
+                  variant="formula"
+                  formula="Servicios con calificación ÷ Total servicios completados × 100."
+                  descripcion="Porcentaje de servicios completados que recibieron una evaluación del cliente."
+                  tip="Una tasa de respuesta ≥ 50% es aceptable. Menos de eso y el promedio de satisfacción puede no ser representativo."
+                />
+              </div>
               <p className="text-gray-500 text-sm">Servicios con calificación</p>
             </div>
           </div>
@@ -501,8 +540,16 @@ function ColaboradoresTab({ data }: { data: RendimientoResponse }) {
             <div className="w-12 h-12 rounded-xl bg-blue-500 flex items-center justify-center">
               <Users className="w-6 h-6 text-white" />
             </div>
-            <div>
-              <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>{c.colaboradores_con_tareas}</p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-1">
+                <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>{c.colaboradores_con_tareas}</p>
+                <InfoPopover
+                  variant="info"
+                  formula="Cantidad de colaboradores que completaron al menos una tarea en el período."
+                  descripcion="Mide cuántos colaboradores están activamente participando en la ejecución de tareas."
+                  tip="Si este número es bajo comparado con el total de colaboradores, puede haber分配不均 o falta de carga de trabajo."
+                />
+              </div>
               <p className="text-gray-500 text-sm">Colaboradores con tareas completadas</p>
             </div>
           </div>
@@ -559,10 +606,22 @@ function SistemaTab({ data }: { data: RendimientoResponse }) {
   const { sistema: s } = data;
 
   const stats = [
-    { label: "Total usuarios", value: s.total_usuarios, icon: Users, color: "bg-blue-500" },
-    { label: "Total áreas", value: s.total_areas, icon: BarChart3, color: "bg-green-500" },
-    { label: "Total clientes", value: s.total_clientes, icon: Users, color: "bg-purple-500" },
-    { label: "Total servicios", value: s.total_servicios, icon: Activity, color: "bg-orange-500" },
+    { label: "Total usuarios", value: s.total_usuarios, icon: Users, color: "bg-blue-500",
+      formula: "Cantidad total de usuarios registrados en el sistema (todos los roles).",
+      descripcion: "Incluye administradores, encargados, colaboradores y cualquier otro rol del sistema.",
+      tip: "Un crecimiento sostenido de usuarios indica adopción del sistema por parte del equipo." },
+    { label: "Total áreas", value: s.total_areas, icon: BarChart3, color: "bg-green-500",
+      formula: "Cantidad de áreas o departamentos registrados en el sistema.",
+      descripcion: "Cada área agrupa colaboradores y servicios. Refleja la estructura organizativa.",
+      tip: "Si hay áreas sin actividad, considerá fusionarlas o revisar su asignación." },
+    { label: "Total clientes", value: s.total_clientes, icon: Users, color: "bg-purple-500",
+      formula: "Cantidad de clientes distintos registrados (por DNI o nombre) en el sistema.",
+      descripcion: "Clientes que han tenido al menos un servicio registrado. No incluye clientes sin servicios.",
+      tip: "La recurrencia de clientes es un buen indicador de calidad del servicio." },
+    { label: "Total servicios", value: s.total_servicios, icon: Activity, color: "bg-orange-500",
+      formula: "Cantidad total de servicios registrados en el sistema, sin importar su estado.",
+      descripcion: "Volumen total de trabajo registrado desde el inicio del sistema.",
+      tip: "Compará este número con el total de clientes para calcular el promedio de servicios por cliente." },
   ];
 
   return (
@@ -576,8 +635,11 @@ function SistemaTab({ data }: { data: RendimientoResponse }) {
                 <div className={`w-12 h-12 rounded-xl ${st.color} flex items-center justify-center`}>
                   <StIcon className="w-6 h-6 text-white" />
                 </div>
-                <div>
-                  <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>{st.value}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="text-3xl text-gray-900" style={{ fontWeight: 700 }}>{st.value}</p>
+                    <InfoPopover variant="info" formula={st.formula!} descripcion={st.descripcion} tip={st.tip} side="top" />
+                  </div>
                   <p className="text-gray-500 text-sm">{st.label}</p>
                 </div>
               </div>
@@ -590,17 +652,41 @@ function SistemaTab({ data }: { data: RendimientoResponse }) {
         <h3 className="text-gray-800 mb-4" style={{ fontWeight: 600 }}>Métricas del sistema</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-gray-50 rounded-xl p-4">
-            <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>{Math.round(s.tasa_servicios_con_calificacion)}%</p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>{Math.round(s.tasa_servicios_con_calificacion)}%</p>
+              <InfoPopover
+                variant="info"
+                formula="Servicios con calificación ÷ Total servicios completados × 100."
+                descripcion="Porcentaje de servicios que recibieron una evaluación del cliente."
+                tip="Una tasa baja (< 30%) resta representatividad al promedio de satisfacción general."
+              />
+            </div>
             <p className="text-xs text-gray-500 mt-1">Servicios con calificación</p>
           </div>
           <div className="bg-gray-50 rounded-xl p-4">
-            <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>{s.dias_datos}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>{s.dias_datos}</p>
+              <InfoPopover
+                variant="info"
+                formula="Días transcurridos desde el primer servicio registrado hasta la fecha actual."
+                descripcion="Antigüedad de los datos históricos del sistema. Sirve para contextualizar el volumen de datos."
+                tip="Mientras más días de datos, más representativas son las tendencias y comparaciones."
+              />
+            </div>
             <p className="text-xs text-gray-500 mt-1">Días de datos históricos</p>
           </div>
           <div className="bg-gray-50 rounded-xl p-4">
-            <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>
-              {s.total_servicios > 0 ? (s.total_servicios / Math.max(s.total_usuarios, 1)).toFixed(1) : 0}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>
+                {s.total_servicios > 0 ? (s.total_servicios / Math.max(s.total_usuarios, 1)).toFixed(1) : 0}
+              </p>
+              <InfoPopover
+                variant="info"
+                formula="Total servicios ÷ Total usuarios."
+                descripcion="Promedio de servicios por usuario del sistema. Un número bajo puede indicar baja productividad o muchos usuarios inactivos."
+                tip="Este ratio ayuda a dimensionar la carga de trabajo promedio por usuario."
+              />
+            </div>
             <p className="text-xs text-gray-500 mt-1">Servicios por usuario</p>
           </div>
         </div>

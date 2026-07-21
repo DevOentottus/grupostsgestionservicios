@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { serviciosApi, seguimientoApi, evidenciasPublicApi, ofertasApi } from "@/api/client.js";
 import { toast } from "sonner";
 import { cn } from "@/app/lib/utils";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { subscribeToPush } from "@/lib/push.js";
 import {
   Clock, CheckCircle2, AlertTriangle, Star, Send, ArrowLeft, Camera, X, Loader2,
@@ -439,11 +440,27 @@ export function ServicioPublicoPage() {
               {/* Right: time indicators section */}
               <div className="shrink-0">
                 <div className="bg-gray-50 rounded-xl border border-gray-200 px-4 py-3 min-w-[130px]">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Transcurrido</p>
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Transcurrido</p>
+                    <InfoPopover
+                      variant="info"
+                      formula="Tiempo desde la creación del servicio hasta ahora (o hasta su finalización)."
+                      descripcion="Muestra cuánto tiempo lleva el servicio activo. Se calcula desde created_at + hora_creacion."
+                      tip="Si el tiempo transcurrido supera ampliamente el estimado, el servicio puede estar estancado."
+                    />
+                  </div>
                   <p className="text-lg font-bold text-gray-900 tabular-nums leading-tight mt-0.5">
                     {formatETA(tiempo_transcurrido_minutos)}
                   </p>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mt-3">Restante estimado</p>
+                  <div className="flex items-center justify-between gap-1 mt-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">Restante estimado</p>
+                    <InfoPopover
+                      variant="info"
+                      formula="Sumatoria de tiempo_estimado de las tareas pendientes."
+                      descripcion="Tiempo estimado para completar las tareas que aún no están finalizadas. Es un cálculo aproximado."
+                      tip="El tiempo restante es estimado. Puede variar según la complejidad real de cada tarea."
+                    />
+                  </div>
                   <p className="text-lg font-bold text-gray-900 tabular-nums leading-tight mt-0.5">
                     {progreso.porcentaje === 100 ? "--" : formatETA(etaMinutos)}
                   </p>
@@ -477,7 +494,15 @@ export function ServicioPublicoPage() {
                     </p>
                   </div>
                 </div>
-                <CircularProgress value={pctProgreso} size={32} strokeWidth={3} />
+                <div className="flex items-center gap-2">
+                  <CircularProgress value={pctProgreso} size={32} strokeWidth={3} />
+                  <InfoPopover
+                    variant="formula"
+                    formula="Tareas completadas ÷ Total de tareas × 100."
+                    descripcion="Porcentaje de avance del servicio basado en las tareas completadas versus el total planificado."
+                    tip="Cuando todas las tareas estén completadas, el progreso llegará al 100%."
+                  />
+                </div>
               </div>
 
               {/* Process Flow */}

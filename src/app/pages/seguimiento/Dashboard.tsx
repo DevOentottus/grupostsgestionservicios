@@ -365,9 +365,18 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
       iconBg: "bg-blue-900",
       iconColor: "text-yellow-400",
       cards: [
-        { label: "Servicios completados", value: indicadores.productividad.servicios_completados, unit: "" },
-        { label: "Tareas completadas", value: indicadores.productividad.tareas_completadas, unit: "" },
-        { label: "Promedio x colaborador", value: indicadores.productividad.promedio_por_colaborador, unit: "" },
+        { label: "Servicios completados", value: indicadores.productividad.servicios_completados, unit: "",
+          formula: "Total de servicios con estado 'completado' en el período seleccionado.",
+          descripcion: "Indica cuántos servicios finalizó el equipo. Incluye todos los servicios marcados como completados, independientemente de si fueron evaluados o no.",
+          tip: "Combiná este valor con la calidad (satisfacción) para evitar que la velocidad sacrifique la experiencia del cliente." },
+        { label: "Tareas completadas", value: indicadores.productividad.tareas_completadas, unit: "",
+          formula: "Sumatoria de tareas con estado 'completado' dentro del período.",
+          descripcion: "Cantidad total de tareas individuales finalizadas. Una tarea completada no implica que el servicio esté completo.",
+          tip: "Monitoreá la relación tareas/servicio. Si es muy baja, las tareas podrían ser demasiado generales." },
+        { label: "Promedio x colaborador", value: indicadores.productividad.promedio_por_colaborador, unit: "",
+          formula: "Servicios completados ÷ Colaboradores activos en el período.",
+          descripcion: "Mide la productividad individual promedio. Útil para identificar brechas de rendimiento entre colaboradores.",
+          tip: "Valores muy dispares entre colaboradores pueden indicar desbalance en la asignación de servicios." },
       ],
     },
     {
@@ -376,9 +385,18 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
       iconBg: "bg-green-600",
       iconColor: "text-white",
       cards: [
-        { label: "Tiempo promedio", value: formatMinutos(indicadores.eficiencia.tiempo_promedio_min), unit: "" },
-        { label: "% a tiempo", value: indicadores.eficiencia.porcentaje_a_tiempo, unit: "%" },
-        { label: "Cant. retrasos", value: indicadores.eficiencia.cantidad_retrasos, unit: "" },
+        { label: "Tiempo promedio", value: formatMinutos(indicadores.eficiencia.tiempo_promedio_min), unit: "",
+          formula: "Sumatoria de tiempo real de tareas (tracking) ÷ N° de servicios completados con tracking.",
+          descripcion: "Tiempo total promedio que toma completar un servicio, desde la primera tarea hasta la última.",
+          tip: "Servicios con tiempos anómalamente largos pueden tener tareas bloqueadas o esperando repuestos." },
+        { label: "% a tiempo", value: indicadores.eficiencia.porcentaje_a_tiempo, unit: "%",
+          formula: "Servicios completados dentro del tiempo estimado ÷ Total de servicios completados × 100.",
+          descripcion: "Porcentaje de servicios que se completaron dentro o por debajo del tiempo estimado. No considera tracking.",
+          tip: "El ideal es ≥ 90%. Debajo de 70%, revisá los tiempos estimados y la carga de trabajo del equipo." },
+        { label: "Cant. retrasos", value: indicadores.eficiencia.cantidad_retrasos, unit: "",
+          formula: "Servicios donde el tiempo real (tracking) superó el tiempo estimado.",
+          descripcion: "Cantidad de servicios que excedieron el tiempo estimado. Un número alto sugiere problemas de planificación o estimación.",
+          tip: "Identificá patrones: ¿los retrasos se concentran en ciertos tipos de servicio o colaboradores?" },
       ],
     },
     {
@@ -387,8 +405,14 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
       iconBg: "bg-yellow-500",
       iconColor: "text-white",
       cards: [
-        { label: "Calificación promedio", value: indicadores.satisfaccion.promedio_calificacion, unit: "/5" },
-        { label: "% Evaluados", value: indicadores.satisfaccion.porcentaje_evaluados, unit: "%" },
+        { label: "Calificación promedio", value: indicadores.satisfaccion.promedio_calificacion, unit: "/5",
+          formula: "Sumatoria de calificaciones (1–5) ÷ Total de servicios evaluados.",
+          descripcion: "Promedio de la satisfacción del cliente. ≥ 4.0 se considera bueno.",
+          tip: "Las calificaciones bajas (≤ 2) deberían disparar una revisión automática. Fomentá que los clientes evalúen siempre." },
+        { label: "% Evaluados", value: indicadores.satisfaccion.porcentaje_evaluados, unit: "%",
+          formula: "Servicios con calificación ÷ Total de servicios completados × 100.",
+          descripcion: "Mide la tasa de respuesta de las encuestas de satisfacción. Una tasa baja puede sesgar el promedio.",
+          tip: "Si baja del 50%, considerá enviar un recordatorio automático al cliente por WhatsApp al completar el servicio." },
       ],
     },
   ];
@@ -446,41 +470,24 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
               <div className={`w-8 h-8 rounded-lg ${group.iconBg} flex items-center justify-center`}>
                 <GroupIcon className={`w-4 h-4 ${group.iconColor}`} />
               </div>
-              <div className="flex items-center gap-1.5">
-                <p className="text-gray-800 text-sm" style={{ fontWeight: 700 }}>{group.title}</p>
-                {group.title === "Productividad" && (
-                  <InfoPopover
-                    variant="formula"
-                    formula="Servicios/tareas completados en el período seleccionado, dividido entre colaboradores activos."
-                    descripcion="Mide el volumen de trabajo completado. A mayor número, mayor productividad del equipo."
-                    tip="Compará este valor contra períodos anteriores para detectar tendencias. Una caída sostenida puede indicar sobrecarga o problemas de proceso."
-                  />
-                )}
-                {group.title === "Eficiencia" && (
-                  <InfoPopover
-                    variant="formula"
-                    formula="Tiempo real de tareas (tracking) acumulado ÷ N° de tareas/servicios completados."
-                    descripcion="Evalúa qué tan rápido se completan los servicios. Menor tiempo promedio indica mayor eficiencia operativa."
-                    tip="El % a tiempo ideal debe estar sobre el 90%. Valores bajo 70% requieren revisión de procesos y asignación de recursos."
-                  />
-                )}
-                {group.title === "Satisfacción" && (
-                  <InfoPopover
-                    variant="formula"
-                    formula="Sumatoria de calificaciones (1–5) ÷ Total de servicios evaluados × 100"
-                    descripcion="Mide la percepción del cliente sobre la calidad del servicio. Una calificación ≥ 4.0 se considera satisfactoria."
-                    tip="Fomentá que los clientes evalúen después de cada servicio. Entre más evaluaciones, más representativa es la métrica."
-                  />
-                )}
-              </div>
+              <p className="text-gray-800 text-sm" style={{ fontWeight: 700 }}>{group.title}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {group.cards.map((card) => (
                 <div key={card.label} className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>
-                    {typeof card.value === "number" ? card.value.toLocaleString() : card.value}
-                    <span className="text-sm font-normal text-gray-400 ml-1">{card.unit}</span>
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>
+                      {typeof card.value === "number" ? card.value.toLocaleString() : card.value}
+                      <span className="text-sm font-normal text-gray-400 ml-1">{card.unit}</span>
+                    </p>
+                    <InfoPopover
+                      variant="formula"
+                      formula={card.formula!}
+                      descripcion={card.descripcion}
+                      tip={card.tip}
+                      side="top"
+                    />
+                  </div>
                   <p className="text-xs text-gray-500 mt-1">{card.label}</p>
                 </div>
               ))}
@@ -494,19 +501,43 @@ function IndicadoresTab({ data }: { data: DashboardV2Response | undefined }) {
         <h3 className="text-gray-800 mb-4" style={{ fontWeight: 600 }}>KPIs del Sistema</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: "Datos completos", value: kpi.registros_completos_pct, unit: "%" },
-            { label: "Con tareas", value: kpi.servicios_con_tareas_pct, unit: "%" },
-            { label: "Dentro tiempo", value: kpi.completados_dentro_tiempo_pct, unit: "%" },
-            { label: "Consultados", value: kpi.servicios_consultados_pct, unit: "%" },
-            { label: "Visibilidad", value: kpi.satisfaccion_visibilidad, unit: "/5" },
-            { label: "Evaluados", value: kpi.servicios_evaluados_pct, unit: "%" },
-            { label: "Con feedback", value: kpi.servicios_con_comentarios_pct, unit: "%" },
-            { label: "Tiempo prom.", value: formatMinutos(kpi.tiempo_promedio_min), unit: "" },
+            { label: "Datos completos", value: kpi.registros_completos_pct, unit: "%",
+              formula: "Servicios con todos los campos obligatorios completos ÷ Total servicios × 100.",
+              descripcion: "Porcentaje de servicios que tienen cliente, equipo, descripción y diagnóstico registrados." },
+            { label: "Con tareas", value: kpi.servicios_con_tareas_pct, unit: "%",
+              formula: "Servicios que tienen al menos una tarea ÷ Total servicios × 100.",
+              descripcion: "Mide la adopción del flujo de tareas. Ideal: 100% de los servicios deberían tener tareas." },
+            { label: "Dentro tiempo", value: kpi.completados_dentro_tiempo_pct, unit: "%",
+              formula: "Servicios completados con tiempo real ≤ tiempo estimado ÷ Total completados × 100.",
+              descripcion: "Porcentaje de servicios que no excedieron el tiempo estimado. Requiere tracking activo." },
+            { label: "Consultados", value: kpi.servicios_consultados_pct, unit: "%",
+              formula: "Servicios cuyo enlace público fue accedido al menos una vez ÷ Total servicios × 100.",
+              descripcion: "Indica cuántos clientes usan el portal de seguimiento. Una tasa baja puede indicar que no reciben el enlace." },
+            { label: "Visibilidad", value: kpi.satisfaccion_visibilidad, unit: "/5",
+              formula: "Promedio de respuestas a la pregunta '¿Qué tan visible fue el estado de tu servicio?' (1–5).",
+              descripcion: "Mide la percepción del cliente sobre la transparencia del proceso." },
+            { label: "Evaluados", value: kpi.servicios_evaluados_pct, unit: "%",
+              formula: "Servicios con encuesta de satisfacción respondida ÷ Total servicios completados × 100.",
+              descripcion: "Tasa de respuesta de encuestas. Una tasa baja resta representatividad al promedio de satisfacción." },
+            { label: "Con feedback", value: kpi.servicios_con_comentarios_pct, unit: "%",
+              formula: "Servicios con al menos un comentario interno ÷ Total servicios × 100.",
+              descripcion: "Porcentaje de servicios donde el equipo dejó notas o comentarios. Refleja la comunicación interna." },
+            { label: "Tiempo prom.", value: formatMinutos(kpi.tiempo_promedio_min), unit: "",
+              formula: "Sumatoria de tiempo real de tareas ÷ N° de tareas con tracking (global, sin filtro de período).",
+              descripcion: "Tiempo promedio global por tarea. Útil para estimar servicios nuevos basados en datos históricos." },
           ].map((k) => (
             <div key={k.label} className="bg-gray-50 rounded-xl p-3">
-              <p className="text-lg text-gray-900" style={{ fontWeight: 700 }}>
-                {k.value}{k.unit}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-lg text-gray-900" style={{ fontWeight: 700 }}>
+                  {k.value}{k.unit}
+                </p>
+                <InfoPopover
+                  variant="info"
+                  formula={k.formula}
+                  descripcion={k.descripcion}
+                  side="top"
+                />
+              </div>
               <p className="text-xs text-gray-500">{k.label}</p>
             </div>
           ))}

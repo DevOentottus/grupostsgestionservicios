@@ -97,28 +97,46 @@ export function AreaServiciosPage() {
           descripcion="Cada área tiene sus propios servicios. Podés filtrar, buscar y gestionar desde esta vista."
           tip="Usá los filtros para encontrar servicios rápidamente. El estado del servicio determina las acciones disponibles."
         />
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 flex items-center gap-1.5">
           {data.servicios.length} servicios · Tiempo promedio:{" "}
           {tiempo_promedio > 0 ? `${Math.round(tiempo_promedio)} min` : "--"}
+          <InfoPopover
+            variant="info"
+            formula="Sumatoria de tiempo real de tracking ÷ N° de tareas con tracking en el área."
+            descripcion="Tiempo promedio por tarea en esta área. Incluye solo tareas que tienen registro de tiempo."
+            tip="Un tiempo promedio alto puede indicar tareas complejas o necesidad de optimización de procesos."
+          />
         </p>
       </div>
 
       {/* Estado Count Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-2xl font-bold text-blue-600">{estado_counts.en_progreso}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-2xl font-bold text-blue-600">{estado_counts.en_progreso}</p>
+            <InfoPopover variant="info" formula="Servicios actualmente en ejecución en esta área." descripcion="Servicios iniciados pero aún no finalizados." tip="Los servicios en progreso deberían tener tracking de tiempo activo." />
+          </div>
           <p className="text-xs text-slate-500">En Progreso</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-2xl font-bold text-green-600">{estado_counts.completado}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-2xl font-bold text-green-600">{estado_counts.completado}</p>
+            <InfoPopover variant="info" formula="Servicios finalizados exitosamente en esta área." descripcion="Servicios marcados como completados por el equipo técnico." tip="Compará completados vs total para calcular la tasa de finalización del área." />
+          </div>
           <p className="text-xs text-slate-500">Completados</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-2xl font-bold text-amber-600">{estado_counts.pendiente}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-2xl font-bold text-amber-600">{estado_counts.pendiente}</p>
+            <InfoPopover variant="info" formula="Servicios registrados pero aún no iniciados." descripcion="Servicios que están en cola de espera para ser asignados o iniciados." tip="Una acumulación alta de pendientes puede indicar falta de recursos o mala planificación." />
+          </div>
           <p className="text-xs text-slate-500">Pendientes</p>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <p className="text-2xl font-bold text-red-600">{estado_counts.bloqueado}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-2xl font-bold text-red-600">{estado_counts.bloqueado}</p>
+            <InfoPopover variant="warning" formula="Servicios que no pueden avanzar por algún impedimento." descripcion="Servicios detenidos que requieren intervención para continuar. Pueden necesitar repuestos, información o decisión." tip="Los servicios bloqueados deberían revisarse periódicamente para destrabarlos o cancelarlos." />
+          </div>
           <p className="text-xs text-slate-500">Bloqueados</p>
         </div>
       </div>

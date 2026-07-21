@@ -236,6 +236,12 @@ export function MiAreaPage() {
                 <div className="flex items-center gap-1.5 mb-2">
                   <Star className="w-4 h-4 text-yellow-500 fill-yellow-400" />
                   <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Satisfacción</h4>
+                  <InfoPopover
+                    variant="formula"
+                    formula="Sumatoria de calificaciones (1–5) ÷ Total de servicios evaluados en el período."
+                    descripcion="Promedio de satisfacción del cliente con los servicios. ≥ 4.0 se considera bueno."
+                    tip="Las calificaciones bajas (≤ 2) deberían disparar una revisión automática del servicio."
+                  />
                 </div>
                 <div className="flex items-center justify-center gap-1.5">
                   <span className="text-2xl font-bold text-slate-900">
@@ -258,7 +264,15 @@ export function MiAreaPage() {
                 <div className="space-y-2 mt-3">
                   <div>
                     <div className="flex justify-between text-[11px] mb-0.5">
-                      <span className="text-slate-600">Clientes que califican</span>
+                      <span className="text-slate-600 flex items-center gap-1">
+                        Clientes que califican
+                        <InfoPopover
+                          variant="info"
+                          formula="Servicios con calificación ÷ Total servicios completados × 100."
+                          descripcion="Porcentaje de servicios que recibieron una calificación del cliente."
+                          tip="Una tasa baja de evaluación puede sesgar el promedio de satisfacción."
+                        />
+                      </span>
                       <span className="font-semibold text-slate-800">{data.satisfaccion.servicios_evaluados_pct}%</span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -270,7 +284,15 @@ export function MiAreaPage() {
                   </div>
                   <div>
                     <div className="flex justify-between text-[11px] mb-0.5">
-                      <span className="text-slate-600">Calificaciones positivas (≥3)</span>
+                      <span className="text-slate-600 flex items-center gap-1">
+                        Calificaciones positivas (≥3)
+                        <InfoPopover
+                          variant="info"
+                          formula="Servicios con calificación ≥ 3 ÷ Total servicios evaluados × 100."
+                          descripcion="Porcentaje de evaluaciones con calificación positiva o neutra."
+                          tip="El ratio positivo/negativo da una mejor imagen que el promedio solo."
+                        />
+                      </span>
                       <span className="font-semibold text-green-600">{data.satisfaccion.calificaciones_positivas_pct}%</span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -282,7 +304,15 @@ export function MiAreaPage() {
                   </div>
                   <div>
                     <div className="flex justify-between text-[11px] mb-0.5">
-                      <span className="text-slate-600">Calificaciones negativas (&lt;3)</span>
+                      <span className="text-slate-600 flex items-center gap-1">
+                        Calificaciones negativas (&lt;3)
+                        <InfoPopover
+                          variant="warning"
+                          formula="Servicios con calificación &lt; 3 ÷ Total servicios evaluados × 100."
+                          descripcion="Porcentaje de evaluaciones con calificación negativa."
+                          tip="Un porcentaje alto de negativas (&gt; 20%) requiere revisión de procesos y calidad."
+                        />
+                      </span>
                       <span className="font-semibold text-red-500">{data.satisfaccion.calificaciones_negativas_pct}%</span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -301,6 +331,12 @@ export function MiAreaPage() {
               <div>
                 <div className="flex items-center gap-1.5 mb-2 justify-center">
                   <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">NPS</h4>
+                  <InfoPopover
+                    variant="formula"
+                    formula="NPS = % Promotores − % Detractores. Rango de −100 a +100."
+                    descripcion="Net Promoter Score: mide la lealtad del cliente. Promotores (9-10), Pasivos (7-8), Detractores (0-6)."
+                    tip="Un NPS ≥ 50 es excelente. Si es negativo, priorizá acciones de mejora en la experiencia del cliente."
+                  />
                 </div>
                 {data.satisfaccion.cantidad > 0 ? (
                   <>
@@ -349,6 +385,12 @@ export function MiAreaPage() {
                   <h4 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                     <Trophy className="w-4 h-4 text-amber-500" />
                     Ranking
+                    <InfoPopover
+                      variant="formula"
+                      formula="Colaboradores ordenados por servicios completados en el período."
+                      descripcion="Ranking de rendimiento de colaboradores del área. Muestra calificación promedio y cantidad de servicios completados."
+                      tip="Usá el ranking para reconocer logros, no para presionar. Combiná con calidad (satisfacción) para una visión completa."
+                    />
                   </h4>
                   <div className="flex items-center gap-1">
                     <button

@@ -146,7 +146,10 @@ export function AreasPage() {
               tip="Creá áreas por especialidad (Soporte Técnico, Ventas, etc.) para una mejor distribución de servicios y reportes."
             />
           </h1>
-          <p className="text-gray-500 text-sm">{visibleAreas.length} áreas registradas</p>
+          <p className="text-gray-500 text-sm flex items-center gap-1.5">
+            {visibleAreas.length} áreas registradas
+            <InfoPopover variant="info" formula="Cantidad de áreas activas en el sistema." descripcion="Cada área agrupa colaboradores y servicios por especialidad o departamento." tip="Creá áreas por función para una mejor organización de servicios y reportes." />
+          </p>
         </div>
 
         {user?.rol !== "encargado" && (
@@ -280,14 +283,29 @@ export function AreasPage() {
                   {/* Stats cards */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                     {[
-                      { label: "Servicios", value: getAreaServiceStats(selectedId).total, icon: ClipboardList, color: "bg-blue-100 text-blue-700" },
-                      { label: "En Progreso", value: getAreaServiceStats(selectedId).en_progreso, icon: Clock, color: "bg-blue-100 text-blue-700" },
-                      { label: "Completados", value: getAreaServiceStats(selectedId).completados, icon: CheckCircle2, color: "bg-green-100 text-green-700" },
-                      { label: "Colaboradores", value: selectedDetail.colaboradores?.length || 0, icon: Users, color: "bg-purple-100 text-purple-700" },
+                      { label: "Servicios", value: getAreaServiceStats(selectedId).total, icon: ClipboardList, color: "bg-blue-100 text-blue-700",
+                        formula: "Cantidad total de servicios en esta área, sin importar su estado.",
+                        descripcion: "Volumen total de trabajo del área. Incluye servicios pendientes, en progreso, completados y bloqueados.",
+                        tip: "Usá el ratio servicios/colaboradores para evaluar la carga de trabajo." },
+                      { label: "En Progreso", value: getAreaServiceStats(selectedId).en_progreso, icon: Clock, color: "bg-blue-100 text-blue-700",
+                        formula: "Servicios con estado 'en_progreso' actualmente en esta área.",
+                        descripcion: "Servicios que están siendo atendidos activamente por el equipo.",
+                        tip: "Si hay muchos en progreso pero pocos completados, revisá los flujos de trabajo." },
+                      { label: "Completados", value: getAreaServiceStats(selectedId).completados, icon: CheckCircle2, color: "bg-green-100 text-green-700",
+                        formula: "Servicios finalizados exitosamente en esta área.",
+                        descripcion: "Servicios marcados como completados. Refleja la producción del área.",
+                        tip: "Compará completados vs total para calcular la tasa de éxito del área." },
+                      { label: "Colaboradores", value: selectedDetail.colaboradores?.length || 0, icon: Users, color: "bg-purple-100 text-purple-700",
+                        formula: "Cantidad de colaboradores asignados a esta área.",
+                        descripcion: "Miembros del equipo técnico que pertenecen al área y pueden recibir servicios.",
+                        tip: "Un área con pocos colaboradores y muchos servicios puede necesitar refuerzos." },
                     ].map((stat) => (
                       <div key={stat.label} className="bg-gray-50 rounded-xl p-3">
-                        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mb-1", stat.color)}>
-                          <stat.icon className="w-4 h-4" />
+                        <div className="flex items-center justify-between">
+                          <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mb-1", stat.color)}>
+                            <stat.icon className="w-4 h-4" />
+                          </div>
+                          <InfoPopover variant="info" formula={stat.formula!} descripcion={stat.descripcion} tip={stat.tip} side="top" />
                         </div>
                         <p className="text-lg font-bold text-gray-900">{stat.value}</p>
                         <p className="text-xs text-gray-500">{stat.label}</p>

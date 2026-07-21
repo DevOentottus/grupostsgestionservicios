@@ -299,12 +299,30 @@ function MetricasTabContent({ tareas, servicio }: { tareas: Tarea[]; servicio: a
   const coberturaPct = tareasSorted.length > 0 ? Math.round((conTracking.length / tareasSorted.length) * 100) : 0;
 
   const metricas = [
-    { label: "Tareas", valor: `${completadas.length}/${tareasSorted.length} (${progresoPct}%)`, unidad: "", color: "text-green-600" },
-    { label: "Tiempo total (tracking)", valor: formatMinutos(totalTiempo), unidad: "", color: "text-purple-600" },
-    { label: "Promedio por tarea", valor: completadas.length > 0 ? formatMinutos(promTiempo) : "—", unidad: "", color: "text-orange-600" },
-    { label: "Eficiencia vs estimado", valor: eficienciaPct != null ? `${eficienciaPct >= 0 ? "+" : ""}${eficienciaPct}%` : "—", unidad: "", color: eficienciaPct != null && eficienciaPct >= 0 ? "text-emerald-600" : "text-red-600" },
-    ...(coberturaPct < 100 ? [{ label: "Cobertura tracking", valor: `${coberturaPct}%`, unidad: "", color: "text-cyan-600" as const }] : []),
-    { label: "Ciclo de vida", valor: vidaTexto, unidad: "", color: "text-slate-600" },
+    { label: "Tareas", valor: `${completadas.length}/${tareasSorted.length} (${progresoPct}%)`, unidad: "", color: "text-green-600",
+      formula: "Tareas completadas ÷ Total de tareas × 100.",
+      descripcion: "Muestra el avance del servicio: cantidad de tareas completadas versus el total planificado.",
+      tip: "Si el progreso se estanca, revisá si hay tareas bloqueadas o pendientes de asignación." },
+    { label: "Tiempo total (tracking)", valor: formatMinutos(totalTiempo), unidad: "", color: "text-purple-600",
+      formula: "Sumatoria de tiempo_real_minutos de todas las tareas con tracking activo.",
+      descripcion: "Tiempo total registrado en las tareas del servicio. Solo incluye tareas que tienen tracking de tiempo activado.",
+      tip: "El tracking debe activarse manualmente en cada tarea. Sin tracking, este valor será 0." },
+    { label: "Promedio por tarea", valor: completadas.length > 0 ? formatMinutos(promTiempo) : "—", unidad: "", color: "text-orange-600",
+      formula: "Tiempo total (tracking) ÷ N° de tareas completadas.",
+      descripcion: "Tiempo promedio que toma cada tarea completada. Útil para estimar servicios similares en el futuro.",
+      tip: "Valores muy altos pueden indicar tareas demasiado complejas o mal estimadas." },
+    { label: "Eficiencia vs estimado", valor: eficienciaPct != null ? `${eficienciaPct >= 0 ? "+" : ""}${eficienciaPct}%` : "—", unidad: "", color: eficienciaPct != null && eficienciaPct >= 0 ? "text-emerald-600" : "text-red-600",
+      formula: "(tiempo_estimado − tiempo_real) / tiempo_estimado × 100. Positivo = se completó antes del estimado.",
+      descripcion: "Compara el tiempo real contra el estimado por tarea. Un valor positivo indica eficiencia; negativo indica que se excedió el estimado.",
+      tip: "Valores negativos consistentes sugieren que los tiempos estimados deben ajustarse." },
+    ...(coberturaPct < 100 ? [{ label: "Cobertura tracking", valor: `${coberturaPct}%`, unidad: "", color: "text-cyan-600" as const,
+      formula: "Tareas con tiempo_real registrado ÷ Total de tareas × 100.",
+      descripcion: "Porcentaje de tareas que tienen registro de tiempo. Idealmente debería ser 100% para métricas precisas.",
+      tip: "Sin tracking de tiempo, las métricas de eficiencia no son representativas. Activá el tracking en cada tarea." }] : []),
+    { label: "Ciclo de vida", valor: vidaTexto, unidad: "", color: "text-slate-600",
+      formula: "Tiempo desde created_at + hora_creacion hasta fecha_fin + hora_fin (o hasta ahora si sigue en curso).",
+      descripcion: "Muestra cuánto tiempo lleva el servicio desde su creación. Si está completado, muestra el tiempo total de vida.",
+      tip: "Servicios con ciclo de vida muy largo pueden tener cuellos de botella. Revisá el estado de las tareas." },
   ];
 
   return (
@@ -313,10 +331,19 @@ function MetricasTabContent({ tareas, servicio }: { tareas: Tarea[]; servicio: a
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {metricas.map((m) => (
           <div key={m.label} className="bg-white rounded-xl border border-slate-200/70 p-4">
-            <p className={`text-lg font-bold ${m.color} tabular-nums`}>
-              {m.valor}
-              {m.unidad && <span className="text-xs font-normal text-slate-400 ml-1">{m.unidad}</span>}
-            </p>
+            <div className="flex items-center justify-between gap-1">
+              <p className={`text-lg font-bold ${m.color} tabular-nums`}>
+                {m.valor}
+                {m.unidad && <span className="text-xs font-normal text-slate-400 ml-1">{m.unidad}</span>}
+              </p>
+              <InfoPopover
+                variant="formula"
+                formula={m.formula!}
+                descripcion={m.descripcion}
+                tip={m.tip}
+                side="top"
+              />
+            </div>
             <p className="text-[11px] text-slate-500 mt-1">{m.label}</p>
           </div>
         ))}
@@ -325,7 +352,15 @@ function MetricasTabContent({ tareas, servicio }: { tareas: Tarea[]; servicio: a
       {/* Tiempo por colaborador */}
       {Object.keys(porColaborador).length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200/70 p-4">
-          <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-3">Tiempo por colaborador</h4>
+          <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            Tiempo por colaborador
+            <InfoPopover
+              variant="info"
+              formula="Tiempo real acumulado por colaborador en tareas completadas, con cantidad de tareas realizadas."
+              descripcion="Desglose del tiempo registrado por cada colaborador que completó tareas en este servicio."
+              tip="Usá esta info para identificar cargas de trabajo desiguales o colaboradores que necesitan apoyo."
+            />
+          </h4>
           <div className="space-y-2">
             {Object.entries(porColaborador).map(([userId, data]) => (
               <div key={userId} className="flex items-center justify-between text-sm">
@@ -340,23 +375,7 @@ function MetricasTabContent({ tareas, servicio }: { tareas: Tarea[]; servicio: a
         </div>
       )}
 
-      {/* InfoPopovers de ayuda */}
-      <div className="flex flex-wrap gap-2">
-        <InfoPopover
-          variant="formula"
-          formula="Eficiencia = (tiempo_estimado − tiempo_real) / tiempo_estimado × 100. Positivo = completado antes del estimado."
-          descripcion="Mide si las tareas se completaron dentro del tiempo estimado. Un valor positivo indica ahorro de tiempo."
-          tip="Valores negativos consistentes sugieren que los tiempos estimados deben ajustarse a la realidad."
-        />
-        {coberturaPct < 100 && (
-          <InfoPopover
-            variant="tip"
-            formula="Cobertura de tracking = tareas con tiempo_real registrado / total tareas × 100."
-            descripcion="Indica qué porcentaje de tareas tienen registro de tiempo. Idealmente debería ser 100%."
-            tip="Sin tracking de tiempo, las métricas de eficiencia no son representativas. Activá el tracking en cada tarea."
-          />
-        )}
-      </div>
+
     </div>
   );
 }

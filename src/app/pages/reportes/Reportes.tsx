@@ -217,16 +217,31 @@ export function ReportesPage() {
           {colabData && colabUserId && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {[
-                { label: "Servicios Completados", value: colabData.servicios_completados, icon: CheckCircle2, color: "bg-green-500" },
-                { label: "Tareas Completadas", value: colabData.tareas_completadas, icon: BarChart3, color: "bg-blue-500" },
-                { label: "Tiempo Promedio", value: formatMinutos(colabData.tiempo_promedio_min), icon: Clock, color: "bg-amber-500" },
-                { label: "Eficiencia", value: `${colabData.eficiencia}%`, icon: TrendingUp, color: "bg-purple-500" },
+                { label: "Servicios Completados", value: colabData.servicios_completados, icon: CheckCircle2, color: "bg-green-500",
+                  formula: "Total de servicios donde el colaborador participó y fueron marcados como completados.",
+                  descripcion: "Cantidad de servicios finalizados en los que el colaborador tuvo participación directa.",
+                  tip: "Compará este valor con el promedio del área para identificar colaboradores destacados." },
+                { label: "Tareas Completadas", value: colabData.tareas_completadas, icon: BarChart3, color: "bg-blue-500",
+                  formula: "Sumatoria de tareas completadas por el colaborador en el período.",
+                  descripcion: "Cantidad total de tareas individuales que el colaborador marcó como completadas.",
+                  tip: "Una cantidad alta de tareas con pocos servicios puede indicar micro-tareas o servicios muy complejos." },
+                { label: "Tiempo Promedio", value: formatMinutos(colabData.tiempo_promedio_min), icon: Clock, color: "bg-amber-500",
+                  formula: "Sumatoria de tiempo real de tareas ÷ N° de tareas completadas por el colaborador.",
+                  descripcion: "Tiempo promedio que le toma al colaborador completar una tarea.",
+                  tip: "Valores extremadamente altos o bajos pueden indicar problemas de estimación o diferencias en complejidad." },
+                { label: "Eficiencia", value: `${colabData.eficiencia}%`, icon: TrendingUp, color: "bg-purple-500",
+                  formula: "Tareas dentro del tiempo estimado ÷ Total de tareas completadas × 100.",
+                  descripcion: "Porcentaje de tareas que el colaborador completó dentro del tiempo estimado.",
+                  tip: "Una eficiencia ≥ 90% es ideal. Si es baja, revisá las estimaciones o identificá patrones de retraso." },
               ].map((s) => (
                 <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                   <div className={`w-11 h-11 ${s.color} rounded-xl flex items-center justify-center mb-3 shadow-sm`}>
                     <s.icon className="w-6 h-6 text-white" />
                   </div>
-                  <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>{s.value}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>{s.value}</p>
+                    <InfoPopover variant="formula" formula={s.formula!} descripcion={s.descripcion} tip={s.tip} side="top" />
+                  </div>
                   <p className="text-gray-500 text-xs mt-1.5">{s.label}</p>
                 </div>
               ))}
@@ -383,16 +398,31 @@ export function ReportesPage() {
           {areaData && areaId && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {[
-                { label: "Productividad", value: `${areaData.productividad}%`, icon: TrendingUp, color: "bg-green-500" },
-                { label: "Total Servicios", value: areaData.total_servicios, icon: BarChart3, color: "bg-blue-500" },
-                { label: "Completados", value: areaData.completados, icon: CheckCircle2, color: "bg-indigo-500" },
-                { label: "Tiempo Promedio", value: formatMinutos(areaData.tiempo_promedio_min), icon: Clock, color: "bg-amber-500" },
+                { label: "Productividad", value: `${areaData.productividad}%`, icon: TrendingUp, color: "bg-green-500",
+                  formula: "Servicios completados en el área ÷ Total servicios × 100.",
+                  descripcion: "Porcentaje de servicios completados versus el total de servicios del área en el período.",
+                  tip: "Una productividad baja puede indicar sobrecarga de trabajo o cuellos de botella en el área." },
+                { label: "Total Servicios", value: areaData.total_servicios, icon: BarChart3, color: "bg-blue-500",
+                  formula: "Cantidad total de servicios registrados en el área en el período seleccionado.",
+                  descripcion: "Volumen total de trabajo del área. Incluye todos los servicios sin importar su estado.",
+                  tip: "Compará este total con el de períodos anteriores para detectar tendencias de crecimiento o estacionalidad." },
+                { label: "Completados", value: areaData.completados, icon: CheckCircle2, color: "bg-indigo-500",
+                  formula: "Servicios con estado 'completado' en el área durante el período.",
+                  descripcion: "Cantidad de servicios que se finalizaron exitosamente en el área.",
+                  tip: "Si los completados son bajos vs el total, revisá el flujo de trabajo y los servicios bloqueados." },
+                { label: "Tiempo Promedio", value: formatMinutos(areaData.tiempo_promedio_min), icon: Clock, color: "bg-amber-500",
+                  formula: "Sumatoria de tiempo real de tareas ÷ N° de tareas con tracking en el área.",
+                  descripcion: "Tiempo promedio por tarea en el área. Útil para comparar eficiencia entre áreas.",
+                  tip: "Áreas con tiempos muy superiores al promedio pueden necesitar revisión de procesos o recursos." },
               ].map((s) => (
                 <div key={s.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                   <div className={`w-11 h-11 ${s.color} rounded-xl flex items-center justify-center mb-3 shadow-sm`}>
                     <s.icon className="w-6 h-6 text-white" />
                   </div>
-                  <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>{s.value}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-2xl text-gray-900" style={{ fontWeight: 700 }}>{s.value}</p>
+                    <InfoPopover variant="formula" formula={s.formula!} descripcion={s.descripcion} tip={s.tip} side="top" />
+                  </div>
                   <p className="text-gray-500 text-xs mt-1.5">{s.label}</p>
                 </div>
               ))}
