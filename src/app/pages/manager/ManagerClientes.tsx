@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { managerApi } from "@/api/client.js";
 import { useState } from "react";
 import { Search, Phone, Mail, MapPin, Calendar, Wrench } from "lucide-react";
+import { InfoPopover } from "@/app/components/ui/info-popover.js";
 
 interface Cliente {
   cliente_id: number;
@@ -80,7 +81,12 @@ export function ManagerClientesPage() {
                   <th className="text-left px-4 py-3 font-medium text-slate-600">DNI</th>
                   <th className="text-left px-4 py-3 font-medium text-slate-600">Contacto</th>
                   <th className="text-left px-4 py-3 font-medium text-slate-600">Dirección</th>
-                  <th className="text-center px-4 py-3 font-medium text-slate-600">Servicios</th>
+                  <th className="text-center px-4 py-3 font-medium text-slate-600">
+                    <span className="inline-flex items-center gap-1 justify-center">
+                      Servicios
+                      <InfoPopover variant="info" formula="Cantidad total de servicios registrados para este cliente." descripcion="Número de servicios que el cliente ha tenido en el sistema." tip="Clientes con múltiples servicios son recurrentes — buena señal de calidad." />
+                    </span>
+                  </th>
                   <th className="text-left px-4 py-3 font-medium text-slate-600">Último servicio</th>
                   <th className="text-left px-4 py-3 font-medium text-slate-600">Registrado</th>
                 </tr>

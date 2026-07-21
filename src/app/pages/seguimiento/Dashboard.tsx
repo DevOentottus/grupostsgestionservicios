@@ -737,7 +737,12 @@ function RankingTab({
                   <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Colaborador</th>
                   <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Servicios</th>
                   <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Tareas</th>
-                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Eficiencia</th>
+                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 justify-center">
+                      Eficiencia
+                      <InfoPopover variant="formula" formula="Tareas dentro del tiempo estimado ÷ Total tareas × 100." descripcion="Porcentaje de tareas completadas dentro del tiempo estimado por el colaborador." tip="≥ 80% es un buen indicador de eficiencia." />
+                    </span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -794,8 +799,18 @@ function RankingTab({
                   <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Servicio</th>
                   <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Cliente</th>
                   <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Prioridad</th>
-                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Progreso</th>
-                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Tiempo</th>
+                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 justify-center">
+                      Progreso
+                      <InfoPopover variant="info" formula="Tareas completadas ÷ Total tareas × 100." descripcion="Porcentaje de avance del servicio." tip="El progreso se actualiza automáticamente al completar tareas." />
+                    </span>
+                  </th>
+                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 justify-center">
+                      Tiempo
+                      <InfoPopover variant="info" formula="Tiempo transcurrido desde la creación del servicio." descripcion="Muestra cuánto tiempo lleva el servicio activo." tip="Si el tiempo es muy superior al estimado, revisá tareas bloqueadas." />
+                    </span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -1004,7 +1019,12 @@ function ComparativoTab({
                   <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Métrica</th>
                   <th className="text-right py-3 px-4 text-gray-500 text-xs font-medium">Anterior</th>
                   <th className="text-right py-3 px-4 text-gray-500 text-xs font-medium">Actual</th>
-                  <th className="text-right py-3 px-4 text-gray-500 text-xs font-medium">Variación</th>
+                  <th className="text-right py-3 px-4 text-gray-500 text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 justify-end">
+                      Variación
+                      <InfoPopover variant="formula" formula="((Actual − Anterior) ÷ Anterior) × 100. Positivo = mejora." descripcion="Cambio porcentual entre el período anterior y el actual." tip="Usá la variación para identificar tendencias positivas o negativas en el rendimiento." />
+                    </span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">

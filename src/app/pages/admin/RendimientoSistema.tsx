@@ -214,7 +214,12 @@ function VisitasTab({ data }: { data: RendimientoResponse }) {
                   <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">#</th>
                   <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Código</th>
                   <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Servicio</th>
-                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Visitas</th>
+                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 justify-center">
+                      Visitas
+                      <InfoPopover variant="info" formula="Cantidad de veces que clientes accedieron al enlace público de seguimiento del servicio." descripcion="Cada acceso de un cliente al portal de seguimiento cuenta como una visita." tip="Las visitas reflejan el interés del cliente en el progreso de su servicio." />
+                    </span>
+                  </th>
                   <th className="text-right py-3 px-4 text-gray-500 text-xs font-medium">Última visita</th>
                 </tr>
               </thead>
@@ -570,7 +575,12 @@ function ColaboradoresTab({ data }: { data: RendimientoResponse }) {
                 <tr className="border-b border-gray-100 bg-gray-50">
                   <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">#</th>
                   <th className="text-left py-3 px-4 text-gray-500 text-xs font-medium">Colaborador</th>
-                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">Tareas completadas</th>
+                  <th className="text-center py-3 px-4 text-gray-500 text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 justify-center">
+                      Tareas completadas
+                      <InfoPopover variant="info" formula="Cantidad total de tareas que el colaborador marcó como completadas." descripcion="Sumatoria de tareas finalizadas. Refleja la productividad del colaborador." tip="Combiná este número con la eficiencia para una visión completa del rendimiento." />
+                    </span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">

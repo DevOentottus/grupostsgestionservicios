@@ -279,13 +279,33 @@ export function ReportesPage() {
                   <thead>
                     <tr className="bg-slate-800">
                       <th className="text-left px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">Colaborador</th>
-                      <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">Tareas Completadas</th>
+                      <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">
+                        <span className="inline-flex items-center gap-1 justify-center">
+                          Tareas Completadas
+                          <InfoPopover variant="info" formula="Cantidad de tareas finalizadas por el colaborador en el período." descripcion="Sumatoria de tareas marcadas como completadas." tip="Más tareas no siempre significa mejor rendimiento — revisá también la calidad." />
+                        </span>
+                      </th>
                       {colabData?.colaboradores
-                        ? <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">Rendimiento</th>
+                        ? <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">
+                            <span className="inline-flex items-center gap-1 justify-center">
+                              Rendimiento
+                              <InfoPopover variant="formula" formula="Servicios completados / total × 100. Combina cantidad y eficiencia." descripcion="Porcentaje de rendimiento general del colaborador." tip="Usá este indicador para identificar colaboradores que necesitan apoyo." />
+                            </span>
+                          </th>
                         : <>
                             <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">Servicios</th>
-                            <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">Tiempo Prom.</th>
-                            <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">Eficiencia</th>
+                            <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">
+                              <span className="inline-flex items-center gap-1 justify-center">
+                                Tiempo Prom.
+                                <InfoPopover variant="info" formula="Sumatoria de tiempo real de tareas ÷ N° de tareas completadas." descripcion="Tiempo promedio por tarea del colaborador." tip="Valores muy altos o bajos pueden indicar diferencias en complejidad de tareas asignadas." />
+                              </span>
+                            </th>
+                            <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">
+                              <span className="inline-flex items-center gap-1 justify-center">
+                                Eficiencia
+                                <InfoPopover variant="formula" formula="Tareas dentro del tiempo estimado ÷ Total tareas × 100." descripcion="Porcentaje de tareas completadas dentro del tiempo estimado." tip="≥ 80% es bueno. ≤ 50% requiere revisión de estimaciones o procesos." />
+                              </span>
+                            </th>
                           </>
                       }
                     </tr>
@@ -462,8 +482,18 @@ export function ReportesPage() {
                       <th className="text-left px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">Área</th>
                       <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">Total Servicios</th>
                       <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">Completados</th>
-                      <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">Productividad</th>
-                      <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">Tiempo Prom.</th>
+                      <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">
+                        <span className="inline-flex items-center gap-1 justify-center">
+                          Productividad
+                          <InfoPopover variant="formula" formula="Servicios completados ÷ Total servicios × 100." descripcion="Porcentaje de servicios finalizados versus el total del área." tip="≥ 80% es saludable. Menos de 50% puede indicar problemas de capacidad." />
+                        </span>
+                      </th>
+                      <th className="text-center px-5 py-3.5 text-xs text-white font-semibold tracking-wider uppercase">
+                        <span className="inline-flex items-center gap-1 justify-center">
+                          Tiempo Prom.
+                          <InfoPopover variant="info" formula="Sumatoria de tiempo real de tareas ÷ N° de tareas con tracking en el área." descripcion="Tiempo promedio de tarea en el área." tip="Compará entre áreas para detectar diferencias operativas." />
+                        </span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
