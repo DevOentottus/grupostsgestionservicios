@@ -60,14 +60,14 @@ function baseQuery() {
 async function validarAccesoPublico(codigo: string, dni: string) {
   const { data: svc } = await (supabase as any)
     .from("servicios")
-    .select("servicio_id, cliente_nombre, cliente_dni")
+    .select("servicio_id, cliente_nombres, cliente_dni")
     .eq("servicio_codigo", codigo)
     .limit(1);
   if (!svc?.length) throw new NotFoundError("Servicio no encontrado");
   if (svc[0].cliente_dni !== dni) {
     throw new ForbiddenError("DNI incorrecto");
   }
-  return svc[0] as { servicio_id: number; cliente_nombre: string; cliente_dni: string };
+  return svc[0] as { servicio_id: number; cliente_nombres: string; cliente_dni: string };
 }
 
 export async function comunicacionesController(app: FastifyInstance) {
@@ -168,7 +168,7 @@ export async function comunicacionesController(app: FastifyInstance) {
           usuario_id: null,
           comunicacion_mensaje: input.mensaje,
           comunicacion_tipo: "consulta",
-          remitente_nombre: svc.cliente_nombre || "Cliente",
+          remitente_nombre: svc.cliente_nombres || "Cliente",
           es_cliente: true,
         })
         .select(`
