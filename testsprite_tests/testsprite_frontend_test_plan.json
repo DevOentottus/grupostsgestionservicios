@@ -1,0 +1,1972 @@
+[
+  {
+    "id": "TC001",
+    "title": "Authorized user creates a service and receives a code",
+    "description": "An authorized user can create a service by entering client, equipment, assignment, and template data and then see the generated service code.",
+    "category": "Service Creation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the new service section"
+      },
+      {
+        "type": "action",
+        "description": "Search for an existing client or create a new client"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the equipment details"
+      },
+      {
+        "type": "action",
+        "description": "Select the service type"
+      },
+      {
+        "type": "action",
+        "description": "Select the common fault"
+      },
+      {
+        "type": "action",
+        "description": "Select the responsible area and technician"
+      },
+      {
+        "type": "action",
+        "description": "Select a task template"
+      },
+      {
+        "type": "action",
+        "description": "Set a valid estimated time"
+      },
+      {
+        "type": "action",
+        "description": "Submit the service form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the generated service code is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new service was created successfully"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Collaborator completes a task with evidence and comment",
+    "description": "A collaborator can mark a task complete, upload evidence, add a comment, and see the service progress update.",
+    "category": "Service Detail",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /servicios"
+      },
+      {
+        "type": "action",
+        "description": "Open an assigned service from the list"
+      },
+      {
+        "type": "action",
+        "description": "Complete a task checklist item"
+      },
+      {
+        "type": "action",
+        "description": "Add a comment to the task"
+      },
+      {
+        "type": "action",
+        "description": "Attach evidence to the task"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task is marked complete"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service progress is updated"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Collaborator finishes all tasks and completes the service",
+    "description": "A collaborator can complete every task in an assigned service and see the service marked as completed.",
+    "category": "Service Execution with Time Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open an assigned service from the service list"
+      },
+      {
+        "type": "action",
+        "description": "Complete each task in the service checklist"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service is marked as completed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the progress is fully complete"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Collaborator opens an assigned service and sees tracking details",
+    "description": "A collaborator can open an assigned service and view the task checklist, progress, and estimated time information.",
+    "category": "Service Execution with Time Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open an assigned service from the service list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service detail page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task checklist and progress information are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Collaborator tracks time while working on a service",
+    "description": "A collaborator can start, pause, and stop time tracking on an assigned service and see the elapsed time update.",
+    "category": "Service Detail",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /servicios"
+      },
+      {
+        "type": "action",
+        "description": "Open an assigned service from the list"
+      },
+      {
+        "type": "action",
+        "description": "Start time tracking"
+      },
+      {
+        "type": "action",
+        "description": "Pause time tracking"
+      },
+      {
+        "type": "action",
+        "description": "Stop time tracking"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify elapsed time is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify tracking progress is updated"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Admin reaches the dashboard after login",
+    "description": "An admin can log in and land on the dashboard with role-appropriate performance overview content visible.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the admin dashboard is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify KPI and ranking content is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Collaborator finishes the service",
+    "description": "A collaborator can finish an assigned service after completing work and see the service move to the completed state.",
+    "category": "Service Detail",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /servicios"
+      },
+      {
+        "type": "action",
+        "description": "Open an assigned service from the list"
+      },
+      {
+        "type": "action",
+        "description": "Finish the service"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service is marked completed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify final elapsed-time summary is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Collaborator starts and pauses time tracking on a task",
+    "description": "A collaborator can start tracking time on a task and then pause it while the elapsed tracking state updates.",
+    "category": "Service Execution with Time Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open an assigned service from the service list"
+      },
+      {
+        "type": "action",
+        "description": "Start tracking time on a task"
+      },
+      {
+        "type": "action",
+        "description": "Pause tracking on the same task"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task tracking state is paused"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify elapsed time information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Collaborator opens an assigned service",
+    "description": "A collaborator can open an assigned service from the service list and see the service detail page with tasks and tracking controls.",
+    "category": "Service Detail",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /servicios"
+      },
+      {
+        "type": "action",
+        "description": "Open an assigned service from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service tasks are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify time tracking controls are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "Track and rate a completed service publicly",
+    "description": "A client can enter a public service code, review the service details and visible evidence, and submit a rating with feedback.",
+    "category": "Client Ratings",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /seguimiento-cliente"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid service code"
+      },
+      {
+        "type": "action",
+        "description": "Submit the service code search"
+      },
+      {
+        "type": "action",
+        "description": "Select a rating of 5 stars"
+      },
+      {
+        "type": "action",
+        "description": "Fill in an optional comment"
+      },
+      {
+        "type": "action",
+        "description": "Submit the rating"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service details are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a rating confirmation is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC011",
+    "title": "Admin reviews dashboard KPIs and ranking",
+    "description": "An admin can open the dashboard, review the key operational metrics and collaborator ranking, and change the date range to see updated values.",
+    "category": "Dashboard KPIs",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Change the date range filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify KPI metrics are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify collaborator ranking is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC012",
+    "title": "New service appears in the service list after creation",
+    "description": "After creating a service, the user can find it in the service list with a pending status.",
+    "category": "Service Creation",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the new service section"
+      },
+      {
+        "type": "action",
+        "description": "Search for an existing client or create a new client"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the equipment details"
+      },
+      {
+        "type": "action",
+        "description": "Select the service type"
+      },
+      {
+        "type": "action",
+        "description": "Select the common fault"
+      },
+      {
+        "type": "action",
+        "description": "Select the responsible area and technician"
+      },
+      {
+        "type": "action",
+        "description": "Select a task template"
+      },
+      {
+        "type": "action",
+        "description": "Set a valid estimated time"
+      },
+      {
+        "type": "action",
+        "description": "Submit the service form"
+      },
+      {
+        "type": "action",
+        "description": "Open the service list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the new service appears in the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service is marked as pending"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC013",
+    "title": "Public user submits a service rating",
+    "description": "A client can rate a completed public service with feedback and see the rating confirmation after submitting.",
+    "category": "Public Service Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /seguimiento-cliente"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a valid service code into the tracking field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the tracking form"
+      },
+      {
+        "type": "action",
+        "description": "Select a rating from 1 to 5 stars"
+      },
+      {
+        "type": "action",
+        "description": "Fill in feedback into the comments field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the rating form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a rating confirmation is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the submitted feedback is reflected in the public view"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC014",
+    "title": "Public user tracks a service using a code",
+    "description": "A public user can enter a valid service code and view the service status and visible evidence.",
+    "category": "Service Execution with Time Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /seguimiento-cliente"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid service code"
+      },
+      {
+        "type": "action",
+        "description": "Open the tracked service"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service status is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify visible evidence is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC015",
+    "title": "Collaborator reaches their performance page after login",
+    "description": "A collaborator can log in and land on their individual performance page instead of the admin dashboard.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the collaborator performance page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify individual metrics content is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC016",
+    "title": "View a public service page and rate from service details",
+    "description": "A client can open a public service page by code, review the visible evidence, and leave a rating and comment from the service detail view.",
+    "category": "Client Ratings",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /public/servicio/:codigo"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid service code"
+      },
+      {
+        "type": "action",
+        "description": "Submit the service code search"
+      },
+      {
+        "type": "action",
+        "description": "Review the service status and completion details"
+      },
+      {
+        "type": "action",
+        "description": "Select a rating from 1 to 5 stars"
+      },
+      {
+        "type": "action",
+        "description": "Fill in an optional suggestion"
+      },
+      {
+        "type": "action",
+        "description": "Submit the rating"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify visible evidence is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a rating confirmation is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC017",
+    "title": "Public user submits a rating and feedback",
+    "description": "A public user can rate a completed service from 1 to 5 stars and submit feedback successfully.",
+    "category": "Service Execution with Time Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /seguimiento-cliente"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid service code"
+      },
+      {
+        "type": "action",
+        "description": "Open the tracked service"
+      },
+      {
+        "type": "action",
+        "description": "Select a star rating"
+      },
+      {
+        "type": "action",
+        "description": "Fill in feedback comments"
+      },
+      {
+        "type": "action",
+        "description": "Submit the rating form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the rating confirmation is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the submitted feedback is recorded in the public view"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC018",
+    "title": "Show the current status for a valid public service code",
+    "description": "A client can enter a valid public service code and see the current progress, elapsed time, and completed tasks.",
+    "category": "Public Service Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /seguimiento-cliente"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid service code"
+      },
+      {
+        "type": "action",
+        "description": "Submit the service code search"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the current service progress is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify completed tasks are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC019",
+    "title": "Review tracking information for a service",
+    "description": "An authorized user can inspect time tracking details for an open service and confirm elapsed time is shown.",
+    "category": "Service Detail Review",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation entry for the service list"
+      },
+      {
+        "type": "action",
+        "description": "Click a service record from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify tracking information is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify elapsed time or service duration is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC020",
+    "title": "Public user opens a shared service page",
+    "description": "A client can open a public service detail page with a valid code and review the service status and evidence on the shared view.",
+    "category": "Public Service Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /public/servicio/{{PUBLIC_SERVICE_CODE}}"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service detail is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service status is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC021",
+    "title": "Public user opens a service from the public detail page",
+    "description": "A public user can open a service through its public code page and see the service information that is available to clients.",
+    "category": "Service Execution with Time Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /public/servicio/:codigo"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the public service detail page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify public service information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC022",
+    "title": "Show public service details for a valid code",
+    "description": "A client can open the public service detail page with a valid code and view service status, elapsed time, and visible evidence.",
+    "category": "Public Service Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /public/servicio/:codigo"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid service code"
+      },
+      {
+        "type": "action",
+        "description": "Submit the service code search"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify service details are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify visible evidence is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC023",
+    "title": "Review task progress in a service detail",
+    "description": "An authorized user can inspect the progress of tasks within a service and see completion status for each task.",
+    "category": "Service Detail Review",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation entry for the service list"
+      },
+      {
+        "type": "action",
+        "description": "Click a service record from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify task progress information is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify task completion status is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC024",
+    "title": "Area manager reviews team metrics",
+    "description": "An area manager can open the area view and review team satisfaction, NPS, and collaborator ranking for their area.",
+    "category": "Area Manager View",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /miarea"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify team satisfaction metrics are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify collaborator ranking within the area is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC025",
+    "title": "Open a service from the list",
+    "description": "An authorized user can open a service record from the service list and reach its detail view.",
+    "category": "Service List and Filtering",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation entry for the service list"
+      },
+      {
+        "type": "action",
+        "description": "Click a service record from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service detail view is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the selected service information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC026",
+    "title": "Admin reviews system performance overview",
+    "description": "An administrator can open the system performance page and see the overall KPI summaries, ratings, collaborator rankings, and system breakdowns needed to evaluate operations.",
+    "category": "System Performance",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the system performance page link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify global KPI summaries are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify collaborator rankings and system breakdowns are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC027",
+    "title": "Collaborator compares elapsed time with the estimate",
+    "description": "A collaborator can view elapsed time against the estimated time while working an assigned service.",
+    "category": "Service Execution with Time Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open an assigned service from the service list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify elapsed time information is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the estimated time information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC028",
+    "title": "Review collaborator performance for the current period",
+    "description": "An authenticated collaborator can open their performance dashboard and see their key productivity metrics for the default period.",
+    "category": "Collaborator Performance",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /midesempeno"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify completed services metrics are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify productivity metrics are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC029",
+    "title": "Manager compares collaborator and area reports",
+    "description": "A manager can switch between collaborator and area report views and compare the summary metrics and tables in each view.",
+    "category": "Reports",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /reportes"
+      },
+      {
+        "type": "action",
+        "description": "Switch to the collaborator reports view"
+      },
+      {
+        "type": "action",
+        "description": "Switch to the area reports view"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify summary cards are displayed for the selected report views"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify report tables are displayed for the selected report views"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC030",
+    "title": "Search for a service from the service list",
+    "description": "An authorized user can search the service list and see matching records returned.",
+    "category": "Service List and Filtering",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation entry for the service list"
+      },
+      {
+        "type": "action",
+        "description": "Fill in a unique service search term into the search field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify matching services are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the list reflects the search filter"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC031",
+    "title": "Admin refreshes dashboard metrics by changing the date range",
+    "description": "An admin can adjust the dashboard date range and see the metrics update for the selected period.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Change the dashboard date range to a different valid period"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify updated KPI metrics are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify updated ranking content is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC032",
+    "title": "Collaborator reviews personal performance",
+    "description": "A collaborator can open the personal performance page and review their key productivity metrics and ranking information.",
+    "category": "Collaborator Performance",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /midesempeno"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify personal performance metrics are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify ranking information is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC033",
+    "title": "Switch collaborator performance between periods",
+    "description": "An authenticated collaborator can change the performance period and see the metrics update for today, week, or month.",
+    "category": "Collaborator Performance",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /midesempeno"
+      },
+      {
+        "type": "action",
+        "description": "Select the week period"
+      },
+      {
+        "type": "action",
+        "description": "Select the month period"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the performance metrics are displayed for the selected period"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify productivity by day is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC034",
+    "title": "Collaborator can continue tracking after pausing a task",
+    "description": "A collaborator can pause a tracked task and resume it again without losing the task progress state.",
+    "category": "Service Execution with Time Tracking",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Open an assigned service from the service list"
+      },
+      {
+        "type": "action",
+        "description": "Start tracking time on a task"
+      },
+      {
+        "type": "action",
+        "description": "Pause tracking on the same task"
+      },
+      {
+        "type": "action",
+        "description": "Resume tracking on the same task"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task tracking state is active"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the task remains in progress"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC035",
+    "title": "Admin sees dashboard metric details",
+    "description": "An admin can open the dashboard information panels and view the metric formula details for the displayed KPIs.",
+    "category": "Dashboard KPIs",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /dashboard"
+      },
+      {
+        "type": "action",
+        "description": "Open a metric information panel"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify metric formula details are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC036",
+    "title": "Filter services by criteria",
+    "description": "An authorized user can apply service filters and see the visible list update accordingly.",
+    "category": "Service List and Filtering",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation entry for the service list"
+      },
+      {
+        "type": "action",
+        "description": "Select a service filter criterion"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the filtered service list is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the visible services match the selected filter"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC037",
+    "title": "Authorized user finds a recently created service in the list",
+    "description": "An authorized user can open the service list and find a newly created service after using the search or filter controls.",
+    "category": "Service List",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /servicios"
+      },
+      {
+        "type": "action",
+        "description": "Search for a service using its identifying data"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the matching service appears in the list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC038",
+    "title": "Admin reviews system performance indicators",
+    "description": "An admin can open the system performance page and view global indicators and ratings summaries.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the system performance section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the system performance page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify global KPI and rating summaries are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC039",
+    "title": "Area manager changes the period filter",
+    "description": "An area manager can change the date period on the area view and see the metrics refresh for the selected range.",
+    "category": "Area Manager View",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /miarea"
+      },
+      {
+        "type": "action",
+        "description": "Change the date period filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify team metrics are updated for the selected period"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC040",
+    "title": "Admin reviews rating distribution and service type metrics",
+    "description": "An administrator can inspect the rating distribution and service-type breakdowns to understand how service quality varies across the system.",
+    "category": "System Performance",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the system performance page link"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to the rating and service breakdown sections"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the rating distribution is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service type metrics are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC041",
+    "title": "Admin reviews system performance metrics",
+    "description": "An admin can open the system performance page and review global ratings and KPI summaries.",
+    "category": "System Performance",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /admin/rendimiento"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify system performance metrics are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC042",
+    "title": "Authorized user filters the service list",
+    "description": "An authorized user can filter the services page and see the results update to match the selected criteria.",
+    "category": "Service List",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /servicios"
+      },
+      {
+        "type": "action",
+        "description": "Change a service filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service list updates to match the selected filter"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC043",
+    "title": "Review evidence and comments in a service detail",
+    "description": "An authorized user can view uploaded evidence and comments associated with a service.",
+    "category": "Service Detail Review",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation entry for the service list"
+      },
+      {
+        "type": "action",
+        "description": "Click a service record from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify service evidence is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify service comments are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC044",
+    "title": "Manager compares collaborator performance metrics",
+    "description": "A manager can open the performance overview and compare collaborator metrics and summaries.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the manager performance section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the manager performance overview is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify collaborator metrics summaries are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC045",
+    "title": "Manager updates report date range",
+    "description": "A manager can change the report date range and see the collaborator or area metrics refresh for the chosen period.",
+    "category": "Reports",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /reportes"
+      },
+      {
+        "type": "action",
+        "description": "Change the date range filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify report metrics are updated for the selected date range"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC046",
+    "title": "Admin opens the system performance page from the dashboard",
+    "description": "An administrator can navigate from the dashboard to the system performance page and reach the full performance overview without leaving the app.",
+    "category": "System Performance",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to the system performance page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the system performance overview is displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC047",
+    "title": "Manager reviews service distribution",
+    "description": "A manager can open the service distribution page and see distribution summaries by area or technician.",
+    "category": "User Authentication",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the service distribution section"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the service distribution page is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify distribution summaries are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC048",
+    "title": "Manager reviews performance overview",
+    "description": "A manager can open the performance overview page and see productivity and efficiency summaries for their team or area.",
+    "category": "Manager Performance Overview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the performance overview page link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify productivity and efficiency summaries are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC049",
+    "title": "Manager compares available performance summaries",
+    "description": "A manager can review the available performance summaries on the overview page to compare team results.",
+    "category": "Manager Performance Overview",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the performance overview page link"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify multiple performance summary sections are displayed"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC050",
+    "title": "Manager reviews client management",
+    "description": "A manager can open the client management page and view the client list for administration.",
+    "category": "Manager Client Management",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_USER}} into the username field"
+      },
+      {
+        "type": "action",
+        "description": "Fill in {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /manager/clientes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the client list is displayed"
+      }
+    ],
+    "priority": "Medium"
+  }
+]

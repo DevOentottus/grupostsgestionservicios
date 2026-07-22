@@ -1,0 +1,17 @@
+{
+  "status": "init",
+  "scope": "codebase",
+  "type": "frontend",
+  "localEndpoint": "http://localhost:5173/",
+  "serverPort": 53941,
+  "executionArgs": {
+    "projectName": "ServicioLocalSTS",
+    "projectPath": "F:\\STS\\ServicioLocalSTS",
+    "testIds": [],
+    "additionalInstruction": "",
+    "serverMode": "development",
+    "envs": {
+      "API_KEY": "sk-user-zsmuW-JRdxzF12UTgyXQX3awGbUi8_o7XQwyn3o4Ic6fUiCGY09Vb0dG37MxdnbuG6RFeBiL8j-b9f9gelkLsxaknM-NdRWEkzHrsiBHpmaSCxoP_MQkY1jyhOssomo78j4"
+    }
+  }
+}

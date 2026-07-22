@@ -1,0 +1,317 @@
+version: "2"
+type: frontend
+tech_stack:
+  - TypeScript
+  - React 18
+  - Vite
+  - Tailwind CSS v4
+  - React Router v6
+  - shadcn/ui (Radix primitives)
+  - Recharts (gráficos)
+  - jsPDF (reportes PDF)
+  - date-fns
+  - TanStack Query (React Query)
+  - Zustand (estado global)
+  - Axios (HTTP client)
+  - Node.js Express backend (serverless en Vercel)
+  - PostgreSQL (Supabase)
+routes:
+  - path: /login
+    file: src/app/pages/login/Login.tsx
+    auth_required: false
+    description: Login page for all users (admin, encargado, colaborador)
+  - path: /display/tv
+    file: src/app/pages/display/DisplayTV.tsx
+    auth_required: false
+    description: TV display showing service status in waiting room
+  - path: /seguimiento-cliente
+    file: src/app/pages/seguimiento/SeguimientoCliente.tsx
+    auth_required: false
+    description: Public service tracking by code
+  - path: /public/servicio/:codigo
+    file: src/app/pages/servicios/ServicioPublico.tsx
+    auth_required: false
+    description: Public service detail page accessible via unique code
+  - path: /dashboard
+    file: src/app/pages/seguimiento/Dashboard.tsx
+    auth_required: true
+    description: Admin dashboard with KPIs, rankings, system indicators
+  - path: /miarea
+    file: src/app/pages/miarea/MiArea.tsx
+    auth_required: true
+    description: Area manager view showing team performance and services
+  - path: /midesempeno
+    file: src/app/pages/colaborador/MiDesempeno.tsx
+    auth_required: true
+    description: Individual collaborator performance dashboard
+  - path: /servicios
+    file: src/app/pages/servicios/Servicios.tsx
+    auth_required: true
+    description: Service list with filters and search
+  - path: /servicios/nuevo
+    file: src/app/pages/servicios/NuevoServicio.tsx
+    auth_required: true
+    description: Create new service with client data, equipment, and template
+  - path: /servicios/:id
+    file: src/app/pages/servicios/ServicioDetail.tsx
+    auth_required: true
+    description: Service detail with tasks, tracking, evidence, comments
+  - path: /areas
+    file: src/app/pages/areas/Areas.tsx
+    auth_required: true
+    description: Area management list
+  - path: /areas/:id/servicios
+    file: src/app/pages/areas/AreaServicios.tsx
+    auth_required: true
+    description: Services grouped by area
+  - path: /plantillas
+    file: src/app/pages/plantillas/Plantillas.tsx
+    auth_required: true
+    description: Service task templates management
+  - path: /reportes
+    file: src/app/pages/reportes/Reportes.tsx
+    auth_required: true
+    description: Productivity reports by collaborator and area
+  - path: /admin/rendimiento
+    file: src/app/pages/admin/RendimientoSistema.tsx
+    auth_required: true
+    description: System performance with ratings and global KPIs
+  - path: /admin/seguridad
+    file: src/app/pages/admin/SeguridadSistema.tsx
+    auth_required: true
+    description: Security settings and access logs
+  - path: /usuarios
+    file: src/app/pages/usuarios/Usuarios.tsx
+    auth_required: true
+    description: User management CRUD
+  - path: /auditoria
+    file: src/app/pages/auditoria/Auditoria.tsx
+    auth_required: true
+    description: Audit log viewer
+  - path: /manager/clientes
+    file: src/app/pages/manager/ManagerClientes.tsx
+    auth_required: true
+    description: Client management for managers
+  - path: /manager/desempeno
+    file: src/app/pages/manager/ManagerDesempeno.tsx
+    auth_required: true
+    description: Manager performance overview
+  - path: /manager/distribucion
+    file: src/app/pages/manager/ManagerDistribucion.tsx
+    auth_required: true
+    description: Service distribution management
+features:
+  - name: User Authentication
+    description: Login with username and password, role-based redirection
+    files:
+      - src/app/pages/login/Login.tsx
+      - src/lib/auth.tsx
+    entry_route: /login
+    user_interactions:
+      - Enter username in input field
+      - Enter password in input field
+      - Toggle show/hide password
+      - Click "Iniciar Sesión" button
+      - View error message on invalid credentials
+      - Auto-redirect based on role (admin→/dashboard, colaborador→/midesempeno)
+    api_calls:
+      - method: POST
+        endpoint: /api/auth/login
+      - method: GET
+        endpoint: /api/auth/me
+    auth_required: false
+  - name: Dashboard KPIs
+    description: Admin dashboard with key performance indicators, rankings, and system metrics
+    files:
+      - src/app/pages/seguimiento/Dashboard.tsx
+      - src/api/queries/useDashboard.ts
+    entry_route: /dashboard
+    user_interactions:
+      - View services completed today count
+      - View average service time
+      - View compliance rate (completed/total)
+      - View overall efficiency percentage
+      - View NPS (Net Promoter Score)
+      - View average satisfaction rating
+      - View collaborator ranking by efficiency
+      - Filter by date range
+      - View InfoPopovers on each metric for formula/details
+    api_calls:
+      - method: GET
+        endpoint: /api/dashboard/resumen
+      - method: GET
+        endpoint: /api/dashboard/kpis
+      - method: GET
+        endpoint: /api/dashboard/ranking
+    auth_required: true
+  - name: Service Creation
+    description: Register new service with client info, equipment details, and task template
+    files:
+      - src/app/pages/servicios/NuevoServicio.tsx
+    entry_route: /servicios/nuevo
+    user_interactions:
+      - Search/create client by DNI or name
+      - Fill equipment description, series, brand
+      - Select service type and common fault
+      - Select responsible area and technician
+      - Choose task template
+      - Set estimated time
+      - Submit service creation
+      - View generated service code
+    api_calls:
+      - method: POST
+        endpoint: /api/servicios
+      - method: GET
+        endpoint: /api/clientes/search
+      - method: GET
+        endpoint: /api/tipos-servicio
+      - method: GET
+        endpoint: /api/fallas-comunes
+      - method: GET
+        endpoint: /api/plantillas
+    auth_required: true
+  - name: Service Execution with Time Tracking
+    description: Collaborators complete tasks with real-time tracking, evidence upload
+    files:
+      - src/app/pages/servicios/ServicioDetail.tsx
+      - src/app/pages/servicios/ServicioPublico.tsx
+      - src/app/components/TrackingControls.tsx
+    entry_route: /servicios/:id
+    user_interactions:
+      - View service details and task checklist
+      - Start time tracking on a task
+      - Pause/resume tracking
+      - Complete task with tracked time
+      - Upload photo/video evidence per task
+      - Add comments to tasks
+      - View service progress bar
+      - Track elapsed time vs estimated
+    api_calls:
+      - method: GET
+        endpoint: /api/servicios/:id
+      - method: POST
+        endpoint: /api/tareas/:id/complete
+      - method: POST
+        endpoint: /api/tracking/start
+      - method: POST
+        endpoint: /api/tracking/stop
+      - method: POST
+        endpoint: /api/evidencias
+    auth_required: true
+  - name: Client Ratings
+    description: Clients rate completed services (1-5) with comments and suggestions
+    files:
+      - src/app/pages/servicios/ServicioPublico.tsx
+      - src/app/pages/seguimiento/SeguimientoCliente.tsx
+    entry_route: /public/servicio/:codigo
+    user_interactions:
+      - View service status and completion details
+      - View evidence photos
+      - Rate service from 1 to 5 stars
+      - Write optional comment
+      - Write optional suggestion
+      - Submit rating
+    api_calls:
+      - method: POST
+        endpoint: /api/calificaciones
+      - method: GET
+        endpoint: /api/servicios/public/:codigo
+    auth_required: false
+  - name: Collaborator Performance
+    description: Individual performance metrics for each technician
+    files:
+      - src/app/pages/colaborador/MiDesempeno.tsx
+    entry_route: /midesempeno
+    user_interactions:
+      - View completed services count
+      - View efficiency percentage (estimated vs real time)
+      - View average rating received
+      - View total tracked time
+      - View completed tasks count
+      - View productivity (tasks/day)
+      - Filter by period (today, week, month)
+    api_calls:
+      - method: GET
+        endpoint: /api/colaborador/desempeno
+    auth_required: true
+  - name: Area Manager View
+    description: Team-level performance overview for area managers
+    files:
+      - src/app/pages/miarea/MiArea.tsx
+    entry_route: /miarea
+    user_interactions:
+      - View team satisfaction metrics
+      - View team NPS
+      - View collaborator ranking within area
+      - Filter by date period
+      - View InfoPopovers with metric formulas
+    api_calls:
+      - method: GET
+        endpoint: /api/miarea/metricas
+    auth_required: true
+  - name: Reports
+    description: Productivity reports by collaborator and area with calculated metrics
+    files:
+      - src/app/pages/reportes/Reportes.tsx
+      - src/api/queries/useReportes.ts
+    entry_route: /reportes
+    user_interactions:
+      - Switch between "por colaborador" and "por área" tabs
+      - View summary cards (services, tasks, times)
+      - View table with efficiency, performance, productivity
+      - Filter by date range
+      - View InfoPopovers on calculated metrics
+    api_calls:
+      - method: GET
+        endpoint: /api/reportes/colaborador
+      - method: GET
+        endpoint: /api/reportes/area
+    auth_required: true
+  - name: System Performance
+    description: Global system KPIs, rating distribution, and collaborator rankings
+    files:
+      - src/app/pages/admin/RendimientoSistema.tsx
+      - src/api/queries/useRendimiento.ts
+    entry_route: /admin/rendimiento
+    user_interactions:
+      - View total services count
+      - View completion rate
+      - View global efficiency
+      - View rating distribution (1-5 stars)
+      - View collaborator ranking table
+      - View system metrics by service type
+      - View common faults frequency
+    api_calls:
+      - method: GET
+        endpoint: /api/rendimiento/resumen
+      - method: GET
+        endpoint: /api/rendimiento/calificaciones
+      - method: GET
+        endpoint: /api/rendimiento/colaboradores
+      - method: GET
+        endpoint: /api/rendimiento/sistema
+    auth_required: true
+  - name: Public Service Tracking
+    description: Clients track their service status publicly without authentication
+    files:
+      - src/app/pages/servicios/ServicioPublico.tsx
+      - src/app/pages/seguimiento/SeguimientoCliente.tsx
+    entry_route: /public/servicio/:codigo
+    user_interactions:
+      - Enter service code
+      - View current status and progress bar
+      - View elapsed vs estimated time
+      - View completed task list
+      - View evidence (if visible to client)
+      - Add public comments
+    api_calls:
+      - method: GET
+        endpoint: /api/servicios/public/:codigo
+    auth_required: false
+known_limitations:
+  - issue: Backend is deployed separately on Vercel (proxy in vite.config.ts points to https://grupostsgestionservicios.vercel.app)
+    location: vite.config.ts
+    impact: Local dev requires backend to be running or proxy target to be reachable
+  - issue: Some admin CRUD operations are UI-only with local state
+    location: src/app/pages/usuarios/Usuarios.tsx
+    impact: Create/update may not persist without backend implementation

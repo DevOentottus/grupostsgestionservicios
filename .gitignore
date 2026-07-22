@@ -11,3 +11,5 @@ backend/dist
 backend/drizzle
 
 .vercel
+
+testsprite_tests\tmp\config.json
