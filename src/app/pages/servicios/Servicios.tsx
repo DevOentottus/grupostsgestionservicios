@@ -269,7 +269,7 @@ export function ServiciosPage() {
             >
               <option value="">Todos los colaboradores</option>
               {colaboradores.map((u: any) => (
-                <option key={u.id} value={u.id}>{u.nombres}</option>
+                <option key={u.id} value={u.id}>{(u.nombres || "") + (u.apellidos ? " " + u.apellidos : "")}</option>
               ))}
             </select>
           )}
