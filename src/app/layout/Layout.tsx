@@ -35,7 +35,7 @@ interface NavItem {
 
 const nav: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, roles: ["admin"] },
-  { to: "/midesempeno", label: "Mi Desempeño", icon: <TrendingUp className="w-4 h-4" />, roles: ["colaborador", "encargado"] },
+  { to: "/midesempeno", label: "Mi Desempeño", icon: <TrendingUp className="w-4 h-4" />, roles: ["colaborador", "encargado", "admin", "sistema"] },
   { to: "/miarea", label: "Mi Área", icon: <Home className="w-4 h-4" />, roles: ["colaborador", "encargado"] },
   { to: "/servicios", label: "Servicios", icon: <Wrench className="w-4 h-4" /> },
   { to: "/plantillas", label: "Plantillas", icon: <FileText className="w-4 h-4" /> },
@@ -245,7 +245,7 @@ export default function Layout() {
         <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
           {nav
             .filter((item) => canSee(item.roles))
-            .filter((item) => !(user?.rol === "sistema" && (item.to === "/miarea" || item.to === "/midesempeno")))
+            .filter((item) => !(user?.rol === "sistema" && item.to === "/miarea"))
             .map((item) => {
               const { to, icon } = item;
               const label = getNavLabel(item);
