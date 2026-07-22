@@ -181,15 +181,19 @@ export function AudioRecorder({
     );
   }
 
-  // ── Micrófono bloqueado: mostrar compacto sin opacar el textbox ──
+  // ── Micrófono bloqueado: botón para reintentar, sin opacar el textbox ──
   if (permDenied) {
     return (
       <div className={`${className} flex-shrink-0`}>
         <div className="flex flex-col items-center gap-1 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2">
-          <span className="flex items-center gap-1.5 text-xs text-slate-400">
+          <button
+            type="button"
+            onClick={startRecording}
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-600 transition cursor-pointer"
+          >
             <Mic className="w-3.5 h-3.5" />
-            Micrófono bloqueado
-          </span>
+            <span>Micrófono bloqueado — tocar para reintentar</span>
+          </button>
         </div>
       </div>
     );
