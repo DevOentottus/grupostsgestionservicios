@@ -1,14 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useSearchParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { serviciosApi, seguimientoApi, evidenciasPublicApi, ofertasApi } from "@/api/client.js";
+import { serviciosApi, seguimientoApi, evidenciasPublicApi, comunicacionesPublicApi, ofertasApi } from "@/api/client.js";
 import { toast } from "sonner";
 import { cn } from "@/app/lib/utils";
 import { InfoPopover } from "@/app/components/ui/info-popover.js";
 import { subscribeToPush } from "@/lib/push.js";
 import {
   Clock, CheckCircle2, AlertTriangle, Star, Send, ArrowLeft, Camera, X, Loader2,
-  ChevronLeft, ChevronRight, MessageCircle, Eye,
+  ChevronLeft, ChevronRight, MessageCircle, Eye, MessageSquare,
 } from "lucide-react";
 import type { PublicServicioResponse, Encuesta, Evidencia, EvidenciaComentario } from "@shared/index.js";
 import { ProcessFlow } from "@/app/components/flow/ProcessFlow.js";
@@ -218,6 +218,31 @@ export function ServicioPublicoPage() {
       setEvidencias(evidenciasQuery.data);
     }
   }, [evidenciasQuery.data]);
+
+  // Comunicación con el técnico
+  const [nuevoMensaje, setNuevoMensaje] = useState("");
+  const comunicacionesQuery = useQuery({
+    queryKey: ["comunicaciones-publicas", codigo, dni],
+    queryFn: async () => {
+      const r = await comunicacionesPublicApi.listar(codigo!, dni!);
+      return r.data.data as {
+        id: number; mensaje: string; remitente: string | null;
+        es_cliente: boolean; created_at: string;
+      }[];
+    },
+    enabled: !!codigo && !!dni && !!data?.servicio,
+    refetchInterval: 15_000,
+  });
+  const enviarMensaje = useMutation({
+    mutationFn: async (mensaje: string) => {
+      await comunicacionesPublicApi.enviar(codigo!, { mensaje, dni: dni! });
+    },
+    onSuccess: () => {
+      setNuevoMensaje("");
+      comunicacionesQuery.refetch();
+    },
+    onError: (err: any) => toast.error(err.response?.data?.detail || "Error al enviar mensaje"),
+  });
 
   // Lookup tarea_id → titulo para mostrar en cada evidencia
   const tareasMap = useMemo(() => {
@@ -677,6 +702,85 @@ export function ServicioPublicoPage() {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* Comunicación con el técnico */}
+            {dni && data?.servicio && (
+              <div style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb', padding: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <div style={{ width: '32px', height: '32px', background: '#dbeafe', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <MessageSquare size={16} color="#2563eb" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ color: '#111827', fontWeight: 600, fontSize: '15px' }}>
+                      Comunicación con el técnico
+                    </h3>
+                    <p style={{ fontSize: '11px', color: '#94a3b8' }}>
+                      {data.servicio.colaborador_nombre || "Técnico asignado"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Lista de mensajes */}
+                <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px', padding: '4px 0' }}>
+                  {comunicacionesQuery.isLoading ? (
+                    <p style={{ fontSize: '12px', color: '#94a3b8', textAlign: 'center', padding: '16px 0' }}>Cargando mensajes...</p>
+                  ) : comunicacionesQuery.data?.length === 0 ? (
+                    <p style={{ fontSize: '12px', color: '#94a3b8', textAlign: 'center', padding: '16px 0' }}>
+                      No hay mensajes todavía. Escribí tu consulta al técnico.
+                    </p>
+                  ) : (
+                    [...(comunicacionesQuery.data || [])].reverse().map((msg) => (
+                      <div key={msg.id} style={{
+                        padding: '10px 12px', borderRadius: '12px', fontSize: '13px', lineHeight: '1.4',
+                        maxWidth: '85%', alignSelf: msg.es_cliente ? 'flex-end' : 'flex-start',
+                        background: msg.es_cliente ? '#dbeafe' : '#f1f5f9',
+                        border: msg.es_cliente ? '1px solid #bfdbfe' : '1px solid #e2e8f0',
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', gap: '8px' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 600, color: msg.es_cliente ? '#1d4ed8' : '#475569' }}>
+                            {msg.remitente || (msg.es_cliente ? "Cliente" : "Técnico")}
+                          </span>
+                          <span style={{ fontSize: '9px', color: '#94a3b8' }}>
+                            {new Date(msg.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p style={{ color: '#1e293b', whiteSpace: 'pre-wrap' }}>{msg.mensaje}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Input para nuevo mensaje */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    value={nuevoMensaje}
+                    onChange={(e) => setNuevoMensaje(e.target.value)}
+                    placeholder="Escribí tu mensaje..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && nuevoMensaje.trim() && !enviarMensaje.isPending) {
+                        enviarMensaje.mutate(nuevoMensaje.trim());
+                      }
+                    }}
+                    style={{
+                      flex: 1, padding: '10px 12px', fontSize: '13px',
+                      border: '1px solid #e2e8f0', borderRadius: '10px',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    onClick={() => { if (nuevoMensaje.trim()) enviarMensaje.mutate(nuevoMensaje.trim()); }}
+                    disabled={!nuevoMensaje.trim() || enviarMensaje.isPending}
+                    style={{
+                      padding: '10px 14px', background: '#1e3a5f', color: '#fff',
+                      border: 'none', borderRadius: '10px', cursor: nuevoMensaje.trim() ? 'pointer' : 'not-allowed',
+                      opacity: nuevoMensaje.trim() ? 1 : 0.5, display: 'flex', alignItems: 'center',
+                    }}
+                  >
+                    {enviarMensaje.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                  </button>
                 </div>
               </div>
             )}

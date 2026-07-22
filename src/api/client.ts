@@ -330,6 +330,16 @@ export const evidenciasPublicApi = {
     api.post(`/public/servicios/${codigo}/encuesta`, data),
 };
 
+// -- Comunicaciones Públicas API --
+export const comunicacionesPublicApi = {
+  listar: (codigo: string, dni?: string) =>
+    api.get(`/public/servicios/${codigo}/comunicaciones`, {
+      params: dni ? { dni } : undefined,
+    }),
+  enviar: (codigo: string, data: { mensaje: string; dni: string }) =>
+    api.post(`/public/servicios/${codigo}/comunicaciones`, data),
+};
+
 // -- Manager API --
 export const managerApi = {
   miArea: (areaId?: number, params?: { fecha_inicio?: string; fecha_fin?: string }) => {

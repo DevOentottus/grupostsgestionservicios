@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
-import { NotFoundError, ForbiddenError } from "@/core/errors/index.js";
+import { NotFoundError, ValidationError, ForbiddenError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
