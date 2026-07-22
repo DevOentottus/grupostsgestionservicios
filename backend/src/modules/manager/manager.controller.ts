@@ -28,7 +28,8 @@ export async function managerController(app: FastifyInstance) {
       }
 
       if (!areaId) {
-        return { data: { area: null, servicios: [], estado_counts: { total: 0, pendiente: 0, en_progreso: 0, completado: 0, bloqueado: 0, cancelado: 0 }, colaboradores: [], satisfaccion: { promedio: 0, cantidad: 0, promotores: 0, pasivos: 0, detractores: 0, nps: 0, servicios_evaluados: 0, servicios_evaluados_pct: 0, calificaciones_positivas_pct: 0, calificaciones_negativas_pct: 0 } } };
+        // Admin/sistema sin área específica: devolver todos los colaboradores del sistema
+        return await getAllColaboradoresResponse(user, query);
       }
 
       const { data: areas } = await supabase
@@ -323,6 +324,144 @@ export async function managerController(app: FastifyInstance) {
       };
     }
   );
+
+  /**
+   * Helper: devuelve todos los colaboradores del sistema con sus stats
+   * (para admin/sistema sin área asignada)
+   */
+  async function getAllColaboradoresResponse(user: any, query: any) {
+    const { fecha_inicio, fecha_fin } = query;
+
+    // Obtener todos los usuarios con rol colaborador o encargado
+    const { data: todosUsuarios } = await supabase
+      .from("usuarios")
+      .select("usuario_id, usuario_nombres, usuario_apellido_paterno, usuario_apellido_materno, usuario_correo, usuario_username, usuario_rol, usuario_activo")
+      .in("usuario_rol", ["colaborador", "encargado"]);
+
+    const usuarios = todosUsuarios || [];
+
+    // Query base de servicios con filtro de fecha
+    let svcBaseQuery = supabase.from("servicios").select("servicio_id, servicio_codigo, servicio_nombre, servicio_estado, servicio_fecha_creacion, servicio_tiempo_estimado, tecnico_principal_id");
+    if (fecha_inicio) svcBaseQuery = svcBaseQuery.gte("servicio_fecha_creacion", fecha_inicio);
+    if (fecha_fin) svcBaseQuery = svcBaseQuery.lte("servicio_fecha_creacion", fecha_fin);
+
+    const { data: todosServicios } = await svcBaseQuery;
+    const serviciosMap = new Map((todosServicios || []).map((s: any) => [s.servicio_id, s]));
+
+    const svcIds = (todosServicios || []).map((s: any) => s.servicio_id).filter(Boolean);
+
+    // Obtener tareas completadas y calificaciones en bulk
+    let tareasBulQuery = supabase
+      .from("tareas")
+      .select("tarea_id, servicio_id, tarea_completado_por, tarea_estado, tarea_tiempo_real")
+      .eq("tarea_estado", "completado");
+    if (svcIds.length > 0) {
+      tareasBulQuery = tareasBulQuery.in("servicio_id", svcIds);
+    } else {
+      tareasBulQuery = tareasBulQuery.in("servicio_id", [-1]);
+    }
+    const { data: tareasBulk } = await tareasBulQuery;
+
+    let califBulk: any[] = [];
+    if (svcIds.length > 0) {
+      const { data: califs } = await supabase
+        .from("calificaciones")
+        .select("servicio_id, calificacion_puntaje")
+        .in("servicio_id", svcIds);
+      califBulk = califs || [];
+    }
+
+    const tareasPorSvc = new Map<number, any[]>();
+    for (const t of tareasBulk || []) {
+      const arr = tareasPorSvc.get(t.servicio_id) || [];
+      arr.push(t);
+      tareasPorSvc.set(t.servicio_id, arr);
+    }
+
+    const califPorSvc = new Map<number, number[]>();
+    for (const c of califBulk) {
+      const arr = califPorSvc.get(c.servicio_id) || [];
+      arr.push(c.calificacion_puntaje);
+      califPorSvc.set(c.servicio_id, arr);
+    }
+
+    // Para cada usuario, calcular stats
+    const colaboradores = usuarios.map((u: any) => {
+      const colId = u.usuario_id;
+
+      // Servicios donde es técnico principal
+      const svcPrincipal = (todosServicios || []).filter((s: any) => s.tecnico_principal_id === colId);
+
+      // IDs de servicios donde participó
+      const svcConTareas = [...new Set(
+        (tareasBulk || [])
+          .filter((t: any) => t.tarea_completado_por === colId)
+          .map((t: any) => t.servicio_id)
+      )];
+      const todosSvcIds = [...new Set([
+        ...svcPrincipal.map((s: any) => s.servicio_id),
+        ...svcConTareas,
+      ])];
+
+      const serviciosCompletados = svcPrincipal.filter((s: any) => s.servicio_estado === "completado").length;
+
+      // Tareas completadas por este usuario
+      const tareasComp = (tareasBulk || []).filter((t: any) => t.tarea_completado_por === colId).length;
+
+      // Tareas pendientes en servicios donde participó
+      let tareasPend = 0;
+      for (const svcId of todosSvcIds) {
+        const tareasSvc = tareasPorSvc.get(svcId) || [];
+        // tareasBulk ya son solo completadas, así que pendientes habría que contar aparte
+        // Por ahora omitimos pendientes para no hacer otra query
+      }
+
+      // Calificación promedio
+      let califPromedio: number | null = null;
+      let totalCalifs = 0;
+      const puntajes: number[] = [];
+      for (const svcId of todosSvcIds) {
+        const pts = califPorSvc.get(svcId) || [];
+        puntajes.push(...pts);
+      }
+      totalCalifs = puntajes.length;
+      if (totalCalifs > 0) {
+        califPromedio = Math.round((puntajes.reduce((a, b) => a + b, 0) / totalCalifs) * 10) / 10;
+      }
+
+      return {
+        usuario_id: colId,
+        id: colId,
+        nombres: u.usuario_nombres || null,
+        apellidos: [u.usuario_apellido_paterno, u.usuario_apellido_materno].filter(Boolean).join(" ") || null,
+        email: u.usuario_correo || null,
+        username: u.usuario_username || null,
+        rol: u.usuario_rol?.toLowerCase() || null,
+        activo: u.usuario_activo ?? true,
+        tareas_activas: 0,
+        tareas_completadas: tareasComp,
+        servicios_completados: serviciosCompletados,
+        calificacion_promedio: califPromedio,
+        total_calificaciones: totalCalifs,
+        servicios_asignados: svcPrincipal.map((s: any) => ({
+          id: s.servicio_id,
+          codigo: s.servicio_codigo || null,
+          titulo: s.servicio_nombre || null,
+          estado: s.servicio_estado || null,
+        })),
+      };
+    });
+
+    return {
+      data: {
+        area: null,
+        satisfaccion: { promedio: 0, cantidad: 0, promotores: 0, pasivos: 0, detractores: 0, nps: 0, servicios_evaluados: 0, servicios_evaluados_pct: 0, calificaciones_positivas_pct: 0, calificaciones_negativas_pct: 0 },
+        servicios: [],
+        estado_counts: { total: 0, pendiente: 0, en_progreso: 0, completado: 0, bloqueado: 0, cancelado: 0 },
+        colaboradores,
+      },
+    };
+  }
 
   // -- GET /api/manager/distribucion --
   app.get(
