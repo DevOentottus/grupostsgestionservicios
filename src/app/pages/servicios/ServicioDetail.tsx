@@ -9,7 +9,7 @@ import {
 
 import { useCrearPlantilla } from "@/api/queries/usePlantillas.js";
 import {
-  useTiemposServicio, useIniciarTiempo, useFinalizarTiempo,
+  useTiemposServicio, useIniciarTiempo, useFinalizarTiempo, useEncuesta,
 } from "@/api/queries/useSeguimiento.js";
 import { CommentsTab } from "./components/CommentsTab.js";
 import { ProcessFlow } from "@/app/components/flow/ProcessFlow.js";
@@ -28,6 +28,7 @@ import {
   Send, AlertTriangle, Plus, X,
   Pencil, MessageCircle, Mic, Info,
   Save, Camera, Share2, Play, Lock, LockOpen, RotateCcw, ChevronUp, ChevronDown, FileText,
+  Star,
 } from "lucide-react";
 import type { Tarea } from "@shared/index.js";
 import {
@@ -420,6 +421,9 @@ export function ServicioDetailPage() {
   const { data: tiemposServicio } = useTiemposServicio(servicioId);
   const iniciarTiempo = useIniciarTiempo();
   const finalizarTiempo = useFinalizarTiempo();
+
+  // -- Encuesta / Calificación del cliente --
+  const { data: encuesta, isLoading: encuestaLoading } = useEncuesta(servicioId);
 
   const [nuevaTarea, setNuevaTarea] = useState("");
   const [editTareaId, setEditTareaId] = useState<number | null>(null);
@@ -1033,6 +1037,67 @@ export function ServicioDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Calificación del Cliente */}
+      {!encuestaLoading && (
+        <div className="mt-4 bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+              <Star className="w-4 h-4 text-amber-400" />
+              Calificación del Cliente
+            </h3>
+            {encuesta && (
+              <span className="text-xs text-gray-400">
+                {new Date(encuesta.created_at).toLocaleDateString("es-PE", {
+                  day: "numeric", month: "short", year: "numeric",
+                })}
+              </span>
+            )}
+          </div>
+
+          {encuesta ? (
+            <div className="mt-2 flex flex-col gap-2">
+              {/* Estrellas */}
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={cn(
+                      "w-5 h-5",
+                      star <= encuesta.calificacion
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-gray-200",
+                    )}
+                  />
+                ))}
+                <span className="ml-2 text-sm font-semibold text-gray-700">
+                  {encuesta.calificacion}/5
+                </span>
+              </div>
+
+              {/* Comentario */}
+              {encuesta.comentario && (
+                <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                  “{encuesta.comentario}”
+                </p>
+              )}
+
+              {/* Sugerencia */}
+              {encuesta.sugerencia && (
+                <div>
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Sugerencia</p>
+                  <p className="text-sm text-gray-600 mt-0.5">{encuesta.sugerencia}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mt-2 flex items-center gap-2 text-sm text-gray-400">
+              <Star className="w-4 h-4 text-gray-300" />
+              <span>El cliente aún no ha calificado este servicio</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tabs - responsive scroll en mobile */}
       <div className="overflow-x-auto -mx-4 md:mx-0">

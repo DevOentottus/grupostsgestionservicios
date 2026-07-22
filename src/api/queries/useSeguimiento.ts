@@ -64,13 +64,24 @@ export function useTiemposServicio(servicioId: number) {
 }
 
 // -- Encuestas --
+export function useEncuesta(servicioId: number) {
+  return useQuery({
+    queryKey: ["encuesta", servicioId],
+    queryFn: async () => {
+      const r = await seguimientoApi.obtenerEncuesta(servicioId);
+      return r.data.data as import("@shared/index.js").Encuesta | null;
+    },
+    enabled: !!servicioId,
+  });
+}
+
 export function useCrearEncuesta() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ servicioId, data }: { servicioId: number; data: any }) =>
       seguimientoApi.crearEncuesta(servicioId, data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["encuesta"] });
+    onSuccess: (_, { servicioId }) => {
+      qc.invalidateQueries({ queryKey: ["encuesta", servicioId] });
       toast.success("Encuesta enviada");
     },
   });

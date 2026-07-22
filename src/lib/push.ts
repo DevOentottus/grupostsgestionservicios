@@ -13,10 +13,11 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 }
 
 export async function subscribeToPush(dni: string): Promise<boolean> {
-  if (!("PushManager" in window) || !VAPID_PUBLIC_KEY) return false;
+  if (!("PushManager" in window)) throw new Error("PushManager no está disponible en este navegador");
+  if (!VAPID_PUBLIC_KEY) throw new Error("Falta la clave VAPID pública. Configurá VITE_VAPID_PUBLIC_KEY en .env");
 
   const reg = await registerServiceWorker();
-  if (!reg) return false;
+  if (!reg) throw new Error("No se pudo registrar el Service Worker. Verificá que /sw.js exista.");
 
   try {
     let subscription = await reg.pushManager.getSubscription();
@@ -29,9 +30,10 @@ export async function subscribeToPush(dni: string): Promise<boolean> {
     }
 
     const subJSON = subscription.toJSON();
-    if (!subJSON.endpoint) return false;
+    if (!subJSON.endpoint) throw new Error("La suscripción push no tiene endpoint");
 
-    const res = await fetch(`${API_BASE}/api/push/subscribe`, {
+    const url = `${API_BASE}/api/push/subscribe`;
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -42,9 +44,15 @@ export async function subscribeToPush(dni: string): Promise<boolean> {
       }),
     });
 
-    return res.ok;
-  } catch {
-    return false;
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`Error del servidor (${res.status}): ${text || res.statusText}`);
+    }
+
+    return true;
+  } catch (err) {
+    if (err instanceof Error) throw err;
+    throw new Error("Error desconocido al activar notificaciones");
   }
 }
 

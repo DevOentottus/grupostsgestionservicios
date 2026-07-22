@@ -45,13 +45,13 @@ export function SeguimientoClientePage() {
           setPushLoading(false);
           return;
         }
-        const ok = await subscribeToPush(dniTrimmed);
-        if (ok) {
+        try {
+          await subscribeToPush(dniTrimmed);
           sessionStorage.setItem("push_subscribed", "true");
           setPushOk(true);
           toast.success("Notificaciones activadas — te avisaremos cuando haya cambios");
-        } else {
-          toast.error("No se pudo activar las notificaciones. Verificá que el servicio esté disponible.");
+        } catch (pushErr: any) {
+          toast.error(pushErr?.message || "No se pudo activar las notificaciones");
         }
       }
     } catch (err) {
