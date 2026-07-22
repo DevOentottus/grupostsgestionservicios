@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { supabase } from "@/lib/supabase.js";
-import { NotFoundError, ValidationError, ForbiddenError } from "@/core/errors/index.js";
+import { NotFoundError, ForbiddenError } from "@/core/errors/index.js";
 import { requireRoles } from "@/core/middleware/auth.js";
 import { auditLog } from "@/core/utils/index.js";
 import { z } from "zod";
@@ -20,13 +20,15 @@ export async function managerController(app: FastifyInstance) {
       };
       const query = request.query as { area_id?: string; fecha_inicio?: string; fecha_fin?: string };
 
-      let areaId: number;
-      if (user.rol === "admin" && query.area_id) {
+      let areaId: number | null = null;
+      if ((user.rol === "admin" || user.rol === "sistema") && query.area_id) {
         areaId = parseInt(query.area_id);
       } else if (user.area_id) {
         areaId = user.area_id;
-      } else {
-        throw new ValidationError("No tienes un área asignada");
+      }
+
+      if (!areaId) {
+        return { data: { area: null, servicios: [], estado_counts: { total: 0, pendiente: 0, en_progreso: 0, completado: 0, bloqueado: 0, cancelado: 0 }, colaboradores: [], satisfaccion: { promedio: 0, cantidad: 0, promotores: 0, pasivos: 0, detractores: 0, nps: 0, servicios_evaluados: 0, servicios_evaluados_pct: 0, calificaciones_positivas_pct: 0, calificaciones_negativas_pct: 0 } } };
       }
 
       const { data: areas } = await supabase
@@ -35,7 +37,9 @@ export async function managerController(app: FastifyInstance) {
         .eq("area_id", areaId)
         .limit(1);
 
-      if (!areas?.length) throw new NotFoundError("Área no encontrada");
+      if (!areas?.length) {
+        return { data: { area: null, servicios: [], estado_counts: { total: 0, pendiente: 0, en_progreso: 0, completado: 0, bloqueado: 0, cancelado: 0 }, colaboradores: [], satisfaccion: { promedio: 0, cantidad: 0, promotores: 0, pasivos: 0, detractores: 0, nps: 0, servicios_evaluados: 0, servicios_evaluados_pct: 0, calificaciones_positivas_pct: 0, calificaciones_negativas_pct: 0 } } };
+      }
       const area = areas[0];
 
       // Servicios del área con información enriquecida
