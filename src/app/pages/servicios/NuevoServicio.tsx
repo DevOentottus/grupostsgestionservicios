@@ -338,6 +338,8 @@ export function NuevoServicioPage() {
     if (!form.titulo.trim()) errs.titulo = "Requerido";
     if (guiarEntrada && !form.cliente_dni.trim()) errs.cliente_dni = "Requerido";
     if (guiarEntrada && !form.codigo_servicio.trim()) errs.codigo_servicio = "Requerido";
+    if (guiarEntrada && !form.cliente_nombres.trim()) errs.cliente_nombres = "Requerido";
+    if (guiarEntrada && !form.cliente_apellido_paterno.trim()) errs.cliente_apellido_paterno = "Requerido";
     if (!autoAsignar && !form.colaborador_id) errs.colaborador_id = "Requerido";
     if (!autoAsignar && !form.area_id) errs.area_id = "Requerido";
     if (!form.cliente_reporte.trim() && !form.servicio_audio_cliente) errs.cliente_reporte = "Requerido";
@@ -554,8 +556,14 @@ export function NuevoServicioPage() {
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-min">
                 <h2 className={sectionTitleClass}><Wrench className="w-4 h-4 text-blue-600 shrink-0" /> Servicio y situación inicial</h2>
                 <div className="mt-4 space-y-3">
-                  <InputField label="Nombre del Servicio" value={form.titulo} onChange={(v) => set("titulo", v)} required error={errors.titulo} placeholder="Ej: Reparación de pantalla..." />
-                  <InputField label="Código de servicio" value={form.codigo_servicio} onChange={(v) => set("codigo_servicio", v.toUpperCase())} placeholder="SRV20260617120000" required error={errors.codigo_servicio} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <InputField label="Nombre del Servicio" value={form.titulo} onChange={(v) => set("titulo", v)} required error={errors.titulo} placeholder="Ej: Reparación de pantalla..." />
+                    <InputField label="Código de servicio" value={form.codigo_servicio} onChange={(v) => set("codigo_servicio", v.toUpperCase())} placeholder="SRV20260617120000" required error={errors.codigo_servicio} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <InputField label="Nombres Cliente" value={form.cliente_nombres} onChange={(v) => set("cliente_nombres", v)} placeholder="Carlos" required error={errors.cliente_nombres} />
+                    <InputField label="Apellidos Cliente" value={form.cliente_apellido_paterno} onChange={(v) => set("cliente_apellido_paterno", v)} placeholder="García" required error={errors.cliente_apellido_paterno} />
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     <InputField label="DNI Cliente" value={form.cliente_dni} onChange={(v) => set("cliente_dni", v.replace(/\D/g, ""))} placeholder="12345678" required error={errors.cliente_dni} />
                     <InputField label="Teléfono Cliente" value={form.cliente_telefono} onChange={(v) => set("cliente_telefono", v.replace(/\D/g, ""))} placeholder="987654321" />
