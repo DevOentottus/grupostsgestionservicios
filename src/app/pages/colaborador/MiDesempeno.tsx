@@ -554,14 +554,31 @@ export function MiDesempenoPage() {
     usuario_id: usuarioId,
   });
 
-  const isLoading = areaLoading && dashLoading;
-  const isError = areaError || dashError;
+  const isLoading = areaLoading || dashLoading;
+  const isError = dashError;
 
   // Datos del colaborador a visualizar
   const misDatos = useMemo(() => {
-    if (!miArea?.colaboradores) return null;
-    return miArea.colaboradores.find((c: any) => c.usuario_id === usuarioId) || null;
-  }, [miArea, usuarioId]);
+    if (miArea?.colaboradores) {
+      return miArea.colaboradores.find((c: any) => c.usuario_id === usuarioId) || null;
+    }
+    // Fallback: si no hay área asignada, usar datos del usuario autenticado
+    if (user && usuarioId === user.id) {
+      return {
+        usuario_id: user.id,
+        nombres: user.nombres,
+        apellidos: null as string | null,
+        email: user.email,
+        username: user.username,
+        tareas_activas: 0,
+        tareas_completadas: 0,
+        servicios_completados: 0,
+        calificacion_promedio: null as number | null,
+        total_calificaciones: 0,
+      };
+    }
+    return null;
+  }, [miArea, usuarioId, user]);
 
   // Indicadores desde dashboard
   const kpi = dashboard?.kpi;

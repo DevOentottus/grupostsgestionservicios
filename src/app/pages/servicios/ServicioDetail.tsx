@@ -13,10 +13,8 @@ import {
 } from "@/api/queries/useSeguimiento.js";
 import { CommentsTab } from "./components/CommentsTab.js";
 import { ProcessFlow } from "@/app/components/flow/ProcessFlow.js";
-import { useEvidencias } from "@/api/queries/useEvidencias.js";
 import { useUsuarios } from "@/api/queries/useUsuarios.js";
-import { EvidenceUploader } from "@/app/components/evidencias/EvidenceUploader.js";
-import { EvidenceViewer } from "@/app/components/evidencias/EvidenceViewer.js";
+import { ComunicacionTab } from "./components/ComunicacionTab.js";
 import { ConfirmDialog } from "@/app/components/ConfirmDialog.js";
 import { AudioRecorder } from "@/app/components/AudioRecorder.js";
 import { useAuth } from "@/lib/auth.js";
@@ -27,7 +25,7 @@ import {
   Archive, ArrowLeft, BarChart3, CheckCircle2, Clock, MessageSquare,
   Send, AlertTriangle, Plus, X,
   Pencil, MessageCircle, Mic, Info,
-  Save, Camera, Share2, Play, Lock, LockOpen, RotateCcw, ChevronUp, ChevronDown, FileText,
+  Save, Share2, Play, Lock, LockOpen, RotateCcw, ChevronUp, ChevronDown, FileText,
   Star,
 } from "lucide-react";
 import type { Tarea } from "@shared/index.js";
@@ -63,7 +61,7 @@ const TABS = [
   { id: "tareas", label: "Tareas", icon: CheckCircle2 },
   { id: "metricas", label: "Métricas", icon: BarChart3 },
   { id: "comentarios", label: "Comentarios", icon: MessageSquare },
-  { id: "evidencias", label: "Evidencias", icon: Camera },
+  { id: "comunicacion", label: "Comunicación", icon: Send },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -136,105 +134,8 @@ const ESTADO_BAR_STYLE: Record<string, string> = {
   cancelado: "bg-white/10 text-gray-200",
 };
 
-// -- Evidencias Tab Component --
-function EvidenciasTabContent({ servicioId, tareas, userRol, userId, tecnicoId, colaboradorPuedeEditar, onToggleVisibilidad }: { servicioId: number; tareas: Tarea[]; userRol?: string; userId?: number; tecnicoId?: number; colaboradorPuedeEditar?: boolean; onToggleVisibilidad?: () => void }) {
-  const { data: evidencias, isLoading } = useEvidencias(servicioId);
-  const [tareaSeleccionada, setTareaSeleccionada] = useState<number | null>(null);
-  const toggleVisibilidad = useEditarServicio();
-
-  const tareaNombres = useMemo(() => {
-    const map: Record<number, string> = {};
-    for (const t of tareas) {
-      map[t.id] = t.titulo;
-    }
-    return map;
-  }, [tareas]);
-
-  return (
-    <div className="space-y-4">
-      {/* Subir evidencia */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-        <h4 className="text-sm font-semibold text-slate-700 mb-3">Subir evidencia</h4>
-        <div className="mb-3">
-          <label className="block text-xs text-slate-500 mb-1">Seleccionar tarea</label>
-          <select
-            value={tareaSeleccionada ?? ""}
-            onChange={(e) => setTareaSeleccionada(e.target.value ? Number(e.target.value) : null)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-500 bg-slate-50"
-          >
-            <option value="">Seleccioná una tarea...</option>
-            {tareas
-              .sort((a, b) => a.orden - b.orden)
-              .map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.titulo} {t.completada ? "✅" : "⬜"}
-                </option>
-              ))}
-          </select>
-        </div>
-        {tareaSeleccionada && (
-          <EvidenceUploader
-            servicioId={servicioId}
-            tareaId={tareaSeleccionada}
-          />
-        )}
-      </div>
-
-      {/* Lista de evidencias */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-        {/* Encargado: toggle para permitir que colaborador edite visibilidad */}
-        {userRol === "encargado" && (
-          <label className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 cursor-pointer select-none hover:bg-slate-50 -mx-4 px-4 transition">
-            <input
-              type="checkbox"
-              checked={colaboradorPuedeEditar ?? false}
-              onChange={() => {
-                toggleVisibilidad.mutate(
-                  { id: servicioId, data: { colaborador_edita_visibilidad: !colaboradorPuedeEditar } },
-                  { onSuccess: () => onToggleVisibilidad?.() }
-                );
-              }}
-              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-xs text-slate-600 font-medium">
-              Permitir a los técnicos modificar visualización de evidencias del cliente
-            </span>
-          </label>
-        )}
-        <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-          <Camera className="w-4 h-4 text-slate-400" />
-          Evidencias subidas
-          <InfoPopover
-            variant="info"
-            formula="Cada tarea puede tener una o más evidencias adjuntas (fotos, archivos, grabaciones de audio)."
-            descripcion="Las evidencias documentan el trabajo realizado y son necesarias para completar tareas que lo requieran."
-            tip="Las evidencias se organizan por tarea. Subí fotos del antes/después para mejor documentación."
-          />
-          {evidencias && (
-            <span className="text-xs font-normal text-slate-400">({evidencias.length})</span>
-          )}
-        </h4>
-        {isLoading ? (
-          <div className="space-y-3 animate-pulse">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-20 bg-slate-100 rounded-xl" />
-            ))}
-          </div>
-        ) : (
-          <EvidenceViewer
-            evidencias={evidencias || []}
-            showStatus
-            tareaNombres={tareaNombres}
-            userRol={userRol}
-            userId={userId}
-            tecnicoId={tecnicoId}
-            colaboradorPuedeEditar={colaboradorPuedeEditar}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
+// -- Evidencias Tab Component (deprecated — reemplazado por ComunicacionTab) --
+// El componente original se mantiene comentado por si se necesita recuperar.
 
 // -- MetricasTab: indicadores de desempeño del servicio --
 function MetricasTabContent({ tareas, servicio }: { tareas: Tarea[]; servicio: any }) {
@@ -1454,8 +1355,15 @@ export function ServicioDetailPage() {
         )}
 
         {/* EVIDENCIAS TAB */}
-        {activeTab === "evidencias" && (
-          <EvidenciasTabContent servicioId={servicioId} tareas={tareas || []} userRol={user?.rol} userId={user?.id} tecnicoId={servicio?.colaborador_id ?? undefined} colaboradorPuedeEditar={servicio?.colaborador_edita_visibilidad} />
+        {activeTab === "comunicacion" && (
+          <ComunicacionTab
+            servicioId={servicioId}
+            tareas={tareas || []}
+            progresoPct={progresoPct}
+            completadasCount={completadasCount}
+            totalTareas={totalTareas}
+            servicioEstado={servicio?.estado || ""}
+          />
         )}
       </div>
 

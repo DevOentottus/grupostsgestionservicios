@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth.js";
 import { useServicios, useCrearServicio, useArchivarServicio, useDesarchivarServicio } from "@/api/queries/useServicios.js";
 import { useAreas } from "@/api/queries/useAreas.js";
+import { useUsuarios } from "@/api/queries/useUsuarios.js";
 import {
   usePlantillas,
   usePlantilla,
@@ -40,6 +41,7 @@ export function ServiciosPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("todos");
   const [filterArea, setFilterArea] = useState<number | "">("");
+  const [filterColaborador, setFilterColaborador] = useState<number | "">("");
   const [mostrarArchivados, setMostrarArchivados] = useState(false);
 
   // Filtro de fechas
@@ -63,6 +65,11 @@ export function ServiciosPage() {
   const desarchivar = useDesarchivarServicio();
   const { data: areas } = useAreas();
   const areaMap = new Map((areas || []).map((a: any) => [a.id, a.nombre]));
+  const { data: usuarios } = useUsuarios();
+  const colaboradores = useMemo(() =>
+    (usuarios || []).filter((u: any) => u.rol === "colaborador" && u.activo),
+    [usuarios],
+  );
   const { data: plantillas } = usePlantillas();
   const crearServicio = useCrearServicio();
   const aplicarPlantilla = useAplicarPlantilla();
@@ -92,8 +99,9 @@ export function ServiciosPage() {
       .includes(search.toLowerCase());
     const matchArea = !filterArea || s.area_id === filterArea;
     const matchStatus = filterStatus === "todos" || s.estado === filterStatus;
+    const matchColaborador = !filterColaborador || s.colaborador_id === filterColaborador;
     const matchDate = !fechaInicio || !fechaFin || (s.created_at?.split("T")[0] ?? "") >= fechaInicio && (s.created_at?.split("T")[0] ?? "") <= fechaFin;
-    return matchSearch && matchArea && matchStatus && matchDate;
+    return matchSearch && matchArea && matchStatus && matchColaborador && matchDate;
   });
 
   const esAdminSistema = currentUser?.rol === "admin" || currentUser?.rol === "sistema";
@@ -249,6 +257,19 @@ export function ServiciosPage() {
               <option value="">Todas las áreas</option>
               {(areas || []).map((a: any) => (
                 <option key={a.id} value={a.id}>{a.nombre}</option>
+              ))}
+            </select>
+          )}
+
+          {esAdminSistema && (
+            <select
+              value={filterColaborador}
+              onChange={(e) => setFilterColaborador(e.target.value ? Number(e.target.value) : "")}
+              className="px-3 py-2 rounded-xl text-sm font-semibold border border-gray-200 bg-white text-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            >
+              <option value="">Todos los colaboradores</option>
+              {colaboradores.map((u: any) => (
+                <option key={u.id} value={u.id}>{u.nombres}</option>
               ))}
             </select>
           )}

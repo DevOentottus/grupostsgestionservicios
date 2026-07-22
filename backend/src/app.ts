@@ -31,6 +31,7 @@ import { pushController } from "@/modules/push/push.controller.js";
 import { ofertasController } from "@/modules/ofertas/ofertas.controller.js";
 import { notificacionesController } from "@/modules/notificaciones/notificaciones.controller.js";
 import { tiposServicioController } from "@/modules/tipos-servicio/tipos-servicio.controller.js";
+import { comunicacionesController } from "@/modules/comunicaciones/comunicaciones.controller.js";
 import { cleanupSeguridad } from "@/scripts/cleanup-seguridad.js";
 
 export async function buildApp() {
@@ -100,6 +101,7 @@ export async function buildApp() {
   await app.register(ofertasController);
   await app.register(notificacionesController);
   await app.register(tiposServicioController);
+  await app.register(comunicacionesController);
 
   // ── Frontend estático (Docker/producción) ────────────────
   let publicDir: string | undefined = process.env.PUBLIC_DIR;

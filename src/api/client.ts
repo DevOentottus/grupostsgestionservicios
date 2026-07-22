@@ -225,6 +225,13 @@ export const seguimientoApi = {
   dashboard: (params?: any) => api.get("/dashboard", { params }),
 };
 
+// -- Comunicaciones --
+export const comunicacionesApi = {
+  listar: (servicioId: number) => api.get(`/servicios/${servicioId}/comunicaciones`),
+  crear: (servicioId: number, data: { mensaje: string; tipo?: string }) =>
+    api.post(`/servicios/${servicioId}/comunicaciones`, data),
+};
+
 // -- Display API --
 export const displayApi = {
   tv: () => api.get("/public/display/tv"),
