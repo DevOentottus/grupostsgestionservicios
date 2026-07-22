@@ -181,6 +181,20 @@ export function AudioRecorder({
     );
   }
 
+  // ── Micrófono bloqueado: mostrar compacto sin opacar el textbox ──
+  if (permDenied) {
+    return (
+      <div className={`${className} flex-shrink-0`}>
+        <div className="flex flex-col items-center gap-1 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2">
+          <span className="flex items-center gap-1.5 text-xs text-slate-400">
+            <Mic className="w-3.5 h-3.5" />
+            Micrófono bloqueado
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={className}>
       {label && (
@@ -264,29 +278,17 @@ export function AudioRecorder({
           <button
             type="button"
             onClick={startRecording}
-            disabled={disabled || permDenied}
-            className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition
-              ${
-                permDenied
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
-              }
-              disabled:opacity-50`}
+            disabled={disabled}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 disabled:opacity-50"
           >
             <Mic className="w-5 h-5" />
-            {permDenied ? "Micrófono bloqueado" : "Grabar audio"}
+            Grabar audio
           </button>
         )}
 
         {/* Error */}
-        {error && !recording && (
+        {error && !recording && !permDenied && (
           <p className="text-xs text-red-500">{error}</p>
-        )}
-
-        {permDenied && (
-          <p className="text-xs text-slate-400">
-            Permití el acceso al micrófono en la configuración del navegador y volvé a intentar.
-          </p>
         )}
       </div>
     </div>
