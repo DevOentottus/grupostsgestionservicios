@@ -44,7 +44,13 @@ export function ComunicacionTab({
   const [showEvidencias, setShowEvidencias] = useState(false);
 
   const tareasRecientes = useMemo(() => {
-    return tareas
+    // Solo mostrar como completadas las que están en secuencia
+    const sorted = [...tareas].sort((a, b) => a.orden - b.orden);
+    const primerHueco = sorted.findIndex((t) => !t.completada);
+    const display = primerHueco >= 0
+      ? sorted.map((t, i) => (i >= primerHueco ? { ...t, completada: false } : t))
+      : sorted;
+    return display
       .filter((t) => t.completada)
       .sort((a, b) => {
         if (!a.completada_at || !b.completada_at) return 0;

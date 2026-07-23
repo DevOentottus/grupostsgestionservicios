@@ -351,8 +351,16 @@ export function ServicioDetailPage() {
   }, [qrModalOpen, servicio]);
 
   const tareasSorted = [...(tareas || [])].sort((a: Tarea, b: Tarea) => a.orden - b.orden);
-  const completadasCount = tareasSorted.filter((t) => t.completada).length;
-  const totalTareas = tareasSorted.length;
+
+  // Display override: tareas después del primer hueco en la secuencia se muestran incompletas
+  // aunque estén marcadas como completadas en BD (completado no secuencial)
+  const primerHuecoIdx = tareasSorted.findIndex((t) => !t.completada);
+  const tareasDisplay = primerHuecoIdx >= 0
+    ? tareasSorted.map((t, i) => (i >= primerHuecoIdx ? { ...t, completada: false } : t))
+    : tareasSorted;
+
+  const completadasCount = tareasDisplay.filter((t) => t.completada).length;
+  const totalTareas = tareasDisplay.length;
   const progresoPct = totalTareas > 0 ? Math.round((completadasCount / totalTareas) * 100) : 0;
   const totalTiempoRealMin = tareasSorted.reduce((sum, t) => sum + (t.tiempo_real_minutos ?? 0), 0);
   const isPendiente = servicio?.estado === "pendiente";
@@ -1116,9 +1124,10 @@ export function ServicioDetailPage() {
               <p className="text-sm text-gray-500 text-center py-8">No hay tareas. Agrega la primera.</p>
             ) : (
               <div className="divide-y divide-gray-50">
-                {tareasSorted.map((tarea: Tarea & { tipo?: string; responsable?: string }, idx) => {
+                {tareasDisplay.map((tarea: Tarea & { tipo?: string; responsable?: string }, idx) => {
                   const isEditing = editTareaId === tarea.id;
-                  const prevIncompleta = idx > 0 && !tareasSorted[idx - 1].completada;
+                  const tareaReal = tareasSorted[idx]; // datos reales para operaciones (reorden)
+                  const prevIncompleta = idx > 0 && !tareasDisplay[idx - 1].completada;
                   return (
                     <div
                       key={tarea.id}
@@ -1127,8 +1136,8 @@ export function ServicioDetailPage() {
                         tarea.completada ? "bg-green-50/30" : "hover:bg-gray-50",
                       )}
                     >
-                      {/* Reorder arrows — solo entre incompletas, no obligatorias y solo admin/asignado */}
-                      {!tarea.completada && !tarea.obligatoria && puedeModificar && (
+                      {/* Reorder arrows — solo entre incompletas reales, no obligatorias y solo admin/asignado */}
+                      {!tareaReal.completada && !tareaReal.obligatoria && puedeModificar && (
                         <div className="flex flex-col items-center gap-0.5 mr-1 flex-shrink-0">
                           {idx > 0 && !tareasSorted[idx - 1].completada && (
                             <button
@@ -1313,7 +1322,7 @@ export function ServicioDetailPage() {
                       })()}
                       {puedeEditarMetadata && (
                         <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 max-md:opacity-100 transition-opacity">
-                          {!isEditing && !tarea.completada && !tarea.obligatoria && (
+                          {!isEditing && !tareaReal.completada && !tareaReal.obligatoria && (
                             <button
                               onClick={() => handleStartTitleEdit(tarea)}
                               className="p-1.5 rounded-lg bg-blue-100 text-blue-800 hover:bg-blue-300 transition"
@@ -1322,7 +1331,7 @@ export function ServicioDetailPage() {
                               <Pencil className="w-3 h-3" />
                             </button>
                           )}
-                          {!tarea.completada && !tarea.obligatoria && (
+                          {!tareaReal.completada && !tareaReal.obligatoria && (
                             <button
                               onClick={() => handleDeleteClick(tarea)}
                               className="p-1.5 rounded-lg bg-red-100 text-red-700 hover:bg-red-300 transition"
